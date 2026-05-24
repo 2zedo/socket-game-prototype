@@ -1,0 +1,10 @@
+.game-shell {
+  width: 100vw;
+  height: 100svh;
+  overflow: hidden;
+  background: #f6f4ef;
+}
+
+.game-shell canvas {
+  display: block;
+}
