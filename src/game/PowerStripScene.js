@@ -11,6 +11,9 @@ const NEED_TICK_MS = 1000
 const NEED_ROW_GAP = 50
 const CYCLE_SECONDS = 60
 const PHASE_SECONDS = 30
+const MICROWAVE_HEAT_GAIN = 3.4
+const MICROWAVE_FATIGUE_RECOVERY = 2.6
+const MICROWAVE_MIN_FATIGUE_RECOVERY = 1.2
 
 const THEME = {
   day: {
@@ -47,6 +50,73 @@ const TIME_EFFECT_TEXT = {
     '- 휴대폰 배터리 감소 속도 증가',
   ].join('\n'),
 }
+
+const DAILY_EVENT_DEFAULTS = {
+  temperatureGainMultiplier: 1,
+  batteryDrainMultiplier: 1,
+  funDrainMultiplier: 1,
+  fatigueRecoveryMultiplier: 1,
+  maxPowerModifier: 0,
+  devicePowerMultiplier: 1,
+}
+
+const DAILY_EVENTS = [
+  {
+    key: 'heatwave',
+    label: '폭염',
+    popup: '오늘은 방이 매우 덥습니다',
+    summary: '온도가 더 빠르게 증가',
+    modifiers: {
+      temperatureGainMultiplier: 1.28,
+    },
+  },
+  {
+    key: 'coldSnap',
+    label: '한파',
+    popup: '방은 덜 더워지지만 회복이 둔해집니다',
+    summary: '온도 상승 감소 / 피로 회복 감소',
+    modifiers: {
+      temperatureGainMultiplier: 0.72,
+      fatigueRecoveryMultiplier: 0.78,
+    },
+  },
+  {
+    key: 'powerLimit',
+    label: '전력 제한',
+    popup: '오늘은 사용할 수 있는 전력이 줄어듭니다',
+    summary: '최대 전력 500W 감소',
+    modifiers: {
+      maxPowerModifier: -500,
+    },
+  },
+  {
+    key: 'powerBank',
+    label: '보조배터리 발견',
+    popup: '오늘은 배터리 소모가 조금 느려집니다',
+    summary: '배터리 감소 속도 완화',
+    modifiers: {
+      batteryDrainMultiplier: 0.72,
+    },
+  },
+  {
+    key: 'gloomyDay',
+    label: '우울한 하루',
+    popup: '재미가 더 빨리 줄어드는 날입니다',
+    summary: '재미 감소 속도 증가',
+    modifiers: {
+      funDrainMultiplier: 1.35,
+    },
+  },
+  {
+    key: 'energySavingDay',
+    label: '절전의 날',
+    popup: '기기 전력 사용량이 조금 줄어듭니다',
+    summary: '모든 기기 전력 사용량 10% 감소',
+    modifiers: {
+      devicePowerMultiplier: 0.9,
+    },
+  },
+]
 
 const EMPTY_DAY_STATS = {
   breakerTrips: 0,
@@ -122,7 +192,7 @@ const NEED_EXPLANATION_TEXT = [
   '[피로] 더우면 증가 / 낮은 온도에서 회복',
   '[재미] 시간 감소 / 노트북 회복',
   '       낮으면 피로가 더 빨리 증가',
-  '[전자레인지] 피로 완화 / 전력+열 크게 증가',
+  '[전자레인지] 사용 중 피로 회복 / 전력+온도 크게 증가',
 ].join('\n')
 
 const DEVICES = [
@@ -186,13 +256,17 @@ class NeedsModel {
     const hasMicrowave = connectedDevices.has('microwave')
     const isDay = timeState.phase === 'day'
     const isNight = timeState.phase === 'night'
+    const eventModifiers = progression.eventModifiers
     const difficulty = 1 + Math.min(0.55, (timeState.dayCount - 1) * 0.055)
-    const temperatureBaseGain = (isDay ? 1.2 : 0.9) * difficulty
-    const funLoss = (isDay ? -1 : -1.3) * difficulty
-    const phoneBatteryLoss = (isNight ? -1.4 : -1.1) * difficulty
+    const temperatureBaseGain = (isDay ? 1.2 : 0.9) * difficulty * eventModifiers.temperatureGainMultiplier
+    const funLoss = (isDay ? -1 : -1.3) * difficulty * eventModifiers.funDrainMultiplier
+    const phoneBatteryLoss = (isNight ? -1.4 : -1.1) * difficulty * eventModifiers.batteryDrainMultiplier
     const fanCooling = 3 + progression.upgrades.fanEfficiency * 0.55
     const chargeGain = 7 + progression.upgrades.chargerEfficiency * 1.1
-    const nextTemperature = this.values.temperature + (hasFan ? -fanCooling : temperatureBaseGain) + (hasMicrowave ? 4 * difficulty : 0)
+    const nextTemperature =
+      this.values.temperature +
+      (hasFan ? -fanCooling : temperatureBaseGain) +
+      (hasMicrowave ? MICROWAVE_HEAT_GAIN * difficulty : 0)
     const nextFun = this.values.fun + (hasLaptop ? 4 : funLoss)
     const fatigueDelta = this.getFatigueDelta(nextTemperature, hasFan, nextFun, hasMicrowave, isNight, progression)
 
@@ -234,7 +308,11 @@ class NeedsModel {
     }
 
     if (hasMicrowave) {
-      fatigueDelta -= 0.7
+      fatigueDelta = Math.min(fatigueDelta - MICROWAVE_FATIGUE_RECOVERY, -MICROWAVE_MIN_FATIGUE_RECOVERY)
+    }
+
+    if (fatigueDelta < 0) {
+      fatigueDelta *= progression.eventModifiers.fatigueRecoveryMultiplier
     }
 
     return fatigueDelta
@@ -426,6 +504,7 @@ export class PowerStripScene extends Phaser.Scene {
     this.dayNightModel = new DayNightModel()
     this.totalPoints = 0
     this.lastPurchasedUpgrade = '없음'
+    this.currentEvent = null
     this.upgrades = {
       outletSlot: 0,
       maxPower: 0,
@@ -436,6 +515,7 @@ export class PowerStripScene extends Phaser.Scene {
     this.dayStats = { ...EMPTY_DAY_STATS }
     this.isShowingResults = false
     this.isChoosingUpgrade = false
+    this.isShowingDailyEvent = false
     this.warningClearEvent = null
     this.popupTween = null
     this.popupClearEvent = null
@@ -489,6 +569,16 @@ export class PowerStripScene extends Phaser.Scene {
       })
       .setOrigin(1, 0)
 
+    this.eventText = this.add
+      .text(0, 0, '', {
+        align: 'right',
+        color: THEME.day.text,
+        fontFamily: 'system-ui, Segoe UI, sans-serif',
+        fontSize: '14px',
+        fontStyle: '700',
+      })
+      .setOrigin(1, 0)
+
     this.statusText = this.add
       .text(0, 0, '기기를 멀티탭에 끌어다 놓으세요', {
         color: '#6f6659',
@@ -512,6 +602,17 @@ export class PowerStripScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
 
+    this.activeEffectText = this.add
+      .text(0, 0, '', {
+        align: 'center',
+        color: '#8a4f18',
+        fontFamily: 'system-ui, Segoe UI, sans-serif',
+        fontSize: '13px',
+        fontStyle: '700',
+        lineSpacing: 2,
+      })
+      .setOrigin(0.5)
+
     this.popupText = this.add
       .text(0, 0, '', {
         align: 'center',
@@ -528,15 +629,15 @@ export class PowerStripScene extends Phaser.Scene {
 
     this.resultsPanel = this.add.container(0, 0).setDepth(80).setVisible(false)
     this.resultsBackdrop = this.add.rectangle(0, 0, 10, 10, 0x111111, 0.62).setOrigin(0.5)
-    this.resultsBox = this.add.rectangle(0, 0, 460, 360, 0xf8f1df, 1)
+    this.resultsBox = this.add.rectangle(0, 0, 500, 420, 0xf8f1df, 1)
     this.resultsBox.setStrokeStyle(3, 0x3d3933, 1)
     this.resultsText = this.add
       .text(0, 0, '', {
         align: 'center',
         color: '#24211c',
         fontFamily: 'system-ui, Segoe UI, sans-serif',
-        fontSize: '17px',
-        lineSpacing: 8,
+        fontSize: '16px',
+        lineSpacing: 7,
       })
       .setOrigin(0.5)
     this.resultsPanel.add([this.resultsBackdrop, this.resultsBox, this.resultsText])
@@ -588,8 +689,10 @@ export class PowerStripScene extends Phaser.Scene {
     this.updatePowerReadout()
     this.updateTimeReadout()
     this.updatePointsReadout()
+    this.updateEventReadout()
     this.applyTimeTheme()
     this.needsPanel.update(this.needsModel.values)
+    this.startDailyEvent()
   }
 
   createOutlet(index) {
@@ -700,8 +803,10 @@ export class PowerStripScene extends Phaser.Scene {
     this.timeText.setPosition(width - 24, 22)
     this.timeEffectText.setPosition(width - 24, 82)
     this.pointsText.setPosition(width - 24, 156)
+    this.eventText.setPosition(width - 24, 180)
     this.statusText.setPosition(width / 2, 74)
     this.warningText.setPosition(width / 2, 104)
+    this.activeEffectText.setPosition(width / 2, 128)
     this.popupText.setPosition(width / 2, height / 2)
     this.needsPanel.setPosition(24, 118)
     this.flashOverlay.setSize(width, height)
@@ -744,7 +849,7 @@ export class PowerStripScene extends Phaser.Scene {
   }
 
   handleDragStart(pointer, device) {
-    if (this.isTripping || this.isShowingResults) {
+    if (this.isTripping || this.isGameplayPaused()) {
       return
     }
 
@@ -756,7 +861,7 @@ export class PowerStripScene extends Phaser.Scene {
   }
 
   handleDrag(pointer, device, dragX, dragY) {
-    if (this.isTripping || this.isShowingResults) {
+    if (this.isTripping || this.isGameplayPaused()) {
       return
     }
 
@@ -770,7 +875,7 @@ export class PowerStripScene extends Phaser.Scene {
     device.setDepth(10)
     this.setOutletHighlights(device, false)
 
-    if (this.isTripping || this.isShowingResults) {
+    if (this.isTripping || this.isGameplayPaused()) {
       return
     }
 
@@ -808,8 +913,9 @@ export class PowerStripScene extends Phaser.Scene {
     this.statusText.setText(`${device.getData('label')} 연결됨`)
     this.updatePowerReadout()
     this.updateOutletVisuals()
+    this.updateActiveDeviceFeedback()
 
-    if (this.getTotalPower() > this.maxPowerWatts) {
+    if (this.getTotalPower() > this.getEffectiveMaxPower()) {
       this.tripBreaker()
     }
   }
@@ -847,6 +953,7 @@ export class PowerStripScene extends Phaser.Scene {
     device.setData('connectedStart', null)
     this.updatePowerReadout()
     this.updateOutletVisuals()
+    this.updateActiveDeviceFeedback()
   }
 
   canUseSlots(device, startIndex) {
@@ -914,8 +1021,12 @@ export class PowerStripScene extends Phaser.Scene {
     })
   }
 
+  isGameplayPaused() {
+    return this.isShowingResults || this.isShowingDailyEvent
+  }
+
   tickNeeds() {
-    if (this.isShowingResults) {
+    if (this.isGameplayPaused()) {
       return
     }
 
@@ -930,11 +1041,13 @@ export class PowerStripScene extends Phaser.Scene {
 
     if (this.isTripping) {
       this.needsPanel.update(this.needsModel.values)
+      this.updateActiveDeviceFeedback()
       return
     }
 
     const warnings = this.needsModel.update(this.getConnectedDeviceKeys(), this.dayNightModel, this.getProgressionContext())
     this.needsPanel.update(this.needsModel.values)
+    this.updateActiveDeviceFeedback()
 
     if (warnings.length > 0) {
       this.handleWarnings(warnings)
@@ -991,6 +1104,22 @@ export class PowerStripScene extends Phaser.Scene {
           this.popupClearEvent = null
         },
       })
+    })
+  }
+
+  startDailyEvent() {
+    this.currentEvent = Phaser.Utils.Array.GetRandom(DAILY_EVENTS)
+    this.isShowingDailyEvent = true
+    this.updateEventReadout()
+    this.updatePowerReadout()
+    this.showPopup(`${this.currentEvent.label}\n${this.currentEvent.popup}`)
+
+    this.time.delayedCall(1700, () => {
+      this.isShowingDailyEvent = false
+
+      if (this.getTotalPower() > this.getEffectiveMaxPower()) {
+        this.tripBreaker()
+      }
     })
   }
 
@@ -1095,6 +1224,7 @@ export class PowerStripScene extends Phaser.Scene {
     this.updatePointsReadout()
     this.updatePowerReadout()
     this.updateTimeReadout()
+    this.startDailyEvent()
   }
 
   showDayResults(completedDay) {
@@ -1108,6 +1238,9 @@ export class PowerStripScene extends Phaser.Scene {
       `생존 DAY: ${completedDay}`,
       '',
       ...score.lines,
+      '',
+      `이벤트: ${this.currentEvent?.label ?? '없음'}`,
+      `효과: ${this.currentEvent?.summary ?? '없음'}`,
       '',
       `획득 포인트: ${score.total}`,
       `총 포인트: ${this.totalPoints}`,
@@ -1184,6 +1317,35 @@ export class PowerStripScene extends Phaser.Scene {
     this.pointsText.setText(`총 포인트: ${this.totalPoints}`)
   }
 
+  updateEventReadout() {
+    if (!this.eventText) {
+      return
+    }
+
+    const eventLabel = this.currentEvent ? this.currentEvent.label : '없음'
+    this.eventText.setText(`현재 이벤트: ${eventLabel}`)
+  }
+
+  updateActiveDeviceFeedback() {
+    if (!this.activeEffectText) {
+      return
+    }
+
+    if (this.isTripping) {
+      this.activeEffectText.setText('')
+      return
+    }
+
+    const connectedDevices = this.getConnectedDeviceKeys()
+
+    if (connectedDevices.has('microwave')) {
+      this.activeEffectText.setText('전자레인지 사용 중: 피로 회복 / 온도 상승 / 높은 전력 사용')
+      return
+    }
+
+    this.activeEffectText.setText('')
+  }
+
   applyTimeTheme() {
     const theme = THEME[this.dayNightModel.phase]
 
@@ -1194,7 +1356,9 @@ export class PowerStripScene extends Phaser.Scene {
     this.timeText.setColor(theme.text)
     this.timeEffectText.setColor(theme.mutedText)
     this.pointsText.setColor(theme.text)
+    this.eventText.setColor(theme.text)
     this.statusText.setColor(theme.mutedText)
+    this.activeEffectText.setColor(this.dayNightModel.phase === 'day' ? '#8a4f18' : '#ffd58e')
     this.needsPanel.setTheme(theme)
   }
 
@@ -1212,12 +1376,30 @@ export class PowerStripScene extends Phaser.Scene {
     return {
       dayCount: this.dayNightModel.dayCount,
       upgrades: this.upgrades,
+      eventModifiers: this.getEventModifiers(),
     }
+  }
+
+  getEventModifiers() {
+    return {
+      ...DAILY_EVENT_DEFAULTS,
+      ...(this.currentEvent?.modifiers ?? {}),
+    }
+  }
+
+  getEffectiveMaxPower() {
+    const eventModifiers = this.getEventModifiers()
+    return Math.max(1500, this.maxPowerWatts + eventModifiers.maxPowerModifier)
+  }
+
+  getDevicePower(device) {
+    const eventModifiers = this.getEventModifiers()
+    return Math.ceil(device.getData('watts') * eventModifiers.devicePowerMultiplier)
   }
 
   getTotalPower() {
     return this.devices.reduce((total, device) => {
-      return device.getData('connectedStart') === null ? total : total + device.getData('watts')
+      return device.getData('connectedStart') === null ? total : total + this.getDevicePower(device)
     }, 0)
   }
 
@@ -1227,8 +1409,10 @@ export class PowerStripScene extends Phaser.Scene {
     }
 
     const totalPower = this.getTotalPower()
-    this.totalText.setText(`전력 사용량: ${totalPower}W / ${this.maxPowerWatts}W`)
-    this.totalText.setColor(totalPower > this.maxPowerWatts ? '#be2020' : THEME[this.dayNightModel.phase].text)
+    const effectiveMaxPower = this.getEffectiveMaxPower()
+    const eventNote = effectiveMaxPower < this.maxPowerWatts ? ' 제한 중' : ''
+    this.totalText.setText(`전력 사용량: ${totalPower}W / ${effectiveMaxPower}W${eventNote}`)
+    this.totalText.setColor(totalPower > effectiveMaxPower ? '#be2020' : THEME[this.dayNightModel.phase].text)
   }
 
   tripBreaker() {

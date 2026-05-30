@@ -1,0 +1,34 @@
+[gd_scene load_steps=9 format=3 uid="uid://swcyt5a7k165"]
+
+[ext_resource type="Script" uid="uid://mgf8yuppoq54" path="res://scripts/Main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://cfjdnwjnllwk7" path="res://scripts/SurvivalState.gd" id="2_state"]
+[ext_resource type="PackedScene" path="res://scenes/Apartment.tscn" id="3_apartment"]
+[ext_resource type="PackedScene" path="res://scenes/ui/SurvivalHUD.tscn" id="4_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PhoneUI.tscn" id="5_phone"]
+[ext_resource type="PackedScene" path="res://scenes/ui/InteractionPanel.tscn" id="6_panel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/OutletMode.tscn" id="7_outlet"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DayResultPanel.tscn" id="8_result"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="SurvivalState" type="Node" parent="."]
+script = ExtResource("2_state")
+
+[node name="Apartment" parent="." instance=ExtResource("3_apartment")]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="SurvivalHUD" parent="UI" instance=ExtResource("4_hud")]
+offset_left = 163.0
+offset_top = 120.0
+offset_right = 163.0
+offset_bottom = 120.0
+
+[node name="PhoneUI" parent="UI" instance=ExtResource("5_phone")]
+
+[node name="InteractionPanel" parent="UI" instance=ExtResource("6_panel")]
+
+[node name="OutletMode" parent="UI" instance=ExtResource("7_outlet")]
+
+[node name="DayResultPanel" parent="UI" instance=ExtResource("8_result")]

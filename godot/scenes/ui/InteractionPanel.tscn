@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3 uid="uid://interaction_panel"]
+
+[ext_resource type="Script" path="res://scripts/ui/InteractionPanel.gd" id="1_panel"]
+
+[node name="InteractionPanel" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_panel")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 390.0
+offset_top = 210.0
+offset_right = 890.0
+offset_bottom = 510.0
+
+[node name="TitleLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 26.0
+offset_right = 474.0
+offset_bottom = 62.0
+theme_override_font_sizes/font_size = 25
+
+[node name="BodyLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 86.0
+offset_right = 474.0
+offset_bottom = 220.0
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 2
+
+[node name="FooterLabel" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 246.0
+offset_right = 474.0
+offset_bottom = 276.0
+theme_override_colors/font_color = Color(0.7, 0.65, 0.56, 1)
+theme_override_font_sizes/font_size = 15
+text = "E 또는 ESC: 닫기"
