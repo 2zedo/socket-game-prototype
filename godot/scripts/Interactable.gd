@@ -117,7 +117,7 @@ func _draw() -> void:
 	draw_string(ThemeDB.fallback_font, label_position, display_name, HORIZONTAL_ALIGNMENT_CENTER, label_width, LABEL_FONT_SIZE, Color("#f8ecd2"))
 
 	if power_watts > 0 or power_units > 0:
-		var state_text: String = "작동 중" if is_powered else "꺼짐"
+		var state_text: String = "연결됨" if is_powered else "전원 없음"
 		var state_color: Color = Color("#ffe066") if is_powered else Color("#5f4b39")
 		var status_position: Vector2 = Vector2(-label_width * 0.5, body_size.y * 0.5 + 16.0)
 		draw_string(ThemeDB.fallback_font, status_position, state_text, HORIZONTAL_ALIGNMENT_CENTER, label_width, STATUS_FONT_SIZE, state_color)

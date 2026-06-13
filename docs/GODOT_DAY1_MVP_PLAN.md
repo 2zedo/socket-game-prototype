@@ -9,6 +9,7 @@ Define the smallest Godot implementation that proves the core `CONCENT / 전력 
 - The player can enter the main room scene.
 - Current power is visible.
 - The player can interact with a small set of room objects.
+- Room objects require a matching outlet connection before use.
 - Confirmed choices spend power.
 - Choices are blocked when power is insufficient.
 - Each choice gives clear dialogue or event feedback.
@@ -18,9 +19,11 @@ Define the smallest Godot implementation that proves the core `CONCENT / 전력 
 ## Required Systems
 
 - Power state
+- Outlet connection/load state
 - Power display
 - Interactable objects
 - Spend/cancel choice
+- Disconnected-device message
 - Insufficient power message
 - Dialogue feedback
 - Day end
@@ -47,9 +50,33 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 - Charger: `2 units`
 - Communication device: `4 units`
 
+## Outlet Load Model
+
+`오늘 남은 전력` and `현재 부하` are one connected system, but they mean different things:
+
+- `오늘 남은 전력: 10 / 10` is the DAY 1 action budget. It decreases only when a connected object is actually used.
+- `현재 부하: 0W / 3000W` is the sum of devices currently connected to the outlet/power strip. It is not a second power meter.
+- `콘센트: 0 / 4` is the number of outlet slots occupied by connected devices.
+- Connecting or disconnecting a device does not spend today's power.
+- Power objects can be used only when the matching device is connected, today's remaining power is enough, and the object has not already been used today.
+
+Temporary DAY 1 device data:
+
+- Light: `60W`, `1` outlet slot, use cost `1`
+- Laptop: `1300W`, `1` outlet slot, use cost `3`
+- Fan: `900W`, `1` outlet slot, use cost `2`
+- Charger: `20W`, `1` outlet slot, use cost `2`
+- Communication device: `300W`, `1` outlet slot, use cost `4`
+
 ## Minimum Flags / State To Track
 
+- `max_power`
 - `current_power`
+- `max_load_watts`
+- `current_load_watts`
+- `max_outlet_slots`
+- `used_outlet_slots`
+- connected device keys
 - `used_light`
 - `checked_laptop`
 - `used_fan`
@@ -60,6 +87,8 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 ## Current Implementation Status
 
 - `SurvivalState.gd` now owns temporary DAY 1 power units, object costs, use flags, and result-summary data.
+- `SurvivalState.gd` now treats outlet connection state as the prerequisite for DAY 1 object use.
+- `OutletMode.gd` is the connection/load panel: it changes current load watts and outlet slots, but it does not spend today's power.
 - `Apartment.gd` now exposes the five DAY 1 interactables: Light, Laptop, Fan, Charger, and Communication device.
 - `Player.gd` and `project.godot` already support keyboard top-down movement through WASD and arrow input actions.
 - `Apartment.gd` tracks the nearest interactable by player proximity, so `E` only opens interaction UI near an object.
@@ -68,6 +97,7 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 - `SurvivalHUD.tscn` has enough status label space to show current DAY 1 power and use records.
 - `Apartment.gd` now includes a bed/rest interactable that opens an explicit `End Day` confirmation through the same proximity `E` model.
 - `SurvivalState.gd` exposes `end_current_day()` so the explicit rest interaction can enter the existing result summary flow.
+- HUD wording now prioritizes `DAY 1`, `오늘 남은 전력`, and used devices instead of debug-like points/time/status bars.
 - Temporary action costs still live in script constants and should move to a Resource or data file after in-editor validation.
 
 ## Suggested Godot Files To Inspect First
@@ -86,8 +116,8 @@ Start implementation from these existing files. Before adding new systems, ident
 3. Compare current behavior against `docs/DAY1_CONTENT_BRIEF.md`.
 4. Define where temporary power costs and object data should live.
 5. Wire a readable power display to the existing state.
-6. Add or refine the interactable flow for spend/cancel choices.
-7. Add insufficient power feedback.
+6. Add outlet connection checks before spend/cancel choices.
+7. Add disconnected-device and insufficient-power feedback.
 8. Add simple dialogue feedback for successful choices.
 9. Add day-end trigger and result summary.
 10. Validate the loop in the Godot main scene.

@@ -28,14 +28,32 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] Communication Device prompt appears only near the Communication Device.
 - [ ] Pressing `E` away from interactable objects does not open the interaction panel.
 
+## Outlet Management Test
+
+- [ ] Outlet/power strip prompt appears only near the power strip.
+- [ ] Opening the power strip shows `오늘 남은 전력: 10 / 10`.
+- [ ] Opening the power strip shows `현재 부하: 0W / 3000W` before any device is connected.
+- [ ] Opening the power strip shows `콘센트: 0 / 4` before any device is connected.
+- [ ] Connecting a device increases current load watts.
+- [ ] Connecting a device increases used outlet slots.
+- [ ] Connecting a device does not decrease today's remaining power.
+- [ ] Disconnecting a device decreases current load watts and used outlet slots.
+- [ ] A device that would exceed load or slot limits cannot be connected.
+- [ ] The power strip does not feel like a separate resource minigame; it only controls which room objects can be used.
+
 ## Power Object Test
 
 For each object below, verify the full flow:
 
+- [ ] Before connecting the device, press `E` near the object and confirm the disconnected message appears.
+- [ ] The disconnected message says the device must be connected through the power strip first.
+- [ ] Today's remaining power does not decrease when disconnected use is blocked.
+- [ ] Connect the matching device through the power strip.
 - [ ] Press `E` to open `InteractionPanel`.
 - [ ] Press `ESC` to cancel.
 - [ ] Approach again, press `E`, then press `E` again to confirm use.
 - [ ] Current power decreases by the expected amount.
+- [ ] Power strip `오늘 남은 전력` and room HUD `오늘 남은 전력` show the same value after use.
 - [ ] HUD use record updates.
 - [ ] Trying the same object again is blocked as already used.
 - [ ] When power is insufficient, use is blocked and a clear message appears.
@@ -66,6 +84,8 @@ Target objects:
 - [ ] Top-down movement plus proximity `E` interaction remains clear.
 - [ ] The screen does not resemble a prison/facility-management game such as `Break the Animal Prison`.
 - [ ] UI does not feel too much like a score board, task sheet, or generic management HUD.
+- [ ] Room HUD does not show debug-like `전력 테스트 공간`, points, unclear timer, or unrelated survival status bars.
+- [ ] Power strip UI clearly separates daily power budget from current outlet load.
 - [ ] The one-room apartment, power shortage, survival log, and power-panel tone remain visible.
 
 ## Bug Report Template
@@ -85,5 +105,6 @@ Target objects:
 
 - [ ] The player can progress from DAY 1 start to End Day result summary.
 - [ ] All five power objects support use, cancel, insufficient-power, and duplicate-use flows.
+- [ ] All five power objects require outlet connection before use.
 - [ ] Movement and interaction UI do not conflict.
 - [ ] No fatal errors occur during Godot play.

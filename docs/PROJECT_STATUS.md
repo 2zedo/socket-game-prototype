@@ -7,7 +7,7 @@
 - Web prototype: React/Vite/Phaser prototype is reference only
 - Current phase: Godot DAY 1 MVP implementation started
 - Current branch: `main`
-- Latest commit at task start: `868a176 feat: add explicit DAY 1 end interaction`
+- Latest commit at task start: `ca88f0b docs: add upstream sync rule and playtest checklist`
 
 ## Latest Completed Work
 
@@ -22,13 +22,16 @@
 - Added an explicit bed/rest `End Day` interaction that enters the existing result summary flow
 - Added upstream sync rules to avoid working on stale `main`
 - Added a Godot DAY 1 MVP manual playtest checklist
+- Unified the DAY 1 daily power budget with the outlet current-load model
+- Made outlet connection a prerequisite for using DAY 1 power objects
+- Cleaned MVP UI wording away from debug/test labels, unclear timers, and score-like result text
 
 ## Current Goal
 
-- Make the documented DAY 1 power loop playable in the Godot apartment scene
-- Keep implementation focused on keyboard movement, proximity interaction, power display, object use, feedback, and result summary readiness
+- Make the documented DAY 1 power loop playable and understandable in the Godot apartment scene
+- Keep implementation focused on keyboard movement, proximity interaction, outlet connection, power display, object use, feedback, and result summary readiness
 - Keep the presentation distinct from generic top-down survival/management games
-- Prepare manual Godot editor testing before the next implementation pass
+- Prepare manual Godot editor testing of the unified power/outlet model
 
 ## Not Doing Yet
 
@@ -41,19 +44,28 @@
 
 ## Changed Files
 
+- `godot/scripts/SurvivalState.gd`
+- `godot/scripts/ui/OutletMode.gd`
+- `godot/scripts/Main.gd`
+- `godot/scripts/Apartment.gd`
+- `godot/scripts/Interactable.gd`
+- `godot/scripts/ui/SurvivalHUD.gd`
+- `godot/scripts/ui/DayResultPanel.gd`
+- `godot/scenes/ui/SurvivalHUD.tscn`
 - `docs/PROJECT_STATUS.md`
+- `docs/GODOT_DAY1_MVP_PLAN.md`
+- `docs/DAY1_CONTENT_BRIEF.md`
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`
-- `AGENTS.md`
 
 ## Validation Results
 
 - `git status --short --branch`: confirmed current branch is `main` before editing
 - `git fetch origin`: updated remote refs before editing
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
-- `git status --short`: checked before staging
-- `git diff --stat`: checked document-only change scope
-- `git diff --check`: checked whitespace/errors in diff
-- Godot execution was not run because this task only adds safety/test documentation
+- `git status --short`: checked changed file scope before staging
+- `git diff --stat`: checked Godot/docs-only change scope
+- `git diff --check`: passed
+- Godot execution was not run because no `godot`/`godot4` CLI or `/Applications` Godot app was available in this environment
 - Web validation was not run because no web files were changed
 
 ## Current Risks or Known Issues
@@ -61,13 +73,14 @@
 - Existing web prototype remains a useful reference, but it should not drive broad Godot scope creep.
 - Concept images define mood and direction, not exact asset requirements.
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
+- Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - The exploration model is keyboard/top-down and not static point-and-click, but it still needs manual playtesting in Godot.
 - Explicit End Day now exists, but still needs manual playtesting in Godot.
 - Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
-- Manual Godot playtesting has not been run yet.
+- The temporary device data still lives in script constants and should move to `.tres` or data files after the loop is validated.
 
 ## Next Recommended Task
 
-- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test the Godot main scene in the editor
+- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test the unified power/outlet flow in the Godot editor
 - Fix bugs found during manual playtesting
-- After the checklist passes, move DAY 1 object data into `.tres` or a data file
+- After the checklist passes, move DAY 1 object and outlet data into `.tres` or a data file

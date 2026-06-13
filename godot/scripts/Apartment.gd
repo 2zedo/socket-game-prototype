@@ -143,7 +143,7 @@ func _spawn_placeholder_furniture() -> void:
 		"id": "laptop",
 		"name": "노트북",
 		"title": "노트북",
-		"body": "재미를 회복할 수 있는 장치입니다.\n멀티탭에서는 큰 어댑터라 옆 콘센트를 막습니다.",
+		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
 		"position": Vector2(650, 480),
 		"size": Vector2(110, 70),
 		"color": Color("#486064"),
@@ -269,9 +269,6 @@ func _draw_power_cable(start_position: Vector2, end_position: Vector2) -> void:
 
 
 func _get_power_key_for_object(object_id: String) -> String:
-	if object_id == "charger":
-		return "phone"
-
 	return object_id
 
 

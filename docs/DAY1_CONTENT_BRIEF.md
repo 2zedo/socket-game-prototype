@@ -18,12 +18,23 @@ The first day should feel quiet and practical: learn the room, test devices, not
 - Temporary object costs should later move into a Godot Resource (`.tres`) or data file.
 - The exact values are placeholders for MVP testing and balance.
 
+## Power And Outlet Meaning
+
+DAY 1 uses two linked values:
+
+- `오늘 남은 전력` is the action budget for the day. It starts at `10 / 10` and decreases only when Yui actually uses a powered object.
+- `현재 부하` is the watt total of devices currently connected to the power strip. It starts at `0W / 3000W` and changes when devices are plugged in or unplugged.
+- `콘센트` tracks occupied outlet slots. The current MVP uses `0 / 4`.
+- Connecting a device enables later use, but it does not spend today's power.
+- A power object cannot be used unless it is connected, has enough remaining daily power, and has not already been used today.
+
 ## Initial Interactable Objects
 
 ### Light
 
 - Gameplay purpose: teaches that power can improve room safety/readability.
 - Suggested power cost: `1 unit`
+- Suggested load data: `60W`, `1` outlet slot
 - Sample feedback/dialogue direction: "The room softens under the weak light. It will not last forever."
 - Possible result flag: `used_light`
 
@@ -31,6 +42,7 @@ The first day should feel quiet and practical: learn the room, test devices, not
 
 - Gameplay purpose: introduces information gathering and the Grid mystery.
 - Suggested power cost: `3 units`
+- Suggested load data: `1300W`, `1` outlet slot
 - Sample feedback/dialogue direction: "Old logs flicker on the screen. Some entries mention Grid."
 - Possible result flag: `checked_laptop`
 
@@ -38,6 +50,7 @@ The first day should feel quiet and practical: learn the room, test devices, not
 
 - Gameplay purpose: introduces comfort/survival tradeoff.
 - Suggested power cost: `2 units`
+- Suggested load data: `900W`, `1` outlet slot
 - Sample feedback/dialogue direction: "The fan turns slowly. The air moves, but the meter drops."
 - Possible result flag: `used_fan`
 
@@ -45,6 +58,7 @@ The first day should feel quiet and practical: learn the room, test devices, not
 
 - Gameplay purpose: introduces practical survival maintenance.
 - Suggested power cost: `2 units`
+- Suggested load data: `20W`, `1` outlet slot
 - Sample feedback/dialogue direction: "The phone battery crawls upward. It feels like buying time."
 - Possible result flag: `charged_device`
 
@@ -52,6 +66,7 @@ The first day should feel quiet and practical: learn the room, test devices, not
 
 - Gameplay purpose: introduces outside contact and the management office / delivery robot thread.
 - Suggested power cost: `4 units`
+- Suggested load data: `300W`, `1` outlet slot
 - Sample feedback/dialogue direction: "A broken signal cuts through. Someone is still broadcasting notices."
 - Possible result flag: `sent_or_received_signal`
 
@@ -69,6 +84,7 @@ The summary should be short and readable:
 
 - Remaining power
 - Objects used
+- Current outlet load and slot use
 - Any important flags
 - One line of narrative consequence
 - Prompt to continue or return to the room

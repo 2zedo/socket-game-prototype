@@ -9,6 +9,8 @@ const MAX_STAT: float = 100.0
 const DAY_SECONDS: float = 60.0
 const PHASE_SECONDS: float = 30.0
 const DAY1_STARTING_POWER_UNITS: int = 10
+const DAY1_MAX_LOAD_WATTS: int = 3000
+const DAY1_MAX_OUTLET_SLOTS: int = 4
 
 # DAY 1 object tuning is grouped here so the MVP can move it into a Resource
 # or data file later without searching through scene flow code.
@@ -16,6 +18,9 @@ const DAY1_ACTIONS: Dictionary = {
 	"light": {
 		"label": "조명",
 		"cost": 1,
+		"watt_usage": 60,
+		"outlet_size": 1,
+		"requires_connection": true,
 		"flag": "used_light",
 		"power_key": "light",
 		"feedback": "약한 조명이 방을 겨우 밝힙니다. 오래 버티지는 못할 빛입니다.",
@@ -24,6 +29,9 @@ const DAY1_ACTIONS: Dictionary = {
 	"laptop": {
 		"label": "노트북",
 		"cost": 3,
+		"watt_usage": 1300,
+		"outlet_size": 1,
+		"requires_connection": true,
 		"flag": "checked_laptop",
 		"power_key": "laptop",
 		"feedback": "낡은 로그가 화면에 떠오릅니다. 몇 줄은 Grid라는 이름을 반복합니다.",
@@ -32,6 +40,9 @@ const DAY1_ACTIONS: Dictionary = {
 	"fan": {
 		"label": "선풍기",
 		"cost": 2,
+		"watt_usage": 900,
+		"outlet_size": 1,
+		"requires_connection": true,
 		"flag": "used_fan",
 		"power_key": "fan",
 		"feedback": "선풍기가 느리게 돌기 시작합니다. 공기가 움직이지만 계량기는 내려갑니다.",
@@ -40,14 +51,20 @@ const DAY1_ACTIONS: Dictionary = {
 	"charger": {
 		"label": "충전기",
 		"cost": 2,
+		"watt_usage": 20,
+		"outlet_size": 1,
+		"requires_connection": true,
 		"flag": "charged_device",
-		"power_key": "phone",
+		"power_key": "charger",
 		"feedback": "배터리가 조금씩 차오릅니다. 시간을 산 느낌입니다.",
 		"already_used": "오늘 필요한 만큼은 이미 충전했습니다.",
 	},
 	"communication_device": {
 		"label": "통신 장치",
 		"cost": 4,
+		"watt_usage": 300,
+		"outlet_size": 1,
+		"requires_connection": true,
 		"flag": "sent_or_received_signal",
 		"power_key": "communication_device",
 		"feedback": "끊어진 신호 사이로 안내 방송이 섞여 들어옵니다. 아직 바깥에는 누군가 있습니다.",
@@ -67,7 +84,13 @@ var battery: float = 68.0
 var temperature: float = 52.0
 var fatigue: float = 34.0
 var fun: float = 42.0
-var max_power_watts: int = 3000
+var max_power: int = DAY1_STARTING_POWER_UNITS
+var current_power: int = DAY1_STARTING_POWER_UNITS
+var max_load_watts: int = DAY1_MAX_LOAD_WATTS
+var current_load_watts: int = 0
+var max_outlet_slots: int = DAY1_MAX_OUTLET_SLOTS
+var used_outlet_slots: int = 0
+var max_power_watts: int = DAY1_MAX_LOAD_WATTS
 var current_power_watts: int = 0
 var current_power_units: int = DAY1_STARTING_POWER_UNITS
 var powered_devices: Array[String] = []
@@ -97,6 +120,7 @@ func _process(delta: float) -> void:
 
 func set_powered_devices(device_keys: Array[String]) -> void:
 	powered_devices = device_keys.duplicate()
+	_recalculate_outlet_state()
 	changed.emit()
 
 
@@ -121,12 +145,7 @@ func get_phase_label() -> String:
 
 
 func get_time_text() -> String:
-	return "DAY %d\n현재 시간: %s\n남은 시간: %d초\n포인트: %d" % [
-		day,
-		get_phase_label(),
-		remaining_phase_seconds,
-		total_points,
-	]
+	return ""
 
 
 func get_phase_effect_text() -> String:
@@ -140,30 +159,18 @@ func get_warning_lines() -> Array[String]:
 	var warnings: Array[String] = []
 
 	if current_power_units <= 2:
-		warnings.append("DAY 1 전력 부족")
-	if battery <= 25.0:
-		warnings.append("배터리 부족")
-	if temperature >= 75.0:
-		warnings.append("너무 더움")
-	if fatigue >= 70.0:
-		warnings.append("매우 피곤함")
-	if fun <= 25.0:
-		warnings.append("우울해지는 중")
-	if current_power_watts > max_power_watts:
-		warnings.append("전력 과부하 위험")
+		warnings.append("오늘 남은 전력 부족")
+	if current_load_watts > max_load_watts:
+		warnings.append("현재 부하 초과")
 
 	return warnings
 
 
 func get_hud_stat_text() -> String:
-	return "⚡ DAY 1 전력 %d/%d\n사용 기록: %s\n\n🔋 배터리 %d%%\n🌡 온도 %d%%\n😫 피로 %d%%\n🙂 재미 %d%%" % [
-		current_power_units,
-		DAY1_STARTING_POWER_UNITS,
+	return "DAY 1\n오늘 남은 전력: %d / %d\n사용한 기기: %s" % [
+		current_power,
+		max_power,
 		get_used_day1_action_summary(),
-		roundi(battery),
-		roundi(temperature),
-		roundi(fatigue),
-		roundi(fun),
 	]
 
 
@@ -177,17 +184,19 @@ func get_phone_text() -> String:
 		"피로: %d%%" % roundi(fatigue),
 		"재미: %d%%" % roundi(fun),
 		"",
-		"DAY 1 전력: %d / %d" % [current_power_units, DAY1_STARTING_POWER_UNITS],
+		"오늘 남은 전력: %d / %d" % [current_power, max_power],
 		"사용 기록: %s" % get_used_day1_action_summary(),
 		"",
-		"전력: %dW / %dW" % [current_power_watts, max_power_watts],
+		"현재 부하: %dW / %dW" % [current_load_watts, max_load_watts],
+		"콘센트: %d / %d" % [used_outlet_slots, max_outlet_slots],
 	]
 
 	return "\n".join(lines)
 
 
 func preview_power_use(watts: int) -> void:
-	current_power_watts = clampi(watts, 0, 9999)
+	current_load_watts = clampi(watts, 0, 9999)
+	current_power_watts = current_load_watts
 	changed.emit()
 
 
@@ -201,6 +210,24 @@ func end_current_day() -> void:
 
 func get_day1_action_data(action_key: String) -> Dictionary:
 	return DAY1_ACTIONS.get(action_key, {})
+
+
+func is_day1_action_connected(action_key: String) -> bool:
+	var action_data := get_day1_action_data(action_key)
+	if action_data.is_empty():
+		return false
+
+	if not bool(action_data.get("requires_connection", false)):
+		return true
+
+	var power_key: String = str(action_data.get("power_key", action_key))
+	return powered_devices.has(power_key)
+
+
+func get_day1_disconnected_message(action_key: String) -> String:
+	var action_data := get_day1_action_data(action_key)
+	var label: String = str(action_data.get("label", action_key))
+	return "%s\n\n전원이 연결되어 있지 않다.\n먼저 멀티탭에서 이 기기를 연결해야 한다." % label
 
 
 func get_used_day1_action_summary() -> String:
@@ -225,26 +252,29 @@ func try_use_day1_action(action_key: String) -> Dictionary:
 
 	var cost: int = int(action_data.get("cost", 0))
 	var label: String = str(action_data.get("label", action_key))
+	if not is_day1_action_connected(action_key):
+		return {
+			"success": false,
+			"message": "전원이 연결되어 있지 않다.\n먼저 멀티탭에서 이 기기를 연결해야 한다.",
+		}
+
 	if used_day1_actions.has(action_key):
 		return {
 			"success": false,
-			"message": str(action_data.get("already_used", "%s은 이미 사용했습니다." % label)),
+			"message": "오늘은 이미 사용했다.",
 		}
 
 	if current_power_units < cost:
 		return {
 			"success": false,
-			"message": "%s 사용에는 전력 %d가 필요합니다.\n남은 전력은 %d뿐입니다." % [label, cost, current_power_units],
+			"message": "오늘 남은 전력이 부족하다.",
 		}
 
 	current_power_units = maxi(0, current_power_units - cost)
+	current_power = current_power_units
 	used_day1_actions.append(action_key)
 	var flag_key: String = str(action_data.get("flag", action_key))
 	day1_flags[flag_key] = true
-
-	var power_key: String = str(action_data.get("power_key", action_key))
-	if power_key != "" and not powered_devices.has(power_key):
-		powered_devices.append(power_key)
 
 	_apply_day1_action_effect(action_key)
 	last_day1_message = str(action_data.get("feedback", "%s을 사용했습니다." % label))
@@ -252,10 +282,10 @@ func try_use_day1_action(action_key: String) -> Dictionary:
 
 	return {
 		"success": true,
-		"message": "%s\n\n남은 DAY 1 전력: %d / %d" % [
+		"message": "%s\n\n오늘 남은 전력: %d / %d" % [
 			last_day1_message,
-			current_power_units,
-			DAY1_STARTING_POWER_UNITS,
+			current_power,
+			max_power,
 		],
 		"remaining_power": current_power_units,
 		"flag": flag_key,
@@ -263,7 +293,7 @@ func try_use_day1_action(action_key: String) -> Dictionary:
 
 
 func _update_needs(delta: float) -> void:
-	var has_phone_charger: bool = powered_devices.has("phone")
+	var has_phone_charger: bool = powered_devices.has("charger") or powered_devices.has("phone")
 	var has_fan: bool = powered_devices.has("fan")
 	var has_laptop: bool = powered_devices.has("laptop")
 	var has_microwave: bool = powered_devices.has("microwave")
@@ -340,25 +370,26 @@ func _calculate_day_result() -> Dictionary:
 	var lines: Array[String] = []
 	var total: int = 0
 
-	total += _add_score_line(lines, "생존 보너스", 100)
-	lines.append("남은 DAY 1 전력: %d / %d" % [current_power_units, DAY1_STARTING_POWER_UNITS])
+	lines.append("오늘 남은 전력: %d / %d" % [current_power, max_power])
 	lines.append("사용 기록: %s" % get_used_day1_action_summary())
+	lines.append("현재 부하: %dW / %dW" % [current_load_watts, max_load_watts])
+	lines.append("콘센트: %d / %d" % [used_outlet_slots, max_outlet_slots])
 	lines.append("확인한 정보: %s" % _get_day1_info_summary())
 	lines.append("상태 변화: %s" % _get_day1_state_change_summary())
 
 	if battery >= 50.0:
-		total += _add_score_line(lines, "배터리 상태", 10)
+		total += 10
 
 	if fatigue <= 55.0:
-		total += _add_score_line(lines, "낮은 피로", 10)
+		total += 10
 	elif fatigue >= 80.0:
-		total += _add_score_line(lines, "피로 패널티", -15)
+		total -= 15
 
 	if temperature >= 85.0:
-		total += _add_score_line(lines, "고온 패널티", -15)
+		total -= 15
 
 	if overloads_today > 0:
-		total += _add_score_line(lines, "과부하 패널티", -10 * overloads_today)
+		total -= 10 * overloads_today
 
 	total = maxi(0, total)
 
@@ -427,7 +458,30 @@ func _apply_day1_action_effect(action_key: String) -> void:
 
 func _reset_day1_power_loop() -> void:
 	current_power_units = DAY1_STARTING_POWER_UNITS
+	current_power = current_power_units
+	current_load_watts = 0
+	current_power_watts = 0
+	used_outlet_slots = 0
+	powered_devices.clear()
 	used_day1_actions.clear()
 	day1_flags.clear()
 	day1_day_ended = false
 	last_day1_message = ""
+
+
+func _recalculate_outlet_state() -> void:
+	current_load_watts = 0
+	used_outlet_slots = 0
+
+	# The outlet panel owns connection gestures, but SurvivalState is the source
+	# of truth for what those connections mean to the DAY 1 power loop.
+	for action_key in DAY1_ACTIONS.keys():
+		var action_data: Dictionary = DAY1_ACTIONS[action_key]
+		var power_key: String = str(action_data.get("power_key", action_key))
+		if not powered_devices.has(power_key):
+			continue
+
+		current_load_watts += int(action_data.get("watt_usage", 0))
+		used_outlet_slots += int(action_data.get("outlet_size", 0))
+
+	current_power_watts = current_load_watts

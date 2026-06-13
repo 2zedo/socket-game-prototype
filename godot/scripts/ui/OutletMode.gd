@@ -6,12 +6,12 @@ signal power_changed(total_power: int)
 signal powered_devices_changed(device_keys: Array[String])
 signal breaker_tripped
 
-const MAX_POWER_WATTS := 3000
-const OUTLET_COUNT := 4
+const MAX_POWER_WATTS := SurvivalState.DAY1_MAX_LOAD_WATTS
+const OUTLET_COUNT := SurvivalState.DAY1_MAX_OUTLET_SLOTS
 const SLOT_SIZE := Vector2(92, 82)
 const SLOT_GAP := 18.0
 const STRIP_SIZE := Vector2(560, 132)
-const DEVICE_HEIGHT := 64.0
+const DEVICE_HEIGHT := 108.0
 const BREAKER_SECONDS := 1.4
 const PANEL_SIZE := Vector2(1120, 620)
 
@@ -21,7 +21,7 @@ var devices: Array[Dictionary] = []
 var dragging_device: Dictionary = {}
 var drag_offset := Vector2.ZERO
 var breaker_timer := 0.0
-var status_text := "기기를 콘센트에 끌어다 놓으세요"
+var status_text := "기기를 콘센트에 끌어다 놓으면 방 안에서 사용할 수 있습니다"
 
 
 func _ready() -> void:
@@ -35,7 +35,7 @@ func open(state: SurvivalState) -> void:
 	survival_state = state
 	visible = true
 	_layout_device_homes()
-	status_text = "기기를 콘센트에 끌어다 놓으세요"
+	status_text = "기기를 콘센트에 끌어다 놓으면 방 안에서 사용할 수 있습니다"
 	set_process(true)
 	power_changed.emit(_get_total_power())
 	powered_devices_changed.emit(_get_powered_device_keys())
@@ -99,21 +99,13 @@ func _draw() -> void:
 	_draw_text(Vector2(panel_rect.position.x + 28, panel_rect.position.y + 38), "멀티탭 관리", 28, Color("#f5ead2"))
 	_draw_text(Vector2(panel_rect.position.x + 28, panel_rect.position.y + 74), "ESC: 아파트로 돌아가기", 15, Color("#bfb6a0"))
 
-	var total_power := _get_total_power()
-	var power_color := Color("#ff6b5f") if total_power > MAX_POWER_WATTS else Color("#f5ead2")
-	_draw_text(Vector2(panel_rect.position.x + 350, panel_rect.position.y + 52), "전력 사용량: %dW / %dW" % [total_power, MAX_POWER_WATTS], 24, power_color)
-
-	_draw_survival_stats(Vector2(panel_rect.position.x + 28, panel_rect.position.y + 128))
-	_draw_need_warnings(Vector2(panel_rect.position.x + 28, panel_rect.position.y + 300))
+	_draw_power_overview(Vector2(panel_rect.position.x + 28, panel_rect.position.y + 122))
 	_draw_text(Vector2(panel_rect.position.x + 350, panel_rect.position.y + 116), "콘센트", 18, Color("#cfc2a8"))
-	_draw_text(Vector2(panel_rect.position.x + 350, panel_rect.end.y - 128), "사용 가능한 기기", 18, Color("#cfc2a8"))
+	_draw_text(Vector2(panel_rect.position.x + 350, panel_rect.end.y - 156), "연결 가능한 기기", 18, Color("#cfc2a8"))
 	_draw_power_strip(_get_strip_center())
 	_draw_devices()
 
-	if breaker_timer > 0.0:
-		_draw_text(center + Vector2(-160, -20), "과부하 발생!\n차단기가 내려갔습니다", 30, Color("#ff6b5f"))
-	else:
-		_draw_text(Vector2(panel_rect.position.x + 28, panel_rect.end.y - 38), status_text, 18, Color("#f5ead2"))
+	_draw_text(Vector2(panel_rect.position.x + 28, panel_rect.end.y - 38), status_text, 18, Color("#f5ead2"))
 
 
 func _draw_power_strip(strip_center: Vector2) -> void:
@@ -139,7 +131,15 @@ func _draw_devices() -> void:
 		var color: Color = device["color"]
 		draw_rect(rect, color, true)
 		draw_rect(rect, Color("#1f1d1a"), false, 2.0)
-		_draw_text(rect.position + Vector2(10, 24), "%s\n%dW" % [device["label"], device["watts"]], 15, Color("#1f1d1a"))
+		var state_text := "연결됨" if int(device["connected_start"]) >= 0 else "연결 안 됨"
+		var device_text := "%s\n상태: %s\n소비전력: %dW\n사용 비용: %d\n콘센트: %d칸" % [
+			device["label"],
+			state_text,
+			int(device["watts"]),
+			int(device["power_cost"]),
+			int(device["slots"]),
+		]
+		_draw_text(rect.position + Vector2(10, 20), device_text, 13, Color("#1f1d1a"))
 
 		var plug_x := rect.get_center().x
 		if device["slots"] == 2:
@@ -147,43 +147,19 @@ func _draw_devices() -> void:
 		draw_rect(Rect2(Vector2(plug_x - 12.0, rect.end.y - 4.0), Vector2(24.0, 28.0)), Color("#2f2b25"), true)
 
 
-func _draw_need_warnings(position: Vector2) -> void:
+func _draw_power_overview(position: Vector2) -> void:
 	if survival_state == null:
 		return
 
-	_draw_text(position, "경고", 17, Color("#f5ead2"))
-	var warnings := survival_state.get_warning_lines()
-	if warnings.is_empty():
-		_draw_text(position + Vector2(0, 28), "현재 경고 없음", 15, Color("#bfb6a0"))
-		return
-
-	var text := " / ".join(warnings)
-	_draw_text(position + Vector2(0, 28), text, 16, Color("#ffd166"))
-
-
-func _draw_survival_stats(position: Vector2) -> void:
-	if survival_state == null:
-		return
-
-	_draw_text(position, "상태", 17, Color("#f5ead2"))
-	var rows := [
-		{ "label": "배터리", "value": survival_state.battery, "color": Color("#4f8edb") },
-		{ "label": "온도", "value": survival_state.temperature, "color": Color("#d98742") },
-		{ "label": "피로", "value": survival_state.fatigue, "color": Color("#8f6bb3") },
-		{ "label": "재미", "value": survival_state.fun, "color": Color("#e0b33f") },
+	var overview := [
+		"오늘 남은 전력: %d / %d" % [survival_state.current_power, survival_state.max_power],
+		"현재 부하: %dW / %dW" % [_get_total_power(), MAX_POWER_WATTS],
+		"콘센트: %d / %d" % [_get_used_slots(), OUTLET_COUNT],
+		"",
+		"연결은 전력을 소모하지 않습니다.",
+		"방 안에서 기기를 사용할 때만 오늘 전력이 줄어듭니다.",
 	]
-
-	for index in range(rows.size()):
-		var row: Dictionary = rows[index]
-		var y := position.y + 34.0 + index * 30.0
-		var value: float = row["value"]
-		var text := "%s %d%%" % [row["label"], roundi(value)]
-		_draw_text(Vector2(position.x, y + 14.0), text, 15, Color("#f5ead2"))
-
-		var bar_rect := Rect2(Vector2(position.x + 86.0, y + 4.0), Vector2(140.0, 12.0))
-		draw_rect(bar_rect, Color("#1f232c"), true)
-		draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * clampf(value / 100.0, 0.0, 1.0), bar_rect.size.y)), row["color"], true)
-		draw_rect(bar_rect, Color("#cfc2a8"), false, 1.0)
+	_draw_text(position, "\n".join(overview), 18, Color("#f5ead2"))
 
 
 func _draw_text(position: Vector2, text: String, font_size: int, color: Color) -> void:
@@ -224,6 +200,14 @@ func _finish_drag() -> void:
 
 func _connect_device(device: Dictionary, start_slot: int) -> void:
 	var slots: int = device["slots"]
+	var projected_power := _get_total_power() + int(device["watts"])
+	if projected_power > MAX_POWER_WATTS:
+		_send_device_home(device)
+		status_text = "%s은 현재 부하 한도를 넘어서 연결할 수 없습니다" % device["label"]
+		power_changed.emit(_get_total_power())
+		powered_devices_changed.emit(_get_powered_device_keys())
+		return
+
 	for slot in range(start_slot, start_slot + slots):
 		occupied_slots[slot] = device["key"]
 
@@ -232,9 +216,6 @@ func _connect_device(device: Dictionary, start_slot: int) -> void:
 	status_text = "%s 연결됨" % device["label"]
 	power_changed.emit(_get_total_power())
 	powered_devices_changed.emit(_get_powered_device_keys())
-
-	if _get_total_power() > MAX_POWER_WATTS:
-		_trip_breaker()
 
 
 func _trip_breaker() -> void:
@@ -262,6 +243,7 @@ func _release_device(device: Dictionary) -> void:
 
 
 func _send_device_home(device: Dictionary) -> void:
+	_release_device(device)
 	device["position"] = device["home_position"]
 	device["connected_start"] = -1
 
@@ -347,6 +329,15 @@ func _get_total_power() -> int:
 	return total
 
 
+func _get_used_slots() -> int:
+	var used_slots := 0
+	for slot_key in occupied_slots:
+		if slot_key != null:
+			used_slots += 1
+
+	return used_slots
+
+
 func _get_powered_device_keys() -> Array[String]:
 	var keys: Array[String] = []
 
@@ -365,19 +356,21 @@ func _reset_slots() -> void:
 
 func _create_devices() -> void:
 	devices = [
-		_make_device("phone", "충전기", 20, 1, 96.0, "center", Color("#4f8edb"), Vector2(350, 550)),
-		_make_device("fan", "선풍기", 900, 1, 96.0, "center", Color("#52a66f"), Vector2(520, 550)),
-		_make_device("laptop", "노트북", 1300, 2, 170.0, "left", Color("#486064"), Vector2(710, 550)),
-		_make_device("microwave", "전자레인지", 2100, 2, 170.0, "right", Color("#d98742"), Vector2(920, 550)),
+		_make_device("light", "조명", 60, 1, 1, 116.0, "center", Color("#d2a85f"), Vector2(350, 550)),
+		_make_device("laptop", "노트북", 1300, 3, 1, 134.0, "center", Color("#486064"), Vector2(520, 550)),
+		_make_device("fan", "선풍기", 900, 2, 1, 116.0, "center", Color("#52a66f"), Vector2(710, 550)),
+		_make_device("charger", "충전기", 20, 2, 1, 116.0, "center", Color("#4f8edb"), Vector2(890, 550)),
+		_make_device("communication_device", "통신 장치", 300, 4, 1, 150.0, "center", Color("#8f6bb3"), Vector2(1050, 550)),
 	]
 	_layout_device_homes()
 
 
-func _make_device(key: String, label: String, watts: int, slots: int, width: float, plug_side: String, color: Color, home_position: Vector2) -> Dictionary:
+func _make_device(key: String, label: String, watts: int, power_cost: int, slots: int, width: float, plug_side: String, color: Color, home_position: Vector2) -> Dictionary:
 	return {
 		"key": key,
 		"label": label,
 		"watts": watts,
+		"power_cost": power_cost,
 		"slots": slots,
 		"width": width,
 		"plug_side": plug_side,
@@ -393,11 +386,12 @@ func _layout_device_homes() -> void:
 		return
 
 	var panel_rect := _get_panel_rect()
-	var bottom_y := panel_rect.end.y - 72.0
+	var bottom_y := panel_rect.end.y - 88.0
 	var home_positions := [
 		Vector2(panel_rect.position.x + 390.0, bottom_y),
-		Vector2(panel_rect.position.x + 560.0, bottom_y),
-		Vector2(panel_rect.position.x + 760.0, bottom_y),
+		Vector2(panel_rect.position.x + 535.0, bottom_y),
+		Vector2(panel_rect.position.x + 680.0, bottom_y),
+		Vector2(panel_rect.position.x + 825.0, bottom_y),
 		Vector2(panel_rect.position.x + 990.0, bottom_y),
 	]
 

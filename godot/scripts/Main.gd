@@ -93,8 +93,13 @@ func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
 
 	var day1_action_key: String = data.get("day1_action_key", "")
 	if day1_action_key != "":
+		if not survival_state.is_day1_action_connected(day1_action_key):
+			pending_interaction_data = {}
+			_open_interaction_panel(data.get("title", "상호작용"), survival_state.get_day1_disconnected_message(day1_action_key), "ESC: 닫기")
+			return
+
 		pending_interaction_data = data
-		_open_interaction_panel(data.get("title", "상호작용"), _build_interaction_body(data), "E: 사용 / ESC: 취소")
+		_open_interaction_panel(data.get("title", "상호작용"), _build_interaction_body(data), "E: 사용하기 / ESC: 취소")
 		return
 
 	var watts: int = data.get("watts", 0)
@@ -112,18 +117,23 @@ func _build_interaction_body(data: Dictionary) -> String:
 
 	var power_units: int = int(data.get("power_units", 0))
 	if power_units > 0:
-		body += "\n\nDAY 1 전력 비용: %d" % power_units
-		body += "\n현재 전력: %d / %d" % [
-			survival_state.current_power_units,
-			SurvivalState.DAY1_STARTING_POWER_UNITS,
+		var action_key: String = data.get("day1_action_key", "")
+		var action_data := survival_state.get_day1_action_data(action_key)
+		var cost: int = int(action_data.get("cost", power_units))
+		var watt_usage: int = int(action_data.get("watt_usage", watts))
+		body += "\n\n오늘 전력 사용량: %d" % cost
+		body += "\n소비전력: %dW" % watt_usage
+		body += "\n현재 남은 전력: %d / %d" % [
+			survival_state.current_power,
+			survival_state.max_power,
 		]
 		body += "\n\n사용하려면 E, 취소하려면 ESC를 누르세요."
 
 	if data.get("interaction_type", "") == "end_day":
 		body += "\n\n오늘을 마칠까요?"
-		body += "\n남은 DAY 1 전력: %d / %d" % [
-			survival_state.current_power_units,
-			SurvivalState.DAY1_STARTING_POWER_UNITS,
+		body += "\n오늘 남은 전력: %d / %d" % [
+			survival_state.current_power,
+			survival_state.max_power,
 		]
 		body += "\n사용 기록: %s" % survival_state.get_used_day1_action_summary()
 		body += "\n\nE로 결과를 확인하거나 ESC로 취소합니다."

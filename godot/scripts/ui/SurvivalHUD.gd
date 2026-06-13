@@ -30,6 +30,9 @@ func set_stats(text: String) -> void:
 
 
 func set_time(text: String) -> void:
+	var has_text := text.strip_edges() != ""
+	time_panel.visible = has_text
+	time_label.visible = has_text
 	time_label.text = text
 
 
