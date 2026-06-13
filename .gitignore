@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Godot generated files
+godot/.godot/
+godot/.import/
+godot/export.cfg
+godot/export_presets.cfg
+godot/*.translation
+godot/shader_cache/
+godot/**/.shader_cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
