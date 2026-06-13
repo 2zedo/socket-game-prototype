@@ -58,6 +58,8 @@ The first day should feel quiet and practical: learn the room, test devices, not
 ## Day End Condition
 
 - MVP option: the day ends when the player chooses `End Day`.
+- Current implementation direction: use a bed/rest point in the room as the explicit `End Day` interactable.
+- The bed/rest point should use the same top-down proximity + `E` confirmation model as power objects.
 - Optional later condition: the day can also end when power reaches `0` or all core interactions are resolved.
 - The first implementation should prefer an explicit `End Day` action for clarity.
 

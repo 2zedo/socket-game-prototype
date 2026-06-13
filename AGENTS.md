@@ -110,6 +110,8 @@ Initial interactable objects may include:
 
 - The intended tone is dark, quiet, lonely, and grounded.
 - Avoid bright arcade-like UI unless explicitly requested.
+- Avoid visual or structural similarity to existing top-down survival/management games. References such as Among Us are only useful for the abstract idea of top-down movement plus proximity interaction, not for art style, UI layout, or room composition.
+- Treat prison/facility-management survival games and bright pixel life-sim/task HUDs as anti-references. `CONCENT` should read as a quiet one-room power-shortage narrative adventure, not a facility/task-management clone.
 - The core fantasy is not “defeating enemies”; it is surviving through limited power and difficult choices.
 - Power usage should feel like a tradeoff:
   - survival

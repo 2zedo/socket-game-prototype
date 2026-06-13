@@ -163,6 +163,18 @@ func _spawn_placeholder_furniture() -> void:
 		"day1_action_key": "communication_device",
 		"label_offset": Vector2.ZERO,
 	})
+	_add_interactable({
+		"id": "bed",
+		"name": "침대",
+		"title": "오늘을 마친다",
+		"body": "더 할 일을 정리하고 오늘 하루를 마칠 수 있습니다.",
+		"position": Vector2(340, 430),
+		"size": Vector2(150, 82),
+		"color": Color("#7c6b5b"),
+		"interaction_type": "end_day",
+		"prompt_text": "[E] 하루 마치기",
+		"label_offset": Vector2.ZERO,
+	})
 
 
 func _add_interactable(config: Dictionary) -> void:

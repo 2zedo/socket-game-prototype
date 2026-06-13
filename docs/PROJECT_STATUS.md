@@ -7,7 +7,7 @@
 - Web prototype: React/Vite/Phaser prototype is reference only
 - Current phase: Godot DAY 1 MVP implementation started
 - Current branch: `main`
-- Latest commit at task start: `4f72698 feat: add Godot DAY 1 power loop`
+- Latest commit at task start: `0ee5001 feat: align Godot interactions with top-down controls`
 
 ## Latest Completed Work
 
@@ -18,11 +18,14 @@
 - Documented visual direction and DAY 1 content direction from concept references
 - Implemented the first Godot DAY 1 power loop pass
 - Confirmed and tightened the top-down movement + proximity `E` interaction model
+- Added visual similarity guardrails to avoid facility/task-management game resemblance
+- Added an explicit bed/rest `End Day` interaction that enters the existing result summary flow
 
 ## Current Goal
 
 - Make the documented DAY 1 power loop playable in the Godot apartment scene
 - Keep implementation focused on keyboard movement, proximity interaction, power display, object use, feedback, and result summary readiness
+- Keep the presentation distinct from generic top-down survival/management games
 
 ## Not Doing Yet
 
@@ -37,7 +40,14 @@
 
 - `docs/PROJECT_STATUS.md`
 - `docs/GODOT_DAY1_MVP_PLAN.md`
+- `docs/VISUAL_DIRECTION.md`
+- `docs/CONCENT_GAME_SPEC.md`
+- `docs/DAY1_CONTENT_BRIEF.md`
+- `AGENTS.md`
 - `godot/scripts/Main.gd`
+- `godot/scripts/Apartment.gd`
+- `godot/scripts/Interactable.gd`
+- `godot/scripts/SurvivalState.gd`
 
 ## Validation Results
 
@@ -54,10 +64,11 @@
 - Concept images define mood and direction, not exact asset requirements.
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - The exploration model is keyboard/top-down and not static point-and-click, but it still needs manual playtesting in Godot.
-- DAY end remains the existing timed result flow; a deliberate `End Day` interaction can be added later if needed.
+- Explicit End Day now exists, but still needs manual playtesting in Godot.
+- Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
 
 ## Next Recommended Task
 
-- Run the Godot main scene in the editor and test movement, proximity prompts, and all five DAY 1 objects
-- Add an explicit end-day interaction if the timed flow feels unclear
+- Run the Godot main scene in the editor and test movement, proximity prompts, all five DAY 1 objects, and the bed/rest End Day flow
+- If result summary feels too score-like, reshape it toward survival log / diary language
 - Move temporary DAY 1 object data into a Resource or data file after the MVP loop is proven

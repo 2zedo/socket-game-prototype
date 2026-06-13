@@ -18,6 +18,8 @@ The tone is quiet, dark, grounded, lonely, and tense. The game should feel more 
 
 The visual and narrative tone should stay restrained: muted beige, brown, dark gray, weak warm light, practical UI panels, and a mood of tired persistence rather than spectacle.
 
+The game may use top-down movement, but the presentation must avoid looking like a prison, facility, restaurant, or task-management sim. Existing top-down games are not visual templates; `CONCENT` should read as a small one-room narrative about conserving power.
+
 ## Core Loop
 
 1. Start a day with limited power.
@@ -26,6 +28,10 @@ The visual and narrative tone should stay restrained: muted beige, brown, dark g
 4. Receive dialogue or event feedback.
 5. Track the consequences of power use.
 6. End the day and review the result.
+
+## Interaction Model
+
+Yui moves through the room directly with keyboard controls. Interactions happen when she approaches an object and presses `E`. Mouse input may support UI later, but the main exploration loop is not static point-and-click object selection.
 
 ## Key Characters
 
@@ -52,6 +58,7 @@ Power usage should create tradeoffs between:
 - Fan: comfort and survival pressure.
 - Charger: practical device survival.
 - Communication device: outside contact, notices, and future NPC hooks.
+- Bed / rest point: explicit DAY 1 end interaction and result summary entry.
 
 ## DAY 1 Role
 

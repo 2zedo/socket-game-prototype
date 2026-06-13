@@ -10,6 +10,8 @@ class_name ApartmentInteractable
 @export var power_watts: int = 0
 @export var power_units: int = 0
 @export var day1_action_key: String = ""
+@export var interaction_type: String = ""
+@export var prompt_text: String = ""
 @export var is_interactable: bool = true
 @export var label_offset: Vector2 = Vector2.ZERO
 @export var outline_color: Color = Color("#f0ddb4")
@@ -32,6 +34,8 @@ func setup(config: Dictionary) -> void:
 	power_watts = config.get("watts", power_watts)
 	power_units = config.get("power_units", power_units)
 	day1_action_key = config.get("day1_action_key", day1_action_key)
+	interaction_type = config.get("interaction_type", interaction_type)
+	prompt_text = config.get("prompt_text", prompt_text)
 	is_interactable = config.get("interactable", is_interactable)
 	label_offset = config.get("label_offset", label_offset)
 	outline_color = config.get("outline_color", outline_color)
@@ -54,7 +58,15 @@ func get_interaction_data() -> Dictionary:
 		"watts": power_watts,
 		"power_units": power_units,
 		"day1_action_key": day1_action_key,
+		"interaction_type": interaction_type,
 	}
+
+
+func get_prompt_text() -> String:
+	if prompt_text != "":
+		return prompt_text
+
+	return "[E] 상호작용: %s" % display_name
 
 
 func set_powered(is_active: bool) -> void:

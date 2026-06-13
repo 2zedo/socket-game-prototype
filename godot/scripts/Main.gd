@@ -51,7 +51,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if pending_interaction_data.is_empty():
 				_close_interaction_panel()
 			else:
-				_confirm_pending_day1_action()
+				_confirm_pending_interaction()
 		else:
 			apartment.request_nearest_interaction()
 
@@ -73,7 +73,7 @@ func _on_nearest_interactable_changed(interactable: ApartmentInteractable) -> vo
 		survival_hud.set_interaction_prompt("")
 		return
 
-	survival_hud.set_interaction_prompt("[E] 상호작용: %s" % interactable.display_name)
+	survival_hud.set_interaction_prompt(interactable.get_prompt_text())
 
 
 func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
@@ -84,6 +84,11 @@ func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
 	var data: Dictionary = interactable.get_interaction_data()
 	if data.get("id", "") == "power_strip":
 		_open_outlet_mode()
+		return
+
+	if data.get("interaction_type", "") == "end_day":
+		pending_interaction_data = data
+		_open_interaction_panel(data.get("title", "오늘을 마친다"), _build_interaction_body(data), "E: 하루 종료 / ESC: 취소")
 		return
 
 	var day1_action_key: String = data.get("day1_action_key", "")
@@ -114,10 +119,24 @@ func _build_interaction_body(data: Dictionary) -> String:
 		]
 		body += "\n\n사용하려면 E, 취소하려면 ESC를 누르세요."
 
+	if data.get("interaction_type", "") == "end_day":
+		body += "\n\n오늘을 마칠까요?"
+		body += "\n남은 DAY 1 전력: %d / %d" % [
+			survival_state.current_power_units,
+			SurvivalState.DAY1_STARTING_POWER_UNITS,
+		]
+		body += "\n사용 기록: %s" % survival_state.get_used_day1_action_summary()
+		body += "\n\nE로 결과를 확인하거나 ESC로 취소합니다."
+
 	return body
 
 
-func _confirm_pending_day1_action() -> void:
+func _confirm_pending_interaction() -> void:
+	if pending_interaction_data.get("interaction_type", "") == "end_day":
+		pending_interaction_data = {}
+		survival_state.end_current_day()
+		return
+
 	var action_key: String = pending_interaction_data.get("day1_action_key", "")
 	var title: String = pending_interaction_data.get("title", "상호작용")
 	var result := survival_state.try_use_day1_action(action_key)

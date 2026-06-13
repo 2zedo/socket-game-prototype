@@ -191,6 +191,14 @@ func preview_power_use(watts: int) -> void:
 	changed.emit()
 
 
+func end_current_day() -> void:
+	if is_time_paused:
+		return
+
+	day1_flags["ended_by_rest"] = true
+	_end_day()
+
+
 func get_day1_action_data(action_key: String) -> Dictionary:
 	return DAY1_ACTIONS.get(action_key, {})
 
@@ -335,6 +343,8 @@ func _calculate_day_result() -> Dictionary:
 	total += _add_score_line(lines, "생존 보너스", 100)
 	lines.append("남은 DAY 1 전력: %d / %d" % [current_power_units, DAY1_STARTING_POWER_UNITS])
 	lines.append("사용 기록: %s" % get_used_day1_action_summary())
+	lines.append("확인한 정보: %s" % _get_day1_info_summary())
+	lines.append("상태 변화: %s" % _get_day1_state_change_summary())
 
 	if battery >= 50.0:
 		total += _add_score_line(lines, "배터리 상태", 10)
@@ -367,6 +377,36 @@ func _add_score_line(lines: Array[String], label: String, amount: int) -> int:
 	var sign_text: String = "+" if amount >= 0 else ""
 	lines.append("%s %s%d" % [label, sign_text, amount])
 	return amount
+
+
+func _get_day1_info_summary() -> String:
+	var info_lines: Array[String] = []
+	if day1_flags.get("checked_laptop", false):
+		info_lines.append("Grid 로그")
+	if day1_flags.get("sent_or_received_signal", false):
+		info_lines.append("외부 안내 신호")
+
+	if info_lines.is_empty():
+		return "없음"
+
+	return ", ".join(info_lines)
+
+
+func _get_day1_state_change_summary() -> String:
+	var changes: Array[String] = []
+	if day1_flags.get("used_light", false):
+		changes.append("방 안 시야 확보")
+	if day1_flags.get("charged_device", false):
+		changes.append("배터리 회복")
+	if day1_flags.get("used_fan", false):
+		changes.append("온도 완화")
+	if day1_flags.get("ended_by_rest", false):
+		changes.append("직접 하루 종료")
+
+	if changes.is_empty():
+		return "특이 변화 없음"
+
+	return ", ".join(changes)
 
 
 func _apply_day1_action_effect(action_key: String) -> void:

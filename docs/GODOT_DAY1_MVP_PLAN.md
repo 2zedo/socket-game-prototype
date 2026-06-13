@@ -66,6 +66,8 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 - `Main.gd` now routes nearby interactables through a simple `E: use / ESC: cancel` confirmation flow and pauses Yui while the modal panel is open.
 - `InteractionPanel.gd` supports context-specific footer text for use/cancel prompts.
 - `SurvivalHUD.tscn` has enough status label space to show current DAY 1 power and use records.
+- `Apartment.gd` now includes a bed/rest interactable that opens an explicit `End Day` confirmation through the same proximity `E` model.
+- `SurvivalState.gd` exposes `end_current_day()` so the explicit rest interaction can enter the existing result summary flow.
 - Temporary action costs still live in script constants and should move to a Resource or data file after in-editor validation.
 
 ## Suggested Godot Files To Inspect First

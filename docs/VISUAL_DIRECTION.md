@@ -45,9 +45,21 @@ Use the references as mood and design guidance, not as exact implementation requ
 - Avoid overbuilding the entire DAY 1~12 story before DAY 1 is playable.
 - Avoid spending early implementation time on polish that does not support the core power loop.
 
+## Visual Similarity Guardrail
+
+- The game uses top-down 2D movement and proximity `E` interaction, but it must not look like a clone of existing top-down survival or management games.
+- Among Us is only a control-model reference for top-down movement and nearby interaction. It is not a visual, UI, color, character, or room-layout reference.
+- Treat games like `Break the Animal Prison` and other top-down pixel survival/facility-management games as anti-references.
+- Avoid prison, institution, facility-management, restaurant/order-card, and bright pixel life-sim moods.
+- Avoid generic task-list survival HUDs, card-choice layouts, resource bars, and facility-grid compositions that directly recall existing indie management games.
+- Do not copy the screen composition, UI placement, card layout, or room hierarchy of existing games.
+- The screen should communicate: a small isolated apartment, power shortage, blackout, outlets, multi-taps, worn electronics, weak light, and Yui's quiet survival routine.
+- UI should feel like a power panel, survival log, laptop screen, apartment notice, or subdued dialogue layer rather than a task-management dashboard.
+
 ## How To Use These References In Future Tasks
 
 - Use the images to guide mood, UI restraint, object selection, and room atmosphere.
 - In implementation tasks, start with readable placeholders that match the direction loosely.
 - When choosing colors or UI layout, prioritize clarity and DAY 1 playability first.
 - Save higher-detail character art, robot art, environment polish, and panel styling for later polish passes.
+- During implementation reviews, check that the result still reads as `a one-room power-shortage story` rather than `a facility/task-management game`.
