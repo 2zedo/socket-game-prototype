@@ -7,7 +7,7 @@
 - Web prototype: React/Vite/Phaser prototype is reference only
 - Current phase: Godot DAY 1 MVP implementation started
 - Current branch: `main`
-- Latest commit at task start: `0ee5001 feat: align Godot interactions with top-down controls`
+- Latest commit at task start: `868a176 feat: add explicit DAY 1 end interaction`
 
 ## Latest Completed Work
 
@@ -20,12 +20,15 @@
 - Confirmed and tightened the top-down movement + proximity `E` interaction model
 - Added visual similarity guardrails to avoid facility/task-management game resemblance
 - Added an explicit bed/rest `End Day` interaction that enters the existing result summary flow
+- Added upstream sync rules to avoid working on stale `main`
+- Added a Godot DAY 1 MVP manual playtest checklist
 
 ## Current Goal
 
 - Make the documented DAY 1 power loop playable in the Godot apartment scene
 - Keep implementation focused on keyboard movement, proximity interaction, power display, object use, feedback, and result summary readiness
 - Keep the presentation distinct from generic top-down survival/management games
+- Prepare manual Godot editor testing before the next implementation pass
 
 ## Not Doing Yet
 
@@ -39,23 +42,18 @@
 ## Changed Files
 
 - `docs/PROJECT_STATUS.md`
-- `docs/GODOT_DAY1_MVP_PLAN.md`
-- `docs/VISUAL_DIRECTION.md`
-- `docs/CONCENT_GAME_SPEC.md`
-- `docs/DAY1_CONTENT_BRIEF.md`
+- `docs/GODOT_PLAYTEST_CHECKLIST.md`
 - `AGENTS.md`
-- `godot/scripts/Main.gd`
-- `godot/scripts/Apartment.gd`
-- `godot/scripts/Interactable.gd`
-- `godot/scripts/SurvivalState.gd`
 
 ## Validation Results
 
 - `git status --short --branch`: confirmed current branch is `main` before editing
+- `git fetch origin`: updated remote refs before editing
+- `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
 - `git status --short`: checked before staging
-- `git diff --stat`: checked interaction and document change scope
+- `git diff --stat`: checked document-only change scope
 - `git diff --check`: checked whitespace/errors in diff
-- Godot CLI validation could not be run because no `godot`/`godot4` executable was available in PATH or `/Applications`
+- Godot execution was not run because this task only adds safety/test documentation
 - Web validation was not run because no web files were changed
 
 ## Current Risks or Known Issues
@@ -66,9 +64,10 @@
 - The exploration model is keyboard/top-down and not static point-and-click, but it still needs manual playtesting in Godot.
 - Explicit End Day now exists, but still needs manual playtesting in Godot.
 - Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
+- Manual Godot playtesting has not been run yet.
 
 ## Next Recommended Task
 
-- Run the Godot main scene in the editor and test movement, proximity prompts, all five DAY 1 objects, and the bed/rest End Day flow
-- If result summary feels too score-like, reshape it toward survival log / diary language
-- Move temporary DAY 1 object data into a Resource or data file after the MVP loop is proven
+- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test the Godot main scene in the editor
+- Fix bugs found during manual playtesting
+- After the checklist passes, move DAY 1 object data into `.tres` or a data file

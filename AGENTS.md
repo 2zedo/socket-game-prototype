@@ -27,6 +27,18 @@ git status --short --branch
 ```
 
 - If the current branch is not `main`, stop and report it before making changes.
+- Before starting any task, check the current branch and remote state:
+
+```bash
+git status --short --branch
+git fetch origin
+git log --oneline HEAD..origin/main
+```
+
+- If `git log --oneline HEAD..origin/main` shows any commits, stop before making changes.
+- Do not automatically pull, merge, rebase, or reset when new remote commits exist.
+- Report the new commit list and ask the user what to do next.
+- Only continue when local `main` is already up to date with `origin/main`.
 - After completing a task, stage only the files that are necessary for the requested change.
 - Do not use `git add .` unless the task clearly requires every changed file.
 - Before committing, inspect the changed files with `git status --short`.
