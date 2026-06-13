@@ -19,13 +19,27 @@
 
 ## Source Control Rules
 
-- Do not work directly on `main` for non-trivial changes.
-- Use a task-specific branch name, for example:
-  - `chore/project-docs`
-  - `feat/godot-day1-power-loop`
-  - `feat/godot-dialogue-system`
-  - `refactor/godot-resource-data`
+- This repository is currently developed directly on `main` unless the user explicitly asks for a separate branch.
+- Before starting work, confirm the current branch with:
 
+```bash
+git status --short --branch
+```
+
+- If the current branch is not `main`, stop and report it before making changes.
+- After completing a task, stage only the files that are necessary for the requested change.
+- Do not use `git add .` unless the task clearly requires every changed file.
+- Before committing, inspect the changed files with `git status --short`.
+- Run relevant validation commands before committing when practical.
+- Commit only when the task is complete and validation has passed, or when validation is impossible and that limitation is clearly reported.
+- Use concise commit messages such as:
+  - `chore: update project instructions`
+  - `docs: add project progress tracking`
+  - `docs: add Godot DAY 1 MVP plan`
+  - `feat: add Godot power loop`
+- Push completed commits to `origin main`.
+- If push fails, do not force push. Report the error and stop.
+- If there are unrelated local changes, do not stage them. Report them separately.
 - Keep commits focused. Separate documentation, refactors, and gameplay changes when practical.
 - Do not commit Godot-generated files or local cache output, including:
   - `godot/.godot/`
@@ -127,6 +141,20 @@ Initial interactable objects may include:
 
 ## Documentation Rules
 
+- At the end of every completed task, update `docs/PROJECT_STATUS.md`.
+- `docs/PROJECT_STATUS.md` is the living progress artifact for the project.
+- The status file should summarize:
+  - current branch
+  - latest commit
+  - current development phase
+  - completed work
+  - changed files
+  - validation results
+  - current risks or known issues
+  - next recommended task
+- Keep the progress file concise and useful. Do not turn it into a long diary.
+- If the task changes the development direction, also update `docs/ROADMAP.md`.
+- If the task changes the immediate Godot MVP scope, also update `docs/GODOT_DAY1_MVP_PLAN.md`.
 - Keep `README.md` concise:
   - project overview
   - repository structure
