@@ -61,7 +61,9 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 
 - `SurvivalState.gd` now owns temporary DAY 1 power units, object costs, use flags, and result-summary data.
 - `Apartment.gd` now exposes the five DAY 1 interactables: Light, Laptop, Fan, Charger, and Communication device.
-- `Main.gd` now routes interactable selection through a simple `E: use / ESC: cancel` confirmation flow.
+- `Player.gd` and `project.godot` already support keyboard top-down movement through WASD and arrow input actions.
+- `Apartment.gd` tracks the nearest interactable by player proximity, so `E` only opens interaction UI near an object.
+- `Main.gd` now routes nearby interactables through a simple `E: use / ESC: cancel` confirmation flow and pauses Yui while the modal panel is open.
 - `InteractionPanel.gd` supports context-specific footer text for use/cancel prompts.
 - `SurvivalHUD.tscn` has enough status label space to show current DAY 1 power and use records.
 - Temporary action costs still live in script constants and should move to a Resource or data file after in-editor validation.

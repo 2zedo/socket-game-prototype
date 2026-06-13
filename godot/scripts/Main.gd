@@ -35,6 +35,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("phone_toggle"):
+		if interaction_panel.visible:
+			get_viewport().set_input_as_handled()
+			return
 		if outlet_mode.visible:
 			get_viewport().set_input_as_handled()
 			return
@@ -46,7 +49,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if interaction_panel.visible:
 			if pending_interaction_data.is_empty():
-				interaction_panel.close()
+				_close_interaction_panel()
 			else:
 				_confirm_pending_day1_action()
 		else:
@@ -61,8 +64,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			phone_ui.set_open(false, survival_state)
 			get_viewport().set_input_as_handled()
 		elif interaction_panel.visible:
-			pending_interaction_data = {}
-			interaction_panel.close()
+			_close_interaction_panel()
 			get_viewport().set_input_as_handled()
 
 
@@ -76,7 +78,7 @@ func _on_nearest_interactable_changed(interactable: ApartmentInteractable) -> vo
 
 func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
 	if interaction_panel.visible:
-		interaction_panel.close()
+		_close_interaction_panel()
 		return
 
 	var data: Dictionary = interactable.get_interaction_data()
@@ -87,11 +89,11 @@ func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
 	var day1_action_key: String = data.get("day1_action_key", "")
 	if day1_action_key != "":
 		pending_interaction_data = data
-		interaction_panel.open(data.get("title", "상호작용"), _build_interaction_body(data), "E: 사용 / ESC: 취소")
+		_open_interaction_panel(data.get("title", "상호작용"), _build_interaction_body(data), "E: 사용 / ESC: 취소")
 		return
 
 	var watts: int = data.get("watts", 0)
-	interaction_panel.open(data.get("title", "상호작용"), _build_interaction_body(data))
+	_open_interaction_panel(data.get("title", "상호작용"), _build_interaction_body(data))
 	survival_state.preview_power_use(watts)
 
 
@@ -122,7 +124,20 @@ func _confirm_pending_day1_action() -> void:
 	var prefix := "사용 완료" if bool(result.get("success", false)) else "사용 불가"
 
 	pending_interaction_data = {}
-	interaction_panel.open("%s - %s" % [title, prefix], str(result.get("message", "")), "E 또는 ESC: 닫기")
+	_open_interaction_panel("%s - %s" % [title, prefix], str(result.get("message", "")), "E 또는 ESC: 닫기")
+
+
+func _open_interaction_panel(title: String, body: String, footer_text: String = "E 또는 ESC: 닫기") -> void:
+	# Exploration is keyboard-driven, so modal interaction text pauses Yui until
+	# the player confirms or cancels the nearby object's action.
+	apartment.set_player_movement_enabled(false)
+	interaction_panel.open(title, body, footer_text)
+
+
+func _close_interaction_panel() -> void:
+	pending_interaction_data = {}
+	interaction_panel.close()
+	apartment.set_player_movement_enabled(true)
 
 
 func _refresh_survival_ui() -> void:
@@ -142,7 +157,7 @@ func _refresh_survival_ui() -> void:
 
 
 func _open_outlet_mode() -> void:
-	interaction_panel.close()
+	_close_interaction_panel()
 	phone_ui.set_open(false, survival_state)
 	apartment.set_player_movement_enabled(false)
 	outlet_mode.open(survival_state)
@@ -169,7 +184,7 @@ func _on_day_ended(result: Dictionary) -> void:
 		outlet_mode.close()
 
 	phone_ui.set_open(false, survival_state)
-	interaction_panel.close()
+	_close_interaction_panel()
 	apartment.set_player_movement_enabled(false)
 	day_result_panel.open(result)
 
