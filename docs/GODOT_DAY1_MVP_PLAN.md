@@ -26,6 +26,37 @@ Define the smallest Godot implementation that proves the core `CONCENT / 전력 
 - Day end
 - Result summary
 
+## DAY 1 Object List
+
+The initial object list should stay small and match `docs/DAY1_CONTENT_BRIEF.md`:
+
+- Light
+- Laptop
+- Fan
+- Charger
+- Communication device
+
+## Suggested Temporary Power Costs
+
+These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or data file when practical instead of hard-coding them into scene logic.
+
+- Starting power: `10 units`
+- Light: `1 unit`
+- Laptop: `3 units`
+- Fan: `2 units`
+- Charger: `2 units`
+- Communication device: `4 units`
+
+## Minimum Flags / State To Track
+
+- `current_power`
+- `used_light`
+- `checked_laptop`
+- `used_fan`
+- `charged_device`
+- `sent_or_received_signal`
+- `day_ended`
+
 ## Suggested Godot Files To Inspect First
 
 - `godot/scenes/Main.tscn`
@@ -33,17 +64,20 @@ Define the smallest Godot implementation that proves the core `CONCENT / 전력 
 - `godot/scripts/SurvivalState.gd`
 - `godot/scripts/OutletMode.gd`
 
+Start implementation from these existing files. Before adding new systems, identify what they already handle for room flow, state, and outlet/power behavior.
+
 ## Implementation Order
 
 1. Inspect the current Godot scene and script structure.
 2. Identify the existing owner of power/state data.
-3. Define the minimum DAY 1 object list and power costs.
-4. Wire a readable power display to the existing state.
-5. Add or refine the interactable flow for spend/cancel choices.
-6. Add insufficient power feedback.
-7. Add simple dialogue feedback for successful choices.
-8. Add day-end trigger and result summary.
-9. Validate the loop in the Godot main scene.
+3. Compare current behavior against `docs/DAY1_CONTENT_BRIEF.md`.
+4. Define where temporary power costs and object data should live.
+5. Wire a readable power display to the existing state.
+6. Add or refine the interactable flow for spend/cancel choices.
+7. Add insufficient power feedback.
+8. Add simple dialogue feedback for successful choices.
+9. Add day-end trigger and result summary.
+10. Validate the loop in the Godot main scene.
 
 ## Out Of Scope For Now
 

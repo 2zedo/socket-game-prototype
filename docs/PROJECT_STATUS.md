@@ -7,7 +7,7 @@
 - Web prototype: React/Vite/Phaser prototype is reference only
 - Current phase: pre-implementation project setup / Godot DAY 1 MVP preparation
 - Current branch: `main`
-- Latest commit at task start: `8466c3e chore: add project instructions and update README`
+- Latest commit at task start: `42f230f docs: add project progress tracking`
 
 ## Latest Completed Work
 
@@ -15,10 +15,12 @@
 - `.gitignore` updated for Godot generated files
 - `README.md` updated from Vite template to project overview
 - Added progress tracking and planning docs under `docs/`
+- Documented visual direction and DAY 1 content direction from concept references
 
 ## Current Goal
 
 - Prepare the Godot DAY 1 MVP implementation
+- Keep initial implementation focused on the documented DAY 1 power loop
 
 ## Not Doing Yet
 
@@ -27,6 +29,7 @@
 - multi-ending
 - complex NPC relationship system
 - web prototype changes
+- art polish before core playability
 
 ## Changed Files
 
@@ -35,6 +38,8 @@
 - `docs/ROADMAP.md`
 - `docs/GODOT_DAY1_MVP_PLAN.md`
 - `docs/CONCENT_GAME_SPEC.md`
+- `docs/VISUAL_DIRECTION.md`
+- `docs/DAY1_CONTENT_BRIEF.md`
 
 ## Validation Results
 
@@ -47,6 +52,8 @@
 
 - Godot DAY 1 MVP scope still needs inspection against the current scene/script structure before implementation.
 - Existing web prototype remains a useful reference, but it should not drive broad Godot scope creep.
+- Concept images define mood and direction, not exact asset requirements.
+- Implementation has not started yet.
 
 ## Next Recommended Task
 
