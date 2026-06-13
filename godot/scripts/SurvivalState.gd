@@ -8,6 +8,52 @@ const MIN_STAT: float = 0.0
 const MAX_STAT: float = 100.0
 const DAY_SECONDS: float = 60.0
 const PHASE_SECONDS: float = 30.0
+const DAY1_STARTING_POWER_UNITS: int = 10
+
+# DAY 1 object tuning is grouped here so the MVP can move it into a Resource
+# or data file later without searching through scene flow code.
+const DAY1_ACTIONS: Dictionary = {
+	"light": {
+		"label": "조명",
+		"cost": 1,
+		"flag": "used_light",
+		"power_key": "light",
+		"feedback": "약한 조명이 방을 겨우 밝힙니다. 오래 버티지는 못할 빛입니다.",
+		"already_used": "조명은 이미 켜져 있습니다. 전력을 더 쓰지는 않습니다.",
+	},
+	"laptop": {
+		"label": "노트북",
+		"cost": 3,
+		"flag": "checked_laptop",
+		"power_key": "laptop",
+		"feedback": "낡은 로그가 화면에 떠오릅니다. 몇 줄은 Grid라는 이름을 반복합니다.",
+		"already_used": "오늘 확인할 수 있는 로그는 이미 훑었습니다.",
+	},
+	"fan": {
+		"label": "선풍기",
+		"cost": 2,
+		"flag": "used_fan",
+		"power_key": "fan",
+		"feedback": "선풍기가 느리게 돌기 시작합니다. 공기가 움직이지만 계량기는 내려갑니다.",
+		"already_used": "선풍기는 이미 돌아가고 있습니다.",
+	},
+	"charger": {
+		"label": "충전기",
+		"cost": 2,
+		"flag": "charged_device",
+		"power_key": "phone",
+		"feedback": "배터리가 조금씩 차오릅니다. 시간을 산 느낌입니다.",
+		"already_used": "오늘 필요한 만큼은 이미 충전했습니다.",
+	},
+	"communication_device": {
+		"label": "통신 장치",
+		"cost": 4,
+		"flag": "sent_or_received_signal",
+		"power_key": "communication_device",
+		"feedback": "끊어진 신호 사이로 안내 방송이 섞여 들어옵니다. 아직 바깥에는 누군가 있습니다.",
+		"already_used": "잡음만 반복됩니다. 오늘 새 신호는 더 잡히지 않습니다.",
+	},
+}
 
 var day: int = 1
 var current_event: String = "없음"
@@ -23,7 +69,12 @@ var fatigue: float = 34.0
 var fun: float = 42.0
 var max_power_watts: int = 3000
 var current_power_watts: int = 0
+var current_power_units: int = DAY1_STARTING_POWER_UNITS
 var powered_devices: Array[String] = []
+var used_day1_actions: Array[String] = []
+var day1_flags: Dictionary = {}
+var day1_day_ended: bool = false
+var last_day1_message: String = ""
 var update_accumulator: float = 0.0
 
 
@@ -60,6 +111,7 @@ func continue_to_next_day() -> void:
 	phase = "day"
 	remaining_phase_seconds = int(PHASE_SECONDS)
 	overloads_today = 0
+	_reset_day1_power_loop()
 	is_time_paused = false
 	changed.emit()
 
@@ -87,6 +139,8 @@ func get_phase_effect_text() -> String:
 func get_warning_lines() -> Array[String]:
 	var warnings: Array[String] = []
 
+	if current_power_units <= 2:
+		warnings.append("DAY 1 전력 부족")
 	if battery <= 25.0:
 		warnings.append("배터리 부족")
 	if temperature >= 75.0:
@@ -102,7 +156,10 @@ func get_warning_lines() -> Array[String]:
 
 
 func get_hud_stat_text() -> String:
-	return "🔋 배터리 %d%%\n🌡 온도 %d%%\n😫 피로 %d%%\n🙂 재미 %d%%" % [
+	return "⚡ DAY 1 전력 %d/%d\n사용 기록: %s\n\n🔋 배터리 %d%%\n🌡 온도 %d%%\n😫 피로 %d%%\n🙂 재미 %d%%" % [
+		current_power_units,
+		DAY1_STARTING_POWER_UNITS,
+		get_used_day1_action_summary(),
 		roundi(battery),
 		roundi(temperature),
 		roundi(fatigue),
@@ -120,6 +177,9 @@ func get_phone_text() -> String:
 		"피로: %d%%" % roundi(fatigue),
 		"재미: %d%%" % roundi(fun),
 		"",
+		"DAY 1 전력: %d / %d" % [current_power_units, DAY1_STARTING_POWER_UNITS],
+		"사용 기록: %s" % get_used_day1_action_summary(),
+		"",
 		"전력: %dW / %dW" % [current_power_watts, max_power_watts],
 	]
 
@@ -129,6 +189,69 @@ func get_phone_text() -> String:
 func preview_power_use(watts: int) -> void:
 	current_power_watts = clampi(watts, 0, 9999)
 	changed.emit()
+
+
+func get_day1_action_data(action_key: String) -> Dictionary:
+	return DAY1_ACTIONS.get(action_key, {})
+
+
+func get_used_day1_action_summary() -> String:
+	if used_day1_actions.is_empty():
+		return "없음"
+
+	var labels: Array[String] = []
+	for action_key in used_day1_actions:
+		var action_data := get_day1_action_data(action_key)
+		labels.append(str(action_data.get("label", action_key)))
+
+	return ", ".join(labels)
+
+
+func try_use_day1_action(action_key: String) -> Dictionary:
+	var action_data := get_day1_action_data(action_key)
+	if action_data.is_empty():
+		return {
+			"success": false,
+			"message": "아직 사용할 수 없는 오브젝트입니다.",
+		}
+
+	var cost: int = int(action_data.get("cost", 0))
+	var label: String = str(action_data.get("label", action_key))
+	if used_day1_actions.has(action_key):
+		return {
+			"success": false,
+			"message": str(action_data.get("already_used", "%s은 이미 사용했습니다." % label)),
+		}
+
+	if current_power_units < cost:
+		return {
+			"success": false,
+			"message": "%s 사용에는 전력 %d가 필요합니다.\n남은 전력은 %d뿐입니다." % [label, cost, current_power_units],
+		}
+
+	current_power_units = maxi(0, current_power_units - cost)
+	used_day1_actions.append(action_key)
+	var flag_key: String = str(action_data.get("flag", action_key))
+	day1_flags[flag_key] = true
+
+	var power_key: String = str(action_data.get("power_key", action_key))
+	if power_key != "" and not powered_devices.has(power_key):
+		powered_devices.append(power_key)
+
+	_apply_day1_action_effect(action_key)
+	last_day1_message = str(action_data.get("feedback", "%s을 사용했습니다." % label))
+	changed.emit()
+
+	return {
+		"success": true,
+		"message": "%s\n\n남은 DAY 1 전력: %d / %d" % [
+			last_day1_message,
+			current_power_units,
+			DAY1_STARTING_POWER_UNITS,
+		],
+		"remaining_power": current_power_units,
+		"flag": flag_key,
+	}
 
 
 func _update_needs(delta: float) -> void:
@@ -197,6 +320,7 @@ func _end_day() -> void:
 	is_time_paused = true
 	phase = "night"
 	remaining_phase_seconds = 0
+	day1_day_ended = true
 
 	var result: Dictionary = _calculate_day_result()
 	total_points += int(result.get("total", 0))
@@ -209,6 +333,8 @@ func _calculate_day_result() -> Dictionary:
 	var total: int = 0
 
 	total += _add_score_line(lines, "생존 보너스", 100)
+	lines.append("남은 DAY 1 전력: %d / %d" % [current_power_units, DAY1_STARTING_POWER_UNITS])
+	lines.append("사용 기록: %s" % get_used_day1_action_summary())
 
 	if battery >= 50.0:
 		total += _add_score_line(lines, "배터리 상태", 10)
@@ -231,6 +357,9 @@ func _calculate_day_result() -> Dictionary:
 		"lines": lines,
 		"total": total,
 		"total_points": total_points + total,
+		"remaining_power": current_power_units,
+		"used_day1_actions": used_day1_actions.duplicate(),
+		"day1_flags": day1_flags.duplicate(),
 	}
 
 
@@ -238,3 +367,27 @@ func _add_score_line(lines: Array[String], label: String, amount: int) -> int:
 	var sign_text: String = "+" if amount >= 0 else ""
 	lines.append("%s %s%d" % [label, sign_text, amount])
 	return amount
+
+
+func _apply_day1_action_effect(action_key: String) -> void:
+	# These small stat nudges make the MVP feedback visible while keeping the
+	# real balance pass separate from this first power-loop implementation.
+	match action_key:
+		"light":
+			fatigue = clampf(fatigue - 2.0, MIN_STAT, MAX_STAT)
+		"laptop":
+			fun = clampf(fun + 8.0, MIN_STAT, MAX_STAT)
+		"fan":
+			temperature = clampf(temperature - 6.0, MIN_STAT, MAX_STAT)
+		"charger":
+			battery = clampf(battery + 12.0, MIN_STAT, MAX_STAT)
+		"communication_device":
+			fun = clampf(fun + 3.0, MIN_STAT, MAX_STAT)
+
+
+func _reset_day1_power_loop() -> void:
+	current_power_units = DAY1_STARTING_POWER_UNITS
+	used_day1_actions.clear()
+	day1_flags.clear()
+	day1_day_ended = false
+	last_day1_message = ""

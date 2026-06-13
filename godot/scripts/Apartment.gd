@@ -104,14 +104,27 @@ func _spawn_placeholder_furniture() -> void:
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
-		"id": "phone_charger",
-		"name": "휴대폰 충전기",
-		"title": "휴대폰 충전기",
+		"id": "light",
+		"name": "조명",
+		"title": "조명",
+		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
+		"position": Vector2(850, 200),
+		"size": Vector2(70, 70),
+		"color": Color("#d2a85f"),
+		"power_units": 1,
+		"day1_action_key": "light",
+		"label_offset": Vector2.ZERO,
+	})
+	_add_interactable({
+		"id": "charger",
+		"name": "충전기",
+		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
 		"position": Vector2(455, 330),
 		"size": Vector2(82, 58),
 		"color": Color("#4f8edb"),
-		"watts": 20,
+		"power_units": 2,
+		"day1_action_key": "charger",
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -122,7 +135,8 @@ func _spawn_placeholder_furniture() -> void:
 		"position": Vector2(650, 190),
 		"size": Vector2(82, 82),
 		"color": Color("#52a66f"),
-		"watts": 900,
+		"power_units": 2,
+		"day1_action_key": "fan",
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -133,18 +147,20 @@ func _spawn_placeholder_furniture() -> void:
 		"position": Vector2(650, 480),
 		"size": Vector2(110, 70),
 		"color": Color("#486064"),
-		"watts": 1300,
+		"power_units": 3,
+		"day1_action_key": "laptop",
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
-		"id": "microwave",
-		"name": "전자레인지",
-		"title": "전자레인지 사용",
-		"body": "피로를 잠깐 줄이는 위험한 선택입니다.\n전력 사용량이 높아 과부하 판단을 강요합니다.",
+		"id": "communication_device",
+		"name": "통신 장치",
+		"title": "통신 장치",
+		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
 		"position": Vector2(850, 330),
 		"size": Vector2(124, 72),
-		"color": Color("#d98742"),
-		"watts": 2100,
+		"color": Color("#8f6bb3"),
+		"power_units": 4,
+		"day1_action_key": "communication_device",
 		"label_offset": Vector2.ZERO,
 	})
 
@@ -241,7 +257,7 @@ func _draw_power_cable(start_position: Vector2, end_position: Vector2) -> void:
 
 
 func _get_power_key_for_object(object_id: String) -> String:
-	if object_id == "phone_charger":
+	if object_id == "charger":
 		return "phone"
 
 	return object_id

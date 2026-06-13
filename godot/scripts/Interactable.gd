@@ -8,6 +8,8 @@ class_name ApartmentInteractable
 @export var body_size: Vector2 = Vector2(96, 64)
 @export var body_color: Color = Color("#b8a889")
 @export var power_watts: int = 0
+@export var power_units: int = 0
+@export var day1_action_key: String = ""
 @export var is_interactable: bool = true
 @export var label_offset: Vector2 = Vector2.ZERO
 @export var outline_color: Color = Color("#f0ddb4")
@@ -28,6 +30,8 @@ func setup(config: Dictionary) -> void:
 	body_size = config.get("size", body_size)
 	body_color = config.get("color", body_color)
 	power_watts = config.get("watts", power_watts)
+	power_units = config.get("power_units", power_units)
+	day1_action_key = config.get("day1_action_key", day1_action_key)
 	is_interactable = config.get("interactable", is_interactable)
 	label_offset = config.get("label_offset", label_offset)
 	outline_color = config.get("outline_color", outline_color)
@@ -48,6 +52,8 @@ func get_interaction_data() -> Dictionary:
 		"title": action_title,
 		"body": action_body,
 		"watts": power_watts,
+		"power_units": power_units,
+		"day1_action_key": day1_action_key,
 	}
 
 
@@ -98,7 +104,7 @@ func _draw() -> void:
 	var label_position: Vector2 = Vector2(-label_width * 0.5, -body_size.y * 0.5 - LABEL_HEIGHT + 2.0) + label_offset
 	draw_string(ThemeDB.fallback_font, label_position, display_name, HORIZONTAL_ALIGNMENT_CENTER, label_width, LABEL_FONT_SIZE, Color("#f8ecd2"))
 
-	if power_watts > 0:
+	if power_watts > 0 or power_units > 0:
 		var state_text: String = "작동 중" if is_powered else "꺼짐"
 		var state_color: Color = Color("#ffe066") if is_powered else Color("#5f4b39")
 		var status_position: Vector2 = Vector2(-label_width * 0.5, body_size.y * 0.5 + 16.0)
@@ -109,7 +115,7 @@ func _draw_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
 	match object_id:
 		"fan":
 			_draw_fan_icon(rect, fill_color, outline)
-		"phone_charger":
+		"charger":
 			_draw_charger_icon(rect, fill_color, outline)
 		"power_strip":
 			_draw_power_strip_icon(rect, fill_color, outline)

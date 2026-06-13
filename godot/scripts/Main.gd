@@ -8,6 +8,8 @@ extends Node2D
 @onready var outlet_mode: OutletMode = $UI/OutletMode
 @onready var day_result_panel: DayResultPanel = $UI/DayResultPanel
 
+var pending_interaction_data: Dictionary = {}
+
 
 func _ready() -> void:
 	apartment.nearest_interactable_changed.connect(_on_nearest_interactable_changed)
@@ -43,7 +45,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if interaction_panel.visible:
-			interaction_panel.close()
+			if pending_interaction_data.is_empty():
+				interaction_panel.close()
+			else:
+				_confirm_pending_day1_action()
 		else:
 			apartment.request_nearest_interaction()
 
@@ -56,6 +61,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			phone_ui.set_open(false, survival_state)
 			get_viewport().set_input_as_handled()
 		elif interaction_panel.visible:
+			pending_interaction_data = {}
 			interaction_panel.close()
 			get_viewport().set_input_as_handled()
 
@@ -78,9 +84,14 @@ func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
 		_open_outlet_mode()
 		return
 
-	interaction_panel.open(data.get("title", "상호작용"), _build_interaction_body(data))
+	var day1_action_key: String = data.get("day1_action_key", "")
+	if day1_action_key != "":
+		pending_interaction_data = data
+		interaction_panel.open(data.get("title", "상호작용"), _build_interaction_body(data), "E: 사용 / ESC: 취소")
+		return
 
 	var watts: int = data.get("watts", 0)
+	interaction_panel.open(data.get("title", "상호작용"), _build_interaction_body(data))
 	survival_state.preview_power_use(watts)
 
 
@@ -92,7 +103,26 @@ func _build_interaction_body(data: Dictionary) -> String:
 		body += "\n\n예상 전력: %dW" % watts
 		body += "\n전력은 늘 부족합니다. 무엇을 켤지 선택해야 합니다."
 
+	var power_units: int = int(data.get("power_units", 0))
+	if power_units > 0:
+		body += "\n\nDAY 1 전력 비용: %d" % power_units
+		body += "\n현재 전력: %d / %d" % [
+			survival_state.current_power_units,
+			SurvivalState.DAY1_STARTING_POWER_UNITS,
+		]
+		body += "\n\n사용하려면 E, 취소하려면 ESC를 누르세요."
+
 	return body
+
+
+func _confirm_pending_day1_action() -> void:
+	var action_key: String = pending_interaction_data.get("day1_action_key", "")
+	var title: String = pending_interaction_data.get("title", "상호작용")
+	var result := survival_state.try_use_day1_action(action_key)
+	var prefix := "사용 완료" if bool(result.get("success", false)) else "사용 불가"
+
+	pending_interaction_data = {}
+	interaction_panel.open("%s - %s" % [title, prefix], str(result.get("message", "")), "E 또는 ESC: 닫기")
 
 
 func _refresh_survival_ui() -> void:

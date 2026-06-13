@@ -57,6 +57,15 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 - `sent_or_received_signal`
 - `day_ended`
 
+## Current Implementation Status
+
+- `SurvivalState.gd` now owns temporary DAY 1 power units, object costs, use flags, and result-summary data.
+- `Apartment.gd` now exposes the five DAY 1 interactables: Light, Laptop, Fan, Charger, and Communication device.
+- `Main.gd` now routes interactable selection through a simple `E: use / ESC: cancel` confirmation flow.
+- `InteractionPanel.gd` supports context-specific footer text for use/cancel prompts.
+- `SurvivalHUD.tscn` has enough status label space to show current DAY 1 power and use records.
+- Temporary action costs still live in script constants and should move to a Resource or data file after in-editor validation.
+
 ## Suggested Godot Files To Inspect First
 
 - `godot/scenes/Main.tscn`
