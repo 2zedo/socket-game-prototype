@@ -19,8 +19,8 @@ const DAY1_ACTIONS: Dictionary = {
 		"label": "조명",
 		"cost": 1,
 		"watt_usage": 60,
-		"outlet_size": 1,
-		"requires_connection": true,
+		"outlet_size": 0,
+		"requires_connection": false,
 		"flag": "used_light",
 		"power_key": "light",
 		"feedback": "약한 조명이 방을 겨우 밝힙니다. 오래 버티지는 못할 빛입니다.",
@@ -485,6 +485,9 @@ func _recalculate_outlet_state() -> void:
 	# of truth for what those connections mean to the DAY 1 power loop.
 	for action_key in DAY1_ACTIONS.keys():
 		var action_data: Dictionary = DAY1_ACTIONS[action_key]
+		if not bool(action_data.get("requires_connection", false)):
+			continue
+
 		var power_key: String = str(action_data.get("power_key", action_key))
 		if not powered_devices.has(power_key):
 			continue

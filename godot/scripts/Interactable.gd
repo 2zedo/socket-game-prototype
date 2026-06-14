@@ -26,8 +26,8 @@ const LABEL_FONT_SIZE: int = 11
 const STATUS_FONT_SIZE: int = 11
 const OBJECT_DISPLAY_RULES := {
 	"light": {
-		"world_size": Vector2(148, 38),
-		"world_offset": Vector2(0, -10),
+		"world_size": Vector2(132, 30),
+		"world_offset": Vector2(0, -58),
 		"world_modulate": Color(0.82, 0.78, 0.68, 0.82),
 		"ui_preview_size": Vector2(260, 92),
 		"z_index": 1,
@@ -319,6 +319,8 @@ func _draw_bed_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
 	var blanket := Rect2(mattress.position + Vector2(mattress.size.x * 0.32, 6.0), Vector2(mattress.size.x * 0.62, mattress.size.y - 12.0))
 	draw_rect(blanket, Color("#403a35"), true)
 	draw_rect(blanket, Color(0.9, 0.82, 0.68, 0.14), false, 1.0)
+	draw_rect(Rect2(blanket.position + Vector2(0, blanket.size.y * 0.14), Vector2(blanket.size.x, 8.0)), Color(0.2, 0.18, 0.16, 0.34), true)
+	draw_line(mattress.position + Vector2(0, 4), mattress.position + Vector2(mattress.size.x, 4), Color(0.95, 0.86, 0.72, 0.18), 1.0)
 	draw_line(blanket.position + Vector2(0, blanket.size.y * 0.42), blanket.position + Vector2(blanket.size.x, blanket.size.y * 0.72), Color(0.9, 0.82, 0.68, 0.16), 1.0)
 
 

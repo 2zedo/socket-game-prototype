@@ -11,10 +11,10 @@ const OUTLET_COUNT := SurvivalState.DAY1_MAX_OUTLET_SLOTS
 const SLOT_SIZE := Vector2(66, 48)
 const SLOT_GAP := 20.0
 const STRIP_SIZE := Vector2(392, 92)
-const DEVICE_WIDTH := 250.0
-const DEVICE_HEIGHT := 48.0
-const DEVICE_COLUMN_GAP := 292.0
-const DEVICE_ROW_GAP := 58.0
+const DEVICE_WIDTH := 230.0
+const DEVICE_HEIGHT := 44.0
+const DEVICE_COLUMN_GAP := 270.0
+const DEVICE_ROW_GAP := 54.0
 const BREAKER_SECONDS := 1.4
 const PANEL_SIZE := Vector2(1160, 640)
 
@@ -146,9 +146,12 @@ func _draw_connected_slot_labels() -> void:
 			Vector2(last_rect.end.x - first_rect.position.x, first_rect.size.y)
 		)
 		var plug_texture := AssetPaths.PLUG_2_SLOT if slots >= 2 else AssetPaths.PLUG_1_SLOT
-		var occupancy_rect := group_rect.grow(5.0)
+		var occupancy_rect := group_rect.grow(3.0)
 		draw_rect(occupancy_rect, Color(0.92, 0.66, 0.23, 0.16), true)
-		draw_texture_rect(plug_texture, group_rect.grow(4.0), false, Color(1, 1, 1, 0.42))
+		var plug_rect := group_rect.grow(2.0)
+		if slots == 1:
+			plug_rect = Rect2(group_rect.get_center() - Vector2(22, 18), Vector2(44, 36))
+		draw_texture_rect(plug_texture, plug_rect, false, Color(1, 1, 1, 0.42))
 		draw_rect(occupancy_rect, UIStyle.ELECTRIC, false, 1.4)
 		var short_label := _get_short_device_label(str(device["key"]), str(device["label"]))
 		var label_position := Vector2(group_rect.get_center().x - 22.0, group_rect.end.y + 16.0)
@@ -166,18 +169,18 @@ func _draw_devices() -> void:
 		draw_rect(rect, border, false, 2.0)
 		var badge_text := "사용 완료" if used else ("연결됨" if connected else "연결 안 됨")
 		var badge_color := UIStyle.SUCCESS if used else (UIStyle.ELECTRIC if connected else UIStyle.MUTED)
-		var badge_rect := Rect2(rect.position + Vector2(10, 8), Vector2(70, 16))
+		var badge_rect := Rect2(rect.position + Vector2(8, 7), Vector2(64, 15))
 		var badge_texture := AssetPaths.BADGE_CONNECTED if connected else AssetPaths.BADGE_DISCONNECTED
 		draw_texture_rect(badge_texture, badge_rect, false, Color(1, 1, 1, 0.78))
 		draw_rect(badge_rect, Color(0.03, 0.03, 0.026, 0.52), true)
-		_draw_text(rect.position + Vector2(14, 20), badge_text, 9, badge_color)
+		_draw_text(rect.position + Vector2(12, 19), badge_text, 8, badge_color)
 		var device_text := "%s\n%dW  비용 %d  %d칸" % [
 			device["label"],
 			int(device["watts"]),
 			int(device["power_cost"]),
 			int(device["slots"]),
 		]
-		_draw_text(rect.position + Vector2(96, 18), device_text, 11, UIStyle.TEXT)
+		_draw_text(rect.position + Vector2(88, 16), device_text, 10, UIStyle.TEXT)
 
 		var plug_x := rect.get_center().x
 		if device["slots"] == 2:
@@ -395,7 +398,6 @@ func _reset_slots() -> void:
 
 func _create_devices() -> void:
 	devices = [
-		_make_day1_device("light", DEVICE_WIDTH, "center", Color("#d2a85f"), Vector2.ZERO),
 		_make_day1_device("laptop", DEVICE_WIDTH, "center", Color("#486064"), Vector2.ZERO),
 		_make_day1_device("fan", DEVICE_WIDTH, "center", Color("#52a66f"), Vector2.ZERO),
 		_make_day1_device("charger", DEVICE_WIDTH, "center", Color("#4f8edb"), Vector2.ZERO),
@@ -440,8 +442,8 @@ func _layout_device_homes() -> void:
 		return
 
 	var panel_rect := _get_panel_rect()
-	var connected_origin := Vector2(panel_rect.position.x + 646.0, panel_rect.position.y + 328.0)
-	var available_origin := Vector2(panel_rect.position.x + 646.0, panel_rect.position.y + 476.0)
+	var connected_origin := Vector2(panel_rect.position.x + 646.0, panel_rect.position.y + 326.0)
+	var available_origin := Vector2(panel_rect.position.x + 646.0, panel_rect.position.y + 468.0)
 
 	var connected_index := 0
 	var available_index := 0

@@ -17,7 +17,7 @@ var current_power_units: int = SurvivalState.DAY1_STARTING_POWER_UNITS
 var phase_key: String = "day"
 
 const ROOM_RECT: Rect2 = Rect2(185, 68, 930, 586)
-const FLOOR_RECT: Rect2 = Rect2(235, 184, 760, 402)
+const FLOOR_RECT: Rect2 = Rect2(235, 206, 760, 380)
 const WALL_THICKNESS: float = 28.0
 
 
@@ -134,7 +134,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": Vector2(620, 126),
+		"position": Vector2(620, 170),
 		"size": Vector2(138, 34),
 		"color": Color("#a8894e"),
 		"power_units": 1,
@@ -170,7 +170,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": Vector2(608, 242),
+		"position": Vector2(608, 252),
 		"size": Vector2(96, 52),
 		"color": Color("#3b4748"),
 		"power_units": 3,
@@ -241,7 +241,7 @@ func _add_furniture_blocker(center: Vector2, size: Vector2) -> void:
 func _add_environment_blockers() -> void:
 	# Non-interactive room features still need small blockers so the top-down
 	# movement reads as an apartment floor, not a board the player can cross.
-	_add_furniture_blocker(Vector2(615, 124), Vector2(720, 88))
+	_add_furniture_blocker(Vector2(615, 132), Vector2(720, 106))
 	_add_furniture_blocker(Vector2(1038, 310), Vector2(74, 340))
 	_add_furniture_blocker(Vector2(1039, 224), Vector2(72, 166))
 	_add_furniture_blocker(Vector2(806, 205), Vector2(92, 150))
@@ -306,10 +306,10 @@ func _draw_wall_floor_separation(floor_rect: Rect2) -> void:
 
 
 func _draw_room_details() -> void:
-	_draw_window(Rect2(Vector2(268, 112), Vector2(202, 78)))
-	_draw_desk(Rect2(Vector2(500, 238), Vector2(210, 72)))
+	# Door and window are supplied by the wall underlay. Avoid drawing duplicate
+	# primitive versions over the art until those fixtures become dedicated nodes.
+	_draw_desk(Rect2(Vector2(500, 248), Vector2(210, 72)))
 	_draw_shelf(Rect2(Vector2(770, 118), Vector2(88, 156)))
-	_draw_door(Rect2(Vector2(1018, 150), Vector2(58, 158)))
 	_draw_rug(Rect2(Vector2(545, 406), Vector2(210, 92)))
 	_draw_small_clutter(FLOOR_RECT)
 
@@ -332,9 +332,12 @@ func _draw_window(rect: Rect2) -> void:
 
 func _draw_desk(rect: Rect2) -> void:
 	draw_rect(Rect2(rect.position + Vector2(5, 7), rect.size), Color(0.02, 0.018, 0.014, 0.5), true)
+	draw_rect(Rect2(rect.position + Vector2(14, rect.size.y - 4), Vector2(10, 34)), Color("#1a130e"), true)
+	draw_rect(Rect2(rect.end - Vector2(24, 4), Vector2(10, 34)), Color("#1a130e"), true)
 	draw_rect(rect, Color("#2f2319"), true)
 	draw_rect(rect.grow(-5.0), Color("#4a3422"), true)
 	draw_rect(rect, Color("#80643e"), false, 2.0)
+	draw_rect(Rect2(rect.position + Vector2(0, rect.size.y - 8), Vector2(rect.size.x, 8)), Color(0.08, 0.055, 0.035, 0.72), true)
 	draw_line(rect.position + Vector2(8.0, 8.0), rect.position + Vector2(rect.size.x - 8.0, 8.0), Color(0.95, 0.75, 0.45, 0.18), 1.0)
 	for index in range(4):
 		var y := rect.position.y + 12.0 + float(index) * 14.0
@@ -406,7 +409,7 @@ func _draw_power_cables() -> void:
 		return
 
 	for object_id in interactables_by_id.keys():
-		if object_id == "power_strip":
+		if object_id == "power_strip" or object_id == "light":
 			continue
 
 		var power_key: String = _get_power_key_for_object(object_id)
@@ -433,22 +436,13 @@ func _draw_power_cable(start_position: Vector2, end_position: Vector2, object_id
 			bend_offset = Vector2(58, -8)
 		"fan":
 			bend_offset = Vector2(18, -12)
-		"light":
-			# Route the fluorescent fixture line along the room instead of cutting a
-			# bright diagonal through the play area.
-			points = PackedVector2Array([
-				start_position,
-				Vector2(start_position.x, 410),
-				Vector2(end_position.x, 410),
-				end_position,
-			])
 
 	if points.size() == 0:
 		var bend: Vector2 = midpoint + bend_offset
 		points = PackedVector2Array([start_position, bend, end_position])
 
 	var cable_core: Color = Color("#fff07a") if phase_key == "day" else Color("#ffe066")
-	var cable_alpha := 0.42 if object_id == "light" else 0.62
+	var cable_alpha := 0.62
 	draw_polyline(points, Color(0.18, 0.12, 0.07, cable_alpha), 4.0, true)
 	draw_polyline(points, Color(cable_core.r, cable_core.g, cable_core.b, cable_alpha), 1.4, true)
 	draw_circle(end_position, 3.2, Color(cable_core.r, cable_core.g, cable_core.b, cable_alpha))
