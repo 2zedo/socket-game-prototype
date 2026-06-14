@@ -87,6 +87,10 @@ Target objects:
 - [ ] Room HUD does not show debug-like `전력 테스트 공간`, points, unclear timer, or unrelated survival status bars.
 - [ ] Power strip UI clearly separates daily power budget from current outlet load.
 - [ ] The one-room apartment, power shortage, survival log, and power-panel tone remain visible.
+- [ ] Exploration state shows only room, compact HUD, nearby prompt, and minimal controls.
+- [ ] Interaction state dims the room and uses the right-side info panel plus Yui comment panel.
+- [ ] Multitap state reads as a dark power connection panel, not a separate arcade screen.
+- [ ] Result state reads as `DAY 1 기록` / survival log, not a score results screen.
 
 ## Bug Report Template
 

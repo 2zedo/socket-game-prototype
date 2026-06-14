@@ -13,7 +13,7 @@ const SLOT_GAP := 18.0
 const STRIP_SIZE := Vector2(560, 132)
 const DEVICE_HEIGHT := 108.0
 const BREAKER_SECONDS := 1.4
-const PANEL_SIZE := Vector2(1120, 620)
+const PANEL_SIZE := Vector2(1160, 640)
 
 var survival_state: SurvivalState
 var occupied_slots: Array = []
@@ -89,37 +89,36 @@ func _draw() -> void:
 	if not visible:
 		return
 
-	var center := size * 0.5
 	var panel_rect := _get_panel_rect()
 
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.02, 0.02, 0.025, 0.62), true)
-	draw_rect(panel_rect, Color("#2f3440"), true)
-	draw_rect(panel_rect, Color("#d8cfba"), false, 3.0)
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0.01, 0.01, 0.012, 0.78), true)
+	draw_rect(panel_rect, UIStyle.PANEL, true)
+	draw_rect(panel_rect, UIStyle.LINE_DIM, false, 2.0)
 
-	_draw_text(Vector2(panel_rect.position.x + 28, panel_rect.position.y + 38), "멀티탭 관리", 28, Color("#f5ead2"))
-	_draw_text(Vector2(panel_rect.position.x + 28, panel_rect.position.y + 74), "ESC: 아파트로 돌아가기", 15, Color("#bfb6a0"))
+	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 42), "멀티탭 관리", 28, UIStyle.TEXT)
+	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 78), "ESC: 아파트로 돌아가기", 15, UIStyle.MUTED)
 
 	_draw_power_overview(Vector2(panel_rect.position.x + 28, panel_rect.position.y + 122))
-	_draw_text(Vector2(panel_rect.position.x + 350, panel_rect.position.y + 116), "콘센트", 18, Color("#cfc2a8"))
-	_draw_text(Vector2(panel_rect.position.x + 350, panel_rect.end.y - 156), "연결 가능한 기기", 18, Color("#cfc2a8"))
+	_draw_text(Vector2(panel_rect.position.x + 392, panel_rect.position.y + 118), "콘센트", 18, UIStyle.MUTED)
+	_draw_text(Vector2(panel_rect.position.x + 360, panel_rect.end.y - 164), "연결 가능한 기기", 18, UIStyle.MUTED)
 	_draw_power_strip(_get_strip_center())
 	_draw_devices()
 
-	_draw_text(Vector2(panel_rect.position.x + 28, panel_rect.end.y - 38), status_text, 18, Color("#f5ead2"))
+	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.end.y - 38), status_text, 17, UIStyle.TEXT)
 
 
 func _draw_power_strip(strip_center: Vector2) -> void:
 	var strip_rect := Rect2(strip_center - STRIP_SIZE * 0.5, STRIP_SIZE)
-	draw_rect(strip_rect, Color("#d6c7a8"), true)
-	draw_rect(strip_rect, Color("#3a332c"), false, 3.0)
+	draw_rect(strip_rect, Color("#8d7b59"), true)
+	draw_rect(strip_rect, Color("#2a2118"), false, 3.0)
 
 	for index in range(OUTLET_COUNT):
 		var slot_rect := _get_slot_rect(index)
 		var occupied := occupied_slots[index] != null
-		var fill := Color("#fffaf0") if not occupied else Color("#d59b45")
+		var fill := Color("#d8cfba") if not occupied else Color("#b18a44")
 		fill.a = 1.0 if not occupied else 0.72
 		draw_rect(slot_rect, fill, true)
-		draw_rect(slot_rect, Color("#665d52"), false, 2.0)
+		draw_rect(slot_rect, Color("#3b332a"), false, 2.0)
 		draw_rect(Rect2(slot_rect.get_center() + Vector2(-16, -18), Vector2(7, 27)), Color("#2d2924"), true)
 		draw_rect(Rect2(slot_rect.get_center() + Vector2(10, -18), Vector2(7, 27)), Color("#2d2924"), true)
 		draw_circle(slot_rect.get_center() + Vector2(0, 24), 5.0, Color("#2d2924"))
@@ -128,23 +127,29 @@ func _draw_power_strip(strip_center: Vector2) -> void:
 func _draw_devices() -> void:
 	for device in devices:
 		var rect := _get_device_rect(device)
-		var color: Color = device["color"]
+		var connected := int(device["connected_start"]) >= 0
+		var used := survival_state != null and survival_state.used_day1_actions.has(str(device["key"]))
+		var color: Color = Color(0.12, 0.105, 0.09, 0.95)
+		var border: Color = UIStyle.ELECTRIC if connected else UIStyle.LINE_DIM
 		draw_rect(rect, color, true)
-		draw_rect(rect, Color("#1f1d1a"), false, 2.0)
-		var state_text := "연결됨" if int(device["connected_start"]) >= 0 else "연결 안 됨"
+		draw_rect(rect, border, false, 2.0)
+		var badge_text := "사용 완료" if used else ("연결됨" if connected else "연결 안 됨")
+		var badge_color := UIStyle.SUCCESS if used else (UIStyle.ELECTRIC if connected else UIStyle.MUTED)
+		draw_rect(Rect2(rect.position + Vector2(10, 8), Vector2(72, 20)), Color(0.03, 0.03, 0.026, 0.82), true)
+		_draw_text(rect.position + Vector2(16, 23), badge_text, 11, badge_color)
 		var device_text := "%s\n상태: %s\n소비전력: %dW\n사용 비용: %d\n콘센트: %d칸" % [
 			device["label"],
-			state_text,
+			badge_text,
 			int(device["watts"]),
 			int(device["power_cost"]),
 			int(device["slots"]),
 		]
-		_draw_text(rect.position + Vector2(10, 20), device_text, 13, Color("#1f1d1a"))
+		_draw_text(rect.position + Vector2(10, 46), device_text, 12, UIStyle.TEXT)
 
 		var plug_x := rect.get_center().x
 		if device["slots"] == 2:
 			plug_x = rect.position.x + 22.0 if device["plug_side"] == "left" else rect.end.x - 22.0
-		draw_rect(Rect2(Vector2(plug_x - 12.0, rect.end.y - 4.0), Vector2(24.0, 28.0)), Color("#2f2b25"), true)
+		draw_rect(Rect2(Vector2(plug_x - 10.0, rect.end.y - 3.0), Vector2(20.0, 28.0)), Color("#1c1814"), true)
 
 
 func _draw_power_overview(position: Vector2) -> void:
@@ -159,7 +164,7 @@ func _draw_power_overview(position: Vector2) -> void:
 		"연결은 전력을 소모하지 않습니다.",
 		"방 안에서 기기를 사용할 때만 오늘 전력이 줄어듭니다.",
 	]
-	_draw_text(position, "\n".join(overview), 18, Color("#f5ead2"))
+	_draw_text(position, "\n".join(overview), 18, UIStyle.TEXT)
 
 
 func _draw_text(position: Vector2, text: String, font_size: int, color: Color) -> void:
@@ -356,11 +361,11 @@ func _reset_slots() -> void:
 
 func _create_devices() -> void:
 	devices = [
-		_make_device("light", "조명", 60, 1, 1, 116.0, "center", Color("#d2a85f"), Vector2(350, 550)),
-		_make_device("laptop", "노트북", 1300, 3, 1, 134.0, "center", Color("#486064"), Vector2(520, 550)),
-		_make_device("fan", "선풍기", 900, 2, 1, 116.0, "center", Color("#52a66f"), Vector2(710, 550)),
-		_make_device("charger", "충전기", 20, 2, 1, 116.0, "center", Color("#4f8edb"), Vector2(890, 550)),
-		_make_device("communication_device", "통신 장치", 300, 4, 1, 150.0, "center", Color("#8f6bb3"), Vector2(1050, 550)),
+		_make_device("light", "조명", 60, 1, 1, 126.0, "center", Color("#d2a85f"), Vector2(350, 550)),
+		_make_device("laptop", "노트북", 1300, 3, 1, 142.0, "center", Color("#486064"), Vector2(520, 550)),
+		_make_device("fan", "선풍기", 900, 2, 1, 126.0, "center", Color("#52a66f"), Vector2(710, 550)),
+		_make_device("charger", "충전기", 20, 2, 1, 126.0, "center", Color("#4f8edb"), Vector2(890, 550)),
+		_make_device("communication_device", "통신 장치", 300, 4, 1, 158.0, "center", Color("#8f6bb3"), Vector2(1050, 550)),
 	]
 	_layout_device_homes()
 
@@ -386,7 +391,7 @@ func _layout_device_homes() -> void:
 		return
 
 	var panel_rect := _get_panel_rect()
-	var bottom_y := panel_rect.end.y - 88.0
+	var bottom_y := panel_rect.end.y - 92.0
 	var home_positions := [
 		Vector2(panel_rect.position.x + 390.0, bottom_y),
 		Vector2(panel_rect.position.x + 535.0, bottom_y),

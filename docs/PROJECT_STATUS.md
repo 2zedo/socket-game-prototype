@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Godot DAY 1 MVP implementation started
+- Current phase: Godot DAY 1 MVP visual design pass
 - Current branch: `main`
-- Latest commit at task start: `ca88f0b docs: add upstream sync rule and playtest checklist`
+- Latest commit at task start: `e83aa13 fix: unify power budget and outlet load model`
 
 ## Latest Completed Work
 
@@ -25,13 +25,14 @@
 - Unified the DAY 1 daily power budget with the outlet current-load model
 - Made outlet connection a prerequisite for using DAY 1 power objects
 - Cleaned MVP UI wording away from debug/test labels, unclear timers, and score-like result text
+- Applied DAY 1 Visual Design Pass 1 to move the Godot MVP away from a clay/test-board look
 
 ## Current Goal
 
-- Make the documented DAY 1 power loop playable and understandable in the Godot apartment scene
+- Make the documented DAY 1 power loop playable, understandable, and visually closer to a dark one-room survival adventure
 - Keep implementation focused on keyboard movement, proximity interaction, outlet connection, power display, object use, feedback, and result summary readiness
 - Keep the presentation distinct from generic top-down survival/management games
-- Prepare manual Godot editor testing of the unified power/outlet model
+- Prepare manual Godot editor testing of the unified power/outlet model and first visual pass
 
 ## Not Doing Yet
 
@@ -44,26 +45,30 @@
 
 ## Changed Files
 
-- `godot/scripts/SurvivalState.gd`
-- `godot/scripts/ui/OutletMode.gd`
-- `godot/scripts/Main.gd`
 - `godot/scripts/Apartment.gd`
 - `godot/scripts/Interactable.gd`
+- `godot/scripts/Main.gd`
+- `godot/scripts/SurvivalState.gd`
+- `godot/scripts/ui/UIStyle.gd`
+- `godot/scripts/ui/InteractionPanel.gd`
+- `godot/scripts/ui/OutletMode.gd`
 - `godot/scripts/ui/SurvivalHUD.gd`
 - `godot/scripts/ui/DayResultPanel.gd`
+- `godot/scenes/Main.tscn`
+- `godot/scenes/ui/InteractionPanel.tscn`
+- `godot/scenes/ui/DayResultPanel.tscn`
 - `godot/scenes/ui/SurvivalHUD.tscn`
 - `docs/PROJECT_STATUS.md`
-- `docs/GODOT_DAY1_MVP_PLAN.md`
-- `docs/DAY1_CONTENT_BRIEF.md`
-- `docs/GODOT_PLAYTEST_CHECKLIST.md`
+- `docs/VISUAL_DIRECTION.md`
+- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
 
 ## Validation Results
 
 - `git status --short --branch`: confirmed current branch is `main` before editing
 - `git fetch origin`: updated remote refs before editing
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
-- `git status --short`: checked changed file scope before staging
-- `git diff --stat`: checked Godot/docs-only change scope
+- `git status --short`: checked changed Godot/docs files before staging
+- `git diff --stat`: checked Godot/docs visual pass scope
 - `git diff --check`: passed
 - Godot execution was not run because no `godot`/`godot4` CLI or `/Applications` Godot app was available in this environment
 - Web validation was not run because no web files were changed
@@ -74,6 +79,8 @@
 - Concept images define mood and direction, not exact asset requirements.
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
+- Visual Design Pass 1 uses primitives and placeholder drawing only; final sprites, portraits, lighting, and typography are still future work.
+- Panel spacing and prompt positions need screenshot-based review in the Godot editor.
 - The exploration model is keyboard/top-down and not static point-and-click, but it still needs manual playtesting in Godot.
 - Explicit End Day now exists, but still needs manual playtesting in Godot.
 - Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
@@ -81,6 +88,6 @@
 
 ## Next Recommended Task
 
-- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test the unified power/outlet flow in the Godot editor
+- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test the unified power/outlet flow and Visual Design Pass 1 in the Godot editor
+- Capture screenshots of Exploration, Interaction, Multitap, and Result states and tune layout/readability
 - Fix bugs found during manual playtesting
-- After the checklist passes, move DAY 1 object and outlet data into `.tres` or a data file

@@ -20,6 +20,18 @@ Use the references as mood and design guidance, not as exact implementation requ
 - Use restrained panels, thin borders, icon labels, and readable status blocks.
 - Power choices should feel serious and resource-based, not flashy.
 - Dialogue UI can combine character presence with the room background, but should stay readable and compact for the MVP.
+- Separate UI by state. Exploration, interaction, multitap management, and result summary should not all appear at once.
+- Exploration should show only the room, compact survival/power HUD, nearby prompt, and minimal controls.
+- Interaction should dim the room and show object information plus a short Yui comment.
+- Multitap should read as an in-world power connection panel, not a detached arcade minigame.
+- Result summary should read as a survival log or diary entry, not a scoreboard.
+
+## Visual Design Pass 1 Notes
+
+- The first Godot visual pass uses only primitives, labels, panels, and simple drawn icons.
+- The room should now bias toward a dark one-room apartment: bed, desk/laptop, window, door, shelf, fan, charger, communication device, and power strip.
+- The current implementation still uses placeholders. It is meant to communicate direction, not final art quality.
+- Future passes should refine spacing, sprites, portraits, lighting, and readability after manual Godot screenshots.
 
 ## Color / Tone Direction
 

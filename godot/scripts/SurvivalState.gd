@@ -167,7 +167,8 @@ func get_warning_lines() -> Array[String]:
 
 
 func get_hud_stat_text() -> String:
-	return "DAY 1\n오늘 남은 전력: %d / %d\n사용한 기기: %s" % [
+	return "DAY 1 - %s\n오늘 남은 전력: %d / %d\n사용한 기기: %s" % [
+		get_phase_label(),
 		current_power,
 		max_power,
 		get_used_day1_action_summary(),

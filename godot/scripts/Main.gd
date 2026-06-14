@@ -73,7 +73,7 @@ func _on_nearest_interactable_changed(interactable: ApartmentInteractable) -> vo
 		survival_hud.set_interaction_prompt("")
 		return
 
-	survival_hud.set_interaction_prompt(interactable.get_prompt_text())
+	survival_hud.set_interaction_prompt(interactable.get_prompt_text(), interactable.global_position)
 
 
 func _on_interaction_requested(interactable: ApartmentInteractable) -> void:

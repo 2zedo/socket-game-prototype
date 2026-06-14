@@ -14,7 +14,7 @@ var interactables_by_id: Dictionary = {}
 var powered_device_keys: Array[String] = []
 var phase_key: String = "day"
 
-const ROOM_RECT: Rect2 = Rect2(160, 90, 960, 540)
+const ROOM_RECT: Rect2 = Rect2(185, 68, 930, 586)
 const WALL_THICKNESS: float = 28.0
 
 
@@ -63,19 +63,23 @@ func set_phase(next_phase_key: String) -> void:
 
 
 func _draw() -> void:
-	var room_fill: Color = Color("#9b7047") if phase_key == "day" else Color("#493d43")
-	var floor_fill: Color = Color("#b68858") if phase_key == "day" else Color("#5a4a4d")
-	var wall_color: Color = Color("#5f4128") if phase_key == "day" else Color("#2d3547")
-	var trim_color: Color = Color("#d5ae78") if phase_key == "day" else Color("#7f879a")
+	var wall_color: Color = Color("#171819")
+	var inner_wall: Color = Color("#2a2522")
+	var floor_fill: Color = Color("#3a2a20")
+	var trim_color: Color = Color("#816845")
 
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("#050606"), true)
+	draw_rect(ROOM_RECT.grow(22.0), Color("#12100f"), true)
 	draw_rect(ROOM_RECT, wall_color, true)
-	draw_rect(ROOM_RECT.grow(-12.0), room_fill, true)
-	draw_rect(ROOM_RECT.grow(-28.0), floor_fill, true)
-	if phase_key == "night":
-		draw_rect(ROOM_RECT.grow(-28.0), Color(0.08, 0.12, 0.2, 0.32), true)
-	draw_rect(ROOM_RECT, wall_color, false, 4.0)
-	draw_rect(ROOM_RECT.grow(-18.0), trim_color, false, 1.5)
+	draw_rect(ROOM_RECT.grow(-12.0), inner_wall, true)
+	draw_rect(ROOM_RECT.grow(-48.0), floor_fill, true)
+	_draw_floorboards(ROOM_RECT.grow(-48.0))
+	_draw_room_details()
+	_draw_light_pool()
 	_draw_power_cables()
+	draw_rect(ROOM_RECT, Color("#3f3021"), false, 5.0)
+	draw_rect(ROOM_RECT.grow(-12.0), trim_color, false, 1.2)
+	draw_rect(ROOM_RECT.grow(-48.0), Color(0.02, 0.018, 0.015, 0.28), false, 2.0)
 
 
 func _build_room_collision() -> void:
@@ -87,7 +91,7 @@ func _build_room_collision() -> void:
 
 func _spawn_player() -> void:
 	player = player_scene.instantiate() as Player
-	player.position = Vector2(640, 500)
+	player.position = Vector2(610, 390)
 	add_child(player)
 
 
@@ -96,11 +100,12 @@ func _spawn_placeholder_furniture() -> void:
 		"id": "power_strip",
 		"name": "멀티탭",
 		"title": "멀티탭",
-		"body": "전력 선택의 핵심 자리입니다.\n다음 단계에서 기존 콘센트 미니게임을 이곳에 연결합니다.",
-		"position": Vector2(650, 330),
-		"size": Vector2(170, 54),
-		"color": Color("#d6c7a8"),
+		"body": "방 안 기기들의 전원을 연결하는 낡은 멀티탭입니다.",
+		"position": Vector2(710, 475),
+		"size": Vector2(150, 44),
+		"color": Color("#6f614e"),
 		"outline_color": Color("#ffe6a3"),
+		"prompt_text": "[E] 멀티탭 관리",
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -108,9 +113,9 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": Vector2(850, 200),
-		"size": Vector2(70, 70),
-		"color": Color("#d2a85f"),
+		"position": Vector2(520, 215),
+		"size": Vector2(62, 78),
+		"color": Color("#a8894e"),
 		"power_units": 1,
 		"day1_action_key": "light",
 		"label_offset": Vector2.ZERO,
@@ -120,9 +125,9 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": Vector2(455, 330),
-		"size": Vector2(82, 58),
-		"color": Color("#4f8edb"),
+		"position": Vector2(605, 292),
+		"size": Vector2(72, 44),
+		"color": Color("#4e5e67"),
 		"power_units": 2,
 		"day1_action_key": "charger",
 		"label_offset": Vector2.ZERO,
@@ -132,9 +137,9 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "선풍기",
 		"title": "선풍기",
 		"body": "더위를 낮출 수 있습니다.\n하지만 켜두면 다른 장치를 꽂을 여유가 줄어듭니다.",
-		"position": Vector2(650, 190),
-		"size": Vector2(82, 82),
-		"color": Color("#52a66f"),
+		"position": Vector2(855, 245),
+		"size": Vector2(78, 90),
+		"color": Color("#53645b"),
 		"power_units": 2,
 		"day1_action_key": "fan",
 		"label_offset": Vector2.ZERO,
@@ -144,9 +149,9 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": Vector2(650, 480),
-		"size": Vector2(110, 70),
-		"color": Color("#486064"),
+		"position": Vector2(610, 230),
+		"size": Vector2(112, 62),
+		"color": Color("#3b4748"),
 		"power_units": 3,
 		"day1_action_key": "laptop",
 		"label_offset": Vector2.ZERO,
@@ -156,9 +161,9 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "통신 장치",
 		"title": "통신 장치",
 		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
-		"position": Vector2(850, 330),
-		"size": Vector2(124, 72),
-		"color": Color("#8f6bb3"),
+		"position": Vector2(970, 335),
+		"size": Vector2(118, 70),
+		"color": Color("#5e5368"),
 		"power_units": 4,
 		"day1_action_key": "communication_device",
 		"label_offset": Vector2.ZERO,
@@ -168,9 +173,9 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "침대",
 		"title": "오늘을 마친다",
 		"body": "더 할 일을 정리하고 오늘 하루를 마칠 수 있습니다.",
-		"position": Vector2(340, 430),
-		"size": Vector2(150, 82),
-		"color": Color("#7c6b5b"),
+		"position": Vector2(350, 455),
+		"size": Vector2(178, 112),
+		"color": Color("#5a5047"),
 		"interaction_type": "end_day",
 		"prompt_text": "[E] 하루 마치기",
 		"label_offset": Vector2.ZERO,
@@ -236,6 +241,89 @@ func _update_nearest_interactable() -> void:
 
 func _draw_label(position: Vector2, text: String, color: Color = Color("#d8cfba")) -> void:
 	draw_string(ThemeDB.fallback_font, position, text, HORIZONTAL_ALIGNMENT_LEFT, 520.0, 16, color)
+
+
+func _draw_floorboards(rect: Rect2) -> void:
+	for index in range(13):
+		var y := rect.position.y + 28.0 + float(index) * 34.0
+		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.12, 0.085, 0.055, 0.38), 1.0)
+	for index in range(9):
+		var x := rect.position.x + 42.0 + float(index) * 92.0
+		draw_line(Vector2(x, rect.position.y), Vector2(x, rect.end.y), Color(0.08, 0.06, 0.04, 0.18), 1.0)
+
+
+func _draw_room_details() -> void:
+	var floor_rect := ROOM_RECT.grow(-48.0)
+	_draw_window(Rect2(Vector2(270, 104), Vector2(190, 92)))
+	_draw_desk(Rect2(Vector2(500, 238), Vector2(205, 70)))
+	_draw_shelf(Rect2(Vector2(760, 120), Vector2(92, 150)))
+	_draw_door(Rect2(Vector2(1004, 142), Vector2(70, 154)))
+	_draw_rug(Rect2(Vector2(545, 406), Vector2(210, 92)))
+	_draw_small_clutter(floor_rect)
+
+
+func _draw_window(rect: Rect2) -> void:
+	draw_rect(rect, Color("#0c1217"), true)
+	draw_rect(rect, Color("#5f513d"), false, 3.0)
+	draw_line(Vector2(rect.get_center().x, rect.position.y), Vector2(rect.get_center().x, rect.end.y), Color("#332b23"), 2.0)
+	draw_line(Vector2(rect.position.x, rect.get_center().y), Vector2(rect.end.x, rect.get_center().y), Color("#332b23"), 2.0)
+	for index in range(9):
+		var x := rect.position.x + 22.0 + float(index) * 16.0
+		draw_circle(Vector2(x, rect.end.y - 22.0 - float(index % 3) * 9.0), 2.0, Color(0.95, 0.68, 0.34, 0.32))
+	draw_rect(Rect2(rect.position + Vector2(-6, 0), Vector2(rect.size.x + 12, 18)), Color(0.08, 0.07, 0.06, 0.82), true)
+	for index in range(5):
+		var y := rect.position.y + 18.0 + float(index) * 12.0
+		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.5, 0.45, 0.36, 0.22), 1.0)
+
+
+func _draw_desk(rect: Rect2) -> void:
+	draw_rect(rect, Color("#4a3627"), true)
+	draw_rect(rect, Color("#7a6242"), false, 2.0)
+	draw_rect(Rect2(rect.position + Vector2(16, 10), Vector2(34, 22)), Color("#262522"), true)
+	draw_rect(Rect2(rect.end - Vector2(62, 44), Vector2(36, 30)), Color("#2a211a"), true)
+	draw_circle(rect.position + Vector2(152, 26), 7.0, Color("#786b58"))
+
+
+func _draw_shelf(rect: Rect2) -> void:
+	draw_rect(rect, Color("#2b211a"), true)
+	draw_rect(rect, Color("#5b4933"), false, 2.0)
+	for index in range(4):
+		var y := rect.position.y + 28.0 + float(index) * 30.0
+		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color("#51412f"), 2.0)
+	for index in range(7):
+		var item_rect := Rect2(rect.position + Vector2(10 + float(index % 3) * 24.0, 12 + float(index / 3) * 38.0), Vector2(14, 22))
+		draw_rect(item_rect, Color("#6b5840").darkened(float(index % 2) * 0.18), true)
+
+
+func _draw_door(rect: Rect2) -> void:
+	draw_rect(rect, Color("#1b2224"), true)
+	draw_rect(rect, Color("#5d4c36"), false, 2.0)
+	draw_rect(Rect2(rect.position + Vector2(13, 34), Vector2(44, 28)), Color("#26343a"), true)
+	draw_circle(rect.position + Vector2(56, 86), 3.0, Color("#b6985b"))
+
+
+func _draw_rug(rect: Rect2) -> void:
+	draw_rect(rect, Color(0.12, 0.15, 0.13, 0.62), true)
+	draw_rect(rect, Color(0.44, 0.37, 0.25, 0.4), false, 1.0)
+
+
+func _draw_small_clutter(_floor_rect: Rect2) -> void:
+	var boxes := [
+		Rect2(Vector2(905, 475), Vector2(48, 34)),
+		Rect2(Vector2(940, 515), Vector2(38, 48)),
+		Rect2(Vector2(440, 520), Vector2(42, 32)),
+		Rect2(Vector2(835, 515), Vector2(54, 34)),
+	]
+	for rect in boxes:
+		draw_rect(rect, Color("#2b241e"), true)
+		draw_rect(rect, Color("#594633"), false, 1.0)
+
+
+func _draw_light_pool() -> void:
+	var center := Vector2(560, 250)
+	for index in range(6, 0, -1):
+		var alpha := 0.018 * float(index)
+		draw_circle(center, 58.0 * float(index), Color(0.92, 0.67, 0.32, alpha))
 
 
 func _draw_power_cables() -> void:

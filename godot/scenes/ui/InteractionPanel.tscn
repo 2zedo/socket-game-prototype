@@ -13,36 +13,71 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_panel")
 
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.018, 0.016, 0.58)
+
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 0
-offset_left = 390.0
-offset_top = 210.0
-offset_right = 890.0
-offset_bottom = 510.0
+offset_left = 850.0
+offset_top = 78.0
+offset_right = 1260.0
+offset_bottom = 420.0
 
 [node name="TitleLabel" type="Label" parent="Panel"]
 layout_mode = 0
 offset_left = 26.0
 offset_top = 26.0
-offset_right = 474.0
+offset_right = 384.0
 offset_bottom = 62.0
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 24
 
 [node name="BodyLabel" type="Label" parent="Panel"]
 layout_mode = 0
 offset_left = 26.0
-offset_top = 86.0
-offset_right = 474.0
-offset_bottom = 220.0
-theme_override_font_sizes/font_size = 18
+offset_top = 82.0
+offset_right = 384.0
+offset_bottom = 262.0
+theme_override_font_sizes/font_size = 15
 autowrap_mode = 2
 
 [node name="FooterLabel" type="Label" parent="Panel"]
 layout_mode = 0
 offset_left = 26.0
-offset_top = 246.0
-offset_right = 474.0
-offset_bottom = 276.0
+offset_top = 282.0
+offset_right = 384.0
+offset_bottom = 318.0
 theme_override_colors/font_color = Color(0.7, 0.65, 0.56, 1)
 theme_override_font_sizes/font_size = 15
 text = "E 또는 ESC: 닫기"
+
+[node name="DialoguePanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 560.0
+offset_right = 1080.0
+offset_bottom = 676.0
+
+[node name="SpeakerLabel" type="Label" parent="DialoguePanel"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 18.0
+offset_right = 118.0
+offset_bottom = 42.0
+theme_override_font_sizes/font_size = 17
+text = "유이"
+
+[node name="DialogueLabel" type="Label" parent="DialoguePanel"]
+layout_mode = 0
+offset_left = 124.0
+offset_top = 18.0
+offset_right = 790.0
+offset_bottom = 96.0
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2

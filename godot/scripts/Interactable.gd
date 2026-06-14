@@ -20,8 +20,8 @@ var is_powered: bool = false
 var phase_key: String = "day"
 
 const LABEL_HEIGHT: float = 18.0
-const LABEL_FONT_SIZE: int = 12
-const STATUS_FONT_SIZE: int = 12
+const LABEL_FONT_SIZE: int = 11
+const STATUS_FONT_SIZE: int = 11
 
 
 func setup(config: Dictionary) -> void:
@@ -66,7 +66,10 @@ func get_prompt_text() -> String:
 	if prompt_text != "":
 		return prompt_text
 
-	return "[E] 상호작용: %s" % display_name
+	if day1_action_key != "":
+		return "[E] %s 사용" % display_name
+
+	return "[E] %s" % display_name
 
 
 func set_powered(is_active: bool) -> void:
@@ -97,28 +100,29 @@ func _update_collision_shape() -> void:
 
 func _draw() -> void:
 	var rect: Rect2 = Rect2(-body_size * 0.5, body_size)
-	var powered_lighten: float = 0.34 if phase_key == "night" else 0.24
-	var inactive_darken: float = 0.24 if phase_key == "night" else 0.14
+	var powered_lighten: float = 0.22 if phase_key == "night" else 0.16
+	var inactive_darken: float = 0.36 if phase_key == "night" else 0.24
 	var fill_color: Color = body_color.lightened(powered_lighten) if is_powered else body_color.darkened(inactive_darken)
-	var active_outline: Color = Color("#ffe066") if is_powered else outline_color
-	var normal_outline: Color = Color("#5a3a22") if phase_key == "day" else Color("#8b8fa3")
+	var active_outline: Color = Color("#d6aa4c") if is_powered else outline_color
+	var normal_outline: Color = Color("#493724") if phase_key == "day" else Color("#76634b")
 	var outline: Color = active_outline if is_powered else normal_outline
 
 	# The SpriteAnchor child is intentionally empty for now. Future sprite nodes can
 	# replace this rectangle without changing interaction or powered-state logic.
 	if is_powered:
-		var glow_alpha: float = 0.28 if phase_key == "night" else 0.18
-		draw_rect(rect.grow(6.0), Color(1.0, 0.86, 0.22, glow_alpha), true)
+		var glow_alpha: float = 0.18 if phase_key == "night" else 0.12
+		draw_rect(rect.grow(8.0), Color(0.95, 0.68, 0.24, glow_alpha), true)
 
 	_draw_icon(rect, fill_color, outline)
 
 	var label_width: float = maxf(body_size.x + 56.0, 120.0)
 	var label_position: Vector2 = Vector2(-label_width * 0.5, -body_size.y * 0.5 - LABEL_HEIGHT + 2.0) + label_offset
-	draw_string(ThemeDB.fallback_font, label_position, display_name, HORIZONTAL_ALIGNMENT_CENTER, label_width, LABEL_FONT_SIZE, Color("#f8ecd2"))
+	draw_rect(Rect2(label_position + Vector2(8.0, -1.0), Vector2(label_width - 16.0, 16.0)), Color(0.02, 0.02, 0.018, 0.58), true)
+	draw_string(ThemeDB.fallback_font, label_position, display_name, HORIZONTAL_ALIGNMENT_CENTER, label_width, LABEL_FONT_SIZE, Color("#eadfca"))
 
 	if power_watts > 0 or power_units > 0:
 		var state_text: String = "연결됨" if is_powered else "전원 없음"
-		var state_color: Color = Color("#ffe066") if is_powered else Color("#5f4b39")
+		var state_color: Color = Color("#d6aa4c") if is_powered else Color("#8d806c")
 		var status_position: Vector2 = Vector2(-label_width * 0.5, body_size.y * 0.5 + 16.0)
 		draw_string(ThemeDB.fallback_font, status_position, state_text, HORIZONTAL_ALIGNMENT_CENTER, label_width, STATUS_FONT_SIZE, state_color)
 
@@ -129,6 +133,12 @@ func _draw_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
 			_draw_fan_icon(rect, fill_color, outline)
 		"charger":
 			_draw_charger_icon(rect, fill_color, outline)
+		"light":
+			_draw_light_icon(rect, fill_color, outline)
+		"communication_device":
+			_draw_communication_icon(rect, fill_color, outline)
+		"bed":
+			_draw_bed_icon(rect, fill_color, outline)
 		"power_strip":
 			_draw_power_strip_icon(rect, fill_color, outline)
 		"microwave":
@@ -176,6 +186,35 @@ func _draw_power_strip_icon(rect: Rect2, fill_color: Color, outline: Color) -> v
 		draw_circle(socket_center, 9.0, Color("#f6ead6"))
 		draw_circle(socket_center + Vector2(-3.0, 0.0), 1.7, outline)
 		draw_circle(socket_center + Vector2(3.0, 0.0), 1.7, outline)
+
+
+func _draw_light_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
+	var cord_top := rect.position + Vector2(rect.size.x * 0.5, 0.0)
+	var shade_rect := Rect2(rect.position + Vector2(rect.size.x * 0.23, rect.size.y * 0.3), Vector2(rect.size.x * 0.54, rect.size.y * 0.32))
+	draw_line(cord_top, shade_rect.position + Vector2(shade_rect.size.x * 0.5, 0), outline, 2.0, true)
+	draw_rect(shade_rect, fill_color, true)
+	draw_rect(shade_rect, outline, false, 2.0)
+	draw_circle(shade_rect.get_center() + Vector2(0, shade_rect.size.y * 0.62), 5.0, Color("#d6aa4c"))
+
+
+func _draw_communication_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
+	var body: Rect2 = rect.grow(-10.0)
+	draw_rect(body, fill_color, true)
+	draw_rect(body, outline, false, 2.0)
+	for index in range(3):
+		draw_circle(body.position + Vector2(16.0 + float(index) * 16.0, 18.0), 3.0, Color("#d6aa4c"))
+	draw_line(body.position + Vector2(body.size.x - 18.0, 12.0), body.position + Vector2(body.size.x - 4.0, -16.0), outline, 2.0, true)
+	draw_line(body.position + Vector2(16.0, body.size.y - 16.0), body.position + Vector2(body.size.x - 16.0, body.size.y - 16.0), outline, 2.0, true)
+
+
+func _draw_bed_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
+	draw_rect(rect, fill_color.darkened(0.12), true)
+	draw_rect(rect, outline, false, 2.0)
+	var pillow := Rect2(rect.position + Vector2(12.0, 12.0), Vector2(rect.size.x * 0.28, rect.size.y - 24.0))
+	draw_rect(pillow, Color("#655b51"), true)
+	var blanket := Rect2(rect.position + Vector2(rect.size.x * 0.34, 10.0), Vector2(rect.size.x * 0.58, rect.size.y - 20.0))
+	draw_rect(blanket, Color("#4b443e"), true)
+	draw_line(blanket.position + Vector2(0, 16), blanket.end - Vector2(0, 16), Color(0.9, 0.82, 0.68, 0.18), 1.0)
 
 
 func _draw_microwave_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
