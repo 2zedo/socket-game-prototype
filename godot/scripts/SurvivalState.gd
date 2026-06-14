@@ -30,7 +30,7 @@ const DAY1_ACTIONS: Dictionary = {
 		"label": "노트북",
 		"cost": 3,
 		"watt_usage": 1300,
-		"outlet_size": 1,
+		"outlet_size": 2,
 		"requires_connection": true,
 		"flag": "checked_laptop",
 		"power_key": "laptop",
@@ -63,7 +63,7 @@ const DAY1_ACTIONS: Dictionary = {
 		"label": "통신 장치",
 		"cost": 4,
 		"watt_usage": 300,
-		"outlet_size": 1,
+		"outlet_size": 2,
 		"requires_connection": true,
 		"flag": "sent_or_received_signal",
 		"power_key": "communication_device",
@@ -167,7 +167,8 @@ func get_warning_lines() -> Array[String]:
 
 
 func get_hud_stat_text() -> String:
-	return "DAY 1 - %s\n\n오늘 남은 전력\n⚡ %d / %d  %s\n\n사용한 기기\n%s" % [
+	return "DAY %d - %s\n\n오늘 남은 전력\n⚡ %d / %d  %s\n\n사용한 기기\n%s" % [
+		day,
 		get_phase_label(),
 		current_power,
 		max_power,
@@ -469,14 +470,11 @@ func _apply_day1_action_effect(action_key: String) -> void:
 func _reset_day1_power_loop() -> void:
 	current_power_units = DAY1_STARTING_POWER_UNITS
 	current_power = current_power_units
-	current_load_watts = 0
-	current_power_watts = 0
-	used_outlet_slots = 0
-	powered_devices.clear()
 	used_day1_actions.clear()
 	day1_flags.clear()
 	day1_day_ended = false
 	last_day1_message = ""
+	_recalculate_outlet_state()
 
 
 func _recalculate_outlet_state() -> void:

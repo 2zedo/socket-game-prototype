@@ -20,6 +20,7 @@ const WALL_THICKNESS: float = 28.0
 
 func _ready() -> void:
 	_build_room_collision()
+	_add_environment_blockers()
 	_spawn_placeholder_furniture()
 	_spawn_player()
 	queue_redraw()
@@ -125,7 +126,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": Vector2(605, 292),
+		"position": Vector2(918, 500),
 		"size": Vector2(72, 44),
 		"color": Color("#4e5e67"),
 		"power_units": 2,
@@ -215,6 +216,14 @@ func _add_furniture_blocker(center: Vector2, size: Vector2) -> void:
 	blocker.position = center
 	blocker.add_child(shape)
 	add_child(blocker)
+
+
+func _add_environment_blockers() -> void:
+	# Non-interactive room features still need small blockers so the top-down
+	# movement reads as an apartment floor, not a board the player can cross.
+	_add_furniture_blocker(Vector2(1039, 219), Vector2(72, 154))
+	_add_furniture_blocker(Vector2(806, 195), Vector2(92, 150))
+	_add_furniture_blocker(Vector2(365, 144), Vector2(190, 38))
 
 
 func _update_nearest_interactable() -> void:
@@ -350,12 +359,25 @@ func _draw_power_cables() -> void:
 		if interactable == null:
 			continue
 
-		_draw_power_cable(power_strip.position, interactable.position)
+		_draw_power_cable(power_strip.position, interactable.position, object_id)
 
 
-func _draw_power_cable(start_position: Vector2, end_position: Vector2) -> void:
+func _draw_power_cable(start_position: Vector2, end_position: Vector2, object_id: String) -> void:
 	var midpoint: Vector2 = (start_position + end_position) * 0.5
-	var bend: Vector2 = midpoint + Vector2(0, 26)
+	var bend_offset := Vector2(0, 28)
+	match object_id:
+		"laptop":
+			bend_offset = Vector2(-18, 18)
+		"charger":
+			bend_offset = Vector2(36, 8)
+		"communication_device":
+			bend_offset = Vector2(58, -8)
+		"fan":
+			bend_offset = Vector2(18, -12)
+		"light":
+			bend_offset = Vector2(-36, -8)
+
+	var bend: Vector2 = midpoint + bend_offset
 	var points: PackedVector2Array = PackedVector2Array([start_position, bend, end_position])
 	var cable_core: Color = Color("#fff07a") if phase_key == "day" else Color("#ffe066")
 	draw_polyline(points, Color(0.18, 0.12, 0.07, 0.55), 5.0, true)

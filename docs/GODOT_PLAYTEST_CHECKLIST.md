@@ -36,6 +36,10 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] Opening the power strip shows `콘센트: 0 / 4` before any device is connected.
 - [ ] Connecting a device increases current load watts.
 - [ ] Connecting a device increases used outlet slots.
+- [ ] Laptop uses 2 outlet slots.
+- [ ] Communication Device uses 2 outlet slots.
+- [ ] Laptop + Communication Device fills `4 / 4` slots.
+- [ ] Laptop + Light + Charger fills `4 / 4` slots.
 - [ ] Connecting a device does not decrease today's remaining power.
 - [ ] Disconnecting a device decreases current load watts and used outlet slots.
 - [ ] A device that would exceed load or slot limits cannot be connected.
@@ -77,6 +81,7 @@ Target objects:
 - [ ] Summary shows used objects.
 - [ ] Summary shows discovered information.
 - [ ] Summary shows simple state changes.
+- [ ] Connected device visuals remain synced in the room after continuing to the next day.
 
 ## Visual Direction Check
 

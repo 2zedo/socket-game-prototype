@@ -63,10 +63,10 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 Temporary DAY 1 device data:
 
 - Light: `60W`, `1` outlet slot, use cost `1`
-- Laptop: `1300W`, `1` outlet slot, use cost `3`
+- Laptop: `1300W`, `2` outlet slots, use cost `3`
 - Fan: `900W`, `1` outlet slot, use cost `2`
 - Charger: `20W`, `1` outlet slot, use cost `2`
-- Communication device: `300W`, `1` outlet slot, use cost `4`
+- Communication device: `300W`, `2` outlet slots, use cost `4`
 
 ## Minimum Flags / State To Track
 
@@ -88,6 +88,7 @@ Temporary DAY 1 device data:
 
 - `SurvivalState.gd` now owns temporary DAY 1 power units, object costs, use flags, and result-summary data.
 - `SurvivalState.gd` now treats outlet connection state as the prerequisite for DAY 1 object use.
+- `SurvivalState.gd` is the source of truth for outlet slot sizes; Laptop and Communication device currently occupy `2` slots each.
 - `OutletMode.gd` is the connection/load panel: it changes current load watts and outlet slots, but it does not spend today's power.
 - `Apartment.gd` now exposes the five DAY 1 interactables: Light, Laptop, Fan, Charger, and Communication device.
 - `Player.gd` and `project.godot` already support keyboard top-down movement through WASD and arrow input actions.

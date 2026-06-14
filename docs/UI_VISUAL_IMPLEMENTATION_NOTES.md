@@ -8,6 +8,10 @@ This pass reshapes the Godot DAY 1 MVP from a test-board layout toward a dark on
 
 This pass responds to in-editor screenshots from Visual Design Pass 1. It keeps the same systems, but reduces the remaining primitive/test-board feeling in the room, HUD, prompts, interaction panel, multitap overlay, and result screen.
 
+## DAY 1 Visual Pass 3
+
+This pass responds to in-editor screenshots showing multitap card overlap, unclear slot occupancy, next-day connection visual desync, and remaining room-layout roughness.
+
 ## Improved Screens
 
 - Exploration: darker apartment frame, lived-in room layout, weaker warm light, clearer object placement, smaller proximity prompt.
@@ -24,6 +28,15 @@ This pass responds to in-editor screenshots from Visual Design Pass 1. It keeps 
 - Interaction: added internal panel dividers, button-like `E`/`ESC` controls, lighter dim strength, and a Yui portrait placeholder in the dialogue panel.
 - Multitap: shifted to a clearer two-column card layout, darkened outlet slots, simplified card text, and separated status memo text from the device cards.
 - Result: widened the record panel, split content into survival-record sections, added a snapshot placeholder, and styled the `SPACE` footer as a button.
+
+## Pass 3 Adjustments
+
+- Multitap: separated connected-device cards from outlet slots; slots now show only occupancy highlights and small device labels.
+- Slot data: Laptop and Communication device use `2` outlet slots, with `SurvivalState.gd` as the source of truth.
+- Sync: continuing to the next day preserves powered devices and recalculates room visual connection state from `SurvivalState`.
+- Room layout: moved the charger away from the laptop desk area and added blockers for non-interactive door/shelf/window features.
+- Cable readability: adjusted cable bends per connected object to reduce visual tangling.
+- Asset preparation: added folders for environment art, object art, portraits, UI icons, panel skins, fonts, themes, and future device data.
 
 ## Common UI Style
 
@@ -44,6 +57,7 @@ This pass responds to in-editor screenshots from Visual Design Pass 1. It keeps 
 - Interaction and result panels reserve space for later portrait, item art, and room snapshot art, but no final art is included.
 - No external art assets were imported.
 - Multitap cards still use drawn rectangles and text rather than final device illustrations.
+- Asset folders are prepared but contain only `.gitkeep` placeholders.
 
 ## Next Visual Tasks
 
@@ -53,3 +67,4 @@ This pass responds to in-editor screenshots from Visual Design Pass 1. It keeps 
 - Add subtle Light2D/CanvasModulate if it does not hurt readability.
 - Move device/object presentation data into resources after the loop is manually validated.
 - Continue screenshot-based spacing checks for the multitap overlay and result screen at the target resolution.
+- Start replacing the highest-impact placeholders with controlled in-repo art assets once the slot/connect flow is stable.
