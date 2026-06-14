@@ -20,6 +20,10 @@ This pass applies the first repo-local PNG assets to the existing Godot DAY 1 MV
 
 This pass replaces the single Yui player texture with directional idle/walk sprite animations while preserving the existing `CharacterBody2D`, collision shape, movement input, and proximity interaction behavior.
 
+## PNG Layout Normalization Pass
+
+This pass responds to latest in-editor screenshots after transparent PNG replacement. It keeps gameplay logic unchanged and focuses on visual scale, position, pivot, z-order, world/UI display separation, and multitap card layout stability.
+
 ## Improved Screens
 
 - Exploration: darker apartment frame, lived-in room layout, weaker warm light, clearer object placement, smaller proximity prompt.
@@ -29,6 +33,7 @@ This pass replaces the single Yui player texture with directional idle/walk spri
 - Result: survival record wording and diary/log tone instead of score-board presentation.
 - P0 art pass: applies PNGs to the player, portrait, room underlay, key interactables, fluorescent glow, HUD power icon, interaction/dialogue backplates, multitap slots, plugs, and connection badges.
 - Yui animation pass: adds directional idle/walk player visuals so Yui changes sprite by movement direction without changing gameplay logic.
+- PNG layout normalization: centralizes object display rules, enlarges Yui's visual-only sprite scale, separates world-scale values from future UI-preview values, and moves multitap device cards into a stable grid.
 
 ## Pass 2 Adjustments
 
@@ -75,6 +80,16 @@ This pass replaces the single Yui player texture with directional idle/walk spri
 - The old `yui_player_idle_back.png` remains as a fallback texture.
 - Direction uses the stronger movement axis; diagonal movement stays 4-directional for this MVP pass.
 
+## PNG Layout Normalization Adjustments
+
+- `Interactable.gd` now owns per-object presentation rules for `world_size`, `world_offset`, `ui_preview_size`, and `z_index`.
+- World display scale and UI preview scale are separated so object PNGs can be tuned differently in the room and in later detail panels.
+- Yui's `AnimatedSprite2D` visual scale was increased while keeping the existing collision shape and interaction range.
+- Laptop, charger, fan, and communication-device positions/collision sizes were nudged to sit more naturally in the room layout.
+- Multitap cards now use a consistent width/height, two-column grid spacing, larger badge padding, and smaller plug tails.
+- The outlet slot area now shows occupancy and small labels instead of trying to place detailed cards directly over the slots.
+- `comm_device_off.png` and `comm_device_on.png` still appear to be RGB/no-alpha files, so the room display keeps the primitive fallback until those PNGs are re-exported with transparency.
+
 ## Common UI Style
 
 - Added `godot/scripts/ui/UIStyle.gd` for shared colors and simple panel styles.
@@ -99,6 +114,7 @@ This pass replaces the single Yui player texture with directional idle/walk spri
 
 - Replace remaining furniture primitives with controlled object sprites or simple `.tscn` object scenes.
 - Tune PNG scale/position and Yui animation pivot after in-editor screenshots.
+- Re-export communication device PNGs with an alpha channel if they should appear as world sprites.
 - Tighten panel spacing after in-editor screenshot review.
 - Add subtle Light2D/CanvasModulate if it does not hurt readability.
 - Move device/object presentation data into resources after the loop is manually validated.

@@ -110,7 +110,7 @@ func _build_room_collision() -> void:
 
 func _spawn_player() -> void:
 	player = player_scene.instantiate() as Player
-	player.position = Vector2(610, 390)
+	player.position = Vector2(610, 392)
 	add_child(player)
 
 
@@ -144,8 +144,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": Vector2(918, 500),
-		"size": Vector2(72, 44),
+		"position": Vector2(922, 505),
+		"size": Vector2(68, 42),
 		"color": Color("#4e5e67"),
 		"power_units": 2,
 		"day1_action_key": "charger",
@@ -156,8 +156,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "선풍기",
 		"title": "선풍기",
 		"body": "더위를 낮출 수 있습니다.\n하지만 켜두면 다른 장치를 꽂을 여유가 줄어듭니다.",
-		"position": Vector2(855, 245),
-		"size": Vector2(78, 90),
+		"position": Vector2(850, 254),
+		"size": Vector2(76, 88),
 		"color": Color("#53645b"),
 		"power_units": 2,
 		"day1_action_key": "fan",
@@ -168,8 +168,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": Vector2(610, 230),
-		"size": Vector2(112, 62),
+		"position": Vector2(610, 232),
+		"size": Vector2(108, 58),
 		"color": Color("#3b4748"),
 		"power_units": 3,
 		"day1_action_key": "laptop",
@@ -180,8 +180,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "통신 장치",
 		"title": "통신 장치",
 		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
-		"position": Vector2(970, 335),
-		"size": Vector2(118, 70),
+		"position": Vector2(980, 342),
+		"size": Vector2(104, 64),
 		"color": Color("#5e5368"),
 		"power_units": 4,
 		"day1_action_key": "communication_device",

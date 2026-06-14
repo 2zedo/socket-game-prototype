@@ -8,10 +8,13 @@ signal breaker_tripped
 
 const MAX_POWER_WATTS := SurvivalState.DAY1_MAX_LOAD_WATTS
 const OUTLET_COUNT := SurvivalState.DAY1_MAX_OUTLET_SLOTS
-const SLOT_SIZE := Vector2(82, 62)
-const SLOT_GAP := 14.0
-const STRIP_SIZE := Vector2(472, 108)
-const DEVICE_HEIGHT := 68.0
+const SLOT_SIZE := Vector2(72, 54)
+const SLOT_GAP := 18.0
+const STRIP_SIZE := Vector2(430, 98)
+const DEVICE_WIDTH := 300.0
+const DEVICE_HEIGHT := 60.0
+const DEVICE_COLUMN_GAP := 338.0
+const DEVICE_ROW_GAP := 74.0
 const BREAKER_SECONDS := 1.4
 const PANEL_SIZE := Vector2(1160, 640)
 
@@ -99,9 +102,9 @@ func _draw() -> void:
 	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 78), "ESC: 아파트로 돌아가기", 15, UIStyle.MUTED)
 
 	_draw_power_overview(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 126))
-	_draw_text(Vector2(panel_rect.position.x + 500, panel_rect.position.y + 124), "콘센트 슬롯", 18, UIStyle.MUTED)
-	_draw_text(Vector2(panel_rect.position.x + 500, panel_rect.position.y + 300), "연결된 기기", 18, UIStyle.MUTED)
-	_draw_text(Vector2(panel_rect.position.x + 500, panel_rect.position.y + 456), "연결 가능한 기기", 18, UIStyle.MUTED)
+	_draw_text(Vector2(panel_rect.position.x + 520, panel_rect.position.y + 124), "콘센트 슬롯", 18, UIStyle.MUTED)
+	_draw_text(Vector2(panel_rect.position.x + 520, panel_rect.position.y + 296), "연결된 기기", 18, UIStyle.MUTED)
+	_draw_text(Vector2(panel_rect.position.x + 520, panel_rect.position.y + 454), "연결 가능한 기기", 18, UIStyle.MUTED)
 	_draw_power_strip(_get_strip_center())
 	_draw_devices()
 
@@ -146,7 +149,8 @@ func _draw_connected_slot_labels() -> void:
 		draw_rect(group_rect.grow(6.0), Color(0.92, 0.66, 0.23, 0.13), true)
 		draw_texture_rect(plug_texture, group_rect.grow(10.0), false, Color(1, 1, 1, 0.78))
 		draw_rect(group_rect.grow(6.0), UIStyle.ELECTRIC, false, 1.4)
-		_draw_text(group_rect.position + Vector2(4.0, group_rect.size.y + 21.0), str(device["label"]), 11, UIStyle.MUTED)
+		var label_position := Vector2(group_rect.get_center().x - 34.0, group_rect.end.y + 18.0)
+		_draw_text(label_position, str(device["label"]), 10, UIStyle.MUTED)
 
 
 func _draw_devices() -> void:
@@ -160,23 +164,23 @@ func _draw_devices() -> void:
 		draw_rect(rect, border, false, 2.0)
 		var badge_text := "사용 완료" if used else ("연결됨" if connected else "연결 안 됨")
 		var badge_color := UIStyle.SUCCESS if used else (UIStyle.ELECTRIC if connected else UIStyle.MUTED)
-		var badge_rect := Rect2(rect.position + Vector2(12, 10), Vector2(76, 20))
+		var badge_rect := Rect2(rect.position + Vector2(12, 9), Vector2(92, 20))
 		var badge_texture := AssetPaths.BADGE_CONNECTED if connected else AssetPaths.BADGE_DISCONNECTED
 		draw_texture_rect(badge_texture, badge_rect, false, Color(1, 1, 1, 0.78))
 		draw_rect(badge_rect, Color(0.03, 0.03, 0.026, 0.52), true)
-		_draw_text(rect.position + Vector2(16, 23), badge_text, 11, badge_color)
-		var device_text := "%s\n소비전력 %dW    비용 %d\n콘센트 %d칸" % [
+		_draw_text(rect.position + Vector2(18, 22), badge_text, 10, badge_color)
+		var device_text := "%s\n소비전력 %dW   비용 %d\n콘센트 %d칸" % [
 			device["label"],
 			int(device["watts"]),
 			int(device["power_cost"]),
 			int(device["slots"]),
 		]
-		_draw_text(rect.position + Vector2(108, 24), device_text, 12, UIStyle.TEXT)
+		_draw_text(rect.position + Vector2(126, 20), device_text, 12, UIStyle.TEXT)
 
 		var plug_x := rect.get_center().x
 		if device["slots"] == 2:
 			plug_x = rect.position.x + 22.0 if device["plug_side"] == "left" else rect.end.x - 22.0
-		draw_rect(Rect2(Vector2(plug_x - 8.0, rect.end.y - 2.0), Vector2(16.0, 18.0)), Color("#1c1814"), true)
+		draw_rect(Rect2(Vector2(plug_x - 6.0, rect.end.y - 1.0), Vector2(12.0, 12.0)), Color("#1c1814"), true)
 
 
 func _draw_power_overview(position: Vector2) -> void:
@@ -326,7 +330,7 @@ func _get_panel_rect() -> Rect2:
 
 func _get_strip_center() -> Vector2:
 	var panel_rect := _get_panel_rect()
-	return Vector2(panel_rect.position.x + 760.0, panel_rect.position.y + 210.0)
+	return Vector2(panel_rect.position.x + 775.0, panel_rect.position.y + 205.0)
 
 
 func _get_device_rect(device: Dictionary) -> Rect2:
@@ -389,11 +393,11 @@ func _reset_slots() -> void:
 
 func _create_devices() -> void:
 	devices = [
-		_make_day1_device("light", 248.0, "center", Color("#d2a85f"), Vector2.ZERO),
-		_make_day1_device("laptop", 248.0, "center", Color("#486064"), Vector2.ZERO),
-		_make_day1_device("fan", 248.0, "center", Color("#52a66f"), Vector2.ZERO),
-		_make_day1_device("charger", 248.0, "center", Color("#4f8edb"), Vector2.ZERO),
-		_make_day1_device("communication_device", 248.0, "center", Color("#8f6bb3"), Vector2.ZERO),
+		_make_day1_device("light", DEVICE_WIDTH, "center", Color("#d2a85f"), Vector2.ZERO),
+		_make_day1_device("laptop", DEVICE_WIDTH, "center", Color("#486064"), Vector2.ZERO),
+		_make_day1_device("fan", DEVICE_WIDTH, "center", Color("#52a66f"), Vector2.ZERO),
+		_make_day1_device("charger", DEVICE_WIDTH, "center", Color("#4f8edb"), Vector2.ZERO),
+		_make_day1_device("communication_device", DEVICE_WIDTH, "center", Color("#8f6bb3"), Vector2.ZERO),
 	]
 	_layout_device_homes()
 
@@ -434,19 +438,8 @@ func _layout_device_homes() -> void:
 		return
 
 	var panel_rect := _get_panel_rect()
-	var connected_positions := [
-		Vector2(panel_rect.position.x + 635.0, panel_rect.position.y + 352.0),
-		Vector2(panel_rect.position.x + 915.0, panel_rect.position.y + 352.0),
-		Vector2(panel_rect.position.x + 635.0, panel_rect.position.y + 432.0),
-		Vector2(panel_rect.position.x + 915.0, panel_rect.position.y + 432.0),
-	]
-	var available_positions := [
-		Vector2(panel_rect.position.x + 635.0, panel_rect.position.y + 508.0),
-		Vector2(panel_rect.position.x + 915.0, panel_rect.position.y + 508.0),
-		Vector2(panel_rect.position.x + 635.0, panel_rect.position.y + 586.0),
-		Vector2(panel_rect.position.x + 915.0, panel_rect.position.y + 586.0),
-		Vector2(panel_rect.position.x + 775.0, panel_rect.position.y + 626.0),
-	]
+	var connected_origin := Vector2(panel_rect.position.x + 670.0, panel_rect.position.y + 344.0)
+	var available_origin := Vector2(panel_rect.position.x + 670.0, panel_rect.position.y + 498.0)
 
 	var connected_index := 0
 	var available_index := 0
@@ -454,16 +447,22 @@ func _layout_device_homes() -> void:
 		var is_connected: bool = int(device["connected_start"]) >= 0
 		var new_home: Vector2
 		if is_connected:
-			new_home = connected_positions[min(connected_index, connected_positions.size() - 1)]
+			new_home = _get_card_grid_position(connected_origin, connected_index)
 			connected_index += 1
 		else:
-			new_home = available_positions[min(available_index, available_positions.size() - 1)]
+			new_home = _get_card_grid_position(available_origin, available_index)
 			available_index += 1
 
 		device["home_position"] = new_home
 		var is_dragging_this_device := not dragging_device.is_empty() and str(dragging_device.get("key", "")) == str(device["key"])
 		if not is_dragging_this_device:
 			device["position"] = new_home
+
+
+func _get_card_grid_position(origin: Vector2, index: int) -> Vector2:
+	var column := index % 2
+	var row := int(index / 2)
+	return origin + Vector2(float(column) * DEVICE_COLUMN_GAP, float(row) * DEVICE_ROW_GAP)
 
 
 func _sync_devices_from_state() -> void:

@@ -24,6 +24,45 @@ var phase_key: String = "day"
 const LABEL_HEIGHT: float = 18.0
 const LABEL_FONT_SIZE: int = 11
 const STATUS_FONT_SIZE: int = 11
+const OBJECT_DISPLAY_RULES := {
+	"light": {
+		"world_size": Vector2(172, 48),
+		"world_offset": Vector2(0, -8),
+		"ui_preview_size": Vector2(260, 92),
+		"z_index": 1,
+	},
+	"laptop": {
+		"world_size": Vector2(128, 96),
+		"world_offset": Vector2(0, 22),
+		"ui_preview_size": Vector2(300, 220),
+		"z_index": 3,
+	},
+	"fan": {
+		"world_size": Vector2(112, 130),
+		"world_offset": Vector2(0, -4),
+		"ui_preview_size": Vector2(220, 250),
+		"z_index": 3,
+	},
+	"charger": {
+		"world_size": Vector2(66, 66),
+		"world_offset": Vector2(-4, 2),
+		"ui_preview_size": Vector2(170, 170),
+		"z_index": 3,
+	},
+	"communication_device": {
+		"world_size": Vector2(104, 78),
+		"world_offset": Vector2(0, 2),
+		"ui_preview_size": Vector2(250, 190),
+		"z_index": 3,
+		"use_world_texture": false,
+	},
+	"power_strip": {
+		"world_size": Vector2(150, 74),
+		"world_offset": Vector2(0, 0),
+		"ui_preview_size": Vector2(280, 140),
+		"z_index": 2,
+	},
+}
 
 
 func setup(config: Dictionary) -> void:
@@ -41,6 +80,7 @@ func setup(config: Dictionary) -> void:
 	is_interactable = config.get("interactable", is_interactable)
 	label_offset = config.get("label_offset", label_offset)
 	outline_color = config.get("outline_color", outline_color)
+	z_index = int(get_display_rule_for_object(object_id).get("z_index", 1))
 	_update_collision_shape()
 	queue_redraw()
 
@@ -137,6 +177,9 @@ func _draw() -> void:
 
 
 func _get_object_texture() -> Texture2D:
+	if get_display_rule_for_object(object_id).get("use_world_texture", true) == false:
+		return null
+
 	match object_id:
 		"light":
 			return AssetPaths.FLUORESCENT_LIGHT_ON if is_used_today else AssetPaths.FLUORESCENT_LIGHT_OFF
@@ -159,17 +202,21 @@ func _get_object_texture() -> Texture2D:
 
 
 func _draw_object_texture(rect: Rect2, texture: Texture2D) -> void:
-	var texture_rect := rect.grow(12.0)
-	if object_id == "light":
-		# The light asset is a fluorescent room fixture, so it reads wider and
-		# shallower than the old desk-lamp placeholder.
-		texture_rect = Rect2(Vector2(-72.0, -38.0), Vector2(144.0, 62.0))
-	elif object_id == "charger":
-		texture_rect = Rect2(Vector2(-48.0, -42.0), Vector2(96.0, 84.0))
-	elif object_id == "power_strip":
-		texture_rect = Rect2(Vector2(-82.0, -38.0), Vector2(164.0, 76.0))
+	var rule := get_display_rule_for_object(object_id)
+	var texture_size: Vector2 = rule.get("world_size", rect.grow(12.0).size)
+	var texture_offset: Vector2 = rule.get("world_offset", Vector2.ZERO)
+	var texture_rect := Rect2(-texture_size * 0.5 + texture_offset, texture_size)
 
 	draw_texture_rect(texture, texture_rect, false)
+
+
+static func get_display_rule_for_object(target_object_id: String) -> Dictionary:
+	return OBJECT_DISPLAY_RULES.get(target_object_id, {})
+
+
+static func get_ui_preview_size_for_object(target_object_id: String) -> Vector2:
+	var rule := get_display_rule_for_object(target_object_id)
+	return rule.get("ui_preview_size", Vector2(180, 140))
 
 
 func _draw_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
