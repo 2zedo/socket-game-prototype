@@ -59,6 +59,7 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 ## P0 Applied Assets
 
 - Yui player: `godot/assets/art/characters/yui/yui_player_idle_back.png`
+- Yui directional animation: idle/walk PNGs under `godot/assets/art/characters/yui/idle/` and `godot/assets/art/characters/yui/walk/`
 - Yui portrait: `godot/assets/art/portraits/yui/yui_portrait_neutral.png`
 - Room underlay: `godot/assets/art/environment/room/room_floor_base.png`, `godot/assets/art/environment/room/room_wall_base.png`
 - Fluorescent room light: `fluorescent_light_off.png`, `fluorescent_light_on.png`, `fluorescent_glow.png`
@@ -80,6 +81,7 @@ These are starting points for the current 1280x720 MVP layout and should be adju
 - Communication device: about `120x75`
 - Multitap / power strip: about `150x45`
 - Yui player sprite: about `48x64`
+- Yui directional source sprites: currently `1024x1536`, scaled in `Player.tscn` to about the previous `48x64` footprint
 - Yui portrait: about `128x128` minimum
 - UI icons: `32x32` and `64x64` source variants
 
@@ -94,6 +96,7 @@ Assets that need state variants:
 - Communication device: disconnected, connected, signal/used
 - Multitap: empty, partially occupied, full
 - Cable segments: inactive/dim and active/electric
+- Yui player: `idle_down`, `idle_up`, `idle_left`, `idle_right`, `walk_down`, `walk_up`, `walk_left`, `walk_right`
 
 Current phone mapping:
 

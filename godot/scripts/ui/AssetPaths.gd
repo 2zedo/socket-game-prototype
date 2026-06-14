@@ -3,6 +3,18 @@ class_name AssetPaths
 
 const YUI_PORTRAIT_NEUTRAL := preload("res://assets/art/portraits/yui/yui_portrait_neutral.png")
 const YUI_PLAYER_IDLE_BACK := preload("res://assets/art/characters/yui/yui_player_idle_back.png")
+const YUI_IDLE_DOWN_PATH := "res://assets/art/characters/yui/idle/yui_idle_down.png"
+const YUI_IDLE_UP_PATH := "res://assets/art/characters/yui/idle/yui_idle_up.png"
+const YUI_IDLE_LEFT_PATH := "res://assets/art/characters/yui/idle/yui_idle_left.png"
+const YUI_IDLE_RIGHT_PATH := "res://assets/art/characters/yui/idle/yui_idle_right.png"
+const YUI_WALK_DOWN_01_PATH := "res://assets/art/characters/yui/walk/yui_walk_down_01.png"
+const YUI_WALK_DOWN_02_PATH := "res://assets/art/characters/yui/walk/yui_walk_down_02.png"
+const YUI_WALK_UP_01_PATH := "res://assets/art/characters/yui/walk/yui_walk_up_01.png"
+const YUI_WALK_UP_02_PATH := "res://assets/art/characters/yui/walk/yui_walk_up_02.png"
+const YUI_WALK_LEFT_01_PATH := "res://assets/art/characters/yui/walk/yui_walk_left_01.png"
+const YUI_WALK_LEFT_02_PATH := "res://assets/art/characters/yui/walk/yui_walk_left_02.png"
+const YUI_WALK_RIGHT_01_PATH := "res://assets/art/characters/yui/walk/yui_walk_right_01.png"
+const YUI_WALK_RIGHT_02_PATH := "res://assets/art/characters/yui/walk/yui_walk_right_02.png"
 
 const ROOM_FLOOR_BASE := preload("res://assets/art/environment/room/room_floor_base.png")
 const ROOM_WALL_BASE := preload("res://assets/art/environment/room/room_wall_base.png")
@@ -35,3 +47,12 @@ const ICON_POWER := preload("res://assets/art/ui/icons/icon_power.png")
 const ICON_PLUG := preload("res://assets/art/ui/icons/icon_plug.png")
 const BADGE_CONNECTED := preload("res://assets/art/ui/badges/badge_connected.png")
 const BADGE_DISCONNECTED := preload("res://assets/art/ui/badges/badge_disconnected.png")
+
+
+static func load_texture_or_fallback(path: String, fallback: Texture2D) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var texture := load(path) as Texture2D
+		if texture != null:
+			return texture
+
+	return fallback

@@ -11,6 +11,10 @@ radius = 62.0
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_player")
 
+[node name="Visual" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -34)
+scale = Vector2(0.045, 0.045)
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_player_body")
 

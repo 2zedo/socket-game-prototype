@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Godot DAY 1 MVP P0 PNG Asset Application Pass 1
+- Current phase: Godot DAY 1 MVP Yui Character Animation Pass 1
 - Current branch: `main`
-- Latest commit at task start: `09151cc fix: refine outlet layout and asset pipeline`
+- Latest commit at task start: `82b83cd style: apply P0 Godot art assets`
 
 ## Latest Completed Work
 
@@ -31,13 +31,14 @@
 - Applied Visual Pass 3 outlet/card layout fixes, restored 2-slot Laptop/Communication device data, and prepared the asset folder pipeline
 - Applied P0 PNG assets to the Godot apartment, interactable objects, player, portrait/dialogue UI, HUD power icon, and multitap slot/badge display
 - Renamed several P0 PNG files that had accidental double-dot filenames so Godot paths match the documented asset pipeline
+- Replaced the single Yui player texture display with directional idle/walk `AnimatedSprite2D` visuals while preserving movement, collision, and interaction logic
 
 ## Current Goal
 
-- Make the documented DAY 1 power loop playable, understandable, and visually closer to a dark one-room survival adventure using controlled in-repo PNG assets
+- Make the documented DAY 1 power loop playable, understandable, and visually closer to a dark one-room survival adventure using controlled in-repo PNG assets and direction-aware Yui player animation
 - Keep implementation focused on keyboard movement, proximity interaction, outlet connection, power display, object use, feedback, and result summary readiness
 - Keep the presentation distinct from generic top-down survival/management games
-- Prepare manual Godot editor testing of the unified power/outlet model, 2-slot devices, next-day connection visuals, and P0 PNG object/UI application
+- Prepare manual Godot editor testing of Yui directional animation together with the unified power/outlet model, 2-slot devices, next-day connection visuals, and P0 PNG object/UI application
 
 ## Not Doing Yet
 
@@ -50,16 +51,11 @@
 
 ## Changed Files
 
-- `godot/scripts/Apartment.gd`
-- `godot/scripts/Interactable.gd`
-- `godot/scripts/Main.gd`
 - `godot/scripts/Player.gd`
-- `godot/scripts/ui/OutletMode.gd`
-- `godot/scripts/ui/InteractionPanel.gd`
-- `godot/scripts/ui/SurvivalHUD.gd`
+- `godot/scenes/Player.tscn`
 - `godot/scripts/ui/AssetPaths.gd`
-- P0 PNG assets under `godot/assets/art/characters/`, `godot/assets/art/environment/room/`, `godot/assets/art/objects/`, `godot/assets/art/overlays/`, `godot/assets/art/portraits/yui/`, and `godot/assets/art/ui/`
-- `docs/ASSET_APPLICATION_NOTES.md`
+- Yui idle/walk PNG assets under `godot/assets/art/characters/yui/idle/` and `godot/assets/art/characters/yui/walk/`
+- `docs/YUI_ANIMATION_NOTES.md`
 - `docs/PROJECT_STATUS.md`
 - `docs/ASSET_PIPELINE.md`
 - `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
@@ -82,6 +78,8 @@
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - P0 PNG assets are now applied, but many furniture/environment details still use primitive fallback drawing.
+- Yui idle/walk sprites are wired, but visual scale, pivot, and animation timing still need in-editor review.
+- Walk frames are temporary and expected to be replaced or tuned later.
 - `room_floor_base.png` and `room_wall_base.png` are drawn as underlay backdrops while existing primitive furniture/collision remains in place.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
 - Panel spacing, multitap card spacing, 2-slot device dragging, and prompt positions need another screenshot-based review in the Godot editor.
@@ -92,6 +90,6 @@
 
 ## Next Recommended Task
 
-- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test Laptop/Communication `2`-slot behavior, next-day connection visuals, and P0 PNG state changes in the Godot editor
+- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test Yui idle/walk directions, Laptop/Communication `2`-slot behavior, next-day connection visuals, and P0 PNG state changes in the Godot editor
 - Capture screenshots of Exploration, Interaction, Multitap, and Result states and tune layout/readability
 - Fix bugs found during manual playtesting

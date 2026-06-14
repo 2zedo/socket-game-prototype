@@ -16,6 +16,10 @@ This pass responds to in-editor screenshots showing multitap card overlap, uncle
 
 This pass applies the first repo-local PNG assets to the existing Godot DAY 1 MVP without changing the power loop, proximity interaction model, End Day flow, or `SurvivalState.gd` source of truth.
 
+## Yui Character Animation Pass 1
+
+This pass replaces the single Yui player texture with directional idle/walk sprite animations while preserving the existing `CharacterBody2D`, collision shape, movement input, and proximity interaction behavior.
+
 ## Improved Screens
 
 - Exploration: darker apartment frame, lived-in room layout, weaker warm light, clearer object placement, smaller proximity prompt.
@@ -24,6 +28,7 @@ This pass applies the first repo-local PNG assets to the existing Godot DAY 1 MV
 - Multitap: dark power-management overlay with unified daily power, current load, outlet usage, and muted device cards.
 - Result: survival record wording and diary/log tone instead of score-board presentation.
 - P0 art pass: applies PNGs to the player, portrait, room underlay, key interactables, fluorescent glow, HUD power icon, interaction/dialogue backplates, multitap slots, plugs, and connection badges.
+- Yui animation pass: adds directional idle/walk player visuals so Yui changes sprite by movement direction without changing gameplay logic.
 
 ## Pass 2 Adjustments
 
@@ -61,6 +66,15 @@ This pass applies the first repo-local PNG assets to the existing Godot DAY 1 MV
 - `OutletMode.gd` uses outlet slot, plug, badge, and plug icon PNGs while preserving slot/load calculations from `SurvivalState.gd`.
 - `SurvivalHUD.gd` adds the power icon PNG next to the power panel area.
 
+## Yui Animation Pass Adjustments
+
+- `Player.tscn` now has an `AnimatedSprite2D` child named `Visual`.
+- `Player.gd` builds `SpriteFrames` at runtime from Yui idle/walk PNG paths in `AssetPaths.gd`.
+- Walk animations use two frames at `5 fps`.
+- Idle animations use one frame.
+- The old `yui_player_idle_back.png` remains as a fallback texture.
+- Direction uses the stronger movement axis; diagonal movement stays 4-directional for this MVP pass.
+
 ## Common UI Style
 
 - Added `godot/scripts/ui/UIStyle.gd` for shared colors and simple panel styles.
@@ -84,7 +98,7 @@ This pass applies the first repo-local PNG assets to the existing Godot DAY 1 MV
 ## Next Visual Tasks
 
 - Replace remaining furniture primitives with controlled object sprites or simple `.tscn` object scenes.
-- Tune PNG scale/position after in-editor screenshots.
+- Tune PNG scale/position and Yui animation pivot after in-editor screenshots.
 - Tighten panel spacing after in-editor screenshot review.
 - Add subtle Light2D/CanvasModulate if it does not hurt readability.
 - Move device/object presentation data into resources after the loop is manually validated.
