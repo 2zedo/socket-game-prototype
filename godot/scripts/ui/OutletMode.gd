@@ -92,11 +92,19 @@ func _draw() -> void:
 	if not visible:
 		return
 
-	var panel_rect := _get_panel_rect()
+	var panel_rect: Rect2 = _get_panel_rect()
+	var power_section: Rect2 = Rect2(panel_rect.position + Vector2(24.0, 104.0), Vector2(390.0, 385.0))
+	var outlet_section: Rect2 = Rect2(panel_rect.position + Vector2(488.0, 104.0), Vector2(610.0, 160.0))
+	var connected_section: Rect2 = Rect2(panel_rect.position + Vector2(488.0, 274.0), Vector2(610.0, 128.0))
+	var available_section: Rect2 = Rect2(panel_rect.position + Vector2(488.0, 420.0), Vector2(610.0, 128.0))
 
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.01, 0.01, 0.012, 0.78), true)
 	draw_rect(panel_rect, UIStyle.PANEL, true)
 	draw_rect(panel_rect, UIStyle.LINE_DIM, false, 2.0)
+	_draw_ui_section(power_section)
+	_draw_ui_section(outlet_section)
+	_draw_ui_section(connected_section)
+	_draw_ui_section(available_section)
 
 	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 42), "멀티탭 관리", 26, UIStyle.TEXT)
 	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 76), "ESC: 아파트로 돌아가기", 14, UIStyle.MUTED)
@@ -156,6 +164,11 @@ func _draw_connected_slot_labels() -> void:
 		var short_label := _get_short_device_label(str(device["key"]), str(device["label"]))
 		var label_position := Vector2(group_rect.get_center().x - 22.0, group_rect.end.y + 16.0)
 		_draw_text(label_position, short_label, 9, UIStyle.MUTED)
+
+
+func _draw_ui_section(rect: Rect2) -> void:
+	draw_rect(rect, Color(0.055, 0.048, 0.04, 0.74), true)
+	draw_rect(rect, Color(0.43, 0.35, 0.23, 0.28), false, 1.0)
 
 
 func _draw_devices() -> void:

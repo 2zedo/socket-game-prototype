@@ -2,7 +2,7 @@ extends CharacterBody2D
 class_name Player
 
 @export var speed: float = 185.0
-@export var walk_animation_fps: float = 5.0
+@export var walk_animation_fps: float = 6.0
 
 var can_move: bool = true
 var facing_direction: String = "down"
@@ -11,6 +11,7 @@ var facing_direction: String = "down"
 
 
 func _ready() -> void:
+	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_setup_yui_sprite_frames()
 	_update_visual(Vector2.ZERO)
 
@@ -22,7 +23,7 @@ func _physics_process(_delta: float) -> void:
 		_update_visual(Vector2.ZERO)
 		return
 
-	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var direction: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	velocity = direction * speed
 	move_and_slide()
 	_update_visual(direction)
@@ -35,11 +36,11 @@ func set_movement_enabled(is_enabled: bool) -> void:
 func _setup_yui_sprite_frames() -> void:
 	# The visual sprite is intentionally separate from collision and movement so
 	# future character art swaps do not change gameplay detection.
-	var frames := SpriteFrames.new()
-	var idle_down := _load_yui_texture(AssetPaths.YUI_IDLE_DOWN_PATH)
-	var idle_up := _load_yui_texture(AssetPaths.YUI_IDLE_UP_PATH)
-	var idle_left := _load_yui_texture(AssetPaths.YUI_IDLE_LEFT_PATH)
-	var idle_right := _load_yui_texture(AssetPaths.YUI_IDLE_RIGHT_PATH)
+	var frames: SpriteFrames = SpriteFrames.new()
+	var idle_down: Texture2D = _load_yui_texture(AssetPaths.YUI_IDLE_DOWN_PATH)
+	var idle_up: Texture2D = _load_yui_texture(AssetPaths.YUI_IDLE_UP_PATH)
+	var idle_left: Texture2D = _load_yui_texture(AssetPaths.YUI_IDLE_LEFT_PATH)
+	var idle_right: Texture2D = _load_yui_texture(AssetPaths.YUI_IDLE_RIGHT_PATH)
 
 	_add_animation(frames, "idle_down", [idle_down], 1.0)
 	_add_animation(frames, "idle_up", [idle_up], 1.0)
@@ -47,19 +48,27 @@ func _setup_yui_sprite_frames() -> void:
 	_add_animation(frames, "idle_right", [idle_right], 1.0)
 	_add_animation(frames, "walk_down", [
 		_load_yui_texture(AssetPaths.YUI_WALK_DOWN_01_PATH, idle_down),
+		idle_down,
 		_load_yui_texture(AssetPaths.YUI_WALK_DOWN_02_PATH, idle_down),
+		idle_down,
 	], walk_animation_fps)
 	_add_animation(frames, "walk_up", [
 		_load_yui_texture(AssetPaths.YUI_WALK_UP_01_PATH, idle_up),
+		idle_up,
 		_load_yui_texture(AssetPaths.YUI_WALK_UP_02_PATH, idle_up),
+		idle_up,
 	], walk_animation_fps)
 	_add_animation(frames, "walk_left", [
 		_load_yui_texture(AssetPaths.YUI_WALK_LEFT_01_PATH, idle_left),
+		idle_left,
 		_load_yui_texture(AssetPaths.YUI_WALK_LEFT_02_PATH, idle_left),
+		idle_left,
 	], walk_animation_fps)
 	_add_animation(frames, "walk_right", [
 		_load_yui_texture(AssetPaths.YUI_WALK_RIGHT_01_PATH, idle_right),
+		idle_right,
 		_load_yui_texture(AssetPaths.YUI_WALK_RIGHT_02_PATH, idle_right),
+		idle_right,
 	], walk_animation_fps)
 
 	visual.sprite_frames = frames

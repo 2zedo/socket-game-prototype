@@ -9,8 +9,11 @@ Use the references as mood and design guidance, not as exact implementation requ
 ## Room / Environment Direction
 
 - Small one-room apartment with visible daily-life clutter.
+- The baseline should read as an ordinary small apartment, not a bunker, ruin, prison, or sci-fi facility.
+- The power-shortage setting should appear through dim light, restrained color, worn electronics, and careful power use rather than exaggerated destruction.
 - Worn walls, old outlets, exposed cords, power strips, and improvised electronics.
 - Night, blackout, weak lamp light, window light, and small device glow should carry the atmosphere.
+- The window should make day/night readable at a glance: warmer incoming light by day and darker/cooler exterior by night.
 - The room should feel lived in by Yui: laptop, charger, fan, communication device, notes, mug, cables, and survival supplies.
 - Environmental details should support gameplay readability: the player should quickly understand which objects can spend power.
 
@@ -51,6 +54,13 @@ Use the references as mood and design guidance, not as exact implementation requ
 ## Object Design Direction
 
 - Power strip, outlets, plugs, and cables are core visual symbols.
+- Power cables should look like normal dark household wires. They should not glow.
+- Powered-state feedback should come from the device itself:
+  - fan lamp/blades
+  - laptop screen
+  - charger LED/phone state
+  - communication-device screen or indicator
+  - power strip connection state
 - Devices should look old, practical, and slightly worn: light, laptop, fan, charger, communication device.
 - The delivery robot should feel utilitarian and service-worn rather than cute or toy-like.
 - Management office and Grid elements should feel bureaucratic, distant, and system-like.

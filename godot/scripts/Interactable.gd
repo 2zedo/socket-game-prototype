@@ -33,14 +33,14 @@ const OBJECT_DISPLAY_RULES := {
 		"z_index": 1,
 	},
 	"laptop": {
-		"world_size": Vector2(104, 78),
+		"world_size": Vector2(92, 68),
 		"world_offset": Vector2(0, 18),
 		"world_modulate": Color(0.82, 0.8, 0.74, 0.88),
 		"ui_preview_size": Vector2(300, 220),
 		"z_index": 3,
 	},
 	"fan": {
-		"world_size": Vector2(86, 104),
+		"world_size": Vector2(76, 94),
 		"world_offset": Vector2(0, 0),
 		"world_modulate": Color(0.78, 0.76, 0.68, 0.82),
 		"ui_preview_size": Vector2(220, 250),
@@ -129,8 +129,8 @@ func set_powered(is_active: bool) -> void:
 
 
 func set_day1_visual_state(used_actions: Array[String], current_power: int) -> void:
-	var next_used := day1_action_key != "" and used_actions.has(day1_action_key)
-	var next_low_power := current_power <= 2
+	var next_used: bool = day1_action_key != "" and used_actions.has(day1_action_key)
+	var next_low_power: bool = current_power <= 2
 	if is_used_today == next_used and is_low_power == next_low_power:
 		return
 
@@ -168,15 +168,14 @@ func _draw() -> void:
 
 	# The SpriteAnchor child is intentionally empty for now. Future sprite nodes can
 	# replace this rectangle without changing interaction or powered-state logic.
-	if is_powered:
-		var glow_alpha: float = 0.18 if phase_key == "night" else 0.12
-		draw_rect(rect.grow(8.0), Color(0.95, 0.68, 0.24, glow_alpha), true)
-
-	var texture := _get_object_texture()
+	var texture: Texture2D = _get_object_texture()
 	if texture != null:
 		_draw_object_texture(rect, texture)
 	else:
 		_draw_icon(rect, fill_color, outline)
+
+	if is_powered:
+		_draw_power_indicator(rect)
 
 	# Labels and power status are intentionally not drawn during exploration.
 	# The single proximity prompt and interaction panel carry that information.
@@ -188,11 +187,11 @@ func _get_object_texture() -> Texture2D:
 
 	match object_id:
 		"light":
-			return AssetPaths.FLUORESCENT_LIGHT_ON if is_used_today else AssetPaths.FLUORESCENT_LIGHT_OFF
+			return AssetPaths.FLUORESCENT_LIGHT_ON if is_powered or is_used_today else AssetPaths.FLUORESCENT_LIGHT_OFF
 		"laptop":
-			return AssetPaths.LAPTOP_ON if is_used_today else AssetPaths.LAPTOP_OFF
+			return AssetPaths.LAPTOP_ON if is_powered or is_used_today else AssetPaths.LAPTOP_OFF
 		"fan":
-			return AssetPaths.FAN_ON if is_used_today else AssetPaths.FAN_OFF
+			return AssetPaths.FAN_ON if is_powered or is_used_today else AssetPaths.FAN_OFF
 		"charger":
 			if is_used_today:
 				return AssetPaths.PHONE_CHARGED
@@ -200,7 +199,7 @@ func _get_object_texture() -> Texture2D:
 				return AssetPaths.PHONE_CHARGING
 			return AssetPaths.PHONE_RECHARGE if is_low_power else AssetPaths.PHONE_NORMAL
 		"communication_device":
-			return AssetPaths.COMM_DEVICE_ON if is_used_today else AssetPaths.COMM_DEVICE_OFF
+			return AssetPaths.COMM_DEVICE_ON if is_powered or is_used_today else AssetPaths.COMM_DEVICE_OFF
 		"power_strip":
 			return AssetPaths.POWERSTRIP_CONNECTED if is_powered else AssetPaths.POWERSTRIP_EMPTY
 
@@ -208,13 +207,29 @@ func _get_object_texture() -> Texture2D:
 
 
 func _draw_object_texture(rect: Rect2, texture: Texture2D) -> void:
-	var rule := get_display_rule_for_object(object_id)
+	var rule: Dictionary = get_display_rule_for_object(object_id)
 	var texture_size: Vector2 = rule.get("world_size", rect.grow(12.0).size)
 	var texture_offset: Vector2 = rule.get("world_offset", Vector2.ZERO)
 	var texture_modulate: Color = rule.get("world_modulate", Color.WHITE)
-	var texture_rect := Rect2(-texture_size * 0.5 + texture_offset, texture_size)
+	var texture_rect: Rect2 = Rect2(-texture_size * 0.5 + texture_offset, texture_size)
 
 	draw_texture_rect(texture, texture_rect, false, texture_modulate)
+
+
+func _draw_power_indicator(rect: Rect2) -> void:
+	var indicator_color: Color = Color("#e9c46a") if phase_key == "day" else Color("#ffd36a")
+	match object_id:
+		"fan":
+			draw_circle(rect.position + Vector2(rect.size.x - 18.0, rect.size.y - 17.0), 4.0, indicator_color)
+		"charger":
+			draw_circle(rect.position + Vector2(rect.size.x - 17.0, rect.size.y * 0.5), 3.5, indicator_color)
+		"laptop":
+			var screen_light: Rect2 = Rect2(rect.position + Vector2(26.0, 16.0), Vector2(rect.size.x - 52.0, rect.size.y * 0.32))
+			draw_rect(screen_light, Color(0.95, 0.75, 0.34, 0.18), true)
+		"communication_device":
+			draw_circle(rect.position + Vector2(rect.size.x - 18.0, 18.0), 3.5, indicator_color)
+		"power_strip":
+			draw_circle(rect.position + Vector2(rect.size.x - 14.0, rect.size.y * 0.5), 3.2, indicator_color)
 
 
 static func get_display_rule_for_object(target_object_id: String) -> Dictionary:
@@ -222,7 +237,7 @@ static func get_display_rule_for_object(target_object_id: String) -> Dictionary:
 
 
 static func get_ui_preview_size_for_object(target_object_id: String) -> Vector2:
-	var rule := get_display_rule_for_object(target_object_id)
+	var rule: Dictionary = get_display_rule_for_object(target_object_id)
 	return rule.get("ui_preview_size", Vector2(180, 140))
 
 
@@ -288,8 +303,8 @@ func _draw_power_strip_icon(rect: Rect2, fill_color: Color, outline: Color) -> v
 
 
 func _draw_light_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
-	var cord_top := rect.position + Vector2(rect.size.x * 0.5, 0.0)
-	var shade_rect := Rect2(rect.position + Vector2(rect.size.x * 0.23, rect.size.y * 0.3), Vector2(rect.size.x * 0.54, rect.size.y * 0.32))
+	var cord_top: Vector2 = rect.position + Vector2(rect.size.x * 0.5, 0.0)
+	var shade_rect: Rect2 = Rect2(rect.position + Vector2(rect.size.x * 0.23, rect.size.y * 0.3), Vector2(rect.size.x * 0.54, rect.size.y * 0.32))
 	draw_line(cord_top, shade_rect.position + Vector2(shade_rect.size.x * 0.5, 0), outline, 2.0, true)
 	draw_rect(shade_rect, fill_color, true)
 	draw_rect(shade_rect, outline, false, 2.0)
@@ -310,13 +325,13 @@ func _draw_bed_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
 	draw_rect(Rect2(rect.position + Vector2(5, 7), rect.size), Color(0.02, 0.018, 0.015, 0.42), true)
 	draw_rect(rect, fill_color.darkened(0.2), true)
 	draw_rect(rect, outline.darkened(0.12), false, 2.0)
-	var mattress := rect.grow(-10.0)
+	var mattress: Rect2 = rect.grow(-10.0)
 	draw_rect(mattress, Color("#5d554d"), true)
 	draw_rect(mattress, Color(0.85, 0.78, 0.66, 0.18), false, 1.0)
-	var pillow := Rect2(mattress.position + Vector2(8.0, 8.0), Vector2(mattress.size.x * 0.26, mattress.size.y - 16.0))
+	var pillow: Rect2 = Rect2(mattress.position + Vector2(8.0, 8.0), Vector2(mattress.size.x * 0.26, mattress.size.y - 16.0))
 	draw_rect(pillow, Color("#756a5f"), true)
 	draw_rect(pillow, Color(0.95, 0.88, 0.76, 0.18), false, 1.0)
-	var blanket := Rect2(mattress.position + Vector2(mattress.size.x * 0.32, 6.0), Vector2(mattress.size.x * 0.62, mattress.size.y - 12.0))
+	var blanket: Rect2 = Rect2(mattress.position + Vector2(mattress.size.x * 0.32, 6.0), Vector2(mattress.size.x * 0.62, mattress.size.y - 12.0))
 	draw_rect(blanket, Color("#403a35"), true)
 	draw_rect(blanket, Color(0.9, 0.82, 0.68, 0.14), false, 1.0)
 	draw_rect(Rect2(blanket.position + Vector2(0, blanket.size.y * 0.14), Vector2(blanket.size.x, 8.0)), Color(0.2, 0.18, 0.16, 0.34), true)

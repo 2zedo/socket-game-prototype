@@ -84,13 +84,13 @@ func set_phase(next_phase_key: String) -> void:
 
 
 func _draw() -> void:
-	var wall_color: Color = Color("#111314")
-	var inner_wall: Color = Color("#211d1a")
-	var floor_fill: Color = Color("#2c2119")
-	var trim_color: Color = Color("#816845")
+	var wall_color: Color = Color("#19130f")
+	var inner_wall: Color = Color("#2a211b")
+	var floor_fill: Color = Color("#3b291b")
+	var trim_color: Color = Color("#9a7446")
 
-	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("#050606"), true)
-	draw_rect(ROOM_RECT.grow(22.0), Color("#0d0b0a"), true)
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("#080706"), true)
+	draw_rect(ROOM_RECT.grow(22.0), Color("#120e0b"), true)
 	draw_rect(ROOM_RECT, wall_color, true)
 	draw_rect(ROOM_RECT.grow(-12.0), inner_wall, true)
 	_draw_room_asset_backdrop(ROOM_RECT.grow(22.0), FLOOR_RECT, wall_color, floor_fill)
@@ -112,7 +112,7 @@ func _build_room_collision() -> void:
 
 func _spawn_player() -> void:
 	player = player_scene.instantiate() as Player
-	player.position = Vector2(610, 392)
+	player.position = Vector2(640, 500)
 	add_child(player)
 
 
@@ -122,7 +122,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "멀티탭",
 		"title": "멀티탭",
 		"body": "방 안 기기들의 전원을 연결하는 낡은 멀티탭입니다.",
-		"position": Vector2(700, 468),
+		"position": Vector2(650, 430),
 		"size": Vector2(128, 38),
 		"color": Color("#6f614e"),
 		"outline_color": Color("#ffe6a3"),
@@ -134,7 +134,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": Vector2(620, 170),
+		"position": Vector2(625, 166),
 		"size": Vector2(138, 34),
 		"color": Color("#a8894e"),
 		"power_units": 1,
@@ -146,7 +146,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": Vector2(906, 518),
+		"position": Vector2(850, 514),
 		"size": Vector2(54, 36),
 		"color": Color("#4e5e67"),
 		"power_units": 2,
@@ -158,7 +158,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "선풍기",
 		"title": "선풍기",
 		"body": "더위를 낮출 수 있습니다.\n하지만 켜두면 다른 장치를 꽂을 여유가 줄어듭니다.",
-		"position": Vector2(875, 280),
+		"position": Vector2(955, 350),
 		"size": Vector2(70, 82),
 		"color": Color("#53645b"),
 		"power_units": 2,
@@ -170,7 +170,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": Vector2(608, 252),
+		"position": Vector2(760, 278),
 		"size": Vector2(96, 52),
 		"color": Color("#3b4748"),
 		"power_units": 3,
@@ -182,7 +182,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "통신 장치",
 		"title": "통신 장치",
 		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
-		"position": Vector2(970, 360),
+		"position": Vector2(930, 452),
 		"size": Vector2(84, 56),
 		"color": Color("#5e5368"),
 		"power_units": 4,
@@ -241,11 +241,11 @@ func _add_furniture_blocker(center: Vector2, size: Vector2) -> void:
 func _add_environment_blockers() -> void:
 	# Non-interactive room features still need small blockers so the top-down
 	# movement reads as an apartment floor, not a board the player can cross.
-	_add_furniture_blocker(Vector2(615, 132), Vector2(720, 106))
-	_add_furniture_blocker(Vector2(1038, 310), Vector2(74, 340))
-	_add_furniture_blocker(Vector2(1039, 224), Vector2(72, 166))
-	_add_furniture_blocker(Vector2(806, 205), Vector2(92, 150))
-	_add_furniture_blocker(Vector2(365, 145), Vector2(196, 48))
+	_add_furniture_blocker(Vector2(612, 132), Vector2(705, 96))
+	_add_furniture_blocker(Vector2(1038, 330), Vector2(76, 360))
+	_add_furniture_blocker(Vector2(1038, 536), Vector2(164, 74))
+	_add_furniture_blocker(Vector2(750, 238), Vector2(240, 86))
+	_add_furniture_blocker(Vector2(292, 542), Vector2(150, 94))
 
 
 func _update_nearest_interactable() -> void:
@@ -306,27 +306,31 @@ func _draw_wall_floor_separation(floor_rect: Rect2) -> void:
 
 
 func _draw_room_details() -> void:
-	# Door and window are supplied by the wall underlay. Avoid drawing duplicate
-	# primitive versions over the art until those fixtures become dedicated nodes.
-	_draw_desk(Rect2(Vector2(500, 248), Vector2(210, 72)))
-	_draw_shelf(Rect2(Vector2(770, 118), Vector2(88, 156)))
-	_draw_rug(Rect2(Vector2(545, 406), Vector2(210, 92)))
+	_draw_window(Rect2(Vector2(510, 94), Vector2(220, 82)))
+	_draw_bathroom_hint(Rect2(Vector2(238, 500), Vector2(132, 94)))
+	_draw_desk(Rect2(Vector2(680, 225), Vector2(250, 74)))
+	_draw_shelf(Rect2(Vector2(974, 170), Vector2(78, 208)))
+	_draw_kitchen_counter(Rect2(Vector2(782, 526), Vector2(258, 58)))
+	_draw_rug(Rect2(Vector2(510, 360), Vector2(270, 126)))
 	_draw_small_clutter(FLOOR_RECT)
 
 
 func _draw_window(rect: Rect2) -> void:
 	draw_rect(Rect2(rect.position + Vector2(-12, -14), Vector2(rect.size.x + 24, rect.size.y + 24)), Color(0.035, 0.035, 0.032, 0.86), true)
-	draw_rect(rect, Color("#0c1217"), true)
+	var sky_color: Color = Color("#6f6b55") if phase_key == "day" else Color("#09101a")
+	var light_alpha: float = 0.16 if phase_key == "day" else 0.04
+	draw_rect(rect, sky_color, true)
 	draw_rect(rect.grow(5.0), Color("#171411"), false, 5.0)
 	draw_rect(rect, Color("#5f513d"), false, 3.0)
 	draw_line(Vector2(rect.get_center().x, rect.position.y), Vector2(rect.get_center().x, rect.end.y), Color("#332b23"), 2.0)
 	draw_line(Vector2(rect.position.x, rect.get_center().y), Vector2(rect.end.x, rect.get_center().y), Color("#332b23"), 2.0)
 	for index in range(9):
-		var x := rect.position.x + 22.0 + float(index) * 16.0
+		var x: float = rect.position.x + 22.0 + float(index) * 16.0
 		draw_circle(Vector2(x, rect.end.y - 22.0 - float(index % 3) * 9.0), 2.0, Color(0.95, 0.68, 0.34, 0.32))
+	draw_rect(Rect2(rect.position + Vector2(-20, rect.size.y - 4), Vector2(rect.size.x + 40, 110)), Color(0.95, 0.66, 0.35, light_alpha), true)
 	draw_rect(Rect2(rect.position + Vector2(-8, -6), Vector2(rect.size.x + 16, 16)), Color(0.08, 0.07, 0.06, 0.86), true)
 	for index in range(5):
-		var y := rect.position.y + 18.0 + float(index) * 12.0
+		var y: float = rect.position.y + 18.0 + float(index) * 12.0
 		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.5, 0.45, 0.36, 0.22), 1.0)
 
 
@@ -369,9 +373,30 @@ func _draw_door(rect: Rect2) -> void:
 	draw_circle(rect.position + Vector2(56, 86), 3.0, Color("#b6985b"))
 
 
+func _draw_bathroom_hint(rect: Rect2) -> void:
+	draw_rect(rect, Color("#211914"), true)
+	draw_rect(rect, Color("#66503a"), false, 2.0)
+	draw_rect(Rect2(rect.position + Vector2(12.0, 12.0), Vector2(rect.size.x - 24.0, 28.0)), Color("#2d2824"), true)
+	draw_string(ThemeDB.fallback_font, rect.position + Vector2(38.0, 31.0), "화장실", HORIZONTAL_ALIGNMENT_CENTER, 58.0, 11, Color("#cdbb96"))
+	draw_circle(rect.position + Vector2(rect.size.x - 18.0, rect.size.y * 0.56), 3.0, Color("#b6985b"))
+
+
+func _draw_kitchen_counter(rect: Rect2) -> void:
+	draw_rect(Rect2(rect.position + Vector2(4, 5), rect.size), Color(0.02, 0.016, 0.012, 0.46), true)
+	draw_rect(rect, Color("#2d241d"), true)
+	draw_rect(rect.grow(-5.0), Color("#4b3927"), true)
+	draw_rect(rect, Color("#7a5d39"), false, 2.0)
+	var sink_rect: Rect2 = Rect2(rect.position + Vector2(24.0, 14.0), Vector2(58.0, 28.0))
+	draw_rect(sink_rect, Color("#2e3537"), true)
+	draw_rect(sink_rect, Color("#8b806b"), false, 1.0)
+	var shelf_rect: Rect2 = Rect2(rect.position + Vector2(112.0, 10.0), Vector2(118.0, 34.0))
+	draw_rect(shelf_rect, Color("#33261b"), true)
+	draw_rect(shelf_rect, Color("#70563a"), false, 1.0)
+
+
 func _draw_rug(rect: Rect2) -> void:
-	draw_rect(rect, Color(0.12, 0.15, 0.13, 0.62), true)
-	draw_rect(rect, Color(0.44, 0.37, 0.25, 0.4), false, 1.0)
+	draw_rect(rect, Color(0.20, 0.15, 0.11, 0.58), true)
+	draw_rect(rect, Color(0.54, 0.40, 0.24, 0.4), false, 1.0)
 
 
 func _draw_small_clutter(_floor_rect: Rect2) -> void:
@@ -425,8 +450,8 @@ func _draw_power_cables() -> void:
 
 func _draw_power_cable(start_position: Vector2, end_position: Vector2, object_id: String) -> void:
 	var midpoint: Vector2 = (start_position + end_position) * 0.5
-	var bend_offset := Vector2(0, 28)
-	var points := PackedVector2Array()
+	var bend_offset: Vector2 = Vector2(0, 28)
+	var points: PackedVector2Array = PackedVector2Array()
 	match object_id:
 		"laptop":
 			bend_offset = Vector2(-18, 18)
@@ -441,11 +466,9 @@ func _draw_power_cable(start_position: Vector2, end_position: Vector2, object_id
 		var bend: Vector2 = midpoint + bend_offset
 		points = PackedVector2Array([start_position, bend, end_position])
 
-	var cable_core: Color = Color("#fff07a") if phase_key == "day" else Color("#ffe066")
-	var cable_alpha := 0.62
-	draw_polyline(points, Color(0.18, 0.12, 0.07, cable_alpha), 4.0, true)
-	draw_polyline(points, Color(cable_core.r, cable_core.g, cable_core.b, cable_alpha), 1.4, true)
-	draw_circle(end_position, 3.2, Color(cable_core.r, cable_core.g, cable_core.b, cable_alpha))
+	var cable_alpha: float = 0.78 if phase_key == "day" else 0.9
+	draw_polyline(points, Color(0.025, 0.018, 0.014, cable_alpha), 4.2, true)
+	draw_polyline(points, Color(0.20, 0.15, 0.10, 0.38), 1.4, true)
 
 
 func _get_power_key_for_object(object_id: String) -> String:

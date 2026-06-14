@@ -28,6 +28,10 @@ This pass responds to latest in-editor screenshots after transparent PNG replace
 
 This pass responds to latest in-editor screenshots where Yui still read too small, several object PNGs read oversized or mismatched, furniture primitives remained too flat, and the multitap overlay still mixed slots and cards too aggressively. It keeps gameplay and power logic unchanged.
 
+## Reference-Based Visual Direction Pass
+
+This pass uses `docs/reference/map 디자인.png` and `docs/reference/주인공, 등장인물 인게임 디자인.png` as visual direction references. It prioritizes presentation and readability over new gameplay systems.
+
 ## Improved Screens
 
 - Exploration: darker apartment frame, lived-in room layout, weaker warm light, clearer object placement, smaller proximity prompt.
@@ -39,6 +43,7 @@ This pass responds to latest in-editor screenshots where Yui still read too smal
 - Yui animation pass: adds directional idle/walk player visuals so Yui changes sprite by movement direction without changing gameplay logic.
 - PNG layout normalization: centralizes object display rules, enlarges Yui's visual-only sprite scale, separates world-scale values from future UI-preview values, and moves multitap device cards into a stable grid.
 - Visual sanity pass: increases Yui's visual footprint, reduces world object texture dominance, improves bed/desk primitive readability, routes the fluorescent cable less intrusively, and simplifies multitap slot occupancy versus device-card information.
+- Reference visual pass: reduces Yui back toward a smaller top-down pixel-game proportion, warms the room into a lived-in one-room apartment, removes glowing power cables, shifts powered feedback onto devices, enlarges dialogue portrait staging, and adds clearer multitap UI sections.
 
 ## Pass 2 Adjustments
 
@@ -107,6 +112,18 @@ This pass responds to latest in-editor screenshots where Yui still read too smal
 - Fluorescent glow was reduced and cable routing for the light now follows the room more quietly instead of cutting a bright diagonal through the center.
 - Multitap overlay now uses a smaller strip, smaller slot textures, compact connected/available device rows, small short labels on occupied slots, and reduced card text size.
 - Laptop and Communication device still depend on `SurvivalState.gd` outlet size data for 2-slot behavior; the visual slot highlight spans the occupied slot group instead of using a full detailed card on top of the strip.
+
+## Reference-Based Visual Pass Adjustments
+
+- Yui's `AnimatedSprite2D` visual scale was reduced from `0.12` to `0.088` so the character reads closer to a small top-down pixel-game sprite relative to the room.
+- Yui walk playback now uses the existing two walk PNGs plus idle frames to create a softer four-step rhythm per direction until dedicated 4-frame walk art exists.
+- The apartment palette was warmed from bunker-like black/gray toward dark brown walls, worn wood flooring, and restrained warm trim.
+- The room now draws a clearer window with day/night sky color, a bathroom door hint instead of a visible bathroom interior, a desk/work area, shelf, kitchen counter, rug, and quieter clutter.
+- The power strip was moved into a more natural central floor position, with laptop, charger, fan, and communication device arranged around it without changing the existing interaction or power systems.
+- Powered cables no longer glow. They are simple dark wires, while active state is communicated by device ON textures and small local indicators.
+- Laptop, fan, communication device, charger, and power strip now respond visually to `is_powered` instead of waiting only for the object to be marked used for the day.
+- The interaction dialogue panel now gives Yui a larger left-side portrait area so dialogue staging can later support bust/half-body character presentation.
+- The multitap overlay keeps the existing behavior but adds subtle dark section backgrounds for power information, outlets, connected devices, and available devices.
 
 ## Common UI Style
 
