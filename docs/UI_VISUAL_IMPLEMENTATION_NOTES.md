@@ -24,6 +24,10 @@ This pass replaces the single Yui player texture with directional idle/walk spri
 
 This pass responds to latest in-editor screenshots after transparent PNG replacement. It keeps gameplay logic unchanged and focuses on visual scale, position, pivot, z-order, world/UI display separation, and multitap card layout stability.
 
+## Visual Sanity Pass
+
+This pass responds to latest in-editor screenshots where Yui still read too small, several object PNGs read oversized or mismatched, furniture primitives remained too flat, and the multitap overlay still mixed slots and cards too aggressively. It keeps gameplay and power logic unchanged.
+
 ## Improved Screens
 
 - Exploration: darker apartment frame, lived-in room layout, weaker warm light, clearer object placement, smaller proximity prompt.
@@ -34,6 +38,7 @@ This pass responds to latest in-editor screenshots after transparent PNG replace
 - P0 art pass: applies PNGs to the player, portrait, room underlay, key interactables, fluorescent glow, HUD power icon, interaction/dialogue backplates, multitap slots, plugs, and connection badges.
 - Yui animation pass: adds directional idle/walk player visuals so Yui changes sprite by movement direction without changing gameplay logic.
 - PNG layout normalization: centralizes object display rules, enlarges Yui's visual-only sprite scale, separates world-scale values from future UI-preview values, and moves multitap device cards into a stable grid.
+- Visual sanity pass: increases Yui's visual footprint, reduces world object texture dominance, improves bed/desk primitive readability, routes the fluorescent cable less intrusively, and simplifies multitap slot occupancy versus device-card information.
 
 ## Pass 2 Adjustments
 
@@ -90,6 +95,19 @@ This pass responds to latest in-editor screenshots after transparent PNG replace
 - The outlet slot area now shows occupancy and small labels instead of trying to place detailed cards directly over the slots.
 - `comm_device_off.png` and `comm_device_on.png` still appear to be RGB/no-alpha files, so the room display keeps the primitive fallback until those PNGs are re-exported with transparency.
 
+## Visual Sanity Pass Adjustments
+
+- Yui's `AnimatedSprite2D` visual scale was increased from `0.072` to `0.12`, with the visual offset moved upward so the collision body and interaction range remain unchanged while the sprite reads as a character instead of a tiny icon.
+- Object world display rules were tightened:
+  - Laptop, fan, charger/phone, power strip, and fluorescent light now use smaller, darker `world_size` and `world_modulate` values.
+  - UI preview sizes remain separate from world sizes so later detail panels can show clearer object art without inflating the room sprites.
+  - Communication device keeps a primitive world fallback even though the PNG now has alpha, because its current perspective/real-product look still clashes with the room view at small scale.
+- Desk primitive now has a shadow, inset tabletop, outline, highlight, and reduced clutter so it reads more like furniture.
+- Bed primitive now separates mattress, pillow, blanket, shadow, and fold line so it reads as the End Day area.
+- Fluorescent glow was reduced and cable routing for the light now follows the room more quietly instead of cutting a bright diagonal through the center.
+- Multitap overlay now uses a smaller strip, smaller slot textures, compact connected/available device rows, small short labels on occupied slots, and reduced card text size.
+- Laptop and Communication device still depend on `SurvivalState.gd` outlet size data for 2-slot behavior; the visual slot highlight spans the occupied slot group instead of using a full detailed card on top of the strip.
+
 ## Common UI Style
 
 - Added `godot/scripts/ui/UIStyle.gd` for shared colors and simple panel styles.
@@ -108,13 +126,16 @@ This pass responds to latest in-editor screenshots after transparent PNG replace
 - Interaction and dialogue panel art is intentionally subtle so Korean text remains readable.
 - Result panel still uses drawn panels and a snapshot placeholder.
 - Multitap device cards still use drawn rectangles and text, with PNG badges/plugs layered in.
+- Communication device world art should be remade or adapted for the room perspective; current PNG is better suited to UI preview than world placement.
+- The fan and laptop are usable as temporary world sprites, but their perspective still differs from the primitive room and should be reviewed when final object art starts.
 - No external art assets were imported.
 
 ## Next Visual Tasks
 
 - Replace remaining furniture primitives with controlled object sprites or simple `.tscn` object scenes.
 - Tune PNG scale/position and Yui animation pivot after in-editor screenshots.
-- Re-export communication device PNGs with an alpha channel if they should appear as world sprites.
+- Create or adapt a dedicated top-down communication-device world sprite instead of forcing the current preview-like PNG into the room.
+- Review whether fan/laptop need dedicated world variants separate from UI preview images.
 - Tighten panel spacing after in-editor screenshot review.
 - Add subtle Light2D/CanvasModulate if it does not hurt readability.
 - Move device/object presentation data into resources after the loop is manually validated.

@@ -8,13 +8,13 @@ signal breaker_tripped
 
 const MAX_POWER_WATTS := SurvivalState.DAY1_MAX_LOAD_WATTS
 const OUTLET_COUNT := SurvivalState.DAY1_MAX_OUTLET_SLOTS
-const SLOT_SIZE := Vector2(72, 54)
-const SLOT_GAP := 18.0
-const STRIP_SIZE := Vector2(430, 98)
-const DEVICE_WIDTH := 300.0
-const DEVICE_HEIGHT := 60.0
-const DEVICE_COLUMN_GAP := 338.0
-const DEVICE_ROW_GAP := 74.0
+const SLOT_SIZE := Vector2(66, 48)
+const SLOT_GAP := 20.0
+const STRIP_SIZE := Vector2(392, 92)
+const DEVICE_WIDTH := 250.0
+const DEVICE_HEIGHT := 48.0
+const DEVICE_COLUMN_GAP := 292.0
+const DEVICE_ROW_GAP := 58.0
 const BREAKER_SECONDS := 1.4
 const PANEL_SIZE := Vector2(1160, 640)
 
@@ -98,24 +98,24 @@ func _draw() -> void:
 	draw_rect(panel_rect, UIStyle.PANEL, true)
 	draw_rect(panel_rect, UIStyle.LINE_DIM, false, 2.0)
 
-	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 42), "멀티탭 관리", 28, UIStyle.TEXT)
-	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 78), "ESC: 아파트로 돌아가기", 15, UIStyle.MUTED)
+	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 42), "멀티탭 관리", 26, UIStyle.TEXT)
+	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 76), "ESC: 아파트로 돌아가기", 14, UIStyle.MUTED)
 
-	_draw_power_overview(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 126))
-	_draw_text(Vector2(panel_rect.position.x + 520, panel_rect.position.y + 124), "콘센트 슬롯", 18, UIStyle.MUTED)
-	_draw_text(Vector2(panel_rect.position.x + 520, panel_rect.position.y + 296), "연결된 기기", 18, UIStyle.MUTED)
-	_draw_text(Vector2(panel_rect.position.x + 520, panel_rect.position.y + 454), "연결 가능한 기기", 18, UIStyle.MUTED)
+	_draw_power_overview(Vector2(panel_rect.position.x + 32, panel_rect.position.y + 122))
+	_draw_text(Vector2(panel_rect.position.x + 512, panel_rect.position.y + 122), "콘센트 슬롯", 17, UIStyle.MUTED)
+	_draw_text(Vector2(panel_rect.position.x + 512, panel_rect.position.y + 284), "연결된 기기", 17, UIStyle.MUTED)
+	_draw_text(Vector2(panel_rect.position.x + 512, panel_rect.position.y + 430), "연결 가능한 기기", 17, UIStyle.MUTED)
 	_draw_power_strip(_get_strip_center())
 	_draw_devices()
 
-	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.end.y - 64), "상태 메모", 15, UIStyle.MUTED)
-	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.end.y - 36), status_text, 16, UIStyle.TEXT)
+	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.end.y - 64), "상태 메모", 14, UIStyle.MUTED)
+	_draw_text(Vector2(panel_rect.position.x + 32, panel_rect.end.y - 36), status_text, 15, UIStyle.TEXT)
 
 
 func _draw_power_strip(strip_center: Vector2) -> void:
 	var strip_rect := Rect2(strip_center - STRIP_SIZE * 0.5, STRIP_SIZE)
 	var strip_texture := AssetPaths.POWERSTRIP_CONNECTED if _get_used_slots() > 0 else AssetPaths.POWERSTRIP_EMPTY
-	draw_texture_rect(strip_texture, strip_rect.grow(10.0), false, Color(1, 1, 1, 0.28))
+	draw_texture_rect(strip_texture, strip_rect.grow(4.0), false, Color(1, 1, 1, 0.18))
 	draw_rect(strip_rect, Color(0.16, 0.135, 0.1, 0.82), true)
 	draw_rect(strip_rect, UIStyle.LINE_DIM, false, 2.0)
 
@@ -124,8 +124,8 @@ func _draw_power_strip(strip_center: Vector2) -> void:
 		var occupied := occupied_slots[index] != null
 		var slot_texture := AssetPaths.OUTLET_SLOT_ACTIVE if occupied else AssetPaths.OUTLET_SLOT_EMPTY
 		if occupied:
-			draw_rect(slot_rect.grow(5.0), Color(0.91, 0.63, 0.18, 0.12), true)
-		draw_texture_rect(slot_texture, slot_rect, false, Color(1, 1, 1, 0.86))
+			draw_rect(slot_rect.grow(4.0), Color(0.91, 0.63, 0.18, 0.14), true)
+		draw_texture_rect(slot_texture, slot_rect, false, Color(1, 1, 1, 0.72))
 		draw_rect(slot_rect, Color(0.08, 0.07, 0.055, 0.28), true)
 		draw_rect(slot_rect, UIStyle.LINE_DIM if not occupied else UIStyle.ELECTRIC, false, 1.5)
 
@@ -146,11 +146,13 @@ func _draw_connected_slot_labels() -> void:
 			Vector2(last_rect.end.x - first_rect.position.x, first_rect.size.y)
 		)
 		var plug_texture := AssetPaths.PLUG_2_SLOT if slots >= 2 else AssetPaths.PLUG_1_SLOT
-		draw_rect(group_rect.grow(6.0), Color(0.92, 0.66, 0.23, 0.13), true)
-		draw_texture_rect(plug_texture, group_rect.grow(10.0), false, Color(1, 1, 1, 0.78))
-		draw_rect(group_rect.grow(6.0), UIStyle.ELECTRIC, false, 1.4)
-		var label_position := Vector2(group_rect.get_center().x - 34.0, group_rect.end.y + 18.0)
-		_draw_text(label_position, str(device["label"]), 10, UIStyle.MUTED)
+		var occupancy_rect := group_rect.grow(5.0)
+		draw_rect(occupancy_rect, Color(0.92, 0.66, 0.23, 0.16), true)
+		draw_texture_rect(plug_texture, group_rect.grow(4.0), false, Color(1, 1, 1, 0.42))
+		draw_rect(occupancy_rect, UIStyle.ELECTRIC, false, 1.4)
+		var short_label := _get_short_device_label(str(device["key"]), str(device["label"]))
+		var label_position := Vector2(group_rect.get_center().x - 22.0, group_rect.end.y + 16.0)
+		_draw_text(label_position, short_label, 9, UIStyle.MUTED)
 
 
 func _draw_devices() -> void:
@@ -164,23 +166,23 @@ func _draw_devices() -> void:
 		draw_rect(rect, border, false, 2.0)
 		var badge_text := "사용 완료" if used else ("연결됨" if connected else "연결 안 됨")
 		var badge_color := UIStyle.SUCCESS if used else (UIStyle.ELECTRIC if connected else UIStyle.MUTED)
-		var badge_rect := Rect2(rect.position + Vector2(12, 9), Vector2(92, 20))
+		var badge_rect := Rect2(rect.position + Vector2(10, 8), Vector2(70, 16))
 		var badge_texture := AssetPaths.BADGE_CONNECTED if connected else AssetPaths.BADGE_DISCONNECTED
 		draw_texture_rect(badge_texture, badge_rect, false, Color(1, 1, 1, 0.78))
 		draw_rect(badge_rect, Color(0.03, 0.03, 0.026, 0.52), true)
-		_draw_text(rect.position + Vector2(18, 22), badge_text, 10, badge_color)
-		var device_text := "%s\n소비전력 %dW   비용 %d\n콘센트 %d칸" % [
+		_draw_text(rect.position + Vector2(14, 20), badge_text, 9, badge_color)
+		var device_text := "%s\n%dW  비용 %d  %d칸" % [
 			device["label"],
 			int(device["watts"]),
 			int(device["power_cost"]),
 			int(device["slots"]),
 		]
-		_draw_text(rect.position + Vector2(126, 20), device_text, 12, UIStyle.TEXT)
+		_draw_text(rect.position + Vector2(96, 18), device_text, 11, UIStyle.TEXT)
 
 		var plug_x := rect.get_center().x
 		if device["slots"] == 2:
 			plug_x = rect.position.x + 22.0 if device["plug_side"] == "left" else rect.end.x - 22.0
-		draw_rect(Rect2(Vector2(plug_x - 6.0, rect.end.y - 1.0), Vector2(12.0, 12.0)), Color("#1c1814"), true)
+		draw_rect(Rect2(Vector2(plug_x - 5.0, rect.end.y - 1.0), Vector2(10.0, 9.0)), Color("#1c1814"), true)
 
 
 func _draw_power_overview(position: Vector2) -> void:
@@ -196,7 +198,7 @@ func _draw_power_overview(position: Vector2) -> void:
 		"방 안에서 기기를 사용할 때만 오늘 전력이 줄어듭니다.",
 	]
 	draw_texture_rect(AssetPaths.ICON_PLUG, Rect2(position + Vector2(-26, -4), Vector2(20, 20)), false, Color(1, 1, 1, 0.78))
-	_draw_text(position, "\n".join(overview), 18, UIStyle.TEXT)
+	_draw_text(position, "\n".join(overview), 16, UIStyle.TEXT)
 
 
 func _draw_text(position: Vector2, text: String, font_size: int, color: Color) -> void:
@@ -330,7 +332,7 @@ func _get_panel_rect() -> Rect2:
 
 func _get_strip_center() -> Vector2:
 	var panel_rect := _get_panel_rect()
-	return Vector2(panel_rect.position.x + 775.0, panel_rect.position.y + 205.0)
+	return Vector2(panel_rect.position.x + 780.0, panel_rect.position.y + 198.0)
 
 
 func _get_device_rect(device: Dictionary) -> Rect2:
@@ -438,8 +440,8 @@ func _layout_device_homes() -> void:
 		return
 
 	var panel_rect := _get_panel_rect()
-	var connected_origin := Vector2(panel_rect.position.x + 670.0, panel_rect.position.y + 344.0)
-	var available_origin := Vector2(panel_rect.position.x + 670.0, panel_rect.position.y + 498.0)
+	var connected_origin := Vector2(panel_rect.position.x + 646.0, panel_rect.position.y + 328.0)
+	var available_origin := Vector2(panel_rect.position.x + 646.0, panel_rect.position.y + 476.0)
 
 	var connected_index := 0
 	var available_index := 0
@@ -463,6 +465,16 @@ func _get_card_grid_position(origin: Vector2, index: int) -> Vector2:
 	var column := index % 2
 	var row := int(index / 2)
 	return origin + Vector2(float(column) * DEVICE_COLUMN_GAP, float(row) * DEVICE_ROW_GAP)
+
+
+func _get_short_device_label(key: String, fallback: String) -> String:
+	match key:
+		"communication_device":
+			return "통신"
+		"charger":
+			return "충전"
+		_:
+			return fallback
 
 
 func _sync_devices_from_state() -> void:

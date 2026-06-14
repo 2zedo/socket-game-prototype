@@ -120,8 +120,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "멀티탭",
 		"title": "멀티탭",
 		"body": "방 안 기기들의 전원을 연결하는 낡은 멀티탭입니다.",
-		"position": Vector2(710, 475),
-		"size": Vector2(150, 44),
+		"position": Vector2(710, 476),
+		"size": Vector2(128, 38),
 		"color": Color("#6f614e"),
 		"outline_color": Color("#ffe6a3"),
 		"prompt_text": "[E] 멀티탭 관리",
@@ -132,8 +132,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": Vector2(620, 136),
-		"size": Vector2(150, 44),
+		"position": Vector2(620, 134),
+		"size": Vector2(138, 34),
 		"color": Color("#a8894e"),
 		"power_units": 1,
 		"day1_action_key": "light",
@@ -144,8 +144,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": Vector2(922, 505),
-		"size": Vector2(68, 42),
+		"position": Vector2(928, 508),
+		"size": Vector2(54, 36),
 		"color": Color("#4e5e67"),
 		"power_units": 2,
 		"day1_action_key": "charger",
@@ -156,8 +156,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "선풍기",
 		"title": "선풍기",
 		"body": "더위를 낮출 수 있습니다.\n하지만 켜두면 다른 장치를 꽂을 여유가 줄어듭니다.",
-		"position": Vector2(850, 254),
-		"size": Vector2(76, 88),
+		"position": Vector2(850, 256),
+		"size": Vector2(70, 82),
 		"color": Color("#53645b"),
 		"power_units": 2,
 		"day1_action_key": "fan",
@@ -168,8 +168,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": Vector2(610, 232),
-		"size": Vector2(108, 58),
+		"position": Vector2(610, 234),
+		"size": Vector2(96, 52),
 		"color": Color("#3b4748"),
 		"power_units": 3,
 		"day1_action_key": "laptop",
@@ -180,8 +180,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "통신 장치",
 		"title": "통신 장치",
 		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
-		"position": Vector2(980, 342),
-		"size": Vector2(104, 64),
+		"position": Vector2(980, 344),
+		"size": Vector2(84, 56),
 		"color": Color("#5e5368"),
 		"power_units": 4,
 		"day1_action_key": "communication_device",
@@ -314,14 +314,17 @@ func _draw_window(rect: Rect2) -> void:
 
 
 func _draw_desk(rect: Rect2) -> void:
-	draw_rect(rect, Color("#3f2f22"), true)
-	draw_rect(rect, Color("#71593b"), false, 2.0)
+	draw_rect(rect.position + Vector2(5, 7), rect.size, Color(0.02, 0.018, 0.014, 0.5), true)
+	draw_rect(rect, Color("#2f2319"), true)
+	draw_rect(rect.grow(-5.0), Color("#4a3422"), true)
+	draw_rect(rect, Color("#80643e"), false, 2.0)
+	draw_line(rect.position + Vector2(8.0, 8.0), rect.position + Vector2(rect.size.x - 8.0, 8.0), Color(0.95, 0.75, 0.45, 0.18), 1.0)
 	for index in range(4):
 		var y := rect.position.y + 12.0 + float(index) * 14.0
-		draw_line(Vector2(rect.position.x + 6.0, y), Vector2(rect.end.x - 6.0, y), Color(0.72, 0.55, 0.34, 0.12), 1.0)
-	draw_rect(Rect2(rect.position + Vector2(16, 10), Vector2(34, 22)), Color("#262522"), true)
-	draw_rect(Rect2(rect.end - Vector2(62, 44), Vector2(36, 30)), Color("#2a211a"), true)
-	draw_circle(rect.position + Vector2(152, 26), 7.0, Color("#786b58"))
+		draw_line(Vector2(rect.position.x + 10.0, y), Vector2(rect.end.x - 10.0, y), Color(0.72, 0.55, 0.34, 0.12), 1.0)
+	draw_rect(Rect2(rect.position + Vector2(20, 15), Vector2(30, 18)), Color("#211f1c"), true)
+	draw_rect(Rect2(rect.end - Vector2(58, 42), Vector2(30, 26)), Color("#2a211a"), true)
+	draw_circle(rect.position + Vector2(155, 28), 6.0, Color("#786b58"))
 
 
 func _draw_shelf(rect: Rect2) -> void:
@@ -363,17 +366,17 @@ func _draw_light_pool() -> void:
 	if not used_day1_action_keys.has("light"):
 		return
 
-	var glow_rect := Rect2(Vector2(348, 74), Vector2(560, 330))
-	draw_texture_rect(AssetPaths.FLUORESCENT_GLOW, glow_rect, false, Color(1, 1, 1, 0.34))
+	var glow_rect := Rect2(Vector2(398, 92), Vector2(440, 270))
+	draw_texture_rect(AssetPaths.FLUORESCENT_GLOW, glow_rect, false, Color(1, 1, 1, 0.24))
 
 	var desk_center := Vector2(610, 242)
-	for index in range(5, 0, -1):
-		var alpha := 0.012 * float(index)
-		draw_circle(desk_center, 34.0 * float(index), Color(0.95, 0.68, 0.31, alpha))
-	var floor_center := Vector2(610, 385)
 	for index in range(4, 0, -1):
 		var alpha := 0.01 * float(index)
-		draw_circle(floor_center, 46.0 * float(index), Color(0.92, 0.62, 0.26, alpha))
+		draw_circle(desk_center, 32.0 * float(index), Color(0.95, 0.68, 0.31, alpha))
+	var floor_center := Vector2(610, 385)
+	for index in range(3, 0, -1):
+		var alpha := 0.008 * float(index)
+		draw_circle(floor_center, 42.0 * float(index), Color(0.92, 0.62, 0.26, alpha))
 
 
 func _draw_power_cables() -> void:
@@ -399,6 +402,7 @@ func _draw_power_cables() -> void:
 func _draw_power_cable(start_position: Vector2, end_position: Vector2, object_id: String) -> void:
 	var midpoint: Vector2 = (start_position + end_position) * 0.5
 	var bend_offset := Vector2(0, 28)
+	var points := PackedVector2Array()
 	match object_id:
 		"laptop":
 			bend_offset = Vector2(-18, 18)
@@ -409,14 +413,24 @@ func _draw_power_cable(start_position: Vector2, end_position: Vector2, object_id
 		"fan":
 			bend_offset = Vector2(18, -12)
 		"light":
-			bend_offset = Vector2(-36, -8)
+			# Route the fluorescent fixture line along the room instead of cutting a
+			# bright diagonal through the play area.
+			points = PackedVector2Array([
+				start_position,
+				Vector2(start_position.x, 410),
+				Vector2(end_position.x, 410),
+				end_position,
+			])
 
-	var bend: Vector2 = midpoint + bend_offset
-	var points: PackedVector2Array = PackedVector2Array([start_position, bend, end_position])
+	if points.size() == 0:
+		var bend: Vector2 = midpoint + bend_offset
+		points = PackedVector2Array([start_position, bend, end_position])
+
 	var cable_core: Color = Color("#fff07a") if phase_key == "day" else Color("#ffe066")
-	draw_polyline(points, Color(0.18, 0.12, 0.07, 0.55), 5.0, true)
-	draw_polyline(points, cable_core, 2.0, true)
-	draw_circle(end_position, 4.0, cable_core)
+	var cable_alpha := 0.42 if object_id == "light" else 0.62
+	draw_polyline(points, Color(0.18, 0.12, 0.07, cable_alpha), 4.0, true)
+	draw_polyline(points, Color(cable_core.r, cable_core.g, cable_core.b, cable_alpha), 1.4, true)
+	draw_circle(end_position, 3.2, Color(cable_core.r, cable_core.g, cable_core.b, cable_alpha))
 
 
 func _get_power_key_for_object(object_id: String) -> String:

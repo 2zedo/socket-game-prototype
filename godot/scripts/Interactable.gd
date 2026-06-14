@@ -26,39 +26,45 @@ const LABEL_FONT_SIZE: int = 11
 const STATUS_FONT_SIZE: int = 11
 const OBJECT_DISPLAY_RULES := {
 	"light": {
-		"world_size": Vector2(172, 48),
-		"world_offset": Vector2(0, -8),
+		"world_size": Vector2(148, 38),
+		"world_offset": Vector2(0, -10),
+		"world_modulate": Color(0.82, 0.78, 0.68, 0.82),
 		"ui_preview_size": Vector2(260, 92),
 		"z_index": 1,
 	},
 	"laptop": {
-		"world_size": Vector2(128, 96),
-		"world_offset": Vector2(0, 22),
+		"world_size": Vector2(104, 78),
+		"world_offset": Vector2(0, 18),
+		"world_modulate": Color(0.82, 0.8, 0.74, 0.88),
 		"ui_preview_size": Vector2(300, 220),
 		"z_index": 3,
 	},
 	"fan": {
-		"world_size": Vector2(112, 130),
-		"world_offset": Vector2(0, -4),
+		"world_size": Vector2(86, 104),
+		"world_offset": Vector2(0, 0),
+		"world_modulate": Color(0.78, 0.76, 0.68, 0.82),
 		"ui_preview_size": Vector2(220, 250),
 		"z_index": 3,
 	},
 	"charger": {
-		"world_size": Vector2(66, 66),
+		"world_size": Vector2(48, 48),
 		"world_offset": Vector2(-4, 2),
+		"world_modulate": Color(0.86, 0.84, 0.78, 0.9),
 		"ui_preview_size": Vector2(170, 170),
 		"z_index": 3,
 	},
 	"communication_device": {
-		"world_size": Vector2(104, 78),
+		"world_size": Vector2(80, 58),
 		"world_offset": Vector2(0, 2),
+		"world_modulate": Color(0.78, 0.74, 0.68, 0.78),
 		"ui_preview_size": Vector2(250, 190),
 		"z_index": 3,
 		"use_world_texture": false,
 	},
 	"power_strip": {
-		"world_size": Vector2(150, 74),
+		"world_size": Vector2(118, 58),
 		"world_offset": Vector2(0, 0),
+		"world_modulate": Color(0.82, 0.78, 0.7, 0.88),
 		"ui_preview_size": Vector2(280, 140),
 		"z_index": 2,
 	},
@@ -205,9 +211,10 @@ func _draw_object_texture(rect: Rect2, texture: Texture2D) -> void:
 	var rule := get_display_rule_for_object(object_id)
 	var texture_size: Vector2 = rule.get("world_size", rect.grow(12.0).size)
 	var texture_offset: Vector2 = rule.get("world_offset", Vector2.ZERO)
+	var texture_modulate: Color = rule.get("world_modulate", Color.WHITE)
 	var texture_rect := Rect2(-texture_size * 0.5 + texture_offset, texture_size)
 
-	draw_texture_rect(texture, texture_rect, false)
+	draw_texture_rect(texture, texture_rect, false, texture_modulate)
 
 
 static func get_display_rule_for_object(target_object_id: String) -> Dictionary:
@@ -300,13 +307,19 @@ func _draw_communication_icon(rect: Rect2, fill_color: Color, outline: Color) ->
 
 
 func _draw_bed_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
-	draw_rect(rect, fill_color.darkened(0.12), true)
-	draw_rect(rect, outline, false, 2.0)
-	var pillow := Rect2(rect.position + Vector2(12.0, 12.0), Vector2(rect.size.x * 0.28, rect.size.y - 24.0))
-	draw_rect(pillow, Color("#655b51"), true)
-	var blanket := Rect2(rect.position + Vector2(rect.size.x * 0.34, 10.0), Vector2(rect.size.x * 0.58, rect.size.y - 20.0))
-	draw_rect(blanket, Color("#4b443e"), true)
-	draw_line(blanket.position + Vector2(0, 16), blanket.end - Vector2(0, 16), Color(0.9, 0.82, 0.68, 0.18), 1.0)
+	draw_rect(rect.position + Vector2(5, 7), rect.size, Color(0.02, 0.018, 0.015, 0.42), true)
+	draw_rect(rect, fill_color.darkened(0.2), true)
+	draw_rect(rect, outline.darkened(0.12), false, 2.0)
+	var mattress := rect.grow(-10.0)
+	draw_rect(mattress, Color("#5d554d"), true)
+	draw_rect(mattress, Color(0.85, 0.78, 0.66, 0.18), false, 1.0)
+	var pillow := Rect2(mattress.position + Vector2(8.0, 8.0), Vector2(mattress.size.x * 0.26, mattress.size.y - 16.0))
+	draw_rect(pillow, Color("#756a5f"), true)
+	draw_rect(pillow, Color(0.95, 0.88, 0.76, 0.18), false, 1.0)
+	var blanket := Rect2(mattress.position + Vector2(mattress.size.x * 0.32, 6.0), Vector2(mattress.size.x * 0.62, mattress.size.y - 12.0))
+	draw_rect(blanket, Color("#403a35"), true)
+	draw_rect(blanket, Color(0.9, 0.82, 0.68, 0.14), false, 1.0)
+	draw_line(blanket.position + Vector2(0, blanket.size.y * 0.42), blanket.position + Vector2(blanket.size.x, blanket.size.y * 0.72), Color(0.9, 0.82, 0.68, 0.16), 1.0)
 
 
 func _draw_microwave_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:

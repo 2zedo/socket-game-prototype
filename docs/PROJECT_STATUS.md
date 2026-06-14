@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Godot DAY 1 MVP PNG layout normalization
+- Current phase: Godot DAY 1 MVP visual sanity pass
 - Current branch: `main`
-- Latest commit at task start: `82b83cd style: apply P0 Godot art assets`
+- Latest commit at task start: `1f91c20 style: normalize Godot PNG layout`
 
 ## Latest Completed Work
 
@@ -33,10 +33,11 @@
 - Renamed several P0 PNG files that had accidental double-dot filenames so Godot paths match the documented asset pipeline
 - Replaced the single Yui player texture display with directional idle/walk `AnimatedSprite2D` visuals while preserving movement, collision, and interaction logic
 - Normalized current PNG world display scale/offset/z-index rules and tightened the multitap card grid so cards no longer share the same cramped slot space
+- Applied a visual sanity pass to enlarge Yui's visual display, reduce oversized world objects, improve primitive furniture readability, soften cable/light presentation, and simplify the multitap slot/card layout
 
 ## Current Goal
 
-- Make the documented DAY 1 power loop playable, understandable, and visually closer to a dark one-room survival adventure using controlled in-repo PNG assets, direction-aware Yui animation, and consistent world/UI scale rules
+- Make the documented DAY 1 power loop playable, understandable, and visually closer to a dark one-room survival adventure using controlled in-repo PNG assets, direction-aware Yui animation, consistent world/UI scale rules, and less cluttered multitap UI
 - Keep implementation focused on keyboard movement, proximity interaction, outlet connection, power display, object use, feedback, and result summary readiness
 - Keep the presentation distinct from generic top-down survival/management games
 - Prepare manual Godot editor testing of Yui directional animation together with the unified power/outlet model, 2-slot devices, next-day connection visuals, P0 PNG object/UI application, and screenshot-based layout tuning
@@ -52,15 +53,11 @@
 
 ## Changed Files
 
-- `godot/scripts/Player.gd`
 - `godot/scenes/Player.tscn`
 - `godot/scripts/Apartment.gd`
 - `godot/scripts/Interactable.gd`
 - `godot/scripts/ui/OutletMode.gd`
-- Yui idle/walk PNG assets under `godot/assets/art/characters/yui/idle/` and `godot/assets/art/characters/yui/walk/`
-- P0 PNG assets under `godot/assets/art/`
 - `docs/PROJECT_STATUS.md`
-- `docs/ASSET_PIPELINE.md`
 - `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
 
 ## Validation Results
@@ -69,9 +66,9 @@
 - `git fetch origin`: updated remote refs before editing
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
 - `git status --short`: checked changed Godot/docs files before staging
-- `git diff --stat`: checked Godot/docs/asset-pipeline scope
+- `git diff --stat`: checked Godot/docs visual-sanity scope
 - `git diff --check`: passed
-- Godot execution validation pending for this task until local editor/CLI verification is run
+- Godot execution validation pending for this task because no local Godot CLI/editor executable was found from the shell
 - Web validation was not run because no web files were changed
 
 ## Current Risks or Known Issues
@@ -81,12 +78,13 @@
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - P0 PNG assets are now applied, but many furniture/environment details still use primitive fallback drawing.
-- Yui idle/walk sprites are wired and visually enlarged, but final scale/pivot still need in-editor review.
+- Yui idle/walk sprites are wired and visually enlarged again, but final scale/pivot still need in-editor review.
 - Walk frames are temporary and expected to be replaced or tuned later.
 - `room_floor_base.png` and `room_wall_base.png` are drawn as underlay backdrops while existing primitive furniture/collision remains in place.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
-- Panel spacing, multitap card spacing, 2-slot device dragging, and prompt positions need another screenshot-based review in the Godot editor.
-- `comm_device_off.png` and `comm_device_on.png` currently read as RGB/no-alpha files, so the room keeps a primitive fallback for that object until the art file is re-exported with transparency.
+- Panel spacing, compact multitap card spacing, 2-slot device dragging, and prompt positions need another screenshot-based review in the Godot editor.
+- `comm_device_off.png` and `comm_device_on.png` now have an alpha channel, but the world view still uses a smaller primitive fallback because the current product-like perspective does not blend well with the top-down room scale.
+- Several furniture pieces are improved primitives, but bed/desk/door/shelf readability will eventually benefit from purpose-built room sprites.
 - The exploration model is keyboard/top-down and not static point-and-click, but it still needs manual playtesting in Godot.
 - Explicit End Day now exists, but still needs manual playtesting in Godot.
 - Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
@@ -94,6 +92,6 @@
 
 ## Next Recommended Task
 
-- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test Yui idle/walk directions, object scale/position, Laptop/Communication `2`-slot behavior, next-day connection visuals, and P0 PNG state changes in the Godot editor
-- Capture screenshots of Exploration, Interaction, Multitap, and Result states and tune any remaining layout/readability issues
+- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test Yui visual scale, object scale/position, Laptop/Communication `2`-slot behavior, compact multitap layout, next-day connection visuals, and P0 PNG state changes in the Godot editor
+- Capture screenshots of Exploration, Interaction, Multitap, and Result states and tune any remaining world/UI readability issues
 - Fix bugs found during manual playtesting
