@@ -25,6 +25,11 @@ func _ready() -> void:
 	UIStyle.apply_label(prompt_label, UIStyle.TEXT, 13)
 	UIStyle.apply_label(hint_label, UIStyle.MUTED, 13)
 	prompt_label.add_theme_stylebox_override("normal", UIStyle.make_panel_style(Color(0.035, 0.032, 0.028, 0.88), UIStyle.LINE, 1, 2))
+	queue_redraw()
+
+
+func _draw() -> void:
+	draw_texture_rect(AssetPaths.ICON_POWER, Rect2(Vector2(24, 132), Vector2(20, 20)), false, Color(1, 1, 1, 0.82))
 
 
 func set_interaction_prompt(text: String, world_position: Vector2 = NO_PROMPT_POSITION) -> void:

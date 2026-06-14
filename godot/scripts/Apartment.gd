@@ -12,6 +12,8 @@ var nearest_interactable: ApartmentInteractable
 var interactables: Array[ApartmentInteractable] = []
 var interactables_by_id: Dictionary = {}
 var powered_device_keys: Array[String] = []
+var used_day1_action_keys: Array[String] = []
+var current_power_units: int = SurvivalState.DAY1_STARTING_POWER_UNITS
 var phase_key: String = "day"
 
 const ROOM_RECT: Rect2 = Rect2(185, 68, 930, 586)
@@ -48,7 +50,24 @@ func set_powered_devices(device_keys: Array[String]) -> void:
 		if interactable == null:
 			continue
 
-		interactable.set_powered(device_keys.has(_get_power_key_for_object(object_id)))
+		var is_powered: bool = device_keys.has(_get_power_key_for_object(object_id))
+		if object_id == "power_strip":
+			is_powered = not device_keys.is_empty()
+		interactable.set_powered(is_powered)
+
+	queue_redraw()
+
+
+func set_day1_visual_state(used_actions: Array[String], current_power: int) -> void:
+	used_day1_action_keys = used_actions.duplicate()
+	current_power_units = current_power
+
+	for object_id in interactables_by_id.keys():
+		var interactable: ApartmentInteractable = interactables_by_id[object_id] as ApartmentInteractable
+		if interactable == null:
+			continue
+
+		interactable.set_day1_visual_state(used_day1_action_keys, current_power_units)
 
 	queue_redraw()
 
@@ -73,8 +92,7 @@ func _draw() -> void:
 	draw_rect(ROOM_RECT.grow(22.0), Color("#0d0b0a"), true)
 	draw_rect(ROOM_RECT, wall_color, true)
 	draw_rect(ROOM_RECT.grow(-12.0), inner_wall, true)
-	draw_rect(ROOM_RECT.grow(-48.0), floor_fill, true)
-	_draw_floorboards(ROOM_RECT.grow(-48.0))
+	_draw_room_asset_backdrop(ROOM_RECT.grow(22.0), ROOM_RECT.grow(-48.0), wall_color, floor_fill)
 	_draw_room_details()
 	_draw_light_pool()
 	_draw_power_cables()
@@ -114,8 +132,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": Vector2(520, 215),
-		"size": Vector2(62, 78),
+		"position": Vector2(620, 136),
+		"size": Vector2(150, 44),
 		"color": Color("#a8894e"),
 		"power_units": 1,
 		"day1_action_key": "light",
@@ -261,6 +279,16 @@ func _draw_floorboards(rect: Rect2) -> void:
 		draw_line(Vector2(x, rect.position.y), Vector2(x, rect.end.y), Color(0.08, 0.06, 0.04, 0.14), 1.0)
 
 
+func _draw_room_asset_backdrop(wall_rect: Rect2, floor_rect: Rect2, wall_fallback: Color, floor_fallback: Color) -> void:
+	# The P0 room art sits under the existing collision and interactable layer so
+	# gameplay stays anchored while primitive furniture is gradually replaced.
+	draw_rect(wall_rect, wall_fallback, true)
+	draw_texture_rect(AssetPaths.ROOM_WALL_BASE, wall_rect, false, Color(1, 1, 1, 0.55))
+	draw_rect(floor_rect, floor_fallback, true)
+	draw_texture_rect(AssetPaths.ROOM_FLOOR_BASE, floor_rect, false, Color(1, 1, 1, 0.62))
+	_draw_floorboards(floor_rect)
+
+
 func _draw_room_details() -> void:
 	var floor_rect := ROOM_RECT.grow(-48.0)
 	_draw_window(Rect2(Vector2(270, 104), Vector2(190, 92)))
@@ -332,7 +360,13 @@ func _draw_small_clutter(_floor_rect: Rect2) -> void:
 
 
 func _draw_light_pool() -> void:
-	var desk_center := Vector2(565, 255)
+	if not used_day1_action_keys.has("light"):
+		return
+
+	var glow_rect := Rect2(Vector2(348, 74), Vector2(560, 330))
+	draw_texture_rect(AssetPaths.FLUORESCENT_GLOW, glow_rect, false, Color(1, 1, 1, 0.34))
+
+	var desk_center := Vector2(610, 242)
 	for index in range(5, 0, -1):
 		var alpha := 0.012 * float(index)
 		draw_circle(desk_center, 34.0 * float(index), Color(0.95, 0.68, 0.31, alpha))

@@ -19,6 +19,7 @@ func _ready() -> void:
 	panel.add_theme_stylebox_override("panel", UIStyle.make_panel_style(UIStyle.PANEL, UIStyle.LINE_DIM, 1, 2))
 	dialogue_panel.add_theme_stylebox_override("panel", UIStyle.make_panel_style(Color(0.035, 0.033, 0.03, 0.92), UIStyle.LINE_DIM, 1, 2))
 	portrait_panel.add_theme_stylebox_override("panel", UIStyle.make_panel_style(Color(0.06, 0.055, 0.05, 0.95), UIStyle.LINE_DIM, 1, 36))
+	_install_texture_backplates()
 	use_button.add_theme_stylebox_override("panel", UIStyle.make_button_style(true))
 	cancel_button.add_theme_stylebox_override("panel", UIStyle.make_button_style(false))
 	UIStyle.apply_label(title_label, UIStyle.TEXT, 24)
@@ -28,6 +29,45 @@ func _ready() -> void:
 	UIStyle.apply_label(portrait_label, UIStyle.MUTED, 13)
 	UIStyle.apply_label(speaker_label, UIStyle.ELECTRIC, 17)
 	UIStyle.apply_label(dialogue_label, UIStyle.TEXT, 16)
+
+
+func _install_texture_backplates() -> void:
+	# Texture backplates are decorative only; the existing StyleBox panels still
+	# carry contrast so Korean text remains readable over the P0 UI art.
+	_add_panel_texture(panel, AssetPaths.UI_PANEL_INTERACTION, 0.24)
+	_add_panel_texture(dialogue_panel, AssetPaths.UI_PANEL_DIALOGUE, 0.28)
+
+	var portrait_texture := TextureRect.new()
+	portrait_texture.texture = AssetPaths.YUI_PORTRAIT_NEUTRAL
+	portrait_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait_texture.modulate = Color(1, 1, 1, 0.9)
+	portrait_texture.anchor_right = 1.0
+	portrait_texture.anchor_bottom = 1.0
+	portrait_texture.offset_left = 6.0
+	portrait_texture.offset_top = 6.0
+	portrait_texture.offset_right = -6.0
+	portrait_texture.offset_bottom = -6.0
+	portrait_panel.add_child(portrait_texture)
+	portrait_panel.move_child(portrait_texture, 0)
+	portrait_label.visible = false
+
+
+func _add_panel_texture(parent: Control, texture: Texture2D, alpha: float) -> void:
+	var texture_rect := TextureRect.new()
+	texture_rect.texture = texture
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	texture_rect.modulate = Color(1, 1, 1, alpha)
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texture_rect.anchor_right = 1.0
+	texture_rect.anchor_bottom = 1.0
+	texture_rect.offset_left = 0.0
+	texture_rect.offset_top = 0.0
+	texture_rect.offset_right = 0.0
+	texture_rect.offset_bottom = 0.0
+	parent.add_child(texture_rect)
+	parent.move_child(texture_rect, 0)
 
 
 func open(title: String, body: String, footer_text: String = "E 또는 ESC: 닫기") -> void:

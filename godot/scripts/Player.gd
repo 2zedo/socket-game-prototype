@@ -22,6 +22,5 @@ func set_movement_enabled(is_enabled: bool) -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, 18.0, Color("#5aa0ff"))
-	draw_circle(Vector2(0, -8), 8.0, Color("#dcecff"))
-	draw_line(Vector2.ZERO, Vector2(0, -24), Color("#1f2b3a"), 3.0)
+	var sprite_rect := Rect2(Vector2(-24.0, -44.0), Vector2(48.0, 64.0))
+	draw_texture_rect(AssetPaths.YUI_PLAYER_IDLE_BACK, sprite_rect, false)

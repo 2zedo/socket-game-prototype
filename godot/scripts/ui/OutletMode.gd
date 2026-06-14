@@ -111,20 +111,20 @@ func _draw() -> void:
 
 func _draw_power_strip(strip_center: Vector2) -> void:
 	var strip_rect := Rect2(strip_center - STRIP_SIZE * 0.5, STRIP_SIZE)
-	draw_rect(strip_rect, Color("#322b21"), true)
+	var strip_texture := AssetPaths.POWERSTRIP_CONNECTED if _get_used_slots() > 0 else AssetPaths.POWERSTRIP_EMPTY
+	draw_texture_rect(strip_texture, strip_rect.grow(10.0), false, Color(1, 1, 1, 0.28))
+	draw_rect(strip_rect, Color(0.16, 0.135, 0.1, 0.82), true)
 	draw_rect(strip_rect, UIStyle.LINE_DIM, false, 2.0)
 
 	for index in range(OUTLET_COUNT):
 		var slot_rect := _get_slot_rect(index)
 		var occupied := occupied_slots[index] != null
-		var fill := Color("#171512") if not occupied else Color(0.78, 0.55, 0.2, 0.42)
+		var slot_texture := AssetPaths.OUTLET_SLOT_ACTIVE if occupied else AssetPaths.OUTLET_SLOT_EMPTY
 		if occupied:
 			draw_rect(slot_rect.grow(5.0), Color(0.91, 0.63, 0.18, 0.12), true)
-		draw_rect(slot_rect, fill, true)
+		draw_texture_rect(slot_texture, slot_rect, false, Color(1, 1, 1, 0.86))
+		draw_rect(slot_rect, Color(0.08, 0.07, 0.055, 0.28), true)
 		draw_rect(slot_rect, UIStyle.LINE_DIM if not occupied else UIStyle.ELECTRIC, false, 1.5)
-		draw_rect(Rect2(slot_rect.get_center() + Vector2(-13, -15), Vector2(5, 24)), Color("#d4c8ad"), true)
-		draw_rect(Rect2(slot_rect.get_center() + Vector2(8, -15), Vector2(5, 24)), Color("#d4c8ad"), true)
-		draw_circle(slot_rect.get_center() + Vector2(0, 19), 3.5, Color("#d4c8ad"))
 
 	_draw_connected_slot_labels()
 
@@ -142,7 +142,9 @@ func _draw_connected_slot_labels() -> void:
 			first_rect.position,
 			Vector2(last_rect.end.x - first_rect.position.x, first_rect.size.y)
 		)
+		var plug_texture := AssetPaths.PLUG_2_SLOT if slots >= 2 else AssetPaths.PLUG_1_SLOT
 		draw_rect(group_rect.grow(6.0), Color(0.92, 0.66, 0.23, 0.13), true)
+		draw_texture_rect(plug_texture, group_rect.grow(10.0), false, Color(1, 1, 1, 0.78))
 		draw_rect(group_rect.grow(6.0), UIStyle.ELECTRIC, false, 1.4)
 		_draw_text(group_rect.position + Vector2(4.0, group_rect.size.y + 21.0), str(device["label"]), 11, UIStyle.MUTED)
 
@@ -158,7 +160,10 @@ func _draw_devices() -> void:
 		draw_rect(rect, border, false, 2.0)
 		var badge_text := "사용 완료" if used else ("연결됨" if connected else "연결 안 됨")
 		var badge_color := UIStyle.SUCCESS if used else (UIStyle.ELECTRIC if connected else UIStyle.MUTED)
-		draw_rect(Rect2(rect.position + Vector2(12, 10), Vector2(76, 20)), Color(0.03, 0.03, 0.026, 0.82), true)
+		var badge_rect := Rect2(rect.position + Vector2(12, 10), Vector2(76, 20))
+		var badge_texture := AssetPaths.BADGE_CONNECTED if connected else AssetPaths.BADGE_DISCONNECTED
+		draw_texture_rect(badge_texture, badge_rect, false, Color(1, 1, 1, 0.78))
+		draw_rect(badge_rect, Color(0.03, 0.03, 0.026, 0.52), true)
 		_draw_text(rect.position + Vector2(16, 23), badge_text, 11, badge_color)
 		var device_text := "%s\n소비전력 %dW    비용 %d\n콘센트 %d칸" % [
 			device["label"],
@@ -186,6 +191,7 @@ func _draw_power_overview(position: Vector2) -> void:
 		"연결은 전력을 소모하지 않습니다.",
 		"방 안에서 기기를 사용할 때만 오늘 전력이 줄어듭니다.",
 	]
+	draw_texture_rect(AssetPaths.ICON_PLUG, Rect2(position + Vector2(-26, -4), Vector2(20, 20)), false, Color(1, 1, 1, 0.78))
 	_draw_text(position, "\n".join(overview), 18, UIStyle.TEXT)
 
 

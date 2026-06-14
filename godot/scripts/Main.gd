@@ -176,6 +176,7 @@ func _refresh_survival_ui() -> void:
 	survival_hud.set_phase_effect(survival_state.get_phase_effect_text())
 	survival_hud.set_phase_style(survival_state.phase)
 	apartment.set_powered_devices(survival_state.powered_devices)
+	apartment.set_day1_visual_state(survival_state.used_day1_actions, survival_state.current_power)
 	apartment.set_phase(survival_state.phase)
 
 	if phone_ui.visible:

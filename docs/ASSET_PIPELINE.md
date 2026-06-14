@@ -47,13 +47,24 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 
 ## Replacement Targets
 
-- Current `Apartment.gd` primitive drawing should later be split into a room background plus separate object sprites.
+- Current `Apartment.gd` uses `room_floor_base.png` and `room_wall_base.png` as underlay art while preserving existing collision and primitive furniture.
+- `ApartmentInteractable` now maps key DAY 1 objects to P0 PNG state textures through `AssetPaths.gd`.
 - Bed, desk, window, door, shelf, fan, multitap, charger/phone, and communication device should remain separate replaceable objects rather than one flattened background image.
 - Cable visuals should become modular cable segment sprites or Line2D-based scenes so connected/off states can update dynamically.
-- The Yui portrait placeholder in `InteractionPanel.tscn` should be replaced with a portrait texture under `godot/assets/art/portraits/`.
-- HUD, interaction, multitap, and result icons should come from `godot/assets/ui/icons/`.
-- Panel backgrounds and decorative frames should come from `godot/assets/ui/panels/` or a shared Theme under `godot/themes/`.
+- The Yui portrait placeholder in `InteractionPanel.tscn` is filled at runtime with `godot/assets/art/portraits/yui/yui_portrait_neutral.png`.
+- HUD and multitap power/plug icons are loaded from `godot/assets/art/ui/icons/`.
+- Interaction and dialogue panel art is used as low-alpha TextureRect backplates so text remains readable.
 - Device tuning currently in `SurvivalState.gd` should later move into `.tres` resources under `godot/data/devices/`.
+
+## P0 Applied Assets
+
+- Yui player: `godot/assets/art/characters/yui/yui_player_idle_back.png`
+- Yui portrait: `godot/assets/art/portraits/yui/yui_portrait_neutral.png`
+- Room underlay: `godot/assets/art/environment/room/room_floor_base.png`, `godot/assets/art/environment/room/room_wall_base.png`
+- Fluorescent room light: `fluorescent_light_off.png`, `fluorescent_light_on.png`, `fluorescent_glow.png`
+- DAY 1 objects: laptop, fan, phone/charger, communication device, and power strip PNG state variants
+- Multitap UI: outlet slot, plug, connected/disconnected badge, and plug icon PNGs
+- UI: dialogue panel, interaction panel, and power icon PNGs
 
 ## Suggested Object Sizes
 
@@ -63,7 +74,7 @@ These are starting points for the current 1280x720 MVP layout and should be adju
 - Bed: about `180x115`
 - Desk: about `210x80`
 - Laptop: about `120x70`
-- Desk lamp: about `64x80`
+- Fluorescent room light: about `140x60`, positioned near the room ceiling/top wall rather than on the desk
 - Fan: about `80x95`
 - Charger / phone: about `75x45`
 - Communication device: about `120x75`
@@ -83,6 +94,13 @@ Assets that need state variants:
 - Communication device: disconnected, connected, signal/used
 - Multitap: empty, partially occupied, full
 - Cable segments: inactive/dim and active/electric
+
+Current phone mapping:
+
+- `phone_normal.png`: default phone state
+- `phone_recharge.png`: low-power / needs charge state
+- `phone_charging.png`: connected to the multitap but not yet used
+- `phone_charged.png`: charger action used today
 
 ## Rules And Warnings
 

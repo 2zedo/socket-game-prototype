@@ -17,6 +17,8 @@ class_name ApartmentInteractable
 @export var outline_color: Color = Color("#f0ddb4")
 
 var is_powered: bool = false
+var is_used_today: bool = false
+var is_low_power: bool = false
 var phase_key: String = "day"
 
 const LABEL_HEIGHT: float = 18.0
@@ -80,6 +82,17 @@ func set_powered(is_active: bool) -> void:
 	queue_redraw()
 
 
+func set_day1_visual_state(used_actions: Array[String], current_power: int) -> void:
+	var next_used := day1_action_key != "" and used_actions.has(day1_action_key)
+	var next_low_power := current_power <= 2
+	if is_used_today == next_used and is_low_power == next_low_power:
+		return
+
+	is_used_today = next_used
+	is_low_power = next_low_power
+	queue_redraw()
+
+
 func set_phase(next_phase_key: String) -> void:
 	if phase_key == next_phase_key:
 		return
@@ -113,10 +126,50 @@ func _draw() -> void:
 		var glow_alpha: float = 0.18 if phase_key == "night" else 0.12
 		draw_rect(rect.grow(8.0), Color(0.95, 0.68, 0.24, glow_alpha), true)
 
-	_draw_icon(rect, fill_color, outline)
+	var texture := _get_object_texture()
+	if texture != null:
+		_draw_object_texture(rect, texture)
+	else:
+		_draw_icon(rect, fill_color, outline)
 
 	# Labels and power status are intentionally not drawn during exploration.
 	# The single proximity prompt and interaction panel carry that information.
+
+
+func _get_object_texture() -> Texture2D:
+	match object_id:
+		"light":
+			return AssetPaths.FLUORESCENT_LIGHT_ON if is_used_today else AssetPaths.FLUORESCENT_LIGHT_OFF
+		"laptop":
+			return AssetPaths.LAPTOP_ON if is_used_today else AssetPaths.LAPTOP_OFF
+		"fan":
+			return AssetPaths.FAN_ON if is_used_today else AssetPaths.FAN_OFF
+		"charger":
+			if is_used_today:
+				return AssetPaths.PHONE_CHARGED
+			if is_powered:
+				return AssetPaths.PHONE_CHARGING
+			return AssetPaths.PHONE_RECHARGE if is_low_power else AssetPaths.PHONE_NORMAL
+		"communication_device":
+			return AssetPaths.COMM_DEVICE_ON if is_used_today else AssetPaths.COMM_DEVICE_OFF
+		"power_strip":
+			return AssetPaths.POWERSTRIP_CONNECTED if is_powered else AssetPaths.POWERSTRIP_EMPTY
+
+	return null
+
+
+func _draw_object_texture(rect: Rect2, texture: Texture2D) -> void:
+	var texture_rect := rect.grow(12.0)
+	if object_id == "light":
+		# The light asset is a fluorescent room fixture, so it reads wider and
+		# shallower than the old desk-lamp placeholder.
+		texture_rect = Rect2(Vector2(-72.0, -38.0), Vector2(144.0, 62.0))
+	elif object_id == "charger":
+		texture_rect = Rect2(Vector2(-48.0, -42.0), Vector2(96.0, 84.0))
+	elif object_id == "power_strip":
+		texture_rect = Rect2(Vector2(-82.0, -38.0), Vector2(164.0, 76.0))
+
+	draw_texture_rect(texture, texture_rect, false)
 
 
 func _draw_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
