@@ -314,7 +314,7 @@ func _draw_window(rect: Rect2) -> void:
 
 
 func _draw_desk(rect: Rect2) -> void:
-	draw_rect(rect.position + Vector2(5, 7), rect.size, Color(0.02, 0.018, 0.014, 0.5), true)
+	draw_rect(Rect2(rect.position + Vector2(5, 7), rect.size), Color(0.02, 0.018, 0.014, 0.5), true)
 	draw_rect(rect, Color("#2f2319"), true)
 	draw_rect(rect.grow(-5.0), Color("#4a3422"), true)
 	draw_rect(rect, Color("#80643e"), false, 2.0)

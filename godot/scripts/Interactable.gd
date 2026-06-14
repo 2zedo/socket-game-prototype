@@ -307,7 +307,7 @@ func _draw_communication_icon(rect: Rect2, fill_color: Color, outline: Color) ->
 
 
 func _draw_bed_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:
-	draw_rect(rect.position + Vector2(5, 7), rect.size, Color(0.02, 0.018, 0.015, 0.42), true)
+	draw_rect(Rect2(rect.position + Vector2(5, 7), rect.size), Color(0.02, 0.018, 0.015, 0.42), true)
 	draw_rect(rect, fill_color.darkened(0.2), true)
 	draw_rect(rect, outline.darkened(0.12), false, 2.0)
 	var mattress := rect.grow(-10.0)
