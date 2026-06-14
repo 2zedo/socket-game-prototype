@@ -17,6 +17,7 @@ var current_power_units: int = SurvivalState.DAY1_STARTING_POWER_UNITS
 var phase_key: String = "day"
 
 const ROOM_RECT: Rect2 = Rect2(185, 68, 930, 586)
+const FLOOR_RECT: Rect2 = Rect2(235, 184, 760, 402)
 const WALL_THICKNESS: float = 28.0
 
 
@@ -92,7 +93,8 @@ func _draw() -> void:
 	draw_rect(ROOM_RECT.grow(22.0), Color("#0d0b0a"), true)
 	draw_rect(ROOM_RECT, wall_color, true)
 	draw_rect(ROOM_RECT.grow(-12.0), inner_wall, true)
-	_draw_room_asset_backdrop(ROOM_RECT.grow(22.0), ROOM_RECT.grow(-48.0), wall_color, floor_fill)
+	_draw_room_asset_backdrop(ROOM_RECT.grow(22.0), FLOOR_RECT, wall_color, floor_fill)
+	_draw_wall_floor_separation(FLOOR_RECT)
 	_draw_room_details()
 	_draw_light_pool()
 	_draw_power_cables()
@@ -120,7 +122,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "멀티탭",
 		"title": "멀티탭",
 		"body": "방 안 기기들의 전원을 연결하는 낡은 멀티탭입니다.",
-		"position": Vector2(710, 476),
+		"position": Vector2(700, 468),
 		"size": Vector2(128, 38),
 		"color": Color("#6f614e"),
 		"outline_color": Color("#ffe6a3"),
@@ -132,7 +134,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": Vector2(620, 134),
+		"position": Vector2(620, 126),
 		"size": Vector2(138, 34),
 		"color": Color("#a8894e"),
 		"power_units": 1,
@@ -144,7 +146,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": Vector2(928, 508),
+		"position": Vector2(906, 518),
 		"size": Vector2(54, 36),
 		"color": Color("#4e5e67"),
 		"power_units": 2,
@@ -156,7 +158,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "선풍기",
 		"title": "선풍기",
 		"body": "더위를 낮출 수 있습니다.\n하지만 켜두면 다른 장치를 꽂을 여유가 줄어듭니다.",
-		"position": Vector2(850, 256),
+		"position": Vector2(875, 280),
 		"size": Vector2(70, 82),
 		"color": Color("#53645b"),
 		"power_units": 2,
@@ -168,7 +170,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": Vector2(610, 234),
+		"position": Vector2(608, 242),
 		"size": Vector2(96, 52),
 		"color": Color("#3b4748"),
 		"power_units": 3,
@@ -180,7 +182,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "통신 장치",
 		"title": "통신 장치",
 		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
-		"position": Vector2(980, 344),
+		"position": Vector2(970, 360),
 		"size": Vector2(84, 56),
 		"color": Color("#5e5368"),
 		"power_units": 4,
@@ -192,7 +194,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "침대",
 		"title": "오늘을 마친다",
 		"body": "더 할 일을 정리하고 오늘 하루를 마칠 수 있습니다.",
-		"position": Vector2(350, 455),
+		"position": Vector2(350, 464),
 		"size": Vector2(178, 112),
 		"color": Color("#5a5047"),
 		"interaction_type": "end_day",
@@ -239,9 +241,11 @@ func _add_furniture_blocker(center: Vector2, size: Vector2) -> void:
 func _add_environment_blockers() -> void:
 	# Non-interactive room features still need small blockers so the top-down
 	# movement reads as an apartment floor, not a board the player can cross.
-	_add_furniture_blocker(Vector2(1039, 219), Vector2(72, 154))
-	_add_furniture_blocker(Vector2(806, 195), Vector2(92, 150))
-	_add_furniture_blocker(Vector2(365, 144), Vector2(190, 38))
+	_add_furniture_blocker(Vector2(615, 124), Vector2(720, 88))
+	_add_furniture_blocker(Vector2(1038, 310), Vector2(74, 340))
+	_add_furniture_blocker(Vector2(1039, 224), Vector2(72, 166))
+	_add_furniture_blocker(Vector2(806, 205), Vector2(92, 150))
+	_add_furniture_blocker(Vector2(365, 145), Vector2(196, 48))
 
 
 func _update_nearest_interactable() -> void:
@@ -289,25 +293,38 @@ func _draw_room_asset_backdrop(wall_rect: Rect2, floor_rect: Rect2, wall_fallbac
 	_draw_floorboards(floor_rect)
 
 
+func _draw_wall_floor_separation(floor_rect: Rect2) -> void:
+	var top_wall := Rect2(ROOM_RECT.position + Vector2(18, 18), Vector2(ROOM_RECT.size.x - 116, floor_rect.position.y - ROOM_RECT.position.y - 18))
+	var right_wall := Rect2(Vector2(floor_rect.end.x, ROOM_RECT.position.y + 22), Vector2(ROOM_RECT.end.x - floor_rect.end.x - 18, ROOM_RECT.size.y - 66))
+	draw_rect(top_wall, Color(0.05, 0.048, 0.042, 0.28), true)
+	draw_rect(right_wall, Color(0.045, 0.047, 0.044, 0.32), true)
+	var molding_y := floor_rect.position.y
+	draw_rect(Rect2(Vector2(floor_rect.position.x - 18, molding_y - 9), Vector2(floor_rect.size.x + 32, 12)), Color(0.08, 0.065, 0.048, 0.74), true)
+	draw_line(Vector2(floor_rect.position.x - 18, molding_y), Vector2(floor_rect.end.x + 14, molding_y), Color(0.62, 0.48, 0.3, 0.5), 2.0)
+	draw_line(Vector2(floor_rect.end.x, ROOM_RECT.position.y + 28), Vector2(floor_rect.end.x, floor_rect.end.y + 42), Color(0.46, 0.36, 0.25, 0.42), 2.0)
+	draw_rect(Rect2(Vector2(floor_rect.position.x, floor_rect.end.y), Vector2(floor_rect.size.x, 30)), Color(0.025, 0.023, 0.02, 0.38), true)
+
+
 func _draw_room_details() -> void:
-	var floor_rect := ROOM_RECT.grow(-48.0)
-	_draw_window(Rect2(Vector2(270, 104), Vector2(190, 92)))
-	_draw_desk(Rect2(Vector2(500, 238), Vector2(205, 70)))
-	_draw_shelf(Rect2(Vector2(760, 120), Vector2(92, 150)))
-	_draw_door(Rect2(Vector2(1004, 142), Vector2(70, 154)))
+	_draw_window(Rect2(Vector2(268, 112), Vector2(202, 78)))
+	_draw_desk(Rect2(Vector2(500, 238), Vector2(210, 72)))
+	_draw_shelf(Rect2(Vector2(770, 118), Vector2(88, 156)))
+	_draw_door(Rect2(Vector2(1018, 150), Vector2(58, 158)))
 	_draw_rug(Rect2(Vector2(545, 406), Vector2(210, 92)))
-	_draw_small_clutter(floor_rect)
+	_draw_small_clutter(FLOOR_RECT)
 
 
 func _draw_window(rect: Rect2) -> void:
+	draw_rect(Rect2(rect.position + Vector2(-12, -14), Vector2(rect.size.x + 24, rect.size.y + 24)), Color(0.035, 0.035, 0.032, 0.86), true)
 	draw_rect(rect, Color("#0c1217"), true)
+	draw_rect(rect.grow(5.0), Color("#171411"), false, 5.0)
 	draw_rect(rect, Color("#5f513d"), false, 3.0)
 	draw_line(Vector2(rect.get_center().x, rect.position.y), Vector2(rect.get_center().x, rect.end.y), Color("#332b23"), 2.0)
 	draw_line(Vector2(rect.position.x, rect.get_center().y), Vector2(rect.end.x, rect.get_center().y), Color("#332b23"), 2.0)
 	for index in range(9):
 		var x := rect.position.x + 22.0 + float(index) * 16.0
 		draw_circle(Vector2(x, rect.end.y - 22.0 - float(index % 3) * 9.0), 2.0, Color(0.95, 0.68, 0.34, 0.32))
-	draw_rect(Rect2(rect.position + Vector2(-6, 0), Vector2(rect.size.x + 12, 18)), Color(0.08, 0.07, 0.06, 0.82), true)
+	draw_rect(Rect2(rect.position + Vector2(-8, -6), Vector2(rect.size.x + 16, 16)), Color(0.08, 0.07, 0.06, 0.86), true)
 	for index in range(5):
 		var y := rect.position.y + 18.0 + float(index) * 12.0
 		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.5, 0.45, 0.36, 0.22), 1.0)
@@ -339,8 +356,12 @@ func _draw_shelf(rect: Rect2) -> void:
 
 
 func _draw_door(rect: Rect2) -> void:
+	draw_rect(Rect2(rect.position + Vector2(-10, -12), Vector2(rect.size.x + 20, rect.size.y + 28)), Color("#161210"), true)
+	draw_rect(Rect2(rect.position + Vector2(-6, -8), Vector2(rect.size.x + 12, rect.size.y + 16)), Color("#60472e"), false, 3.0)
 	draw_rect(rect, Color("#1b2224"), true)
 	draw_rect(rect, Color("#5d4c36"), false, 2.0)
+	draw_line(rect.position + Vector2(8, 12), rect.position + Vector2(8, rect.size.y - 12), Color(0.65, 0.5, 0.32, 0.2), 1.0)
+	draw_line(rect.position + Vector2(rect.size.x - 10, 10), rect.position + Vector2(rect.size.x - 10, rect.size.y - 10), Color(0.0, 0.0, 0.0, 0.3), 2.0)
 	draw_rect(Rect2(rect.position + Vector2(13, 34), Vector2(44, 28)), Color("#26343a"), true)
 	draw_circle(rect.position + Vector2(56, 86), 3.0, Color("#b6985b"))
 
