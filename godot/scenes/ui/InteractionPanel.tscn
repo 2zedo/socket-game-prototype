@@ -21,7 +21,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.02, 0.018, 0.016, 0.58)
+color = Color(0.02, 0.018, 0.016, 0.44)
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 0
@@ -29,6 +29,22 @@ offset_left = 850.0
 offset_top = 78.0
 offset_right = 1260.0
 offset_bottom = 420.0
+
+[node name="TitleDivider" type="ColorRect" parent="Panel"]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 72.0
+offset_right = 384.0
+offset_bottom = 73.0
+color = Color(0.47, 0.39, 0.27, 0.55)
+
+[node name="InfoDivider" type="ColorRect" parent="Panel"]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 258.0
+offset_right = 384.0
+offset_bottom = 259.0
+color = Color(0.47, 0.39, 0.27, 0.45)
 
 [node name="TitleLabel" type="Label" parent="Panel"]
 layout_mode = 0
@@ -43,41 +59,81 @@ layout_mode = 0
 offset_left = 26.0
 offset_top = 82.0
 offset_right = 384.0
-offset_bottom = 262.0
+offset_bottom = 250.0
 theme_override_font_sizes/font_size = 15
 autowrap_mode = 2
 
-[node name="FooterLabel" type="Label" parent="Panel"]
+[node name="UseButton" type="Panel" parent="Panel"]
 layout_mode = 0
 offset_left = 26.0
-offset_top = 282.0
+offset_top = 278.0
+offset_right = 188.0
+offset_bottom = 320.0
+
+[node name="UseButtonLabel" type="Label" parent="Panel/UseButton"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 9.0
+offset_right = 150.0
+offset_bottom = 32.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+
+[node name="CancelButton" type="Panel" parent="Panel"]
+layout_mode = 0
+offset_left = 206.0
+offset_top = 278.0
 offset_right = 384.0
-offset_bottom = 318.0
+offset_bottom = 320.0
+
+[node name="CancelButtonLabel" type="Label" parent="Panel/CancelButton"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 9.0
+offset_right = 166.0
+offset_bottom = 32.0
+horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.7, 0.65, 0.56, 1)
-theme_override_font_sizes/font_size = 15
-text = "E 또는 ESC: 닫기"
+theme_override_font_sizes/font_size = 14
 
 [node name="DialoguePanel" type="Panel" parent="."]
 layout_mode = 0
-offset_left = 260.0
+offset_left = 250.0
 offset_top = 560.0
-offset_right = 1080.0
+offset_right = 1100.0
 offset_bottom = 676.0
+
+[node name="PortraitPanel" type="Panel" parent="DialoguePanel"]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = 108.0
+offset_bottom = 100.0
+
+[node name="PortraitLabel" type="Label" parent="DialoguePanel/PortraitPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 30.0
+offset_right = 78.0
+offset_bottom = 54.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 13
+text = "YUI"
 
 [node name="SpeakerLabel" type="Label" parent="DialoguePanel"]
 layout_mode = 0
-offset_left = 24.0
+offset_left = 130.0
 offset_top = 18.0
-offset_right = 118.0
+offset_right = 224.0
 offset_bottom = 42.0
 theme_override_font_sizes/font_size = 17
 text = "유이"
 
 [node name="DialogueLabel" type="Label" parent="DialoguePanel"]
 layout_mode = 0
-offset_left = 124.0
+offset_left = 224.0
 offset_top = 18.0
-offset_right = 790.0
+offset_right = 820.0
 offset_bottom = 96.0
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 2

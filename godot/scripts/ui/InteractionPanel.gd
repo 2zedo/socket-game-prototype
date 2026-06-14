@@ -4,8 +4,13 @@ class_name InteractionPanel
 @onready var panel: Panel = $Panel
 @onready var title_label: Label = $Panel/TitleLabel
 @onready var body_label: Label = $Panel/BodyLabel
-@onready var footer_label: Label = $Panel/FooterLabel
+@onready var use_button: Panel = $Panel/UseButton
+@onready var use_button_label: Label = $Panel/UseButton/UseButtonLabel
+@onready var cancel_button: Panel = $Panel/CancelButton
+@onready var cancel_button_label: Label = $Panel/CancelButton/CancelButtonLabel
 @onready var dialogue_panel: Panel = $DialoguePanel
+@onready var portrait_panel: Panel = $DialoguePanel/PortraitPanel
+@onready var portrait_label: Label = $DialoguePanel/PortraitPanel/PortraitLabel
 @onready var speaker_label: Label = $DialoguePanel/SpeakerLabel
 @onready var dialogue_label: Label = $DialoguePanel/DialogueLabel
 
@@ -13,9 +18,14 @@ class_name InteractionPanel
 func _ready() -> void:
 	panel.add_theme_stylebox_override("panel", UIStyle.make_panel_style(UIStyle.PANEL, UIStyle.LINE_DIM, 1, 2))
 	dialogue_panel.add_theme_stylebox_override("panel", UIStyle.make_panel_style(Color(0.035, 0.033, 0.03, 0.92), UIStyle.LINE_DIM, 1, 2))
+	portrait_panel.add_theme_stylebox_override("panel", UIStyle.make_panel_style(Color(0.06, 0.055, 0.05, 0.95), UIStyle.LINE_DIM, 1, 36))
+	use_button.add_theme_stylebox_override("panel", UIStyle.make_button_style(true))
+	cancel_button.add_theme_stylebox_override("panel", UIStyle.make_button_style(false))
 	UIStyle.apply_label(title_label, UIStyle.TEXT, 24)
 	UIStyle.apply_label(body_label, UIStyle.TEXT, 15)
-	UIStyle.apply_label(footer_label, UIStyle.MUTED, 14)
+	UIStyle.apply_label(use_button_label, UIStyle.TEXT, 14)
+	UIStyle.apply_label(cancel_button_label, UIStyle.MUTED, 14)
+	UIStyle.apply_label(portrait_label, UIStyle.MUTED, 13)
 	UIStyle.apply_label(speaker_label, UIStyle.ELECTRIC, 17)
 	UIStyle.apply_label(dialogue_label, UIStyle.TEXT, 16)
 
@@ -23,13 +33,24 @@ func _ready() -> void:
 func open(title: String, body: String, footer_text: String = "E 또는 ESC: 닫기") -> void:
 	title_label.text = title
 	body_label.text = body
-	footer_label.text = footer_text
+	_apply_footer(footer_text)
 	dialogue_label.text = _make_yui_line(title, body)
 	visible = true
 
 
 func close() -> void:
 	visible = false
+
+
+func _apply_footer(footer_text: String) -> void:
+	var has_primary := footer_text.find("E") >= 0 and footer_text.find("닫기") < 0
+	use_button.visible = has_primary
+	if has_primary:
+		use_button_label.text = "[E] 하루 종료" if footer_text.find("하루") >= 0 else "[E] 사용하기"
+		cancel_button_label.text = "[ESC] 취소"
+		return
+
+	cancel_button_label.text = "[ESC] 닫기"
 
 
 func _make_yui_line(title: String, body: String) -> String:

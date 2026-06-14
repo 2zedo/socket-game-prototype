@@ -63,13 +63,13 @@ func set_phase(next_phase_key: String) -> void:
 
 
 func _draw() -> void:
-	var wall_color: Color = Color("#171819")
-	var inner_wall: Color = Color("#2a2522")
-	var floor_fill: Color = Color("#3a2a20")
+	var wall_color: Color = Color("#111314")
+	var inner_wall: Color = Color("#211d1a")
+	var floor_fill: Color = Color("#2c2119")
 	var trim_color: Color = Color("#816845")
 
 	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("#050606"), true)
-	draw_rect(ROOM_RECT.grow(22.0), Color("#12100f"), true)
+	draw_rect(ROOM_RECT.grow(22.0), Color("#0d0b0a"), true)
 	draw_rect(ROOM_RECT, wall_color, true)
 	draw_rect(ROOM_RECT.grow(-12.0), inner_wall, true)
 	draw_rect(ROOM_RECT.grow(-48.0), floor_fill, true)
@@ -79,7 +79,7 @@ func _draw() -> void:
 	_draw_power_cables()
 	draw_rect(ROOM_RECT, Color("#3f3021"), false, 5.0)
 	draw_rect(ROOM_RECT.grow(-12.0), trim_color, false, 1.2)
-	draw_rect(ROOM_RECT.grow(-48.0), Color(0.02, 0.018, 0.015, 0.28), false, 2.0)
+	draw_rect(ROOM_RECT.grow(-48.0), Color(0.02, 0.018, 0.015, 0.34), false, 2.0)
 
 
 func _build_room_collision() -> void:
@@ -246,10 +246,10 @@ func _draw_label(position: Vector2, text: String, color: Color = Color("#d8cfba"
 func _draw_floorboards(rect: Rect2) -> void:
 	for index in range(13):
 		var y := rect.position.y + 28.0 + float(index) * 34.0
-		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.12, 0.085, 0.055, 0.38), 1.0)
+		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.17, 0.12, 0.075, 0.34), 1.0)
 	for index in range(9):
 		var x := rect.position.x + 42.0 + float(index) * 92.0
-		draw_line(Vector2(x, rect.position.y), Vector2(x, rect.end.y), Color(0.08, 0.06, 0.04, 0.18), 1.0)
+		draw_line(Vector2(x, rect.position.y), Vector2(x, rect.end.y), Color(0.08, 0.06, 0.04, 0.14), 1.0)
 
 
 func _draw_room_details() -> void:
@@ -277,8 +277,11 @@ func _draw_window(rect: Rect2) -> void:
 
 
 func _draw_desk(rect: Rect2) -> void:
-	draw_rect(rect, Color("#4a3627"), true)
-	draw_rect(rect, Color("#7a6242"), false, 2.0)
+	draw_rect(rect, Color("#3f2f22"), true)
+	draw_rect(rect, Color("#71593b"), false, 2.0)
+	for index in range(4):
+		var y := rect.position.y + 12.0 + float(index) * 14.0
+		draw_line(Vector2(rect.position.x + 6.0, y), Vector2(rect.end.x - 6.0, y), Color(0.72, 0.55, 0.34, 0.12), 1.0)
 	draw_rect(Rect2(rect.position + Vector2(16, 10), Vector2(34, 22)), Color("#262522"), true)
 	draw_rect(Rect2(rect.end - Vector2(62, 44), Vector2(36, 30)), Color("#2a211a"), true)
 	draw_circle(rect.position + Vector2(152, 26), 7.0, Color("#786b58"))
@@ -320,10 +323,14 @@ func _draw_small_clutter(_floor_rect: Rect2) -> void:
 
 
 func _draw_light_pool() -> void:
-	var center := Vector2(560, 250)
-	for index in range(6, 0, -1):
-		var alpha := 0.018 * float(index)
-		draw_circle(center, 58.0 * float(index), Color(0.92, 0.67, 0.32, alpha))
+	var desk_center := Vector2(565, 255)
+	for index in range(5, 0, -1):
+		var alpha := 0.012 * float(index)
+		draw_circle(desk_center, 34.0 * float(index), Color(0.95, 0.68, 0.31, alpha))
+	var floor_center := Vector2(610, 385)
+	for index in range(4, 0, -1):
+		var alpha := 0.01 * float(index)
+		draw_circle(floor_center, 46.0 * float(index), Color(0.92, 0.62, 0.26, alpha))
 
 
 func _draw_power_cables() -> void:

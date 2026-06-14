@@ -167,10 +167,11 @@ func get_warning_lines() -> Array[String]:
 
 
 func get_hud_stat_text() -> String:
-	return "DAY 1 - %s\n오늘 남은 전력: %d / %d\n사용한 기기: %s" % [
+	return "DAY 1 - %s\n\n오늘 남은 전력\n⚡ %d / %d  %s\n\n사용한 기기\n%s" % [
 		get_phase_label(),
 		current_power,
 		max_power,
+		_get_power_bar_text(),
 		get_used_day1_action_summary(),
 	]
 
@@ -193,6 +194,14 @@ func get_phone_text() -> String:
 	]
 
 	return "\n".join(lines)
+
+
+func _get_power_bar_text() -> String:
+	var blocks := PackedStringArray()
+	for index in range(max_power):
+		blocks.append("■" if index < current_power else "□")
+
+	return "".join(blocks)
 
 
 func preview_power_use(watts: int) -> void:

@@ -3,6 +3,7 @@ class_name UIStyle
 
 const BG: Color = Color("#070808")
 const PANEL: Color = Color(0.055, 0.052, 0.047, 0.88)
+const PANEL_STRONG: Color = Color(0.04, 0.037, 0.032, 0.92)
 const PANEL_SOFT: Color = Color(0.09, 0.078, 0.064, 0.72)
 const LINE: Color = Color("#8f7a55")
 const LINE_DIM: Color = Color(0.47, 0.39, 0.27, 0.72)
@@ -30,6 +31,12 @@ static func make_panel_style(fill: Color = PANEL, border: Color = LINE_DIM, bord
 	style.content_margin_right = 16
 	style.content_margin_bottom = 14
 	return style
+
+
+static func make_button_style(is_primary: bool = false) -> StyleBoxFlat:
+	var fill := Color(0.09, 0.074, 0.046, 0.82) if is_primary else Color(0.045, 0.042, 0.038, 0.82)
+	var border := ELECTRIC if is_primary else LINE_DIM
+	return make_panel_style(fill, border, 1, 2)
 
 
 static func apply_label(label: Label, color: Color = TEXT, font_size: int = 15) -> void:

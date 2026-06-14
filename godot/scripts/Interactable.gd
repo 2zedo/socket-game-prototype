@@ -115,16 +115,8 @@ func _draw() -> void:
 
 	_draw_icon(rect, fill_color, outline)
 
-	var label_width: float = maxf(body_size.x + 56.0, 120.0)
-	var label_position: Vector2 = Vector2(-label_width * 0.5, -body_size.y * 0.5 - LABEL_HEIGHT + 2.0) + label_offset
-	draw_rect(Rect2(label_position + Vector2(8.0, -1.0), Vector2(label_width - 16.0, 16.0)), Color(0.02, 0.02, 0.018, 0.58), true)
-	draw_string(ThemeDB.fallback_font, label_position, display_name, HORIZONTAL_ALIGNMENT_CENTER, label_width, LABEL_FONT_SIZE, Color("#eadfca"))
-
-	if power_watts > 0 or power_units > 0:
-		var state_text: String = "연결됨" if is_powered else "전원 없음"
-		var state_color: Color = Color("#d6aa4c") if is_powered else Color("#8d806c")
-		var status_position: Vector2 = Vector2(-label_width * 0.5, body_size.y * 0.5 + 16.0)
-		draw_string(ThemeDB.fallback_font, status_position, state_text, HORIZONTAL_ALIGNMENT_CENTER, label_width, STATUS_FONT_SIZE, state_color)
+	# Labels and power status are intentionally not drawn during exploration.
+	# The single proximity prompt and interaction panel carry that information.
 
 
 func _draw_icon(rect: Rect2, fill_color: Color, outline: Color) -> void:

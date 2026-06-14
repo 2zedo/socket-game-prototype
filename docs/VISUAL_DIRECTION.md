@@ -33,6 +33,14 @@ Use the references as mood and design guidance, not as exact implementation requ
 - The current implementation still uses placeholders. It is meant to communicate direction, not final art quality.
 - Future passes should refine spacing, sprites, portraits, lighting, and readability after manual Godot screenshots.
 
+## Visual Design Pass 2 Notes
+
+- Reduce primitive/test-board signals by hiding always-on object status labels and letting proximity prompts carry interaction affordance.
+- Keep lighting small and local to lamps/devices; avoid large uniform circles that read as debug overlays.
+- Multitap management should look like a subdued power-control panel, with readable device cards and dark outlet slots rather than bright instructional diagrams.
+- Interaction and result states should use sectioned panels, dividers, and portrait/snapshot placeholders so they feel like survival records and dialogue layers.
+- Continue using placeholders only as long as they support the one-room survival mood and do not imply final art quality.
+
 ## Color / Tone Direction
 
 - Prefer dark gray, worn black, muted beige, brown, dust, and low warm light.
