@@ -19,7 +19,7 @@ FOOT_BASELINE = 90
 ALPHA_THRESHOLD = 12
 BBOX_ALPHA_THRESHOLD = 48
 CROP_PADDING = 4
-BACK_HEAD_REPAIR_PIXELS = 4
+BACK_MIN_HEADROOM = 4
 
 ROW_DOWN = 0
 ROW_LEFT = 1
@@ -38,7 +38,7 @@ def normalize_alpha(image: Image.Image) -> Image.Image:
     return rgba
 
 
-def get_visible_bbox(image: Image.Image) -> tuple[int, int, int, int] | None:
+def get_visible_bbox(image: Image.Image, alpha_threshold: int = BBOX_ALPHA_THRESHOLD) -> tuple[int, int, int, int] | None:
     pixels = image.load()
     left = image.width
     top = image.height
@@ -47,7 +47,7 @@ def get_visible_bbox(image: Image.Image) -> tuple[int, int, int, int] | None:
 
     for y in range(image.height):
         for x in range(image.width):
-            if pixels[x, y][3] <= BBOX_ALPHA_THRESHOLD:
+            if pixels[x, y][3] <= alpha_threshold:
                 continue
             left = min(left, x)
             top = min(top, y)
@@ -91,27 +91,46 @@ def normalize_direction_sources(frames: list[Image.Image]) -> list[Image.Image]:
     return normalized
 
 
-def repair_back_head(frame: Image.Image) -> Image.Image:
-    bbox = get_visible_bbox(frame)
-    if bbox is None or bbox[1] < BACK_HEAD_REPAIR_PIXELS:
-        return frame
+def alpha_composite_clipped(canvas: Image.Image, source: Image.Image, position: tuple[int, int]) -> None:
+    x, y = position
+    source_left = max(0, -x)
+    source_top = max(0, -y)
+    source_right = min(source.width, canvas.width - x)
+    source_bottom = min(source.height, canvas.height - y)
 
-    repaired = frame.copy()
-    source_pixels = frame.load()
-    target_pixels = repaired.load()
-    left, top, right, _bottom = bbox
+    if source_right <= source_left or source_bottom <= source_top:
+        return
 
-    for offset in range(BACK_HEAD_REPAIR_PIXELS):
-        source_y = top + BACK_HEAD_REPAIR_PIXELS - offset
-        target_y = top - BACK_HEAD_REPAIR_PIXELS + offset
-        inset = BACK_HEAD_REPAIR_PIXELS - offset
-        for x in range(left + inset, right - inset):
-            pixel = source_pixels[x, source_y]
-            if pixel[3] <= ALPHA_THRESHOLD:
-                continue
-            target_pixels[x, target_y] = pixel
+    canvas.alpha_composite(
+        source.crop((source_left, source_top, source_right, source_bottom)),
+        (x + source_left, y + source_top),
+    )
 
-    return repaired
+
+def fit_back_frame(frame: Image.Image) -> Image.Image:
+    # Back-facing frames keep the fixed-grid source cell intact so faint hair
+    # pixels from yui-1.png are not mistaken for removable background.
+    bbox = get_visible_bbox(frame, ALPHA_THRESHOLD)
+    if bbox is None:
+        return Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0))
+
+    visible_height = bbox[3] - bbox[1]
+    baseline_limited_height = FOOT_BASELINE - BACK_MIN_HEADROOM
+    scale = min(
+        TARGET_CHARACTER_HEIGHT / float(visible_height),
+        baseline_limited_height / float(visible_height),
+    )
+    target_width = max(1, round(frame.width * scale))
+    target_height = max(1, round(frame.height * scale))
+    resized = frame.resize((target_width, target_height), Image.Resampling.NEAREST)
+
+    canvas = Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0))
+    visible_center_x = ((bbox[0] + bbox[2]) * 0.5) * scale
+    visible_bottom_y = bbox[3] * scale
+    x = round(FRAME_SIZE * 0.5 - visible_center_x)
+    y = round(FOOT_BASELINE - visible_bottom_y)
+    alpha_composite_clipped(canvas, resized, (x, y))
+    return canvas
 
 
 def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
@@ -119,6 +138,10 @@ def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
     fitted_frames: list[Image.Image] = []
 
     for index, frame in enumerate(frames):
+        if index // GRID_COLUMNS == ROW_UP:
+            fitted_frames.append(fit_back_frame(frame))
+            continue
+
         bbox = bboxes[index]
         if bbox is None:
             fitted_frames.append(Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0)))
@@ -138,16 +161,17 @@ def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
         x = round(FRAME_SIZE * 0.5 - visible_center_x)
         y = round(FOOT_BASELINE - visible_bottom_y)
         canvas.alpha_composite(resized, (x, y))
-        if index // GRID_COLUMNS == ROW_UP:
-            canvas = repair_back_head(canvas)
         fitted_frames.append(canvas)
 
     return fitted_frames
 
 
 def main() -> None:
-    source = normalize_alpha(Image.open(REFERENCE_SOURCE))
-    frames = normalize_direction_sources(split_source_sheet(source))
+    source = Image.open(REFERENCE_SOURCE).convert("RGBA")
+    frames = normalize_direction_sources(split_source_sheet(normalize_alpha(source)))
+    source_frames = split_source_sheet(source)
+    for column in range(GRID_COLUMNS):
+        frames[ROW_UP * GRID_COLUMNS + column] = source_frames[ROW_UP * GRID_COLUMNS + column]
     fitted_frames = fit_frames(frames)
     output = Image.new("RGBA", (FRAME_SIZE * GRID_COLUMNS, FRAME_SIZE * GRID_ROWS), (0, 0, 0, 0))
 

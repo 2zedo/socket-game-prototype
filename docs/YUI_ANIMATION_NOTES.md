@@ -24,9 +24,9 @@ This pass replaces the active player sprite source with `docs/reference/yui-1.pn
 
 This pass regenerates the active `yui-1` walk sheet to fix directional alignment only. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, and End Day flow.
 
-## YUI Up Headroom Cleanup Pass
+## YUI Back Silhouette Preservation Pass
 
-This pass repairs only the up/back-facing row headroom in the generated active `yui-1` walk sheet. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, and the front/left/right frame pixels.
+This pass preserves the original up/back-facing row silhouette from `docs/reference/yui-1.png` by fitting the fixed-grid fourth-row cells without alpha cleanup or bbox cropping. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, and the front/left/right frame pixels.
 
 ## Applied Idle PNGs
 
@@ -111,7 +111,7 @@ This pass repairs only the up/back-facing row headroom in the generated active `
   - `docs/validation/yui_direction_back.png`
   - `docs/validation/yui_direction_left.png`
   - `docs/validation/yui_direction_right.png`
-- Up-direction headroom screenshots saved at:
+- Up-direction silhouette screenshots saved at:
   - `docs/validation/yui_up_idle_headroom.png`
   - `docs/validation/yui_up_walk_headroom.png`
 - Automated frame inspection confirms all 16 generated frames use visible height `78`, bottom baseline `89`, and center x near `48`.
@@ -128,5 +128,5 @@ This pass repairs only the up/back-facing row headroom in the generated active `
 - Aligns every frame to the same centered x position and foot baseline.
 - Preserves crop padding around hair, lower body, and shoes so the back-facing head and feet do not clip.
 - Mirrors the left-facing source row for the right-facing row because the source right row has inconsistent crop extent and made that direction appear smaller.
-- Repairs only the back-facing head top with a small dark-pixel cap so the top of the head no longer appears cut flat.
+- Fits the back-facing row from intact fixed-grid source cells and preserves the original alpha channel instead of redrawing the head top or removing faint hair pixels.
 - Preserves the original source character art instead of redrawing or replacing Yui.
