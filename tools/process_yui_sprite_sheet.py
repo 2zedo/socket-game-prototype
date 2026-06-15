@@ -19,6 +19,7 @@ FOOT_BASELINE = 90
 ALPHA_THRESHOLD = 12
 BBOX_ALPHA_THRESHOLD = 48
 CROP_PADDING = 4
+BACK_HEAD_REPAIR_PIXELS = 4
 
 ROW_DOWN = 0
 ROW_LEFT = 1
@@ -90,6 +91,29 @@ def normalize_direction_sources(frames: list[Image.Image]) -> list[Image.Image]:
     return normalized
 
 
+def repair_back_head(frame: Image.Image) -> Image.Image:
+    bbox = get_visible_bbox(frame)
+    if bbox is None or bbox[1] < BACK_HEAD_REPAIR_PIXELS:
+        return frame
+
+    repaired = frame.copy()
+    source_pixels = frame.load()
+    target_pixels = repaired.load()
+    left, top, right, _bottom = bbox
+
+    for offset in range(BACK_HEAD_REPAIR_PIXELS):
+        source_y = top + BACK_HEAD_REPAIR_PIXELS - offset
+        target_y = top - BACK_HEAD_REPAIR_PIXELS + offset
+        inset = BACK_HEAD_REPAIR_PIXELS - offset
+        for x in range(left + inset, right - inset):
+            pixel = source_pixels[x, source_y]
+            if pixel[3] <= ALPHA_THRESHOLD:
+                continue
+            target_pixels[x, target_y] = pixel
+
+    return repaired
+
+
 def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
     bboxes: list[tuple[int, int, int, int] | None] = [get_visible_bbox(frame) for frame in frames]
     fitted_frames: list[Image.Image] = []
@@ -114,6 +138,8 @@ def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
         x = round(FRAME_SIZE * 0.5 - visible_center_x)
         y = round(FOOT_BASELINE - visible_bottom_y)
         canvas.alpha_composite(resized, (x, y))
+        if index // GRID_COLUMNS == ROW_UP:
+            canvas = repair_back_head(canvas)
         fitted_frames.append(canvas)
 
     return fitted_frames

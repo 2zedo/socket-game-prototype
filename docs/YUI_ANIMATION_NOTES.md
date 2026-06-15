@@ -24,6 +24,10 @@ This pass replaces the active player sprite source with `docs/reference/yui-1.pn
 
 This pass regenerates the active `yui-1` walk sheet to fix directional alignment only. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, and End Day flow.
 
+## YUI Up Headroom Cleanup Pass
+
+This pass repairs only the up/back-facing row headroom in the generated active `yui-1` walk sheet. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, and the front/left/right frame pixels.
+
 ## Applied Idle PNGs
 
 - `godot/assets/art/characters/yui/idle/yui_idle_down.png`
@@ -107,7 +111,11 @@ This pass regenerates the active `yui-1` walk sheet to fix directional alignment
   - `docs/validation/yui_direction_back.png`
   - `docs/validation/yui_direction_left.png`
   - `docs/validation/yui_direction_right.png`
+- Up-direction headroom screenshots saved at:
+  - `docs/validation/yui_up_idle_headroom.png`
+  - `docs/validation/yui_up_walk_headroom.png`
 - Automated frame inspection confirms all 16 generated frames use visible height `78`, bottom baseline `89`, and center x near `48`.
+- Automated pixel comparison confirms front, left, and right rows are unchanged from the previous committed sheet; only the up/back-facing row changed.
 - Manual movement input should still be checked in-editor for all four directions because the automated screenshots force idle direction animations.
 - No 8-direction animation exists; diagonal movement intentionally resolves to the stronger cardinal axis.
 
@@ -120,4 +128,5 @@ This pass regenerates the active `yui-1` walk sheet to fix directional alignment
 - Aligns every frame to the same centered x position and foot baseline.
 - Preserves crop padding around hair, lower body, and shoes so the back-facing head and feet do not clip.
 - Mirrors the left-facing source row for the right-facing row because the source right row has inconsistent crop extent and made that direction appear smaller.
+- Repairs only the back-facing head top with a small dark-pixel cap so the top of the head no longer appears cut flat.
 - Preserves the original source character art instead of redrawing or replacing Yui.

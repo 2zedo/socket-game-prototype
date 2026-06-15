@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Yui directional sprite alignment cleanup
+- Current phase: Yui up-direction headroom cleanup
 - Current branch: `main`
-- Latest commit at task start: `d749b43 chore: track Godot import metadata`
+- Latest commit at task start: `2a33ef2 fix: realign yui directional sprite frames`
 
 ## Latest Completed Work
 
@@ -80,10 +80,16 @@
   - Aligned all 16 frames to the same visible height, foot baseline, and x center
   - Rebuilt the right-facing row from the left-facing row mirror to avoid the bad source crop that made right movement look smaller
   - Saved four runtime direction screenshots under `docs/validation/`
+- Repaired only the up/back-facing Yui headroom issue:
+  - Kept the active source as `docs/reference/yui-1.png`
+  - Preserved the existing `96x96` canvas, runtime display scale, map, UI, object placement, and interaction logic
+  - Added a small back-row-only hair cap so the top of the back-facing head no longer appears cut flat
+  - Confirmed front, left, and right rows are pixel-identical to the previous committed sheet
+  - Saved up-direction idle and walk validation screenshots under `docs/validation/`
 
 ## Current Goal
 
-- Keep Yui's active player sprite aligned across all four directions without changing map, UI, object placement, or interaction logic
+- Keep Yui's active player sprite readable in the up/back direction without changing map, UI, object placement, or interaction logic
 - Keep Godot source assets reproducible by tracking source-side `.import` and necessary `.uid` metadata
 - Continue focusing active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
 
@@ -104,6 +110,8 @@
 - `docs/validation/yui_direction_back.png`
 - `docs/validation/yui_direction_left.png`
 - `docs/validation/yui_direction_right.png`
+- `docs/validation/yui_up_idle_headroom.png`
+- `docs/validation/yui_up_walk_headroom.png`
 - `docs/PROJECT_STATUS.md`
 - `docs/ASSET_APPLICATION_NOTES.md`
 - `docs/YUI_ANIMATION_NOTES.md`
@@ -134,6 +142,18 @@
   - no visible bbox touches the frame edge
 - `Godot_v4.5.1-stable_win64_console.exe --headless --path . --import --quit`: completed successfully after regenerating the Yui sheet
 - `Godot_v4.5.1-stable_win64_console.exe --path . --script %TEMP%/capture_yui_directions.gd --resolution 1280x720`: completed successfully and saved four runtime direction screenshots
+- `git status --short --branch`: confirmed current branch is `main` at this task start
+- `git rev-parse --short HEAD`: recorded task-start commit `2a33ef2`
+- `git fetch origin`: updated remote refs before this task
+- `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
+- `tools/process_yui_sprite_sheet.py`: regenerated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` from `docs/reference/yui-1.png` with a back-row-only headroom repair
+- Automated pixel comparison against `HEAD:godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`: confirmed front, left, and right rows were unchanged; only the back row changed
+- Automated frame inspection after the up-direction repair:
+  - front, left, and right frames remain at visible top `12` and bottom `89`
+  - back/up frames now have visible top `8` and bottom `89`
+  - x center remains near `48`
+- `Godot_v4.5.1-stable_win64_console.exe --headless --path . --import --quit`: completed successfully after the up-direction repair
+- `Godot_v4.5.1-stable_win64_console.exe --path . --script %TEMP%/capture_yui_up_headroom.gd --resolution 1280x720`: completed successfully and saved up-direction idle/walk screenshots
 - Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
 - Opened and inspected `docs/reference/yui-1.png` before editing
 - `docs/reference/yui-1.png`: `1254x1254`, RGBA, 4x4 frame sheet
@@ -155,7 +175,7 @@
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - The direct reference map now supplies the visible apartment background; invisible interaction and collision overlays still need manual alignment review.
-- Yui now uses the processed `yui-1.png` source sheet with normalized frame size, foot baseline, and side-view scale. Automated screenshots confirm each idle direction renders, but manual movement input should still be checked in-editor for every direction.
+- Yui now uses the processed `yui-1.png` source sheet with normalized frame size, foot baseline, side-view scale, and repaired up/back headroom. Automated screenshots confirm the up idle and up walk frames render without the head touching the frame edge, but manual movement input should still be checked in-editor.
 - The actual reference map is drawn directly as the apartment background; interaction/collision overlays need manual alignment review against the art.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
 - Direct map background placement, Yui display, interaction hotspots, collision blockers, and prompt positions need screenshot-based review in the Godot editor.
