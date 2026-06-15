@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Reference apartment visual rebuild pass
+- Current phase: Map UI and Yui sprite specification alignment pass
 - Current branch: `main`
-- Latest commit at task start: `0720fe1 docs: codify project workflow rules`
+- Latest commit at task start: `0a8157d feat: rebuild apartment visual composition`
 
 ## Latest Completed Work
 
@@ -50,12 +50,18 @@
   - Repositioned the power strip as a central power hub and rerouted powered-device cables as organized dark wires instead of glowing power lines
   - Normalized powered object display sizes so devices, furniture, and player proportions are more consistent
   - Updated visual implementation, asset application, and Yui animation notes for the reference rebuild pass
+- Aligned the Godot apartment presentation to the newer `map ui` and `YUI Sprite Sheet` reference specifications:
+  - Replaced the in-room large PNG character display with runtime generated `32x48` pixel-style Yui frames using front/side/back silhouettes and a 4-frame walk cycle
+  - Repositioned implemented objects to match the `map ui` numbered guide: bed, multitap, laptop, fan, charger, and communication device
+  - Recentered the multitap as the central lower-floor power hub and rerouted cables as dark non-glowing physical wires
+  - Updated object display sizes and player collision scale to better match the reference map proportions
+  - Added an `AGENTS.md` rule requiring named reference images to be opened and treated as implementation specifications when requested
 
 ## Current Goal
 
-- Verify the reference apartment rebuild in the Godot editor with screenshots
+- Verify the map UI/Yui sprite specification alignment pass in the Godot editor with screenshots
 - Continue focusing the active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
-- Tune remaining object art and character animation only after the rebuilt room composition is manually reviewed
+- Tune remaining object art and character animation only after the `map ui` aligned room composition is manually reviewed
 
 ## Not Doing Yet
 
@@ -70,7 +76,11 @@
 
 - `godot/scripts/Apartment.gd`
 - `godot/scenes/Player.tscn`
+- `godot/scripts/Player.gd`
 - `godot/scripts/Interactable.gd`
+- `AGENTS.md`
+- `docs/reference/YUI Sprite Sheet.png`
+- `docs/reference/map ui.png`
 - `docs/PROJECT_STATUS.md`
 - `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
 - `docs/ASSET_APPLICATION_NOTES.md`
@@ -79,14 +89,17 @@
 ## Validation Results
 
 - `git status --short --branch`: confirmed current branch is `main`; only pre-existing untracked reference/import sidecar files were present before this task
-- `git rev-parse --short HEAD`: recorded task-start commit `0720fe1`
+- `git rev-parse --short HEAD`: recorded task-start commit `0a8157d`
 - `git fetch origin`: updated remote refs before editing
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
 - Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
-- Checked `docs/reference/map 디자인.png` and `docs/reference/주인공, 등장인물 인게임 디자인.png` before editing
-- `git diff --stat`: checked visual/code/documentation scope before staging
+- Opened and inspected `docs/reference/YUI Sprite Sheet.png` before editing
+- Opened and inspected `docs/reference/map ui.png` before editing
+- `git diff --stat`: checked visual/code/documentation/reference scope before staging
 - `git diff --check`: passed
-- `Get-Command godot -ErrorAction SilentlyContinue`: Godot CLI was not found in PATH, so editor/runtime validation is Manual check required
+- `Get-Command godot -ErrorAction SilentlyContinue`: Godot CLI was not found in PATH
+- `Get-Command godot4 -ErrorAction SilentlyContinue`: Godot 4 CLI was not found in PATH
+- Godot editor/runtime validation is Manual check required
 - Web validation was not run because no web files were changed
 
 ## Current Risks or Known Issues
@@ -96,11 +109,11 @@
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - P0 PNG assets are now applied, but many furniture/environment details still use primitive fallback drawing.
-- Yui idle/walk sprites are wired and now scaled smaller for the reference rebuild direction, but final scale/pivot still need in-editor review.
-- Walk frames still use existing two walk PNGs per direction with idle frames inserted for a softer 4-frame rhythm; purpose-made 4-frame sprite art is still recommended later.
+- Yui now uses generated 32x48 pixel-style frames based on the reference sheet proportions, but final hand-authored sprite-sheet PNGs are still recommended later.
+- Yui scale, foot pivot, collision radius, and 4-frame walk timing need in-editor review against furniture, prompts, and collision.
 - `room_floor_base.png` and `room_wall_base.png` are drawn as underlay backdrops while existing primitive furniture/collision remains in place.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
-- Room composition, cable routing, powered device readability, panel spacing, compact multitap section spacing, 2-slot device dragging, enlarged dialogue portrait placement, and prompt positions need another screenshot-based review in the Godot editor.
+- Room composition, `map ui` object placement, cable routing, powered device readability, panel spacing, compact multitap section spacing, 2-slot device dragging, enlarged dialogue portrait placement, and prompt positions need another screenshot-based review in the Godot editor.
 - `comm_device_off.png` and `comm_device_on.png` now have an alpha channel, but the world view still uses a smaller primitive fallback because the current product-like perspective does not blend well with the top-down room scale.
 - Several furniture pieces are improved primitives, but bed/desk/door/shelf readability will eventually benefit from purpose-built room sprites.
 - The exploration model is keyboard/top-down and not static point-and-click, but it still needs manual playtesting in Godot.
@@ -112,10 +125,10 @@
 
 ## Next Recommended Task
 
-1. Run the Godot editor playtest checklist for the reference apartment rebuild pass
+1. Run the Godot editor playtest checklist for the map UI/Yui sprite alignment pass
 
 Reason:
-The reference apartment rebuild changed room composition, Yui scale, powered object scale, cable routing, and multitap hub placement, but it has not been verified in the Godot editor.
+The current pass changed Yui sprite generation, player scale/collision, room object placement, cable routing, and multitap hub placement from the new reference specifications, but it has not been verified in the Godot editor.
 
 Start with:
 

@@ -78,6 +78,8 @@
 - Do not remove existing comments casually.
 - Preserve existing code comments unless they are clearly obsolete because of the current change.
 - Add comments to new code when they clarify gameplay intent, engine behavior, or non-obvious decisions.
+- When the user names reference images as implementation specifications, open and inspect those images before editing. If the files cannot be read, stop and report that before making code, scene, or asset changes.
+- When reference images contain written labels, layout notes, proportions, or numbered object guides, treat those notes as the primary implementation source for that task unless the user explicitly says otherwise.
 - Avoid broad refactors unless the user explicitly asks for them.
 - Before making a large structural change, summarize:
   - what will change

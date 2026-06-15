@@ -16,8 +16,8 @@ var used_day1_action_keys: Array[String] = []
 var current_power_units: int = SurvivalState.DAY1_STARTING_POWER_UNITS
 var phase_key: String = "day"
 
-const ROOM_RECT: Rect2 = Rect2(70, 36, 1140, 642)
-const FLOOR_RECT: Rect2 = Rect2(112, 206, 1032, 402)
+const ROOM_RECT: Rect2 = Rect2(42, 34, 1050, 642)
+const FLOOR_RECT: Rect2 = Rect2(96, 206, 940, 402)
 const WALL_THICKNESS: float = 28.0
 
 
@@ -112,7 +112,7 @@ func _build_room_collision() -> void:
 
 func _spawn_player() -> void:
 	player = player_scene.instantiate() as Player
-	player.position = Vector2(610, 386)
+	player.position = Vector2(470, 386)
 	add_child(player)
 
 
@@ -122,8 +122,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "멀티탭",
 		"title": "멀티탭",
 		"body": "방 안 기기들의 전원을 모으는 핵심 멀티탭입니다.",
-		"position": Vector2(640, 444),
-		"size": Vector2(154, 56),
+		"position": Vector2(570, 485),
+		"size": Vector2(150, 54),
 		"color": Color("#77654c"),
 		"outline_color": Color("#ffe6a3"),
 		"prompt_text": "[E] 멀티탭 관리",
@@ -134,7 +134,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": Vector2(884, 184),
+		"position": Vector2(835, 202),
 		"size": Vector2(138, 34),
 		"color": Color("#a8894e"),
 		"power_units": 1,
@@ -146,8 +146,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": Vector2(838, 506),
-		"size": Vector2(60, 44),
+		"position": Vector2(790, 466),
+		"size": Vector2(58, 42),
 		"color": Color("#4e5e67"),
 		"power_units": 2,
 		"day1_action_key": "charger",
@@ -158,8 +158,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "선풍기",
 		"title": "선풍기",
 		"body": "더위를 낮출 수 있습니다.\n하지만 켜두면 다른 장치를 꽂을 여유가 줄어듭니다.",
-		"position": Vector2(1082, 376),
-		"size": Vector2(78, 96),
+		"position": Vector2(980, 382),
+		"size": Vector2(78, 94),
 		"color": Color("#53645b"),
 		"power_units": 2,
 		"day1_action_key": "fan",
@@ -170,7 +170,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": Vector2(930, 252),
+		"position": Vector2(835, 258),
 		"size": Vector2(96, 56),
 		"color": Color("#3b4748"),
 		"power_units": 3,
@@ -182,8 +182,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "통신 장치",
 		"title": "통신 장치",
 		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
-		"position": Vector2(1034, 520),
-		"size": Vector2(86, 58),
+		"position": Vector2(585, 278),
+		"size": Vector2(82, 58),
 		"color": Color("#5e5368"),
 		"power_units": 4,
 		"day1_action_key": "communication_device",
@@ -194,8 +194,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "침대",
 		"title": "오늘을 마친다",
 		"body": "더 할 일을 정리하고 오늘 하루를 마칠 수 있습니다.",
-		"position": Vector2(250, 390),
-		"size": Vector2(210, 150),
+		"position": Vector2(210, 380),
+		"size": Vector2(214, 164),
 		"color": Color("#5a5047"),
 		"interaction_type": "end_day",
 		"prompt_text": "[E] 하루 마치기",
@@ -241,12 +241,12 @@ func _add_furniture_blocker(center: Vector2, size: Vector2) -> void:
 func _add_environment_blockers() -> void:
 	# Non-interactive room features still need small blockers so the top-down
 	# movement reads as an apartment floor, not a board the player can cross.
-	_add_furniture_blocker(Vector2(640, 116), Vector2(360, 112))
-	_add_furniture_blocker(Vector2(456, 190), Vector2(112, 186))
-	_add_furniture_blocker(Vector2(944, 262), Vector2(292, 106))
-	_add_furniture_blocker(Vector2(1068, 178), Vector2(92, 178))
-	_add_furniture_blocker(Vector2(972, 572), Vector2(352, 86))
-	_add_furniture_blocker(Vector2(222, 566), Vector2(266, 120))
+	_add_furniture_blocker(Vector2(560, 116), Vector2(340, 112))
+	_add_furniture_blocker(Vector2(312, 188), Vector2(112, 178))
+	_add_furniture_blocker(Vector2(850, 266), Vector2(266, 112))
+	_add_furniture_blocker(Vector2(1010, 202), Vector2(82, 184))
+	_add_furniture_blocker(Vector2(875, 572), Vector2(318, 86))
+	_add_furniture_blocker(Vector2(172, 578), Vector2(220, 118))
 
 
 func _update_nearest_interactable() -> void:
@@ -277,10 +277,10 @@ func _draw_label(position: Vector2, text: String, color: Color = Color("#d8cfba"
 
 func _draw_floorboards(rect: Rect2) -> void:
 	for index in range(13):
-		var y := rect.position.y + 28.0 + float(index) * 34.0
+		var y: float = rect.position.y + 28.0 + float(index) * 34.0
 		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color(0.17, 0.12, 0.075, 0.34), 1.0)
 	for index in range(9):
-		var x := rect.position.x + 42.0 + float(index) * 92.0
+		var x: float = rect.position.x + 42.0 + float(index) * 92.0
 		draw_line(Vector2(x, rect.position.y), Vector2(x, rect.end.y), Color(0.08, 0.06, 0.04, 0.14), 1.0)
 
 
@@ -306,17 +306,17 @@ func _draw_wall_floor_separation(floor_rect: Rect2) -> void:
 
 
 func _draw_room_details() -> void:
-	_draw_window(Rect2(Vector2(522, 70), Vector2(260, 112)))
+	_draw_window(Rect2(Vector2(438, 70), Vector2(260, 112)))
 	_draw_wall_decor()
-	_draw_bathroom_hint(Rect2(Vector2(114, 520), Vector2(220, 122)))
-	_draw_entry_door(Rect2(Vector2(470, 604), Vector2(138, 62)))
-	_draw_desk(Rect2(Vector2(814, 214), Vector2(276, 88)))
-	_draw_shelf(Rect2(Vector2(398, 118), Vector2(112, 188)))
-	_draw_appliance_shelf(Rect2(Vector2(1064, 118), Vector2(96, 190)))
-	_draw_kitchen_counter(Rect2(Vector2(780, 552), Vector2(340, 62)))
-	_draw_rug(Rect2(Vector2(712, 360), Vector2(320, 174)))
-	_draw_round_table(Vector2(870, 420), 56.0)
-	_draw_power_hub_plate(Vector2(640, 444))
+	_draw_bathroom_hint(Rect2(Vector2(74, 520), Vector2(196, 122)))
+	_draw_entry_door(Rect2(Vector2(420, 604), Vector2(138, 62)))
+	_draw_desk(Rect2(Vector2(730, 214), Vector2(258, 92)))
+	_draw_shelf(Rect2(Vector2(282, 118), Vector2(112, 188)))
+	_draw_appliance_shelf(Rect2(Vector2(1000, 130), Vector2(78, 178)))
+	_draw_kitchen_counter(Rect2(Vector2(710, 552), Vector2(318, 62)))
+	_draw_rug(Rect2(Vector2(665, 365), Vector2(278, 174)))
+	_draw_round_table(Vector2(805, 455), 54.0)
+	_draw_power_hub_plate(Vector2(570, 485))
 	_draw_small_clutter(FLOOR_RECT)
 
 
@@ -340,14 +340,14 @@ func _draw_window(rect: Rect2) -> void:
 
 
 func _draw_wall_decor() -> void:
-	draw_rect(Rect2(Vector2(220, 112), Vector2(78, 54)), Color("#2d261f"), true)
-	draw_rect(Rect2(Vector2(220, 112), Vector2(78, 54)), Color("#766044"), false, 1.0)
-	draw_rect(Rect2(Vector2(236, 126), Vector2(18, 18)), Color("#4d463c"), true)
-	draw_rect(Rect2(Vector2(264, 123), Vector2(20, 26)), Color("#3a342d"), true)
-	draw_rect(Rect2(Vector2(858, 92), Vector2(118, 78)), Color("#2d251e"), true)
-	draw_rect(Rect2(Vector2(858, 92), Vector2(118, 78)), Color("#80633e"), false, 2.0)
-	draw_rect(Rect2(Vector2(878, 110), Vector2(30, 22)), Color("#4c443a"), true)
-	draw_rect(Rect2(Vector2(922, 110), Vector2(34, 42)), Color("#5d5142"), true)
+	draw_rect(Rect2(Vector2(206, 102), Vector2(78, 54)), Color("#2d261f"), true)
+	draw_rect(Rect2(Vector2(206, 102), Vector2(78, 54)), Color("#766044"), false, 1.0)
+	draw_rect(Rect2(Vector2(222, 116), Vector2(18, 18)), Color("#4d463c"), true)
+	draw_rect(Rect2(Vector2(250, 113), Vector2(20, 26)), Color("#3a342d"), true)
+	draw_rect(Rect2(Vector2(862, 92), Vector2(118, 78)), Color("#2d251e"), true)
+	draw_rect(Rect2(Vector2(862, 92), Vector2(118, 78)), Color("#80633e"), false, 2.0)
+	draw_rect(Rect2(Vector2(882, 110), Vector2(30, 22)), Color("#4c443a"), true)
+	draw_rect(Rect2(Vector2(926, 110), Vector2(34, 42)), Color("#5d5142"), true)
 
 
 func _draw_entry_door(rect: Rect2) -> void:
@@ -368,7 +368,7 @@ func _draw_desk(rect: Rect2) -> void:
 	draw_rect(Rect2(rect.position + Vector2(0, rect.size.y - 8), Vector2(rect.size.x, 8)), Color(0.08, 0.055, 0.035, 0.72), true)
 	draw_line(rect.position + Vector2(8.0, 8.0), rect.position + Vector2(rect.size.x - 8.0, 8.0), Color(0.95, 0.75, 0.45, 0.18), 1.0)
 	for index in range(4):
-		var y := rect.position.y + 12.0 + float(index) * 14.0
+		var y: float = rect.position.y + 12.0 + float(index) * 14.0
 		draw_line(Vector2(rect.position.x + 10.0, y), Vector2(rect.end.x - 10.0, y), Color(0.72, 0.55, 0.34, 0.12), 1.0)
 	draw_rect(Rect2(rect.position + Vector2(20, 15), Vector2(30, 18)), Color("#211f1c"), true)
 	draw_rect(Rect2(rect.end - Vector2(70, 48), Vector2(46, 32)), Color("#2a211a"), true)
@@ -381,10 +381,10 @@ func _draw_shelf(rect: Rect2) -> void:
 	draw_rect(rect, Color("#2b211a"), true)
 	draw_rect(rect, Color("#5b4933"), false, 2.0)
 	for index in range(4):
-		var y := rect.position.y + 28.0 + float(index) * 30.0
+		var y: float = rect.position.y + 28.0 + float(index) * 30.0
 		draw_line(Vector2(rect.position.x, y), Vector2(rect.end.x, y), Color("#51412f"), 2.0)
 	for index in range(7):
-		var item_rect := Rect2(rect.position + Vector2(10 + float(index % 3) * 24.0, 12 + float(index / 3) * 38.0), Vector2(14, 22))
+		var item_rect: Rect2 = Rect2(rect.position + Vector2(10 + float(index % 3) * 24.0, 12 + float(index / 3) * 38.0), Vector2(14, 22))
 		draw_rect(item_rect, Color("#6b5840").darkened(float(index % 2) * 0.18), true)
 
 
@@ -464,30 +464,30 @@ func _draw_power_hub_plate(center: Vector2) -> void:
 
 func _draw_small_clutter(_floor_rect: Rect2) -> void:
 	var boxes: Array[Rect2] = [
-		Rect2(Vector2(176, 590), Vector2(42, 22)),
-		Rect2(Vector2(230, 598), Vector2(36, 18)),
-		Rect2(Vector2(1048, 560), Vector2(44, 26)),
-		Rect2(Vector2(438, 300), Vector2(34, 18)),
+		Rect2(Vector2(150, 590), Vector2(42, 22)),
+		Rect2(Vector2(202, 598), Vector2(36, 18)),
+		Rect2(Vector2(956, 560), Vector2(44, 26)),
+		Rect2(Vector2(392, 300), Vector2(34, 18)),
 	]
 	for rect in boxes:
 		draw_rect(rect, Color("#2b241e"), true)
 		draw_rect(rect, Color("#594633"), false, 1.0)
-	draw_line(Vector2(476, 616), Vector2(544, 622), Color("#201812"), 3.0, true)
-	draw_line(Vector2(488, 626), Vector2(552, 630), Color("#201812"), 2.0, true)
+	draw_line(Vector2(426, 616), Vector2(494, 622), Color("#201812"), 3.0, true)
+	draw_line(Vector2(438, 626), Vector2(502, 630), Color("#201812"), 2.0, true)
 
 
 func _draw_light_pool() -> void:
 	if not used_day1_action_keys.has("light"):
 		return
 
-	var glow_rect: Rect2 = Rect2(Vector2(742, 128), Vector2(390, 278))
+	var glow_rect: Rect2 = Rect2(Vector2(700, 128), Vector2(360, 278))
 	draw_texture_rect(AssetPaths.FLUORESCENT_GLOW, glow_rect, false, Color(1.0, 0.88, 0.58, 0.2))
 
-	var desk_center: Vector2 = Vector2(948, 250)
+	var desk_center: Vector2 = Vector2(850, 252)
 	for index in range(4, 0, -1):
 		var alpha: float = 0.012 * float(index)
 		draw_circle(desk_center, 32.0 * float(index), Color(0.95, 0.68, 0.31, alpha))
-	var floor_center: Vector2 = Vector2(760, 430)
+	var floor_center: Vector2 = Vector2(680, 430)
 	for index in range(3, 0, -1):
 		var alpha: float = 0.008 * float(index)
 		draw_circle(floor_center, 42.0 * float(index), Color(0.92, 0.62, 0.26, alpha))
@@ -518,30 +518,31 @@ func _draw_power_cable(start_position: Vector2, end_position: Vector2, object_id
 	match object_id:
 		"laptop":
 			points = PackedVector2Array([
-				start_position + Vector2(12.0, -26.0),
-				Vector2(684.0, 390.0),
-				Vector2(826.0, 316.0),
-				end_position + Vector2(-28.0, 18.0),
+				start_position + Vector2(28.0, -28.0),
+				Vector2(612.0, 360.0),
+				Vector2(746.0, 314.0),
+				end_position + Vector2(-36.0, 22.0),
 			])
 		"charger":
 			points = PackedVector2Array([
-				start_position + Vector2(42.0, 26.0),
-				Vector2(724.0, 502.0),
-				end_position + Vector2(-18.0, 10.0),
+				start_position + Vector2(44.0, 20.0),
+				Vector2(650.0, 510.0),
+				Vector2(742.0, 500.0),
+				end_position + Vector2(-24.0, 10.0),
 			])
 		"communication_device":
 			points = PackedVector2Array([
-				start_position + Vector2(56.0, 30.0),
-				Vector2(768.0, 548.0),
-				Vector2(972.0, 548.0),
-				end_position + Vector2(-24.0, 8.0),
+				start_position + Vector2(2.0, -30.0),
+				Vector2(570.0, 406.0),
+				Vector2(575.0, 338.0),
+				end_position + Vector2(0.0, 24.0),
 			])
 		"fan":
 			points = PackedVector2Array([
-				start_position + Vector2(64.0, -2.0),
-				Vector2(804.0, 420.0),
-				Vector2(1018.0, 398.0),
-				end_position + Vector2(-28.0, 20.0),
+				start_position + Vector2(58.0, -8.0),
+				Vector2(720.0, 448.0),
+				Vector2(914.0, 404.0),
+				end_position + Vector2(-32.0, 16.0),
 			])
 
 	if points.size() == 0:

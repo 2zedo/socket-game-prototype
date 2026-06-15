@@ -79,15 +79,16 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
 ## Scale And Position Notes
 
 - P0 object images are large source PNGs, so current implementation scales them inside the existing interactable draw rects.
-- Yui player sprite is now drawn smaller than the previous pass with `Visual` scale `0.052`, so the character reads closer to a top-down pixel-game proportion inside the apartment.
+- Yui player art now uses a runtime generated `32x48` pixel-style sprite at `Visual` scale `1.35`, based on `docs/reference/YUI Sprite Sheet.png`, instead of drawing the large full-body PNGs in the room.
 - The fluorescent light interactable moved to the upper room area and uses a wider, shallow draw rect.
 - Room wall/floor PNGs are drawn as scaled underlays beneath primitive furniture and existing collision.
 - UI panel PNGs are low-alpha backplates so text readability remains the first priority.
-- Laptop, fan, charger, communication device, and power strip world display sizes were normalized down for the reference apartment rebuild pass.
+- Laptop, fan, charger, communication device, and power strip world display sizes were adjusted again to match the `map ui` object proportions.
 - Powered cables are still drawn as lines, but now use bundled dark physical routes instead of glowing electrical feedback.
 
 ## Remaining Art Issues
 
+- The runtime generated Yui sprite should eventually be replaced with hand-authored sprite-sheet PNGs using the same 32px-reference proportions.
 - The room still needs dedicated sprites or scene pieces for bed, desk, window, door, shelf, rug, and clutter.
 - Cable visuals are still drawn lines and should later become cleaner modular cable art or refined Line2D paths.
 - The result panel does not yet use a dedicated final diary/log skin.

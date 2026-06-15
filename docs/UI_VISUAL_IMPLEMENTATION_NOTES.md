@@ -36,6 +36,10 @@ This pass uses `docs/reference/map 디자인.png` and `docs/reference/주인공,
 
 This pass rebuilds the apartment presentation more directly from the current map and character references. It keeps gameplay systems unchanged, but treats the previous room placement as disposable presentation scaffolding.
 
+## Map UI Specification Alignment Pass
+
+This pass uses `docs/reference/map ui.png` and `docs/reference/YUI Sprite Sheet.png` as implementation specifications. It preserves the existing interaction, power, day result, and HUD systems while realigning the apartment layout, object positions, cable routes, and Yui in-game sprite behavior to the reference sheets.
+
 ## Improved Screens
 
 - Exploration: darker apartment frame, lived-in room layout, weaker warm light, clearer object placement, smaller proximity prompt.
@@ -49,6 +53,7 @@ This pass rebuilds the apartment presentation more directly from the current map
 - Visual sanity pass: increases Yui's visual footprint, reduces world object texture dominance, improves bed/desk primitive readability, routes the fluorescent cable less intrusively, and simplifies multitap slot occupancy versus device-card information.
 - Reference visual pass: reduces Yui back toward a smaller top-down pixel-game proportion, warms the room into a lived-in one-room apartment, removes glowing power cables, shifts powered feedback onto devices, enlarges dialogue portrait staging, and adds clearer multitap UI sections.
 - Reference apartment rebuild pass: expands the one-room apartment composition into a more lived-in layout with bed, bathroom-door hint, window, desk/work area, kitchen/appliance area, central rug/table, and a more intentional multitap hub with bundled non-glowing cables.
+- Map UI specification pass: aligns the implemented objects to the `map ui` numbered guide, with bed/end-day on the left, communication device below the window, laptop on the right desk, fan on the right floor, charger near the rug table, and the multitap as the central power hub.
 
 ## Pass 2 Adjustments
 
@@ -146,6 +151,22 @@ This pass rebuilds the apartment presentation more directly from the current map
 - Yui's in-room visual scale was reduced again to fit a top-down pixel-game room proportion, while collision and interaction remain functional.
 - Interactable object display sizes were normalized down so the room, furniture, and player have a more consistent scale relationship.
 - This pass does not add new gameplay, new devices, new inventory, story, or save behavior.
+
+## Map UI Specification Adjustments
+
+- `docs/reference/map ui.png` was treated as the primary room-layout source for this pass.
+- Implemented object positions now follow the guide structure:
+  - Player/Yui near the room center-left walkway.
+  - Multitap/power hub on the central lower floor.
+  - Laptop on the right-side desk.
+  - Fan on the right-side floor.
+  - Charger near the rug and round table.
+  - Communication device below/near the window.
+  - Bed/End Day interaction on the left side.
+- The room composition was tightened back from the previous overly wide layout so the implemented object group better matches the reference room proportions.
+- Cable routes now start from the multitap and travel as dark, non-glowing physical wires toward the powered objects.
+- The window, desk, shelf, bathroom-door hint, kitchen counter, rug, and table were repositioned to support the same visual reading as the reference image.
+- This pass does not add new interactable object types; it only repositions and re-presents the current implemented systems.
 
 ## Common UI Style
 

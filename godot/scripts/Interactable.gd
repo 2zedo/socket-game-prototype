@@ -24,7 +24,7 @@ var phase_key: String = "day"
 const LABEL_HEIGHT: float = 18.0
 const LABEL_FONT_SIZE: int = 11
 const STATUS_FONT_SIZE: int = 11
-const OBJECT_DISPLAY_RULES := {
+const OBJECT_DISPLAY_RULES: Dictionary = {
 	"light": {
 		"world_size": Vector2(132, 30),
 		"world_offset": Vector2(0, -58),
@@ -33,28 +33,28 @@ const OBJECT_DISPLAY_RULES := {
 		"z_index": 1,
 	},
 	"laptop": {
-		"world_size": Vector2(82, 58),
-		"world_offset": Vector2(0, 10),
+		"world_size": Vector2(92, 62),
+		"world_offset": Vector2(0, 8),
 		"world_modulate": Color(0.88, 0.86, 0.8, 0.9),
 		"ui_preview_size": Vector2(300, 220),
 		"z_index": 3,
 	},
 	"fan": {
-		"world_size": Vector2(70, 88),
+		"world_size": Vector2(72, 92),
 		"world_offset": Vector2(0, 0),
 		"world_modulate": Color(0.86, 0.84, 0.76, 0.88),
 		"ui_preview_size": Vector2(220, 250),
 		"z_index": 3,
 	},
 	"charger": {
-		"world_size": Vector2(54, 42),
+		"world_size": Vector2(58, 44),
 		"world_offset": Vector2(-4, 2),
 		"world_modulate": Color(0.86, 0.84, 0.78, 0.9),
 		"ui_preview_size": Vector2(170, 170),
 		"z_index": 3,
 	},
 	"communication_device": {
-		"world_size": Vector2(76, 54),
+		"world_size": Vector2(82, 58),
 		"world_offset": Vector2(0, 2),
 		"world_modulate": Color(0.78, 0.74, 0.68, 0.78),
 		"ui_preview_size": Vector2(250, 190),
@@ -62,7 +62,7 @@ const OBJECT_DISPLAY_RULES := {
 		"use_world_texture": false,
 	},
 	"power_strip": {
-		"world_size": Vector2(148, 60),
+		"world_size": Vector2(150, 58),
 		"world_offset": Vector2(0, 0),
 		"world_modulate": Color(0.92, 0.88, 0.78, 0.94),
 		"ui_preview_size": Vector2(280, 140),
