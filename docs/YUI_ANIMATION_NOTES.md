@@ -20,6 +20,10 @@ This pass updates only the active Yui sprite sheet cleanup and visual display si
 
 This pass replaces the active player sprite source with `docs/reference/yui-1.png`. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, and End Day flow.
 
+## YUI Direction Alignment Cleanup Pass
+
+This pass regenerates the active `yui-1` walk sheet to fix directional alignment only. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, and End Day flow.
+
 ## Applied Idle PNGs
 
 - `godot/assets/art/characters/yui/idle/yui_idle_down.png`
@@ -79,7 +83,7 @@ This pass replaces the active player sprite source with `docs/reference/yui-1.pn
 - Godot source copy: `godot/assets/art/characters/yui/yui_1_source_sheet.png`.
 - Processed sheet: `384x384`, RGBA.
 - Frame size: `96x96`.
-- Source character fit height inside each frame: `80px`.
+- Source character fit height inside each frame: `78px`.
 - Shared foot baseline inside each frame: `y = 90`.
 - `Visual` scale: `Vector2(1.45, 1.45)`.
 - `Visual` position: `Vector2(0, -61)`.
@@ -98,7 +102,13 @@ This pass replaces the active player sprite source with `docs/reference/yui-1.pn
 
 - The processed YUI sheet uses `docs/reference/yui-1.png`, not the older `docs/reference/YUI.png` checkerboard source.
 - Runtime screenshot saved at `docs/validation/yui_1_runtime_screenshot00000000.png`.
-- Manual movement input should still be checked in-editor for all four directions.
+- Directional runtime screenshots saved at:
+  - `docs/validation/yui_direction_front.png`
+  - `docs/validation/yui_direction_back.png`
+  - `docs/validation/yui_direction_left.png`
+  - `docs/validation/yui_direction_right.png`
+- Automated frame inspection confirms all 16 generated frames use visible height `78`, bottom baseline `89`, and center x near `48`.
+- Manual movement input should still be checked in-editor for all four directions because the automated screenshots force idle direction animations.
 - No 8-direction animation exists; diagonal movement intentionally resolves to the stronger cardinal axis.
 
 ## Processing Script
@@ -108,4 +118,6 @@ This pass replaces the active player sprite source with `docs/reference/yui-1.pn
 - Removes very low-alpha source noise from `yui-1`.
 - Normalizes all 16 frames to `96x96`.
 - Aligns every frame to the same centered x position and foot baseline.
+- Preserves crop padding around hair, lower body, and shoes so the back-facing head and feet do not clip.
+- Mirrors the left-facing source row for the right-facing row because the source right row has inconsistent crop extent and made that direction appear smaller.
 - Preserves the original source character art instead of redrawing or replacing Yui.

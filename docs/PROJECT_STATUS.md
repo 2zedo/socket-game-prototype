@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Godot import metadata tracking pass
+- Current phase: Yui directional sprite alignment cleanup
 - Current branch: `main`
-- Latest commit at task start: `19864bd fix: replace player sprite with yui-1 and normalize frame alignment`
+- Latest commit at task start: `d749b43 chore: track Godot import metadata`
 
 ## Latest Completed Work
 
@@ -73,11 +73,18 @@
   - Added `.gitignore` comments/negation rules documenting that source-side `.import` and `.uid` metadata should be tracked
   - Added current PNG import metadata files next to their source images
   - Added the remaining `AssetPaths.gd.uid` script UID sidecar
+- Regenerated the active `yui-1` player walk sheet for directional alignment only:
+  - Kept the active source as `docs/reference/yui-1.png`
+  - Preserved `96x96` frames and the existing Godot runtime display scale
+  - Added crop padding and stricter bbox detection so hair, lower body, and shoes are not clipped
+  - Aligned all 16 frames to the same visible height, foot baseline, and x center
+  - Rebuilt the right-facing row from the left-facing row mirror to avoid the bad source crop that made right movement look smaller
+  - Saved four runtime direction screenshots under `docs/validation/`
 
 ## Current Goal
 
+- Keep Yui's active player sprite aligned across all four directions without changing map, UI, object placement, or interaction logic
 - Keep Godot source assets reproducible by tracking source-side `.import` and necessary `.uid` metadata
-- Keep generated `.godot/` cache files excluded from Git
 - Continue focusing active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
 
 ## Not Doing Yet
@@ -91,16 +98,12 @@
 
 ## Changed Files
 
-- `godot/scenes/Player.tscn`
-- `godot/scripts/Player.gd`
-- `godot/scripts/ui/AssetPaths.gd.uid`
-- `godot/assets/art/characters/yui/yui_1_source_sheet.png`
 - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
-- `godot/assets/art/**/*.png.import`
 - `tools/process_yui_sprite_sheet.py`
-- `docs/reference/yui-1.png`
-- `docs/validation/yui_1_runtime_screenshot00000000.png`
-- `.gitignore`
+- `docs/validation/yui_direction_front.png`
+- `docs/validation/yui_direction_back.png`
+- `docs/validation/yui_direction_left.png`
+- `docs/validation/yui_direction_right.png`
 - `docs/PROJECT_STATUS.md`
 - `docs/ASSET_APPLICATION_NOTES.md`
 - `docs/YUI_ANIMATION_NOTES.md`
@@ -118,13 +121,26 @@
 - `Get-ChildItem -Recurse -Filter "*.png.import"`: identified source-side texture import metadata to track
 - `Get-ChildItem -Recurse -Filter "*.uid"` and `git ls-files "*.uid"`: identified `AssetPaths.gd.uid` as the only remaining untracked script UID
 - `Godot --headless --path . --import --quit`: completed successfully after source-side import metadata tracking
+- `git status --short --branch`: confirmed current branch is `main` at task start
+- `git rev-parse --short HEAD`: recorded task-start commit `d749b43`
+- `git fetch origin`: updated remote refs before this task
+- `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
+- `tools/process_yui_sprite_sheet.py`: copied `docs/reference/yui-1.png` to `godot/assets/art/characters/yui/yui_1_source_sheet.png` and regenerated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` as `384x384` RGBA
+- Automated frame inspection after regeneration:
+  - all 16 frames use `96x96` canvases
+  - visible height is `78` for every frame
+  - bottom baseline is `89` for every frame
+  - center x stays near `48`
+  - no visible bbox touches the frame edge
+- `Godot_v4.5.1-stable_win64_console.exe --headless --path . --import --quit`: completed successfully after regenerating the Yui sheet
+- `Godot_v4.5.1-stable_win64_console.exe --path . --script %TEMP%/capture_yui_directions.gd --resolution 1280x720`: completed successfully and saved four runtime direction screenshots
 - Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
 - Opened and inspected `docs/reference/yui-1.png` before editing
 - `docs/reference/yui-1.png`: `1254x1254`, RGBA, 4x4 frame sheet
 - `tools/process_yui_sprite_sheet.py`: copied `docs/reference/yui-1.png` to `godot/assets/art/characters/yui/yui_1_source_sheet.png` and regenerated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` as `384x384` RGBA
 - Confirmed generated Yui sheet:
   - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`: `384x384`, RGBA, `96x96` frames
-  - All 16 frames have visible height `80`, bottom baseline `90`, center x near `48`, and no visible bbox touching the frame edge
+  - All 16 frames have visible height `78`, bottom baseline `89`, center x near `48`, and no visible bbox touching the frame edge
   - Static fringe check after regeneration: `34,763` opaque pixels and `0` bright neutral edge pixels under the local edge-detection heuristic
 - `Godot_v4.5.1-stable_win64_console.exe --version`: confirmed `4.5.1.stable.official.f62fdbde1`
 - `Godot --headless --path . --import --quit`: completed successfully
@@ -139,7 +155,7 @@
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - The direct reference map now supplies the visible apartment background; invisible interaction and collision overlays still need manual alignment review.
-- Yui now uses the processed `yui-1.png` source sheet, with normalized frame size and foot baseline. The screenshot pass confirms startup display, but manual movement input should still be checked in-editor for every direction.
+- Yui now uses the processed `yui-1.png` source sheet with normalized frame size, foot baseline, and side-view scale. Automated screenshots confirm each idle direction renders, but manual movement input should still be checked in-editor for every direction.
 - The actual reference map is drawn directly as the apartment background; interaction/collision overlays need manual alignment review against the art.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
 - Direct map background placement, Yui display, interaction hotspots, collision blockers, and prompt positions need screenshot-based review in the Godot editor.
@@ -149,7 +165,7 @@
 - Explicit End Day now exists, but still needs manual playtesting in Godot.
 - Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
 - The temporary device data still lives in script constants and should move to `.tres` or data files after the loop is validated.
-- Multiple Godot `.png.import` / `.uid` sidecar files remain untracked from earlier work; they should stay out of commits unless the team decides otherwise.
+- Godot source-side `.png.import` and necessary `.uid` metadata are now tracked; generated `.godot/` cache files remain excluded.
 - `PROJECT_STATUS.md` still carries a long accumulated completed-work list; if it becomes harder to scan, propose a split before deleting history.
 
 ## Next Recommended Task
