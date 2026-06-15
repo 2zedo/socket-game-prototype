@@ -4,8 +4,15 @@
 
 This pass applies the first in-repository PNG art assets to the existing Godot DAY 1 MVP while preserving the current gameplay loop.
 
+## Direct Reference Asset Application Pass
+
+This pass copies the current reference map and YUI files into the Godot project and uses them directly for runtime apartment/player art.
+
 ## Applied PNGs
 
+- `godot/assets/art/maps/apartment/apartment_map_reference.png`
+- `godot/assets/art/characters/yui/yui_source_sheet.png`
+- `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
 - `godot/assets/art/characters/yui/yui_player_idle_back.png`
 - `godot/assets/art/portraits/yui/yui_portrait_neutral.png`
 - `godot/assets/art/environment/room/room_floor_base.png`
@@ -39,7 +46,7 @@ This pass applies the first in-repository PNG art assets to the existing Godot D
 ## Not Applied
 
 - None of the requested P0 PNG paths are intentionally left unused.
-- Several broader room details still use primitive fallback drawing because no specific P0 sprite exists yet for bed, desk, window, door, shelf, rug, and clutter.
+- The direct reference map pass no longer needs separate primitive fallback drawing for bed, desk, window, door, shelf, rug, and clutter in the apartment view.
 
 ## Filename Corrections
 
@@ -78,19 +85,29 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
 
 ## Scale And Position Notes
 
+- `apartment_map_reference.png` is copied from `docs/reference/map.png` and displayed directly as the apartment background at the original aspect ratio.
+- `yui_source_sheet.png` is copied from `docs/reference/YUI.png`.
+- `yui_walk_4dir_rgba.png` is generated from `yui_source_sheet.png` with transparent background, 4 rows, 4 columns, and `64x64` frames.
 - P0 object images are large source PNGs, so current implementation scales them inside the existing interactable draw rects.
-- Yui player art now uses a runtime generated `32x48` pixel-style sprite at `Visual` scale `1.35`, based on `docs/reference/YUI Sprite Sheet.png`, instead of drawing the large full-body PNGs in the room.
+- Yui player art now uses `yui_walk_4dir_rgba.png` through `AnimatedSprite2D` / `AtlasTexture` frames instead of generated placeholder drawing.
 - The fluorescent light interactable moved to the upper room area and uses a wider, shallow draw rect.
-- Room wall/floor PNGs are drawn as scaled underlays beneath primitive furniture and existing collision.
+- Room wall/floor PNGs remain in the project, but the apartment view now draws `apartment_map_reference.png` directly.
 - UI panel PNGs are low-alpha backplates so text readability remains the first priority.
 - Laptop, fan, charger, communication device, and power strip world display sizes were adjusted again to match the `map ui` object proportions.
-- Powered cables are still drawn as lines, but now use bundled dark physical routes instead of glowing electrical feedback.
+- Apartment-view cable visuals now come from `apartment_map_reference.png`; dynamic cable drawing is not called in the direct map pass.
+- The direct map pass hides current world object placeholders; the visible furniture, devices, and cables come from `apartment_map_reference.png`.
 
 ## Remaining Art Issues
 
-- The runtime generated Yui sprite should eventually be replaced with hand-authored sprite-sheet PNGs using the same 32px-reference proportions.
-- The room still needs dedicated sprites or scene pieces for bed, desk, window, door, shelf, rug, and clutter.
-- Cable visuals are still drawn lines and should later become cleaner modular cable art or refined Line2D paths.
+- The processed YUI sheet should be reviewed in Godot for frame alignment and foot pivot.
+- Interaction hotspots should be checked against the visible objects in the map background.
 - The result panel does not yet use a dedicated final diary/log skin.
 - Multitap device cards are still drawn UI cards; only slots, plugs, badges, and icons use PNGs.
 - In-editor screenshots are needed to tune scale, alignment, prompt overlap, and panel readability.
+
+## Processing Scripts
+
+- `tools/process_yui_sprite_sheet.py`
+  - Input: `godot/assets/art/characters/yui/yui_source_sheet.png`
+  - Output: `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
+  - Purpose: removes the baked bright checkerboard background, normalizes the 4x4 frames into `64x64` cells, and keeps Yui's source art as the player sprite.

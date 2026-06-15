@@ -80,6 +80,8 @@
 - Add comments to new code when they clarify gameplay intent, engine behavior, or non-obvious decisions.
 - When the user names reference images as implementation specifications, open and inspect those images before editing. If the files cannot be read, stop and report that before making code, scene, or asset changes.
 - When reference images contain written labels, layout notes, proportions, or numbered object guides, treat those notes as the primary implementation source for that task unless the user explicitly says otherwise.
+- When a task explicitly says to apply a reference image directly as an asset, copy the source image into the Godot project and use it directly. Do not redraw, reinterpret, or replace it with approximate placeholder geometry.
+- Keep visual reference assets separate from interaction/collision nodes. The map can be visible art while Area2D, collision, and gameplay nodes remain invisible functional overlays.
 - Avoid broad refactors unless the user explicitly asks for them.
 - Before making a large structural change, summarize:
   - what will change

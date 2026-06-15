@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Map UI and Yui sprite specification alignment pass
+- Current phase: Reference asset application pass
 - Current branch: `main`
-- Latest commit at task start: `0a8157d feat: rebuild apartment visual composition`
+- Latest commit at task start: `228a42d feat: align apartment with map ui references`
 
 ## Latest Completed Work
 
@@ -56,12 +56,18 @@
   - Recentered the multitap as the central lower-floor power hub and rerouted cables as dark non-glowing physical wires
   - Updated object display sizes and player collision scale to better match the reference map proportions
   - Added an `AGENTS.md` rule requiring named reference images to be opened and treated as implementation specifications when requested
+- Applied the actual reference images as Godot runtime assets:
+  - Copied `docs/reference/map.png` into the Godot project and now draws it directly as the apartment background
+  - Copied `docs/reference/YUI.png` into the Godot project and processed it into an RGBA 4-direction, 4-frame sprite sheet
+  - Replaced the generated Yui placeholder frames with `AtlasTexture` frames from the processed reference YUI sheet
+  - Hid duplicate placeholder object drawings while keeping the existing Area2D interaction and collision overlays aligned to the map art
+  - Added `tools/process_yui_sprite_sheet.py` to reproduce the transparent YUI sheet generation
 
 ## Current Goal
 
-- Verify the map UI/Yui sprite specification alignment pass in the Godot editor with screenshots
+- Verify the direct reference map/YUI asset application pass in the Godot editor with screenshots
 - Continue focusing the active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
-- Tune remaining object art and character animation only after the `map ui` aligned room composition is manually reviewed
+- Tune interaction hotspot placement only after the direct map background and actual YUI sprite are manually reviewed
 
 ## Not Doing Yet
 
@@ -78,9 +84,15 @@
 - `godot/scenes/Player.tscn`
 - `godot/scripts/Player.gd`
 - `godot/scripts/Interactable.gd`
+- `godot/scripts/ui/AssetPaths.gd`
+- `godot/assets/art/maps/apartment/apartment_map_reference.png`
+- `godot/assets/art/characters/yui/yui_source_sheet.png`
+- `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
+- `tools/process_yui_sprite_sheet.py`
 - `AGENTS.md`
-- `docs/reference/YUI Sprite Sheet.png`
-- `docs/reference/map ui.png`
+- `docs/reference/YUI.png`
+- `docs/reference/map.png`
+- `docs/reference/tasks/APPLY_REFERENCE_ASSETS_TASK.md`
 - `docs/PROJECT_STATUS.md`
 - `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
 - `docs/ASSET_APPLICATION_NOTES.md`
@@ -89,14 +101,22 @@
 ## Validation Results
 
 - `git status --short --branch`: confirmed current branch is `main`; only pre-existing untracked reference/import sidecar files were present before this task
-- `git rev-parse --short HEAD`: recorded task-start commit `0a8157d`
+- `git rev-parse --short HEAD`: recorded task-start commit `228a42d`
 - `git fetch origin`: updated remote refs before editing
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
 - Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
-- Opened and inspected `docs/reference/YUI Sprite Sheet.png` before editing
-- Opened and inspected `docs/reference/map ui.png` before editing
+- Requested task path `docs/tasks/APPLY_REFERENCE_ASSETS_TASK.md` was not present; read the actual task file at `docs/reference/tasks/APPLY_REFERENCE_ASSETS_TASK.md`
+- Opened and inspected `docs/reference/map.png` before editing
+- Opened and inspected `docs/reference/YUI.png` before editing
+- `docs/reference/map.png`: `1464x1074`, no alpha channel
+- `docs/reference/YUI.png`: `1254x1254`, no alpha channel, 4x4 frame sheet
+- `tools/process_yui_sprite_sheet.py`: generated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` as `256x256` RGBA
 - `git diff --stat`: checked visual/code/documentation/reference scope before staging
 - `git diff --check`: passed
+- Confirmed generated assets:
+  - `godot/assets/art/maps/apartment/apartment_map_reference.png`: `1464x1074`, no alpha
+  - `godot/assets/art/characters/yui/yui_source_sheet.png`: `1254x1254`, no alpha
+  - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`: `256x256`, RGBA
 - `Get-Command godot -ErrorAction SilentlyContinue`: Godot CLI was not found in PATH
 - `Get-Command godot4 -ErrorAction SilentlyContinue`: Godot 4 CLI was not found in PATH
 - Godot editor/runtime validation is Manual check required
@@ -108,27 +128,26 @@
 - Concept images define mood and direction, not exact asset requirements.
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
-- P0 PNG assets are now applied, but many furniture/environment details still use primitive fallback drawing.
-- Yui now uses generated 32x48 pixel-style frames based on the reference sheet proportions, but final hand-authored sprite-sheet PNGs are still recommended later.
-- Yui scale, foot pivot, collision radius, and 4-frame walk timing need in-editor review against furniture, prompts, and collision.
-- `room_floor_base.png` and `room_wall_base.png` are drawn as underlay backdrops while existing primitive furniture/collision remains in place.
+- The direct reference map now supplies the visible apartment background; invisible interaction and collision overlays still need manual alignment review.
+- Yui now uses the processed reference YUI sprite sheet, but scale, foot pivot, collision radius, and 4-frame walk timing still need in-editor review.
+- The actual reference map is drawn directly as the apartment background; interaction/collision overlays need manual alignment review against the art.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
-- Room composition, `map ui` object placement, cable routing, powered device readability, panel spacing, compact multitap section spacing, 2-slot device dragging, enlarged dialogue portrait placement, and prompt positions need another screenshot-based review in the Godot editor.
-- `comm_device_off.png` and `comm_device_on.png` now have an alpha channel, but the world view still uses a smaller primitive fallback because the current product-like perspective does not blend well with the top-down room scale.
-- Several furniture pieces are improved primitives, but bed/desk/door/shelf readability will eventually benefit from purpose-built room sprites.
+- Direct map background placement, Yui display, interaction hotspots, collision blockers, and prompt positions need screenshot-based review in the Godot editor.
+- World object placeholder drawing is hidden for current map-visible objects; powered feedback is currently limited by the static reference map art.
+- Previous primitive room/furniture drawings are no longer called in the apartment view, but several unused helper draw functions still exist in `Apartment.gd` and can be removed in a later cleanup pass.
 - The exploration model is keyboard/top-down and not static point-and-click, but it still needs manual playtesting in Godot.
 - Explicit End Day now exists, but still needs manual playtesting in Godot.
 - Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
 - The temporary device data still lives in script constants and should move to `.tres` or data files after the loop is validated.
-- `docs/reference/` and multiple Godot `.png.import` / `.uid` sidecar files remain untracked from earlier work; they were not staged in this documentation workflow task.
+- Multiple Godot `.png.import` / `.uid` sidecar files remain untracked from earlier work; they should stay out of commits unless the team decides otherwise.
 - `PROJECT_STATUS.md` still carries a long accumulated completed-work list; if it becomes harder to scan, propose a split before deleting history.
 
 ## Next Recommended Task
 
-1. Run the Godot editor playtest checklist for the map UI/Yui sprite alignment pass
+1. Run the Godot editor playtest checklist for the direct reference asset pass
 
 Reason:
-The current pass changed Yui sprite generation, player scale/collision, room object placement, cable routing, and multitap hub placement from the new reference specifications, but it has not been verified in the Godot editor.
+The current pass replaced the drawn apartment with the actual reference map and replaced the generated Yui placeholder with the processed reference sprite sheet, but it has not been verified in the Godot editor.
 
 Start with:
 
@@ -140,41 +159,35 @@ Start with:
 Completion criteria:
 
 - Exploration, Interaction, Multitap, and Result states run without fatal errors
-- Yui scale/pivot, object placement, cable readability, powered device feedback, day/night window readability, and enlarged dialogue portrait are checked in-editor
+- Map aspect ratio, Yui display, 4-direction walk frames, interaction hotspots, collision blockers, and existing power strip entry flow are checked in-editor
 - Any bugs found are recorded with screenshots or clear reproduction steps
 
-2. Decide how to handle untracked reference and Godot sidecar files
+2. Tune interaction hotspots against the reference map
 
 Reason:
-`docs/reference/` and multiple Godot `.png.import` / `.uid` files remain untracked. Some may be intentional project documentation/assets, while others may be generated sidecars that should stay out of commits.
-
-Start with:
-
-- `docs/reference/`
-- `godot/assets/art/**/*.png.import`
-- `godot/scripts/ui/AssetPaths.gd.uid`
-- `.gitignore`
-
-Completion criteria:
-
-- Intentional reference assets are either committed or explicitly left untracked
-- Generated/cache-like files are ignored or documented as intentionally untracked
-- No `.godot/` cache or unrelated temporary files are staged
-
-3. Tune visual layout from actual Godot screenshots
-
-Reason:
-The current room and UI presentation has been rebuilt from code and reference images, but final readability depends on screenshots from the running Godot scene.
+The visible objects now come from the map image, while gameplay uses invisible Area2D overlays. Their positions may need small screenshot-based corrections.
 
 Start with:
 
 - `godot/scripts/Apartment.gd`
-- `godot/scripts/Interactable.gd`
-- `godot/scripts/ui/OutletMode.gd`
-- `godot/scenes/ui/InteractionPanel.tscn`
+- `docs/reference/map.png`
 
 Completion criteria:
 
-- Screenshot-based issues are fixed without adding new gameplay systems
-- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md` is updated with the new visual pass
-- `docs/PROJECT_STATUS.md` reflects changed files, validation, risks, and next task
+- Every visible map object has a matching usable interaction hotspot
+- Player cannot walk through major furniture in the reference map
+- No visible placeholder object drawings overlap the map art
+
+3. Remove unused primitive room drawing helpers
+
+Reason:
+The actual map image now provides the apartment art, so the old primitive room drawing helpers are no longer part of the visible scene.
+
+Start with:
+
+- `godot/scripts/Apartment.gd`
+
+Completion criteria:
+
+- Dead draw helpers are removed without touching interaction, movement, power strip mode, result screen, or HUD behavior
+- `git diff --check` passes

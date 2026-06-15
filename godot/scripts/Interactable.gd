@@ -13,6 +13,7 @@ class_name ApartmentInteractable
 @export var interaction_type: String = ""
 @export var prompt_text: String = ""
 @export var is_interactable: bool = true
+@export var visible_in_world: bool = true
 @export var label_offset: Vector2 = Vector2.ZERO
 @export var outline_color: Color = Color("#f0ddb4")
 
@@ -84,6 +85,7 @@ func setup(config: Dictionary) -> void:
 	interaction_type = config.get("interaction_type", interaction_type)
 	prompt_text = config.get("prompt_text", prompt_text)
 	is_interactable = config.get("interactable", is_interactable)
+	visible_in_world = config.get("visible_in_world", visible_in_world)
 	label_offset = config.get("label_offset", label_offset)
 	outline_color = config.get("outline_color", outline_color)
 	z_index = int(get_display_rule_for_object(object_id).get("z_index", 1))
@@ -158,6 +160,9 @@ func _update_collision_shape() -> void:
 
 
 func _draw() -> void:
+	if not visible_in_world:
+		return
+
 	var rect: Rect2 = Rect2(-body_size * 0.5, body_size)
 	var powered_lighten: float = 0.22 if phase_key == "night" else 0.16
 	var inactive_darken: float = 0.36 if phase_key == "night" else 0.24

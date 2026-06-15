@@ -16,8 +16,11 @@ var used_day1_action_keys: Array[String] = []
 var current_power_units: int = SurvivalState.DAY1_STARTING_POWER_UNITS
 var phase_key: String = "day"
 
-const ROOM_RECT: Rect2 = Rect2(42, 34, 1050, 642)
-const FLOOR_RECT: Rect2 = Rect2(96, 206, 940, 402)
+const MAP_SOURCE_SIZE: Vector2 = Vector2(1464.0, 1074.0)
+const MAP_SCALE: float = 0.670391
+const MAP_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
+const ROOM_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
+const FLOOR_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
 const WALL_THICKNESS: float = 28.0
 
 
@@ -84,23 +87,8 @@ func set_phase(next_phase_key: String) -> void:
 
 
 func _draw() -> void:
-	var wall_color: Color = Color("#2b231d")
-	var inner_wall: Color = Color("#3b3028")
-	var floor_fill: Color = Color("#4a3020")
-	var trim_color: Color = Color("#9f7847")
-
 	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("#100e0c"), true)
-	draw_rect(ROOM_RECT.grow(22.0), Color("#17110d"), true)
-	draw_rect(ROOM_RECT, wall_color, true)
-	draw_rect(ROOM_RECT.grow(-12.0), inner_wall, true)
-	_draw_room_asset_backdrop(ROOM_RECT.grow(22.0), FLOOR_RECT, wall_color, floor_fill)
-	_draw_wall_floor_separation(FLOOR_RECT)
-	_draw_room_details()
-	_draw_light_pool()
-	_draw_power_cables()
-	draw_rect(ROOM_RECT, Color("#3f3021"), false, 5.0)
-	draw_rect(ROOM_RECT.grow(-12.0), trim_color, false, 1.2)
-	draw_rect(ROOM_RECT.grow(-48.0), Color(0.02, 0.018, 0.015, 0.34), false, 2.0)
+	draw_texture_rect(AssetPaths.APARTMENT_MAP_REFERENCE, MAP_RECT, false, Color.WHITE)
 
 
 func _build_room_collision() -> void:
@@ -110,9 +98,17 @@ func _build_room_collision() -> void:
 	_add_wall(Rect2(ROOM_RECT.end.x, ROOM_RECT.position.y, WALL_THICKNESS, ROOM_RECT.size.y))
 
 
+func _map_point(source_position: Vector2) -> Vector2:
+	return MAP_RECT.position + source_position * MAP_SCALE
+
+
+func _map_size(source_size: Vector2) -> Vector2:
+	return source_size * MAP_SCALE
+
+
 func _spawn_player() -> void:
 	player = player_scene.instantiate() as Player
-	player.position = Vector2(470, 386)
+	player.position = _map_point(Vector2(500.0, 505.0))
 	add_child(player)
 
 
@@ -122,11 +118,12 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "멀티탭",
 		"title": "멀티탭",
 		"body": "방 안 기기들의 전원을 모으는 핵심 멀티탭입니다.",
-		"position": Vector2(570, 485),
-		"size": Vector2(150, 54),
+		"position": _map_point(Vector2(790.0, 584.0)),
+		"size": _map_size(Vector2(124.0, 70.0)),
 		"color": Color("#77654c"),
 		"outline_color": Color("#ffe6a3"),
 		"prompt_text": "[E] 멀티탭 관리",
+		"visible_in_world": false,
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -134,11 +131,12 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": Vector2(835, 202),
-		"size": Vector2(138, 34),
+		"position": _map_point(Vector2(1060.0, 242.0)),
+		"size": _map_size(Vector2(96.0, 78.0)),
 		"color": Color("#a8894e"),
 		"power_units": 1,
 		"day1_action_key": "light",
+		"visible_in_world": false,
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -146,11 +144,12 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": Vector2(790, 466),
-		"size": Vector2(58, 42),
+		"position": _map_point(Vector2(1090.0, 688.0)),
+		"size": _map_size(Vector2(80.0, 70.0)),
 		"color": Color("#4e5e67"),
 		"power_units": 2,
 		"day1_action_key": "charger",
+		"visible_in_world": false,
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -158,11 +157,12 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "선풍기",
 		"title": "선풍기",
 		"body": "더위를 낮출 수 있습니다.\n하지만 켜두면 다른 장치를 꽂을 여유가 줄어듭니다.",
-		"position": Vector2(980, 382),
-		"size": Vector2(78, 94),
+		"position": _map_point(Vector2(565.0, 510.0)),
+		"size": _map_size(Vector2(120.0, 150.0)),
 		"color": Color("#53645b"),
 		"power_units": 2,
 		"day1_action_key": "fan",
+		"visible_in_world": false,
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -170,11 +170,12 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": Vector2(835, 258),
-		"size": Vector2(96, 56),
+		"position": _map_point(Vector2(1110.0, 282.0)),
+		"size": _map_size(Vector2(120.0, 80.0)),
 		"color": Color("#3b4748"),
 		"power_units": 3,
 		"day1_action_key": "laptop",
+		"visible_in_world": false,
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -182,11 +183,12 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "통신 장치",
 		"title": "통신 장치",
 		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
-		"position": Vector2(585, 278),
-		"size": Vector2(82, 58),
+		"position": _map_point(Vector2(760.0, 318.0)),
+		"size": _map_size(Vector2(72.0, 116.0)),
 		"color": Color("#5e5368"),
 		"power_units": 4,
 		"day1_action_key": "communication_device",
+		"visible_in_world": false,
 		"label_offset": Vector2.ZERO,
 	})
 	_add_interactable({
@@ -194,11 +196,12 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "침대",
 		"title": "오늘을 마친다",
 		"body": "더 할 일을 정리하고 오늘 하루를 마칠 수 있습니다.",
-		"position": Vector2(210, 380),
-		"size": Vector2(214, 164),
+		"position": _map_point(Vector2(286.0, 428.0)),
+		"size": _map_size(Vector2(230.0, 350.0)),
 		"color": Color("#5a5047"),
 		"interaction_type": "end_day",
 		"prompt_text": "[E] 하루 마치기",
+		"visible_in_world": false,
 		"label_offset": Vector2.ZERO,
 	})
 
@@ -239,14 +242,12 @@ func _add_furniture_blocker(center: Vector2, size: Vector2) -> void:
 
 
 func _add_environment_blockers() -> void:
-	# Non-interactive room features still need small blockers so the top-down
-	# movement reads as an apartment floor, not a board the player can cross.
-	_add_furniture_blocker(Vector2(560, 116), Vector2(340, 112))
-	_add_furniture_blocker(Vector2(312, 188), Vector2(112, 178))
-	_add_furniture_blocker(Vector2(850, 266), Vector2(266, 112))
-	_add_furniture_blocker(Vector2(1010, 202), Vector2(82, 184))
-	_add_furniture_blocker(Vector2(875, 572), Vector2(318, 86))
-	_add_furniture_blocker(Vector2(172, 578), Vector2(220, 118))
+	# These blockers match major furniture already visible in the reference map.
+	_add_furniture_blocker(_map_point(Vector2(450.0, 250.0)), _map_size(Vector2(145.0, 260.0)))
+	_add_furniture_blocker(_map_point(Vector2(1080.0, 305.0)), _map_size(Vector2(330.0, 155.0)))
+	_add_furniture_blocker(_map_point(Vector2(1320.0, 350.0)), _map_size(Vector2(118.0, 330.0)))
+	_add_furniture_blocker(_map_point(Vector2(1080.0, 962.0)), _map_size(Vector2(450.0, 160.0)))
+	_add_furniture_blocker(_map_point(Vector2(210.0, 870.0)), _map_size(Vector2(320.0, 350.0)))
 
 
 func _update_nearest_interactable() -> void:

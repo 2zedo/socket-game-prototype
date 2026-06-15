@@ -2,7 +2,9 @@ extends RefCounted
 class_name AssetPaths
 
 const YUI_PORTRAIT_NEUTRAL := preload("res://assets/art/portraits/yui/yui_portrait_neutral.png")
+const APARTMENT_MAP_REFERENCE := preload("res://assets/art/maps/apartment/apartment_map_reference.png")
 const YUI_PLAYER_IDLE_BACK := preload("res://assets/art/characters/yui/yui_player_idle_back.png")
+const YUI_WALK_4DIR_RGBA := preload("res://assets/art/characters/yui/yui_walk_4dir_rgba.png")
 const YUI_IDLE_DOWN_PATH := "res://assets/art/characters/yui/idle/yui_idle_down.png"
 const YUI_IDLE_UP_PATH := "res://assets/art/characters/yui/idle/yui_idle_up.png"
 const YUI_IDLE_LEFT_PATH := "res://assets/art/characters/yui/idle/yui_idle_left.png"
@@ -51,7 +53,7 @@ const BADGE_DISCONNECTED := preload("res://assets/art/ui/badges/badge_disconnect
 
 static func load_texture_or_fallback(path: String, fallback: Texture2D) -> Texture2D:
 	if ResourceLoader.exists(path):
-		var texture := load(path) as Texture2D
+		var texture: Texture2D = load(path) as Texture2D
 		if texture != null:
 			return texture
 

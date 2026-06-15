@@ -40,6 +40,10 @@ This pass rebuilds the apartment presentation more directly from the current map
 
 This pass uses `docs/reference/map ui.png` and `docs/reference/YUI Sprite Sheet.png` as implementation specifications. It preserves the existing interaction, power, day result, and HUD systems while realigning the apartment layout, object positions, cable routes, and Yui in-game sprite behavior to the reference sheets.
 
+## Direct Reference Asset Application Pass
+
+This pass uses the actual `docs/reference/map.png` and `docs/reference/YUI.png` files as runtime art assets. It does not redesign the power strip UI, HUD, day/night systems, survival systems, or result flow.
+
 ## Improved Screens
 
 - Exploration: darker apartment frame, lived-in room layout, weaker warm light, clearer object placement, smaller proximity prompt.
@@ -54,6 +58,7 @@ This pass uses `docs/reference/map ui.png` and `docs/reference/YUI Sprite Sheet.
 - Reference visual pass: reduces Yui back toward a smaller top-down pixel-game proportion, warms the room into a lived-in one-room apartment, removes glowing power cables, shifts powered feedback onto devices, enlarges dialogue portrait staging, and adds clearer multitap UI sections.
 - Reference apartment rebuild pass: expands the one-room apartment composition into a more lived-in layout with bed, bathroom-door hint, window, desk/work area, kitchen/appliance area, central rug/table, and a more intentional multitap hub with bundled non-glowing cables.
 - Map UI specification pass: aligns the implemented objects to the `map ui` numbered guide, with bed/end-day on the left, communication device below the window, laptop on the right desk, fan on the right floor, charger near the rug table, and the multitap as the central power hub.
+- Direct reference asset pass: draws the copied map image directly as the apartment background and keeps interaction/collision as invisible overlays instead of redrawing placeholder room geometry.
 
 ## Pass 2 Adjustments
 
@@ -168,6 +173,16 @@ This pass uses `docs/reference/map ui.png` and `docs/reference/YUI Sprite Sheet.
 - The window, desk, shelf, bathroom-door hint, kitchen counter, rug, and table were repositioned to support the same visual reading as the reference image.
 - This pass does not add new interactable object types; it only repositions and re-presents the current implemented systems.
 
+## Direct Reference Asset Adjustments
+
+- `docs/reference/map.png` was copied to `godot/assets/art/maps/apartment/apartment_map_reference.png`.
+- `Apartment.gd` now draws `AssetPaths.APARTMENT_MAP_REFERENCE` directly into a fixed aspect-preserving 1280x720 display rect.
+- Existing primitive room/furniture drawing is no longer called in the apartment view.
+- Interactable objects now support `visible_in_world`; current map-visible objects are hidden while their Area2D interaction and blocker behavior remains active.
+- Interaction hotspots for multitap, light, charger, fan, laptop, communication device, and bed are mapped from source map coordinates onto the displayed map image.
+- Cables and device art are provided by the map image itself for this pass, avoiding duplicate glowing or placeholder cable drawings.
+- This pass preserves existing movement, proximity interaction, power strip entry, power state syncing, phone UI, HUD, and result flow.
+
 ## Common UI Style
 
 - Added `godot/scripts/ui/UIStyle.gd` for shared colors and simple panel styles.
@@ -181,19 +196,19 @@ This pass uses `docs/reference/map ui.png` and `docs/reference/YUI Sprite Sheet.
 
 ## Still Placeholder
 
-- Bed, desk, window, door, shelf, rug, and small clutter still use primitive drawing.
-- Room floor/wall art is a scaled underlay, not a fully sliced final environment.
+- The apartment background now uses the direct reference map image instead of primitive furniture drawing.
+- Interaction/collision nodes are still invisible overlays and need screenshot-based hotspot tuning.
 - Interaction and dialogue panel art is intentionally subtle so Korean text remains readable.
 - Result panel still uses drawn panels and a snapshot placeholder.
 - Multitap device cards still use drawn rectangles and text, with PNG badges/plugs layered in.
 - Communication device world art should be remade or adapted for the room perspective; current PNG is better suited to UI preview than world placement.
 - The fan and laptop are usable as temporary world sprites, but their perspective still differs from the primitive room and should be reviewed when final object art starts.
-- No external art assets were imported.
+- The current map and YUI reference images are imported as project-local runtime assets.
 
 ## Next Visual Tasks
 
-- Replace remaining furniture primitives with controlled object sprites or simple `.tscn` object scenes.
-- Tune PNG scale/position and Yui animation pivot after in-editor screenshots.
+- Tune invisible interaction hotspots and blockers against the direct map image after in-editor screenshots.
+- Tune Yui frame alignment, scale, and foot pivot after in-editor screenshots.
 - Create or adapt a dedicated top-down communication-device world sprite instead of forcing the current preview-like PNG into the room.
 - Review whether fan/laptop need dedicated world variants separate from UI preview images.
 - Tighten panel spacing after in-editor screenshot review.

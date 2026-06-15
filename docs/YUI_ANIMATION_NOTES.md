@@ -8,6 +8,10 @@ This pass replaces the single Yui player draw call with directional idle/walk sp
 
 This pass uses `docs/reference/YUI Sprite Sheet.png` as the implementation specification for in-game scale and animation behavior. It keeps player movement and interaction logic unchanged.
 
+## Direct YUI Source Sheet Pass
+
+This pass uses `docs/reference/YUI.png` as the player sprite source. It preserves movement, collision, proximity interaction, power logic, multitap logic, and End Day flow.
+
 ## Applied Idle PNGs
 
 - `godot/assets/art/characters/yui/idle/yui_idle_down.png`
@@ -17,6 +21,8 @@ This pass uses `docs/reference/YUI Sprite Sheet.png` as the implementation speci
 
 ## Applied Walk PNGs
 
+- `godot/assets/art/characters/yui/yui_source_sheet.png`
+- `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
 - `godot/assets/art/characters/yui/walk/yui_walk_down_01.png`
 - `godot/assets/art/characters/yui/walk/yui_walk_down_02.png`
 - `godot/assets/art/characters/yui/walk/yui_walk_up_01.png`
@@ -30,7 +36,7 @@ This pass uses `docs/reference/YUI Sprite Sheet.png` as the implementation speci
 
 - `godot/assets/art/characters/yui/yui_player_idle_back.png` remains tracked as the emergency fallback texture.
 - `Player.gd` uses `AssetPaths.load_texture_or_fallback()` so missing directional/walk files can fall back to an idle texture or the old single back-idle texture.
-- Walk files are temporary; later PNG replacement should keep the same filenames or update `AssetPaths.gd`.
+- `yui_walk_4dir_rgba.png` is now the active player sprite sheet. Older directional walk PNG paths remain in `AssetPaths.gd` as legacy/fallback references.
 
 ## Animation Names
 
@@ -49,15 +55,21 @@ This pass uses `docs/reference/YUI Sprite Sheet.png` as the implementation speci
 - The new `AnimatedSprite2D` child named `Visual` handles only the character image.
 - Direction uses the stronger axis from the current movement vector.
 - When Yui stops, the animation returns to the idle animation matching the last facing direction.
-- The current in-game Yui sprite is generated at runtime as a 32x48 pixel-style texture so the silhouette reads closer to the reference sheet than the previous full-body illustration PNGs.
-- The generated sprite keeps black hair, dark hoodie, light inner shirt, dark pants, boots, side bag/patch detail, front/side/back facing differences, and a foot-centered pivot.
+- `Player.gd` builds `SpriteFrames` from `yui_walk_4dir_rgba.png` using `AtlasTexture` regions.
+- Sheet layout:
+  - Row 1: `walk_down`
+  - Row 2: `walk_left`
+  - Row 3: `walk_right`
+  - Row 4: `walk_up`
+- Idle animations use the first frame from each row.
 
 ## Scale And Pivot
 
-- Source PNG size: `1024x1536`.
-- Runtime generated sprite size: `32x48`.
-- `Visual` scale: `1.35`.
-- `Visual` position: `Vector2(0, -31)`.
+- Original source sheet: `1254x1254`, no alpha.
+- Processed sheet: `256x256`, RGBA.
+- Frame size: `64x64`.
+- `Visual` scale: default `Vector2(1, 1)`.
+- `Visual` position: `Vector2(0, -32)`.
 - Collision radius: `11`.
 - Interaction radius: `54`.
 - This keeps Yui smaller against the rebuilt apartment layout and places the origin near the feet so collision and interaction detection stay stable.
@@ -65,11 +77,18 @@ This pass uses `docs/reference/YUI Sprite Sheet.png` as the implementation speci
 ## Animation Speed
 
 - Walk animation speed: `7.5 fps`.
-- Walk cycle: 4 generated frames per direction, targeting the reference note's roughly `120-150ms` frame timing.
+- Walk cycle: 4 frames per direction, targeting the reference note's roughly `120-150ms` frame timing.
 - Idle animations use one frame.
 
 ## Current Issues
 
-- The generated pixel sprites are implementation placeholders based on the sheet proportions; hand-authored final sprite art should eventually replace them.
+- The processed YUI sheet uses the actual source image, but the transparent background removal and per-frame alignment should be reviewed in Godot.
 - The current pivot/scale should be checked in the room against furniture and prompts.
 - No 8-direction animation exists; diagonal movement intentionally resolves to the stronger cardinal axis.
+
+## Processing Script
+
+- `tools/process_yui_sprite_sheet.py`
+- Removes the baked bright checkerboard background from `yui_source_sheet.png`.
+- Normalizes all 16 frames to `64x64`.
+- Preserves the original source character art instead of redrawing or replacing Yui.
