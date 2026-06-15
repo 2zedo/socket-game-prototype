@@ -79,10 +79,12 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
 ## Scale And Position Notes
 
 - P0 object images are large source PNGs, so current implementation scales them inside the existing interactable draw rects.
-- Yui player sprite is drawn at about `48x64` to keep collision and proximity behavior unchanged.
+- Yui player sprite is now drawn smaller than the previous pass with `Visual` scale `0.052`, so the character reads closer to a top-down pixel-game proportion inside the apartment.
 - The fluorescent light interactable moved to the upper room area and uses a wider, shallow draw rect.
 - Room wall/floor PNGs are drawn as scaled underlays beneath primitive furniture and existing collision.
 - UI panel PNGs are low-alpha backplates so text readability remains the first priority.
+- Laptop, fan, charger, communication device, and power strip world display sizes were normalized down for the reference apartment rebuild pass.
+- Powered cables are still drawn as lines, but now use bundled dark physical routes instead of glowing electrical feedback.
 
 ## Remaining Art Issues
 

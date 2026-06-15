@@ -3,18 +3,18 @@
 [ext_resource type="Script" path="res://scripts/Player.gd" id="1_player"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player_body"]
-radius = 17.0
+radius = 12.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_interaction"]
-radius = 62.0
+radius = 54.0
 
 [node name="Player" type="CharacterBody2D"]
 z_index = 10
 script = ExtResource("1_player")
 
 [node name="Visual" type="AnimatedSprite2D" parent="."]
-position = Vector2(0, -54)
-scale = Vector2(0.088, 0.088)
+position = Vector2(0, -34)
+scale = Vector2(0.052, 0.052)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_player_body")

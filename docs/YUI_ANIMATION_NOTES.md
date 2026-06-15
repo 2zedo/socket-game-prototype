@@ -49,9 +49,11 @@ This pass replaces the single Yui player draw call with directional idle/walk sp
 ## Scale And Pivot
 
 - Source PNG size: `1024x1536`.
-- `Visual` scale: `0.045`.
+- `Visual` scale: `0.052`.
 - `Visual` position: `Vector2(0, -34)`.
-- This keeps Yui close to the previous `48x64` screen footprint and places the origin near the feet so collision and interaction detection stay stable.
+- Collision radius: `12`.
+- Interaction radius: `54`.
+- This keeps Yui smaller against the rebuilt apartment layout and places the origin near the feet so collision and interaction detection stay stable.
 
 ## Animation Speed
 
@@ -60,6 +62,6 @@ This pass replaces the single Yui player draw call with directional idle/walk sp
 
 ## Current Issues
 
-- Walk frames are temporary and may need replacement or timing adjustment after Godot editor review.
+- Walk frames are temporary and still reuse two walk PNGs plus idle frames; purpose-made 4-frame pixel walk cycles are still recommended.
 - The current pivot/scale should be checked in the room against furniture and prompts.
 - No 8-direction animation exists; diagonal movement intentionally resolves to the stronger cardinal axis.
