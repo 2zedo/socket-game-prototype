@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Reference asset application pass
+- Current phase: YUI-1 player sprite replacement pass
 - Current branch: `main`
-- Latest commit at task start: `228a42d feat: align apartment with map ui references`
+- Latest commit at task start: `be999d9 feat: apply reference apartment map and YUI sprite assets`
 
 ## Latest Completed Work
 
@@ -62,12 +62,17 @@
   - Replaced the generated Yui placeholder frames with `AtlasTexture` frames from the processed reference YUI sheet
   - Hid duplicate placeholder object drawings while keeping the existing Area2D interaction and collision overlays aligned to the map art
   - Added `tools/process_yui_sprite_sheet.py` to reproduce the transparent YUI sheet generation
+- Replaced the active player sprite source with `docs/reference/yui-1.png`:
+  - Regenerated the active Yui walk sheet from `yui-1.png` instead of the older `YUI.png` source
+  - Normalized all 16 frames into matching `96x96` canvases with shared foot-baseline alignment
+  - Increased the active `AnimatedSprite2D` display size while keeping collision, movement, interaction, map, UI, and object placement unchanged
+  - Verified the Godot main scene with a runtime screenshot at `docs/validation/yui_1_runtime_screenshot00000000.png`
 
 ## Current Goal
 
-- Verify the direct reference map/YUI asset application pass in the Godot editor with screenshots
+- Keep the active player sprite on the `yui-1` source sheet and avoid reusing the old automatic cutout result from `YUI.png`
 - Continue focusing the active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
-- Tune interaction hotspot placement only after the direct map background and actual YUI sprite are manually reviewed
+- Preserve the current map, UI, object placement, movement, and interaction systems while tuning only player sprite quality
 
 ## Not Doing Yet
 
@@ -80,46 +85,35 @@
 
 ## Changed Files
 
-- `godot/scripts/Apartment.gd`
 - `godot/scenes/Player.tscn`
 - `godot/scripts/Player.gd`
-- `godot/scripts/Interactable.gd`
-- `godot/scripts/ui/AssetPaths.gd`
-- `godot/assets/art/maps/apartment/apartment_map_reference.png`
-- `godot/assets/art/characters/yui/yui_source_sheet.png`
+- `godot/assets/art/characters/yui/yui_1_source_sheet.png`
 - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
 - `tools/process_yui_sprite_sheet.py`
-- `AGENTS.md`
-- `docs/reference/YUI.png`
-- `docs/reference/map.png`
-- `docs/reference/tasks/APPLY_REFERENCE_ASSETS_TASK.md`
+- `docs/reference/yui-1.png`
+- `docs/validation/yui_1_runtime_screenshot00000000.png`
 - `docs/PROJECT_STATUS.md`
-- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
 - `docs/ASSET_APPLICATION_NOTES.md`
 - `docs/YUI_ANIMATION_NOTES.md`
 
 ## Validation Results
 
-- `git status --short --branch`: confirmed current branch is `main`; only pre-existing untracked reference/import sidecar files were present before this task
-- `git rev-parse --short HEAD`: recorded task-start commit `228a42d`
+- `git status --short --branch`: confirmed current branch is `main`; pre-existing untracked Godot `.png.import` / `.uid` sidecars were present before this task
+- `git rev-parse --short HEAD`: recorded task-start commit `be999d9`
 - `git fetch origin`: updated remote refs before editing
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
 - Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
-- Requested task path `docs/tasks/APPLY_REFERENCE_ASSETS_TASK.md` was not present; read the actual task file at `docs/reference/tasks/APPLY_REFERENCE_ASSETS_TASK.md`
-- Opened and inspected `docs/reference/map.png` before editing
-- Opened and inspected `docs/reference/YUI.png` before editing
-- `docs/reference/map.png`: `1464x1074`, no alpha channel
-- `docs/reference/YUI.png`: `1254x1254`, no alpha channel, 4x4 frame sheet
-- `tools/process_yui_sprite_sheet.py`: generated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` as `256x256` RGBA
-- `git diff --stat`: checked visual/code/documentation/reference scope before staging
-- `git diff --check`: passed
-- Confirmed generated assets:
-  - `godot/assets/art/maps/apartment/apartment_map_reference.png`: `1464x1074`, no alpha
-  - `godot/assets/art/characters/yui/yui_source_sheet.png`: `1254x1254`, no alpha
-  - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`: `256x256`, RGBA
-- `Get-Command godot -ErrorAction SilentlyContinue`: Godot CLI was not found in PATH
-- `Get-Command godot4 -ErrorAction SilentlyContinue`: Godot 4 CLI was not found in PATH
-- Godot editor/runtime validation is Manual check required
+- Opened and inspected `docs/reference/yui-1.png` before editing
+- `docs/reference/yui-1.png`: `1254x1254`, RGBA, 4x4 frame sheet
+- `tools/process_yui_sprite_sheet.py`: copied `docs/reference/yui-1.png` to `godot/assets/art/characters/yui/yui_1_source_sheet.png` and regenerated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` as `384x384` RGBA
+- Confirmed generated Yui sheet:
+  - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`: `384x384`, RGBA, `96x96` frames
+  - All 16 frames have visible height `80`, bottom baseline `90`, center x near `48`, and no visible bbox touching the frame edge
+  - Static fringe check after regeneration: `34,763` opaque pixels and `0` bright neutral edge pixels under the local edge-detection heuristic
+- `Godot_v4.5.1-stable_win64_console.exe --version`: confirmed `4.5.1.stable.official.f62fdbde1`
+- `Godot --headless --path . --import --quit`: completed successfully
+- `Godot --path . --scene res://scenes/Main.tscn --resolution 1280x720 --fixed-fps 1 --quit-after 1 --write-movie ...`: completed successfully
+- Runtime screenshot saved at `docs/validation/yui_1_runtime_screenshot00000000.png`
 - Web validation was not run because no web files were changed
 
 ## Current Risks or Known Issues
@@ -129,7 +123,7 @@
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - The direct reference map now supplies the visible apartment background; invisible interaction and collision overlays still need manual alignment review.
-- Yui now uses the processed reference YUI sprite sheet, but scale, foot pivot, collision radius, and 4-frame walk timing still need in-editor review.
+- Yui now uses the processed `yui-1.png` source sheet, with normalized frame size and foot baseline. The screenshot pass confirms startup display, but manual movement input should still be checked in-editor for every direction.
 - The actual reference map is drawn directly as the apartment background; interaction/collision overlays need manual alignment review against the art.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
 - Direct map background placement, Yui display, interaction hotspots, collision blockers, and prompt positions need screenshot-based review in the Godot editor.
@@ -144,39 +138,39 @@
 
 ## Next Recommended Task
 
-1. Run the Godot editor playtest checklist for the direct reference asset pass
+1. Manual movement check for the `yui-1` sprite
 
 Reason:
-The current pass replaced the drawn apartment with the actual reference map and replaced the generated Yui placeholder with the processed reference sprite sheet, but it has not been verified in the Godot editor.
+The runtime screenshot confirms the main scene starts and Yui displays at the new size, but automated movie capture did not press movement keys.
 
 Start with:
 
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`
 - `godot/scenes/Main.tscn`
-- `godot/scripts/Apartment.gd`
+- `godot/scenes/Player.tscn`
+- `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
+
+Completion criteria:
+
+- Up, down, left, and right walk animations still play in the correct directions
+- The sprite does not visibly jump or clip during movement
+- Interaction prompts still trigger from the expected player position
+
+2. Adjust Yui scale/pivot only if the runtime screenshot shows issues
+
+Reason:
+The visual scale changed without touching collision. If the sprite feet do not line up with the collision origin in Godot, only the `Visual` offset/scale should be tuned.
+
+Start with:
+
+- `godot/scenes/Player.tscn`
 - `godot/scripts/Player.gd`
 
 Completion criteria:
 
-- Exploration, Interaction, Multitap, and Result states run without fatal errors
-- Map aspect ratio, Yui display, 4-direction walk frames, interaction hotspots, collision blockers, and existing power strip entry flow are checked in-editor
-- Any bugs found are recorded with screenshots or clear reproduction steps
-
-2. Tune interaction hotspots against the reference map
-
-Reason:
-The visible objects now come from the map image, while gameplay uses invisible Area2D overlays. Their positions may need small screenshot-based corrections.
-
-Start with:
-
-- `godot/scripts/Apartment.gd`
-- `docs/reference/map.png`
-
-Completion criteria:
-
-- Every visible map object has a matching usable interaction hotspot
-- Player cannot walk through major furniture in the reference map
-- No visible placeholder object drawings overlap the map art
+- Collision still feels foot-based
+- Proximity interaction still works from the expected distance
+- No map, UI, object placement, or gameplay logic changes are included
 
 3. Remove unused primitive room drawing helpers
 

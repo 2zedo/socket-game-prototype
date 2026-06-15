@@ -8,9 +8,18 @@ This pass applies the first in-repository PNG art assets to the existing Godot D
 
 This pass copies the current reference map and YUI files into the Godot project and uses them directly for runtime apartment/player art.
 
+## YUI Scale And Fringe Cleanup Pass
+
+This pass updates only the active Yui player sprite processing and display scale. It does not change the map background, object placement, UI panels, interaction logic, power logic, or day/result systems.
+
+## YUI-1 Replacement Pass
+
+This pass replaces the active player sprite source with `docs/reference/yui-1.png`. It does not change the map background, object placement, UI panels, interaction logic, power logic, or day/result systems.
+
 ## Applied PNGs
 
 - `godot/assets/art/maps/apartment/apartment_map_reference.png`
+- `godot/assets/art/characters/yui/yui_1_source_sheet.png`
 - `godot/assets/art/characters/yui/yui_source_sheet.png`
 - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
 - `godot/assets/art/characters/yui/yui_player_idle_back.png`
@@ -87,9 +96,12 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
 
 - `apartment_map_reference.png` is copied from `docs/reference/map.png` and displayed directly as the apartment background at the original aspect ratio.
 - `yui_source_sheet.png` is copied from `docs/reference/YUI.png`.
-- `yui_walk_4dir_rgba.png` is generated from `yui_source_sheet.png` with transparent background, 4 rows, 4 columns, and `64x64` frames.
+- `yui_1_source_sheet.png` is copied from `docs/reference/yui-1.png` and is now the active player sprite source copy.
+- `yui_walk_4dir_rgba.png` is generated from `yui_1_source_sheet.png` with transparent background, 4 rows, 4 columns, and `96x96` frames.
+- The older `docs/reference/YUI.png` / `yui_source_sheet.png` automatic checkerboard cutout is no longer used for the active player display.
 - P0 object images are large source PNGs, so current implementation scales them inside the existing interactable draw rects.
 - Yui player art now uses `yui_walk_4dir_rgba.png` through `AnimatedSprite2D` / `AtlasTexture` frames instead of generated placeholder drawing.
+- Yui's active display scale is handled in `godot/scenes/Player.tscn` through the `Visual` `AnimatedSprite2D`; collision and interaction shapes remain separate.
 - The fluorescent light interactable moved to the upper room area and uses a wider, shallow draw rect.
 - Room wall/floor PNGs remain in the project, but the apartment view now draws `apartment_map_reference.png` directly.
 - UI panel PNGs are low-alpha backplates so text readability remains the first priority.
@@ -99,7 +111,8 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
 
 ## Remaining Art Issues
 
-- The processed YUI sheet should be reviewed in Godot for frame alignment and foot pivot.
+- The `yui-1` runtime screenshot was captured at `docs/validation/yui_1_runtime_screenshot00000000.png`.
+- Manual directional movement should still be checked in-editor because the screenshot capture does not press movement keys.
 - Interaction hotspots should be checked against the visible objects in the map background.
 - The result panel does not yet use a dedicated final diary/log skin.
 - Multitap device cards are still drawn UI cards; only slots, plugs, badges, and icons use PNGs.
@@ -108,6 +121,7 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
 ## Processing Scripts
 
 - `tools/process_yui_sprite_sheet.py`
-  - Input: `godot/assets/art/characters/yui/yui_source_sheet.png`
+  - Input: `docs/reference/yui-1.png`
+  - Source copy: `godot/assets/art/characters/yui/yui_1_source_sheet.png`
   - Output: `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
-  - Purpose: removes the baked bright checkerboard background, normalizes the 4x4 frames into `64x64` cells, and keeps Yui's source art as the player sprite.
+  - Purpose: normalizes the `yui-1` 4x4 RGBA sheet into matching `96x96` cells, removes very low-alpha source noise, keeps all frames on a shared foot baseline, and keeps Yui's source art as the player sprite.

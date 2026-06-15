@@ -9,7 +9,7 @@ var facing_direction: String = "down"
 
 @onready var visual: AnimatedSprite2D = $Visual
 
-const YUI_FRAME_SIZE: Vector2i = Vector2i(64, 64)
+const YUI_FRAME_SIZE: Vector2i = Vector2i(96, 96)
 const YUI_ROW_DOWN: int = 0
 const YUI_ROW_LEFT: int = 1
 const YUI_ROW_RIGHT: int = 2

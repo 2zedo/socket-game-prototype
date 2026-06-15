@@ -13,7 +13,9 @@ z_index = 10
 script = ExtResource("1_player")
 
 [node name="Visual" type="AnimatedSprite2D" parent="."]
-position = Vector2(0, -32)
+texture_filter = 1
+position = Vector2(0, -61)
+scale = Vector2(1.45, 1.45)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_player_body")

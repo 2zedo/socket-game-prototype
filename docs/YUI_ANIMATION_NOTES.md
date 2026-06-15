@@ -12,6 +12,14 @@ This pass uses `docs/reference/YUI Sprite Sheet.png` as the implementation speci
 
 This pass uses `docs/reference/YUI.png` as the player sprite source. It preserves movement, collision, proximity interaction, power logic, multitap logic, and End Day flow.
 
+## YUI Scale And Fringe Cleanup Pass
+
+This pass updates only the active Yui sprite sheet cleanup and visual display size. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, and End Day flow.
+
+## YUI-1 Replacement Pass
+
+This pass replaces the active player sprite source with `docs/reference/yui-1.png`. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, and End Day flow.
+
 ## Applied Idle PNGs
 
 - `godot/assets/art/characters/yui/idle/yui_idle_down.png`
@@ -21,6 +29,7 @@ This pass uses `docs/reference/YUI.png` as the player sprite source. It preserve
 
 ## Applied Walk PNGs
 
+- `godot/assets/art/characters/yui/yui_1_source_sheet.png`
 - `godot/assets/art/characters/yui/yui_source_sheet.png`
 - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
 - `godot/assets/art/characters/yui/walk/yui_walk_down_01.png`
@@ -36,7 +45,8 @@ This pass uses `docs/reference/YUI.png` as the player sprite source. It preserve
 
 - `godot/assets/art/characters/yui/yui_player_idle_back.png` remains tracked as the emergency fallback texture.
 - `Player.gd` uses `AssetPaths.load_texture_or_fallback()` so missing directional/walk files can fall back to an idle texture or the old single back-idle texture.
-- `yui_walk_4dir_rgba.png` is now the active player sprite sheet. Older directional walk PNG paths remain in `AssetPaths.gd` as legacy/fallback references.
+- `yui_walk_4dir_rgba.png` is now the active player sprite sheet and is generated from `docs/reference/yui-1.png`.
+- Older directional walk PNG paths remain in `AssetPaths.gd` as legacy/fallback references.
 
 ## Animation Names
 
@@ -65,14 +75,18 @@ This pass uses `docs/reference/YUI.png` as the player sprite source. It preserve
 
 ## Scale And Pivot
 
-- Original source sheet: `1254x1254`, no alpha.
-- Processed sheet: `256x256`, RGBA.
-- Frame size: `64x64`.
-- `Visual` scale: default `Vector2(1, 1)`.
-- `Visual` position: `Vector2(0, -32)`.
+- Original active source sheet: `docs/reference/yui-1.png`, `1254x1254`, RGBA.
+- Godot source copy: `godot/assets/art/characters/yui/yui_1_source_sheet.png`.
+- Processed sheet: `384x384`, RGBA.
+- Frame size: `96x96`.
+- Source character fit height inside each frame: `80px`.
+- Shared foot baseline inside each frame: `y = 90`.
+- `Visual` scale: `Vector2(1.45, 1.45)`.
+- `Visual` position: `Vector2(0, -61)`.
+- `Visual` texture filter: nearest.
 - Collision radius: `11`.
 - Interaction radius: `54`.
-- This keeps Yui smaller against the rebuilt apartment layout and places the origin near the feet so collision and interaction detection stay stable.
+- This makes Yui read much larger in the room while keeping the origin near the feet so collision and interaction detection stay stable.
 
 ## Animation Speed
 
@@ -82,13 +96,16 @@ This pass uses `docs/reference/YUI.png` as the player sprite source. It preserve
 
 ## Current Issues
 
-- The processed YUI sheet uses the actual source image, but the transparent background removal and per-frame alignment should be reviewed in Godot.
-- The current pivot/scale should be checked in the room against furniture and prompts.
+- The processed YUI sheet uses `docs/reference/yui-1.png`, not the older `docs/reference/YUI.png` checkerboard source.
+- Runtime screenshot saved at `docs/validation/yui_1_runtime_screenshot00000000.png`.
+- Manual movement input should still be checked in-editor for all four directions.
 - No 8-direction animation exists; diagonal movement intentionally resolves to the stronger cardinal axis.
 
 ## Processing Script
 
 - `tools/process_yui_sprite_sheet.py`
-- Removes the baked bright checkerboard background from `yui_source_sheet.png`.
-- Normalizes all 16 frames to `64x64`.
+- Copies `docs/reference/yui-1.png` to `godot/assets/art/characters/yui/yui_1_source_sheet.png`.
+- Removes very low-alpha source noise from `yui-1`.
+- Normalizes all 16 frames to `96x96`.
+- Aligns every frame to the same centered x position and foot baseline.
 - Preserves the original source character art instead of redrawing or replacing Yui.
