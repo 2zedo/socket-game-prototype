@@ -21,6 +21,11 @@ godot/*.translation
 godot/shader_cache/
 godot/**/.shader_cache/
 
+# Godot source-side import metadata is part of the project state.
+# Keep these tracked next to source assets/scripts; only .godot/ caches stay ignored.
+!godot/**/*.import
+!godot/**/*.uid
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

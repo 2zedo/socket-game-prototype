@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: YUI-1 player sprite replacement pass
+- Current phase: Godot import metadata tracking pass
 - Current branch: `main`
-- Latest commit at task start: `be999d9 feat: apply reference apartment map and YUI sprite assets`
+- Latest commit at task start: `19864bd fix: replace player sprite with yui-1 and normalize frame alignment`
 
 ## Latest Completed Work
 
@@ -67,12 +67,18 @@
   - Normalized all 16 frames into matching `96x96` canvases with shared foot-baseline alignment
   - Increased the active `AnimatedSprite2D` display size while keeping collision, movement, interaction, map, UI, and object placement unchanged
   - Verified the Godot main scene with a runtime screenshot at `docs/validation/yui_1_runtime_screenshot00000000.png`
+- Tracked Godot source-side metadata needed for stable asset/script imports:
+  - Confirmed commit `19864bd` is included in `origin/main`
+  - Kept `.godot/` cache and imported `.ctex`/`.md5` output excluded
+  - Added `.gitignore` comments/negation rules documenting that source-side `.import` and `.uid` metadata should be tracked
+  - Added current PNG import metadata files next to their source images
+  - Added the remaining `AssetPaths.gd.uid` script UID sidecar
 
 ## Current Goal
 
-- Keep the active player sprite on the `yui-1` source sheet and avoid reusing the old automatic cutout result from `YUI.png`
-- Continue focusing the active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
-- Preserve the current map, UI, object placement, movement, and interaction systems while tuning only player sprite quality
+- Keep Godot source assets reproducible by tracking source-side `.import` and necessary `.uid` metadata
+- Keep generated `.godot/` cache files excluded from Git
+- Continue focusing active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
 
 ## Not Doing Yet
 
@@ -87,21 +93,31 @@
 
 - `godot/scenes/Player.tscn`
 - `godot/scripts/Player.gd`
+- `godot/scripts/ui/AssetPaths.gd.uid`
 - `godot/assets/art/characters/yui/yui_1_source_sheet.png`
 - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
+- `godot/assets/art/**/*.png.import`
 - `tools/process_yui_sprite_sheet.py`
 - `docs/reference/yui-1.png`
 - `docs/validation/yui_1_runtime_screenshot00000000.png`
+- `.gitignore`
 - `docs/PROJECT_STATUS.md`
 - `docs/ASSET_APPLICATION_NOTES.md`
 - `docs/YUI_ANIMATION_NOTES.md`
 
 ## Validation Results
 
-- `git status --short --branch`: confirmed current branch is `main`; pre-existing untracked Godot `.png.import` / `.uid` sidecars were present before this task
-- `git rev-parse --short HEAD`: recorded task-start commit `be999d9`
+- `git status --short --branch`: confirmed current branch is `main`; untracked Godot `.png.import` sidecars and one untracked `.uid` sidecar were present before this task
+- `git rev-parse --short HEAD`: recorded task-start commit `19864bd`
 - `git fetch origin`: updated remote refs before editing
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
+- `git branch --contains 19864bd -r`: confirmed `origin/main` contains `19864bd`
+- `git merge-base --is-ancestor 19864bd origin/main`: confirmed `19864bd is included in origin/main`
+- `git ls-files --ignored --others --exclude-standard`: confirmed `.godot/` cache files are still ignored
+- `git check-ignore -v godot/.godot/imported/...ctex`: confirmed `.godot/` imported cache remains excluded by `.gitignore`
+- `Get-ChildItem -Recurse -Filter "*.png.import"`: identified source-side texture import metadata to track
+- `Get-ChildItem -Recurse -Filter "*.uid"` and `git ls-files "*.uid"`: identified `AssetPaths.gd.uid` as the only remaining untracked script UID
+- `Godot --headless --path . --import --quit`: completed successfully after source-side import metadata tracking
 - Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
 - Opened and inspected `docs/reference/yui-1.png` before editing
 - `docs/reference/yui-1.png`: `1254x1254`, RGBA, 4x4 frame sheet
