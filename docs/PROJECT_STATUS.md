@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Godot DAY 1 MVP reference-based visual direction pass
+- Current phase: Documentation workflow and project status alignment pass
 - Current branch: `main`
-- Latest commit at task start: `1f91c20 style: normalize Godot PNG layout`
+- Latest commit at task start: `7156414 feat: revise Godot visual direction`
 
 ## Latest Completed Work
 
@@ -41,13 +41,15 @@
   - Removed glowing cable presentation; cables now read as simple dark wires, while powered state is communicated through device visuals
   - Enlarged the dialogue portrait presentation so Yui appears as a larger side illustration instead of a tiny face icon
   - Added subtle section separation to the multitap management overlay without changing its slot/load behavior
+- Added persistent `AGENTS.md` workflow rules for startup checks, document-specific update criteria, meaningful work-unit closeout, and final report structure
+- Aligned `PROJECT_STATUS.md` with the new documentation workflow rules without adding new tracking documents
+- Reconfirmed that `ROADMAP.md`, `GODOT_DAY1_MVP_PLAN.md`, `UI_VISUAL_IMPLEMENTATION_NOTES.md`, `ASSET_APPLICATION_NOTES.md`, and `YUI_ANIMATION_NOTES.md` should be updated only when their specific scope changes
 
 ## Current Goal
 
-- Make the documented DAY 1 power loop playable, understandable, and visually closer to the current reference direction: a small lived-in apartment, smaller top-down Yui sprite, restrained power-management UI, natural dark cables, and device-based powered feedback
-- Keep implementation focused on keyboard movement, proximity interaction, outlet connection, power display, object use, feedback, and result summary readiness
-- Keep the presentation distinct from generic top-down survival/management games
-- Prepare manual Godot editor testing of Yui directional animation together with the unified power/outlet model, 2-slot devices, next-day connection visuals, P0 PNG object/UI application, and screenshot-based layout tuning
+- Keep future development sessions aligned with the documented startup, validation, documentation, commit, and push workflow
+- Continue focusing the active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
+- Prepare manual Godot editor testing before recording the latest visual direction pass as fully verified
 
 ## Not Doing Yet
 
@@ -60,27 +62,19 @@
 
 ## Changed Files
 
-- `godot/scenes/Player.tscn`
-- `godot/scenes/ui/InteractionPanel.tscn`
-- `godot/scripts/Apartment.gd`
-- `godot/scripts/Interactable.gd`
-- `godot/scripts/Player.gd`
-- `godot/scripts/ui/InteractionPanel.gd`
-- `godot/scripts/ui/OutletMode.gd`
+- `AGENTS.md`
 - `docs/PROJECT_STATUS.md`
-- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
-- `docs/VISUAL_DIRECTION.md`
 
 ## Validation Results
 
-- `git status --short --branch`: confirmed current branch is `main` before editing
+- `git status --short --branch`: confirmed current branch is `main`; only pre-existing untracked reference/import sidecar files were present before this task
+- `git rev-parse --short HEAD`: recorded task-start commit `7156414`
 - `git fetch origin`: updated remote refs before editing
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
-- `git status --short`: checked changed Godot/docs files before staging
-- `git diff --stat`: checked Godot/docs visual-sanity scope
+- Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
+- `git diff --stat`: checked documentation-only scope before staging
 - `git diff --check`: passed
-- `godot --version`: failed because no local Godot CLI/editor executable was found from the shell PATH
-- Godot execution validation pending for this task because no local Godot CLI/editor executable was found from the shell
+- Godot execution validation was not run because this task only changes documentation/workflow rules
 - Web validation was not run because no web files were changed
 
 ## Current Risks or Known Issues
@@ -101,9 +95,61 @@
 - Explicit End Day now exists, but still needs manual playtesting in Godot.
 - Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
 - The temporary device data still lives in script constants and should move to `.tres` or data files after the loop is validated.
+- `docs/reference/` and multiple Godot `.png.import` / `.uid` sidecar files remain untracked from earlier work; they were not staged in this documentation workflow task.
+- `PROJECT_STATUS.md` still carries a long accumulated completed-work list; if it becomes harder to scan, propose a split before deleting history.
 
 ## Next Recommended Task
 
-- Use `docs/GODOT_PLAYTEST_CHECKLIST.md` to test Yui's smaller top-down scale, object placement around the central multitap, dark cable readability, powered device feedback, Laptop/Communication `2`-slot behavior, compact multitap layout, and enlarged dialogue portrait in the Godot editor
-- Capture screenshots of Exploration, Interaction, Multitap, and Result states and tune any remaining world/UI readability issues
-- Fix bugs found during manual playtesting
+1. Run the Godot editor playtest checklist for the latest visual direction pass
+
+Reason:
+The reference-based visual direction pass changed Yui scale, room tone, device placement, cable presentation, multitap sections, and dialogue portrait layout, but it has not been verified in the Godot editor.
+
+Start with:
+
+- `docs/GODOT_PLAYTEST_CHECKLIST.md`
+- `godot/scenes/Main.tscn`
+- `godot/scripts/Apartment.gd`
+- `godot/scripts/Player.gd`
+
+Completion criteria:
+
+- Exploration, Interaction, Multitap, and Result states run without fatal errors
+- Yui scale/pivot, object placement, cable readability, powered device feedback, and enlarged dialogue portrait are checked in-editor
+- Any bugs found are recorded with screenshots or clear reproduction steps
+
+2. Decide how to handle untracked reference and Godot sidecar files
+
+Reason:
+`docs/reference/` and multiple Godot `.png.import` / `.uid` files remain untracked. Some may be intentional project documentation/assets, while others may be generated sidecars that should stay out of commits.
+
+Start with:
+
+- `docs/reference/`
+- `godot/assets/art/**/*.png.import`
+- `godot/scripts/ui/AssetPaths.gd.uid`
+- `.gitignore`
+
+Completion criteria:
+
+- Intentional reference assets are either committed or explicitly left untracked
+- Generated/cache-like files are ignored or documented as intentionally untracked
+- No `.godot/` cache or unrelated temporary files are staged
+
+3. Tune visual layout from actual Godot screenshots
+
+Reason:
+The current room and UI presentation has been adjusted from code, but final readability depends on screenshots from the running Godot scene.
+
+Start with:
+
+- `godot/scripts/Apartment.gd`
+- `godot/scripts/Interactable.gd`
+- `godot/scripts/ui/OutletMode.gd`
+- `godot/scenes/ui/InteractionPanel.tscn`
+
+Completion criteria:
+
+- Screenshot-based issues are fixed without adding new gameplay systems
+- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md` is updated with the new visual pass
+- `docs/PROJECT_STATUS.md` reflects changed files, validation, risks, and next task

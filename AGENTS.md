@@ -20,21 +20,24 @@
 ## Source Control Rules
 
 - This repository is currently developed directly on `main` unless the user explicitly asks for a separate branch.
-- Before starting work, confirm the current branch with:
-
-```bash
-git status --short --branch
-```
-
+- Before starting any development work, complete the startup check:
+  - run `git status --short --branch`
+  - confirm the current branch
+  - record the task-start commit with `git rev-parse --short HEAD`
+  - run `git fetch origin`
+  - run `git log --oneline HEAD..origin/main`
+  - read `AGENTS.md`
+  - read existing relevant tracking docs when present:
+    - `docs/PROJECT_STATUS.md`
+    - `docs/ROADMAP.md`
+    - `docs/GODOT_DAY1_MVP_PLAN.md`
+    - `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
+    - `docs/ASSET_APPLICATION_NOTES.md`
+    - `docs/YUI_ANIMATION_NOTES.md`
+- Preserve each document's existing heading structure, tone, bullet style, and level of detail.
+- Do not invent missing tracking documents. Do not create `NEXT_TASKS.md`, `WORK_LOG.md`, or similar files unless the user explicitly asks for them.
+- Modify only the documents relevant to the current task.
 - If the current branch is not `main`, stop and report it before making changes.
-- Before starting any task, check the current branch and remote state:
-
-```bash
-git status --short --branch
-git fetch origin
-git log --oneline HEAD..origin/main
-```
-
 - If `git log --oneline HEAD..origin/main` shows any commits, stop before making changes.
 - Do not automatically pull, merge, rebase, or reset when new remote commits exist.
 - Report the new commit list and ask the user what to do next.
@@ -51,13 +54,17 @@ git log --oneline HEAD..origin/main
   - `feat: add Godot power loop`
 - Push completed commits to `origin main`.
 - If push fails, do not force push. Report the error and stop.
+- Before pushing, check remote state. If remote changes exist, stop and report instead of overwriting or force pushing.
+- If conflicts occur, stop and report the conflicted files, likely cause, and required next action. Do not delete or overwrite someone else's work to resolve a conflict.
 - If there are unrelated local changes, do not stage them. Report them separately.
 - Keep commits focused. Separate documentation, refactors, and gameplay changes when practical.
+- For a meaningful work unit, commit the related code, scene, and documentation updates together. Do not split documentation into a separate commit unless the task is documentation-only.
 - Do not commit Godot-generated files or local cache output, including:
   - `godot/.godot/`
   - Godot shader cache files
   - editor layout/cache files
   - generated import/cache folders
+- Commit user-provided reference images only when they are intended to remain project documentation assets.
 
 - Before finishing a task, report:
   - branch name
@@ -155,20 +162,36 @@ Initial interactable objects may include:
 
 ## Documentation Rules
 
-- At the end of every completed task, update `docs/PROJECT_STATUS.md`.
+- Update documentation after a meaningful work unit is complete, not after every tiny edit.
+- Meaningful work units include examples such as player scale/walk animation improvement, apartment map tone revision, multitap placement/cable presentation, multitap UI revision, or dialogue portrait structure revision.
+- At the end of every completed development task, update `docs/PROJECT_STATUS.md`.
 - `docs/PROJECT_STATUS.md` is the living progress artifact for the project.
-- The status file should summarize:
-  - current branch
-  - latest commit
-  - current development phase
-  - completed work
-  - changed files
-  - validation results
-  - current risks or known issues
-  - next recommended task
+- Keep `docs/PROJECT_STATUS.md` as the current status board, not a long diary.
+- Preserve the existing structure and update these sections to match the actual result:
+  - `Snapshot`: current phase, current branch, and latest commit at task start
+  - `Latest Completed Work`: only work actually completed, preferably 3-7 concise bullets for the current unit
+  - `Current Goal`: 2-4 active goals; move completed goals to completed work
+  - `Changed Files`: important changed files only, excluding caches and unrelated files
+  - `Validation Results`: commands run, Godot/manual checks, and explicit `Not verified` or `Manual check required` notes when validation was not possible
+  - `Current Risks or Known Issues`: remaining bugs, manual checks, structural risks, and temporary implementations
+  - `Next Recommended Task`: 1-3 immediately actionable tasks
+- Each `Next Recommended Task` entry should include what to change, why it is needed, which files or systems to inspect first, and completion criteria.
 - Keep the progress file concise and useful. Do not turn it into a long diary.
-- If the task changes the development direction, also update `docs/ROADMAP.md`.
-- If the task changes the immediate Godot MVP scope, also update `docs/GODOT_DAY1_MVP_PLAN.md`.
+- Update `docs/ROADMAP.md` only when broad direction or stage changes, such as demo scope, development phase, core system priority, long-term/release target, or a shift from DAY 1 MVP to a broader DAY 1-12 demo.
+- Do not update `docs/ROADMAP.md` for ordinary UI tweaks or small feature changes.
+- Update `docs/GODOT_DAY1_MVP_PLAN.md` only when the current Godot MVP feature plan changes.
+- Preserve the MVP plan order: `Purpose`, `Success Criteria`, `Required Systems`, `Implementation Order`, and `Out Of Scope`.
+- If work changes actual success criteria or implementation status, reflect that in `docs/GODOT_DAY1_MVP_PLAN.md`.
+- Update `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md` when the task changes the map, UI, dialogue window, multitap screen, layout, camera, lighting, or other visual presentation.
+- For visual work, add a new pass instead of deleting older pass history:
+  - `## <Work Name> Pass`
+  - one short paragraph describing what changed and what existing systems were not changed
+  - `## <Work Name> Adjustments`
+  - bullets for actual changes, preserved behavior, changed scenes/UI structure, and manual checks needed
+- Update `docs/ASSET_APPLICATION_NOTES.md` only when applying new image/pixel assets, replacing temporary assets, changing resources from references, or changing SpriteFrames, textures, atlases, or font application.
+- Asset notes should list applied assets, file paths, scene/node usage, scale handling, whether assets are temporary, and future replacement needs.
+- Update `docs/YUI_ANIMATION_NOTES.md` only when Yui's in-game sprite or animation changes.
+- Yui animation notes should include changed directions/animations, frame count, frame rate, sprite size/scale, movement-to-idle behavior, remaining awkwardness, and next animation tasks.
 - Keep `README.md` concise:
   - project overview
   - repository structure
@@ -179,6 +202,35 @@ Initial interactable objects may include:
 - Put implementation plans or migration notes in `docs/`.
 - Update documentation when project structure, run commands, or core development direction changes.
 - Do not update README for every small gameplay tweak.
+- Do not add excessive dates/times to document bodies. Use Git commits and `git log` as the source of truth for dates and authors.
+- Record commit hashes in document bodies only when they are useful reference points, such as `Latest commit at task start`.
+- Do not guess past dates or authors.
+- Do not delete completed pass history just because it is old. If a document becomes too long, report a proposed split before reorganizing it.
+
+## Work Unit Closeout
+
+At the end of each meaningful work unit:
+
+1. Check the actual changed files.
+2. Run practical validation.
+3. Update the relevant detailed document for the task type.
+4. Update `docs/PROJECT_STATUS.md`.
+5. Re-evaluate `Next Recommended Task` from the current code, docs, validation results, roadmap, MVP plan, reference images, and remaining blockers.
+6. Inspect `git diff`.
+7. Stage only the files required for that work unit.
+8. Commit with a clear message.
+9. Push to `origin main`.
+
+Before ending a work session, confirm:
+
+- related code and scenes are saved
+- validation was run where possible
+- `docs/PROJECT_STATUS.md` matches the current state
+- the relevant detailed docs were updated
+- `Next Recommended Task` is current
+- changed files are reflected in the docs
+- commit and push succeeded, or failure was reported clearly
+- incomplete work was not recorded as completed
 
 ## Validation Commands
 
@@ -207,10 +259,11 @@ git status --short --branch
 
 When finishing a task, keep the report short and concrete:
 
-- What changed
-- Why it changed
-- What was not changed
-- Validation result
-- Next recommended step
+- `Completed`: completed work
+- `Changed Files`: important changed files
+- `Documentation Updated`: updated docs and why
+- `Validation`: commands/tests and manual checks still needed
+- `Next Recommended Tasks`: 1-3 next tasks
+- `Git`: branch, commit, and push result
 
 Avoid vague claims such as “improved architecture” unless the actual changes are listed.
