@@ -28,6 +28,10 @@ This pass regenerates the active `yui-1` walk sheet to fix directional alignment
 
 This pass preserves the original up/back-facing row silhouette from `docs/reference/yui-1.png` by fitting the fixed-grid fourth-row cells without alpha cleanup or bbox cropping. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, and the front/left/right frame pixels.
 
+## YUI Back Row Scale Adjustment Pass
+
+This pass scales only the completed up/back-facing `96x96` frames to `94%` inside the same frame canvas. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, foot baseline, and the front/left/right frame pixels.
+
 ## Applied Idle PNGs
 
 - `godot/assets/art/characters/yui/idle/yui_idle_down.png`
@@ -114,7 +118,7 @@ This pass preserves the original up/back-facing row silhouette from `docs/refere
 - Up-direction silhouette screenshots saved at:
   - `docs/validation/yui_up_idle_headroom.png`
   - `docs/validation/yui_up_walk_headroom.png`
-- Automated frame inspection confirms all 16 generated frames use visible height `78`, bottom baseline `89`, and center x near `48`.
+- Automated frame inspection confirms the back-facing row now uses visible top `17`, bottom baseline `89`, height `73`, and center x near `48`.
 - Automated pixel comparison confirms front, left, and right rows are unchanged from the previous committed sheet; only the up/back-facing row changed.
 - Manual movement input should still be checked in-editor for all four directions because the automated screenshots force idle direction animations.
 - No 8-direction animation exists; diagonal movement intentionally resolves to the stronger cardinal axis.
@@ -129,4 +133,5 @@ This pass preserves the original up/back-facing row silhouette from `docs/refere
 - Preserves crop padding around hair, lower body, and shoes so the back-facing head and feet do not clip.
 - Mirrors the left-facing source row for the right-facing row because the source right row has inconsistent crop extent and made that direction appear smaller.
 - Fits the back-facing row from intact fixed-grid source cells and preserves the original alpha channel instead of redrawing the head top or removing faint hair pixels.
+- Scales only the completed back-facing frames to `94%` and re-anchors them to the previous foot baseline.
 - Preserves the original source character art instead of redrawing or replacing Yui.

@@ -20,6 +20,7 @@ ALPHA_THRESHOLD = 12
 BBOX_ALPHA_THRESHOLD = 48
 CROP_PADDING = 4
 BACK_MIN_HEADROOM = 4
+BACK_ROW_SCALE = 0.94
 
 ROW_DOWN = 0
 ROW_LEFT = 1
@@ -133,13 +134,38 @@ def fit_back_frame(frame: Image.Image) -> Image.Image:
     return canvas
 
 
+def shrink_back_frame(frame: Image.Image) -> Image.Image:
+    # Scale the completed 96x96 back-facing frame as a whole. This avoids
+    # re-cropping the silhouette while adding runtime headroom.
+    bbox = get_visible_bbox(frame, ALPHA_THRESHOLD)
+    if bbox is None:
+        return frame
+
+    target_width = max(1, round(FRAME_SIZE * BACK_ROW_SCALE))
+    target_height = max(1, round(FRAME_SIZE * BACK_ROW_SCALE))
+    resized = frame.resize((target_width, target_height), Image.Resampling.NEAREST)
+
+    original_bottom = bbox[3] - 1
+    resized_bbox = get_visible_bbox(resized, ALPHA_THRESHOLD)
+    if resized_bbox is None:
+        return frame
+
+    resized_bottom = resized_bbox[3] - 1
+    x = round(FRAME_SIZE * 0.5 - target_width * 0.5)
+    y = original_bottom - resized_bottom
+
+    canvas = Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0))
+    alpha_composite_clipped(canvas, resized, (x, y))
+    return canvas
+
+
 def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
     bboxes: list[tuple[int, int, int, int] | None] = [get_visible_bbox(frame) for frame in frames]
     fitted_frames: list[Image.Image] = []
 
     for index, frame in enumerate(frames):
         if index // GRID_COLUMNS == ROW_UP:
-            fitted_frames.append(fit_back_frame(frame))
+            fitted_frames.append(shrink_back_frame(fit_back_frame(frame)))
             continue
 
         bbox = bboxes[index]
