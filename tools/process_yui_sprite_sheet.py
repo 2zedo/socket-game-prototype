@@ -14,18 +14,31 @@ OUTPUT = ROOT / "godot" / "assets" / "art" / "characters" / "yui" / "yui_walk_4d
 GRID_COLUMNS = 4
 GRID_ROWS = 4
 FRAME_SIZE = 96
+FIXED_SOURCE_SIZE = 1256
+FIXED_SOURCE_CELL_SIZE = 314
 TARGET_CHARACTER_HEIGHT = 78
 FOOT_BASELINE = 90
 ALPHA_THRESHOLD = 12
 BBOX_ALPHA_THRESHOLD = 48
 CROP_PADDING = 4
-BACK_MIN_HEADROOM = 4
-BACK_ROW_SCALE = 0.96
 
 ROW_DOWN = 0
 ROW_LEFT = 1
 ROW_RIGHT = 2
 ROW_UP = 3
+
+# Fixed source cells for the back-facing row in docs/reference/yui-1.png.
+# docs/reference/yui-1.png is 1254x1254, so the script first builds a
+# 1256x1256 transparent fixed-grid source with 314x314 cells. These rects are
+# copied as whole cells into that grid, then the final back row is copied from
+# those cells. Do not replace this with bbox/trim/recenter logic: the back hair
+# silhouette must come from the original pixels unchanged.
+BACK_SOURCE_RECTS = (
+    (51, 884, 365, 1198),
+    (324, 884, 638, 1198),
+    (599, 884, 913, 1198),
+    (869, 884, 1183, 1198),
+)
 
 
 def normalize_alpha(image: Image.Image) -> Image.Image:
@@ -82,6 +95,23 @@ def split_source_sheet(image: Image.Image) -> list[Image.Image]:
     return frames
 
 
+def build_fixed_source_grid(source: Image.Image) -> Image.Image:
+    fixed_grid = Image.new(
+        "RGBA",
+        (FIXED_SOURCE_SIZE, FIXED_SOURCE_SIZE),
+        (0, 0, 0, 0),
+    )
+
+    for column, rect in enumerate(BACK_SOURCE_RECTS):
+        back_cell = source.crop(rect)
+        fixed_grid.alpha_composite(
+            back_cell,
+            (column * FIXED_SOURCE_CELL_SIZE, ROW_UP * FIXED_SOURCE_CELL_SIZE),
+        )
+
+    return fixed_grid
+
+
 def normalize_direction_sources(frames: list[Image.Image]) -> list[Image.Image]:
     normalized = frames.copy()
     for column in range(GRID_COLUMNS):
@@ -108,55 +138,19 @@ def alpha_composite_clipped(canvas: Image.Image, source: Image.Image, position: 
     )
 
 
-def fit_back_frame(frame: Image.Image) -> Image.Image:
-    # Back-facing frames keep the fixed-grid source cell intact so faint hair
-    # pixels from yui-1.png are not mistaken for removable background.
-    bbox = get_visible_bbox(frame, ALPHA_THRESHOLD)
-    if bbox is None:
-        return Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0))
-
-    visible_height = bbox[3] - bbox[1]
-    baseline_limited_height = FOOT_BASELINE - BACK_MIN_HEADROOM
-    scale = min(
-        TARGET_CHARACTER_HEIGHT / float(visible_height),
-        baseline_limited_height / float(visible_height),
-    )
-    target_width = max(1, round(frame.width * scale))
-    target_height = max(1, round(frame.height * scale))
-    resized = frame.resize((target_width, target_height), Image.Resampling.NEAREST)
-
-    canvas = Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0))
-    visible_center_x = ((bbox[0] + bbox[2]) * 0.5) * scale
-    visible_bottom_y = bbox[3] * scale
-    x = round(FRAME_SIZE * 0.5 - visible_center_x)
-    y = round(FOOT_BASELINE - visible_bottom_y)
-    alpha_composite_clipped(canvas, resized, (x, y))
-    return canvas
-
-
-def shrink_back_frame(frame: Image.Image) -> Image.Image:
-    # Scale the completed 96x96 back-facing frame as a whole. This avoids
-    # re-cropping the silhouette while adding runtime headroom.
-    bbox = get_visible_bbox(frame, ALPHA_THRESHOLD)
-    if bbox is None:
-        return frame
-
-    target_width = max(1, round(FRAME_SIZE * BACK_ROW_SCALE))
-    target_height = max(1, round(FRAME_SIZE * BACK_ROW_SCALE))
-    resized = frame.resize((target_width, target_height), Image.Resampling.NEAREST)
-
-    original_bottom = bbox[3] - 1
-    resized_bbox = get_visible_bbox(resized, ALPHA_THRESHOLD)
-    if resized_bbox is None:
-        return frame
-
-    resized_bottom = resized_bbox[3] - 1
-    x = round(FRAME_SIZE * 0.5 - target_width * 0.5)
-    y = original_bottom - resized_bottom
-
-    canvas = Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0))
-    alpha_composite_clipped(canvas, resized, (x, y))
-    return canvas
+def copy_fixed_back_row_frames(fixed_grid: Image.Image) -> list[Image.Image]:
+    back_frames: list[Image.Image] = []
+    row_top = ROW_UP * FIXED_SOURCE_CELL_SIZE
+    for column in range(GRID_COLUMNS):
+        left = column * FIXED_SOURCE_CELL_SIZE
+        source_cell = fixed_grid.crop((
+            left,
+            row_top,
+            left + FIXED_SOURCE_CELL_SIZE,
+            row_top + FIXED_SOURCE_CELL_SIZE,
+        ))
+        back_frames.append(source_cell.resize((FRAME_SIZE, FRAME_SIZE), Image.Resampling.NEAREST))
+    return back_frames
 
 
 def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
@@ -165,7 +159,7 @@ def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
 
     for index, frame in enumerate(frames):
         if index // GRID_COLUMNS == ROW_UP:
-            fitted_frames.append(shrink_back_frame(fit_back_frame(frame)))
+            fitted_frames.append(Image.new("RGBA", (FRAME_SIZE, FRAME_SIZE), (0, 0, 0, 0)))
             continue
 
         bbox = bboxes[index]
@@ -194,11 +188,12 @@ def fit_frames(frames: list[Image.Image]) -> list[Image.Image]:
 
 def main() -> None:
     source = Image.open(REFERENCE_SOURCE).convert("RGBA")
+    fixed_source_grid = build_fixed_source_grid(source)
     frames = normalize_direction_sources(split_source_sheet(normalize_alpha(source)))
-    source_frames = split_source_sheet(source)
-    for column in range(GRID_COLUMNS):
-        frames[ROW_UP * GRID_COLUMNS + column] = source_frames[ROW_UP * GRID_COLUMNS + column]
     fitted_frames = fit_frames(frames)
+    back_frames = copy_fixed_back_row_frames(fixed_source_grid)
+    for column, frame in enumerate(back_frames):
+        fitted_frames[ROW_UP * GRID_COLUMNS + column] = frame
     output = Image.new("RGBA", (FRAME_SIZE * GRID_COLUMNS, FRAME_SIZE * GRID_ROWS), (0, 0, 0, 0))
 
     for index, frame in enumerate(fitted_frames):

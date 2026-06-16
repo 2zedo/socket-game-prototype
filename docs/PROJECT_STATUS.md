@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Yui back-facing frame scale adjustment
+- Current phase: Yui fixed-cell back-row preservation
 - Current branch: `main`
-- Latest commit at task start: `8a6fe58 fix: scale back-facing YUI frames for headroom`
+- Latest commit at task start: `14821a7 fix: tune back-facing YUI frame scale`
 
 ## Latest Completed Work
 
@@ -94,10 +94,18 @@
   - Kept the back-row foot baseline at visible bottom `89`
   - Confirmed front, left, and right rows are pixel-identical to the previous committed sheet
   - Updated up-direction idle and two walk validation screenshots under `docs/validation/`
+- Replaced the scale-only up/back-facing Yui treatment with fixed source-cell back-row copying:
+  - Kept the active source as `docs/reference/yui-1.png`
+  - Removed the back row from bbox, trim, alpha-crop, visible-top/bottom, recenter, and scale-normalization processing
+  - Built a transparent `1256x1256` working grid with `314x314` fixed back-row cells before generating the final sheet
+  - Copied the back-facing row from those fixed source cells into the generated `96x96` output frames with nearest cell resizing only
+  - Confirmed the final generated back row is pixel-identical to the transparent `1256x1256` fixed-grid cell copy result
+  - Confirmed front/down, left, and right rows are unchanged from the previous committed sheet
+  - Saved fixed-cell, source-vs-final, full runtime, and cropped runtime validation screenshots under `docs/validation/`
 
 ## Current Goal
 
-- Keep Yui's active player sprite readable in the up/back direction without changing map, UI, object placement, interaction logic, or other direction frames
+- Keep Yui's active player sprite readable in the up/back direction by preserving the source back-row silhouette without changing map, UI, object placement, interaction logic, or other direction frames
 - Keep Godot source assets reproducible by tracking source-side `.import` and necessary `.uid` metadata
 - Continue focusing active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
 
@@ -114,12 +122,19 @@
 
 - `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
 - `tools/process_yui_sprite_sheet.py`
-- `docs/validation/yui_direction_front.png`
-- `docs/validation/yui_direction_back.png`
-- `docs/validation/yui_direction_left.png`
-- `docs/validation/yui_direction_right.png`
-- `docs/validation/yui_up_idle_headroom.png`
-- `docs/validation/yui_up_walk_headroom.png`
+- `docs/validation/yui_back_row_enlarged.png`
+- `docs/validation/yui_back_source_vs_final_compare.png`
+- `docs/validation/yui_fixed_1256_back_row_source.png`
+- `docs/validation/yui_runtime_back_idle.png`
+- `docs/validation/yui_runtime_back_walk_01.png`
+- `docs/validation/yui_runtime_back_walk_02.png`
+- `docs/validation/yui_runtime_front.png`
+- `docs/validation/yui_runtime_right.png`
+- `docs/validation/yui_runtime_back_idle_crop.png`
+- `docs/validation/yui_runtime_back_walk_01_crop.png`
+- `docs/validation/yui_runtime_back_walk_02_crop.png`
+- `docs/validation/yui_runtime_front_crop.png`
+- `docs/validation/yui_runtime_right_crop.png`
 - `docs/PROJECT_STATUS.md`
 - `docs/ASSET_APPLICATION_NOTES.md`
 - `docs/YUI_ANIMATION_NOTES.md`
@@ -178,6 +193,39 @@
   - x center remains near `48`
 - `Godot_v4.5.1-stable_win64_console.exe --headless --path . --import --quit`: completed successfully after the back-row scale pass
 - `Godot_v4.5.1-stable_win64_console.exe --path . --script %TEMP%/capture_yui_up_three.gd --resolution 1280x720`: completed successfully and updated one up-direction idle screenshot plus two up-direction walk screenshots
+- `git status --short --branch`: confirmed current branch is `main` at this task start
+- `git rev-parse --short HEAD`: recorded task-start commit `14821a7`
+- `git fetch origin`: updated remote refs before this task
+- `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
+- Opened and inspected `docs/reference/yui-1.png` before editing; the source is `1254x1254`, RGBA, while the generated Godot sheet is `384x384` with `96x96` frames
+- `tools/process_yui_sprite_sheet.py`: regenerated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` from `docs/reference/yui-1.png` with a back-row-only transparent `1256x1256` / `314x314` fixed source-cell copy path
+- Static pixel validation:
+  - fixed grid size: `1256x1256`
+  - fixed cell size: `314`
+  - final back row exact transparent-1256-grid cell copy result: `True`
+  - front/down row unchanged from `HEAD`: `True`
+  - left row unchanged from `HEAD`: `True`
+  - right row unchanged from `HEAD`: `True`
+  - back frames have visible headroom `6px` and visible bottom `89-90`
+- Source-vs-final validation images saved at:
+  - `docs/validation/yui_fixed_1256_back_row_source.png`
+  - `docs/validation/yui_back_row_enlarged.png`
+  - `docs/validation/yui_back_source_vs_final_compare.png`
+- `python -m py_compile tools/process_yui_sprite_sheet.py`: completed successfully
+- `Godot_v4.5.1-stable_win64_console.exe --headless --path . --import --quit`: completed successfully, with sandbox-only AppData editor/cache directory warnings during the non-escalated import run
+- `Godot_v4.5.1-stable_win64_console.exe --path . --script %TEMP%/capture_yui_fixed_back.gd --resolution 1280x720`: completed successfully with escalation and saved runtime screenshots
+- Runtime screenshots saved at:
+  - `docs/validation/yui_runtime_back_idle.png`
+  - `docs/validation/yui_runtime_back_walk_01.png`
+  - `docs/validation/yui_runtime_back_walk_02.png`
+  - `docs/validation/yui_runtime_front.png`
+  - `docs/validation/yui_runtime_right.png`
+- Cropped runtime review images saved at:
+  - `docs/validation/yui_runtime_back_idle_crop.png`
+  - `docs/validation/yui_runtime_back_walk_01_crop.png`
+  - `docs/validation/yui_runtime_back_walk_02_crop.png`
+  - `docs/validation/yui_runtime_front_crop.png`
+  - `docs/validation/yui_runtime_right_crop.png`
 - Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
 - Opened and inspected `docs/reference/yui-1.png` before editing
 - `docs/reference/yui-1.png`: `1254x1254`, RGBA, 4x4 frame sheet
@@ -199,7 +247,7 @@
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - The direct reference map now supplies the visible apartment background; invisible interaction and collision overlays still need manual alignment review.
-- Yui now uses the processed `yui-1.png` source sheet with normalized frame size, foot baseline, side-view scale, fixed-grid preserved up/back source cells, and a back-row-only `96%` scale adjustment for headroom. Automated screenshots confirm the up idle and two up walk frames render without the head touching the frame edge, but manual movement input should still be checked in-editor.
+- Yui now uses the processed `yui-1.png` source sheet with normalized non-back rows and a back-row-only transparent `1256x1256` / `314x314` fixed source-cell copy path. The previous auto-trim / bbox crop / alpha-threshold crop style back-row processing has been removed from the active up/back output path, and runtime screenshots confirm the up idle and two up walk frames render with the rounded rear-head silhouette intact. Manual movement input should still be checked in-editor.
 - The actual reference map is drawn directly as the apartment background; interaction/collision overlays need manual alignment review against the art.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
 - Direct map background placement, Yui display, interaction hotspots, collision blockers, and prompt positions need screenshot-based review in the Godot editor.
@@ -214,10 +262,10 @@
 
 ## Next Recommended Task
 
-1. Manual movement check for the `yui-1` sprite
+1. Manual movement check for the fixed-cell `yui-1` back row
 
 Reason:
-The runtime screenshot confirms the main scene starts and Yui displays at the new size, but automated movie capture did not press movement keys.
+Automated runtime screenshots force specific animation frames and confirm the back silhouette is no longer clipped, but they do not press movement keys through the live input loop.
 
 Start with:
 
@@ -229,7 +277,8 @@ Start with:
 Completion criteria:
 
 - Up, down, left, and right walk animations still play in the correct directions
-- The sprite does not visibly jump or clip during movement
+- The up/back walk cycle keeps the rounded head top visible throughout movement
+- The sprite does not visibly jump during movement
 - Interaction prompts still trigger from the expected player position
 
 2. Adjust Yui scale/pivot only if the runtime screenshot shows issues

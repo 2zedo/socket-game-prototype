@@ -32,6 +32,10 @@ This pass preserves the original up/back-facing row silhouette from `docs/refere
 
 This pass scales only the completed up/back-facing `96x96` frames to `96%` inside the same frame canvas. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, foot baseline, and the front/left/right frame pixels.
 
+## YUI Transparent Fixed Back Row Pass
+
+This pass replaces the previous up/back-facing scale adjustment with a transparent `1256x1256` fixed-grid source and `314x314` back-cell copy path. It preserves movement, collision, proximity interaction, power logic, map layout, UI panels, multitap logic, runtime display scale, and the front/down, left, and right frame pixels.
+
 ## Applied Idle PNGs
 
 - `godot/assets/art/characters/yui/idle/yui_idle_down.png`
@@ -93,6 +97,8 @@ This pass scales only the completed up/back-facing `96x96` frames to `96%` insid
 - Frame size: `96x96`.
 - Source character fit height inside each frame: `78px`.
 - Shared foot baseline inside each frame: `y = 90`.
+- Back-facing source handling: transparent `1256x1256` working grid with `314x314` fixed cells copied into the generated fourth row.
+- Back-facing runtime frame inspection: visible top `6`, visible bottom `89-90`, and no flat top clipping.
 - `Visual` scale: `Vector2(1.45, 1.45)`.
 - `Visual` position: `Vector2(0, -61)`.
 - `Visual` texture filter: nearest.
@@ -120,8 +126,19 @@ This pass scales only the completed up/back-facing `96x96` frames to `96%` insid
   - `docs/validation/yui_up_walk_headroom.png`
   - `docs/validation/yui_up_walk_headroom_01.png`
   - `docs/validation/yui_up_walk_headroom_02.png`
-- Automated frame inspection confirms the back-facing row now uses visible top `16`, bottom baseline `89`, height `74`, and center x near `48`.
-- Automated pixel comparison confirms front, left, and right rows are unchanged from the previous committed sheet; only the up/back-facing row changed.
+- Transparent fixed-grid back-row validation images saved at:
+  - `docs/validation/yui_fixed_1256_back_row_source.png`
+  - `docs/validation/yui_back_row_enlarged.png`
+  - `docs/validation/yui_back_source_vs_final_compare.png`
+  - `docs/validation/yui_runtime_back_idle.png`
+  - `docs/validation/yui_runtime_back_walk_01.png`
+  - `docs/validation/yui_runtime_back_walk_02.png`
+  - `docs/validation/yui_runtime_front.png`
+  - `docs/validation/yui_runtime_right.png`
+- Previous problem cause: auto-trim / bbox crop / alpha-threshold crop style processing damaged the rear frames' top silhouette before runtime.
+- Current fix: fixed-grid slice through a transparent `1256x1256` working source, `314x314` back-cell copy, no auto-trim, no bbox crop, no alpha crop, no visible top/bottom recentering, and no back-row scale normalization.
+- Automated frame inspection confirms the back-facing row now uses visible top `6`, visible bottom `89-90`, and the rounded rear-head silhouette remains intact.
+- Automated pixel comparison confirms front/down, left, and right rows are unchanged from the previous committed sheet; only the up/back-facing row changed.
 - Manual movement input should still be checked in-editor for all four directions because the automated screenshots force idle direction animations.
 - No 8-direction animation exists; diagonal movement intentionally resolves to the stronger cardinal axis.
 
@@ -129,11 +146,11 @@ This pass scales only the completed up/back-facing `96x96` frames to `96%` insid
 
 - `tools/process_yui_sprite_sheet.py`
 - Copies `docs/reference/yui-1.png` to `godot/assets/art/characters/yui/yui_1_source_sheet.png`.
-- Removes very low-alpha source noise from `yui-1`.
-- Normalizes all 16 frames to `96x96`.
-- Aligns every frame to the same centered x position and foot baseline.
+- Removes very low-alpha source noise from `yui-1` only for the non-back rows.
+- Normalizes the non-back rows to `96x96`.
+- Aligns non-back frames to the same centered x position and foot baseline.
 - Preserves crop padding around hair, lower body, and shoes so the back-facing head and feet do not clip.
 - Mirrors the left-facing source row for the right-facing row because the source right row has inconsistent crop extent and made that direction appear smaller.
-- Fits the back-facing row from intact fixed-grid source cells and preserves the original alpha channel instead of redrawing the head top or removing faint hair pixels.
-- Scales only the completed back-facing frames to `96%` and re-anchors them to the previous foot baseline.
+- Builds a transparent `1256x1256` working grid and copies the back-facing source pixels into `314x314` fourth-row cells.
+- Copies the back-facing row from those fixed cells into the generated sheet without bbox calculation, trim, alpha crop, visible top/bottom calculation, recentering, or scale normalization.
 - Preserves the original source character art instead of redrawing or replacing Yui.
