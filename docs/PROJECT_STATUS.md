@@ -7,7 +7,7 @@
 - Web prototype: React/Vite/Phaser prototype is reference only
 - Current phase: Yui back-facing frame scale adjustment
 - Current branch: `main`
-- Latest commit at task start: `cc77802 fix: preserve full back-facing YUI sprite silhouette`
+- Latest commit at task start: `8a6fe58 fix: scale back-facing YUI frames for headroom`
 
 ## Latest Completed Work
 
@@ -87,13 +87,13 @@
   - Preserved the original back-row alpha channel instead of running alpha cleanup or bbox crop on those source cells
   - Confirmed front, left, and right rows are pixel-identical to the previous committed sheet
   - Saved up-direction idle and walk validation screenshots under `docs/validation/`
-- Scaled only the completed up/back-facing Yui frames for runtime headroom:
+- Tuned only the completed up/back-facing Yui frames for runtime headroom:
   - Kept the active source as `docs/reference/yui-1.png`
   - Preserved the existing `96x96` canvas, runtime display scale, map, UI, object placement, and interaction logic
-  - Scaled only the fourth-row completed frames to `94%` inside the same canvas
+  - Scaled only the fourth-row completed frames to `96%` inside the same canvas for a less shrunken silhouette
   - Kept the back-row foot baseline at visible bottom `89`
   - Confirmed front, left, and right rows are pixel-identical to the previous committed sheet
-  - Updated up-direction idle and walk validation screenshots under `docs/validation/`
+  - Updated up-direction idle and two walk validation screenshots under `docs/validation/`
 
 ## Current Goal
 
@@ -167,17 +167,17 @@
 - `Godot_v4.5.1-stable_win64_console.exe --headless --path . --import --quit`: completed successfully after the up-direction preservation pass
 - `Godot_v4.5.1-stable_win64_console.exe --path . --script %TEMP%/capture_yui_up_headroom.gd --resolution 1280x720`: completed successfully and saved up-direction idle/walk screenshots
 - `git status --short --branch`: confirmed current branch is `main` at this task start
-- `git rev-parse --short HEAD`: recorded task-start commit `cc77802`
+- `git rev-parse --short HEAD`: recorded task-start commit `8a6fe58`
 - `git fetch origin`: updated remote refs before this task
 - `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
-- `tools/process_yui_sprite_sheet.py`: regenerated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` from `docs/reference/yui-1.png` with a back-row-only `94%` frame scale adjustment
+- `tools/process_yui_sprite_sheet.py`: regenerated `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png` from `docs/reference/yui-1.png` with a back-row-only `96%` frame scale adjustment
 - Automated pixel comparison against `HEAD:godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`: confirmed front, left, and right rows were unchanged; only the back row changed
 - Automated frame inspection after the back-row scale pass:
   - front, left, and right frames remain unchanged at visible top `12` and bottom `89`
-  - back/up frames now have visible top `17`, bottom `89`, and height `73`
+  - back/up frames now have visible top `16`, bottom `89`, and height `74`
   - x center remains near `48`
 - `Godot_v4.5.1-stable_win64_console.exe --headless --path . --import --quit`: completed successfully after the back-row scale pass
-- `Godot_v4.5.1-stable_win64_console.exe --path . --script %TEMP%/capture_yui_up_headroom.gd --resolution 1280x720`: completed successfully and updated up-direction idle/walk screenshots
+- `Godot_v4.5.1-stable_win64_console.exe --path . --script %TEMP%/capture_yui_up_three.gd --resolution 1280x720`: completed successfully and updated one up-direction idle screenshot plus two up-direction walk screenshots
 - Read `AGENTS.md` and the existing project tracking docs requested by the workflow update
 - Opened and inspected `docs/reference/yui-1.png` before editing
 - `docs/reference/yui-1.png`: `1254x1254`, RGBA, 4x4 frame sheet
@@ -199,7 +199,7 @@
 - The first DAY 1 power loop is implemented, but it still needs in-editor Godot playtesting.
 - Outlet connection now gates object use, but drag/connect/disconnect behavior still needs manual playtesting in Godot.
 - The direct reference map now supplies the visible apartment background; invisible interaction and collision overlays still need manual alignment review.
-- Yui now uses the processed `yui-1.png` source sheet with normalized frame size, foot baseline, side-view scale, fixed-grid preserved up/back source cells, and a back-row-only `94%` scale adjustment for headroom. Automated screenshots confirm the up idle and up walk frames render without the head touching the frame edge, but manual movement input should still be checked in-editor.
+- Yui now uses the processed `yui-1.png` source sheet with normalized frame size, foot baseline, side-view scale, fixed-grid preserved up/back source cells, and a back-row-only `96%` scale adjustment for headroom. Automated screenshots confirm the up idle and two up walk frames render without the head touching the frame edge, but manual movement input should still be checked in-editor.
 - The actual reference map is drawn directly as the apartment background; interaction/collision overlays need manual alignment review against the art.
 - UI panel PNGs are used as low-alpha decorative backplates because text readability remains the priority.
 - Direct map background placement, Yui display, interaction hotspots, collision blockers, and prompt positions need screenshot-based review in the Godot editor.
