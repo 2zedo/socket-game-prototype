@@ -18,6 +18,7 @@ func _ready() -> void:
 	outlet_mode.closed.connect(_on_outlet_mode_closed)
 	outlet_mode.power_changed.connect(_on_outlet_power_changed)
 	outlet_mode.powered_devices_changed.connect(_on_powered_devices_changed)
+	outlet_mode.connection_state_changed.connect(_on_outlet_connection_state_changed)
 	outlet_mode.breaker_tripped.connect(_on_breaker_tripped)
 	survival_state.day_ended.connect(_on_day_ended)
 
@@ -203,6 +204,10 @@ func _on_outlet_power_changed(total_power: int) -> void:
 
 func _on_powered_devices_changed(device_keys: Array[String]) -> void:
 	survival_state.set_powered_devices(device_keys)
+
+
+func _on_outlet_connection_state_changed(slot_occupancy: Array) -> void:
+	survival_state.set_powerstrip_slot_occupancy(slot_occupancy)
 
 
 func _on_breaker_tripped() -> void:

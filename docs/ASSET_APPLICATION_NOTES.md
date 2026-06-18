@@ -32,6 +32,14 @@ This pass updates only the completed back-facing `96x96` frames by scaling them 
 
 This pass replaces the previous scale-only back-facing treatment with a transparent `1256x1256` fixed-grid source and `314x314` back-cell copy path. It keeps the map background, object placement, UI panels, interaction logic, power logic, day/result systems, runtime display scale, and the front/down, left, and right rows unchanged.
 
+## Fix Multitap Asset And Wire Sync Pass
+
+This pass applies the provided `docs/reference/Fix/` multitap assets directly and adds dynamic map wire overlays. It does not recreate or modify the source images, does not add fridge wiring, and keeps the existing player, object placement, interaction flow, day/result systems, and non-multitap UI logic unchanged.
+
+## Fix Multitap Adapter And Wire Endpoint Follow-up
+
+This follow-up keeps the same multitap systems and does not add gameplay. It preserves the no-wire base map as the apartment background, keeps `map_reference_all_wires.jpeg` as reference-only source material, tightens adapter insertion presentation, and splits the Laptop map wire into floor and desk overlay sprites so the desk segment can draw above the map layer.
+
 ## Applied PNGs
 
 - `godot/assets/art/maps/apartment/apartment_map_reference.png`
@@ -61,6 +69,19 @@ This pass replaces the previous scale-only back-facing treatment with a transpar
 - `godot/assets/art/objects/outlet/outlet_slot_active.png`
 - `godot/assets/art/objects/outlet/plug_1slot.png`
 - `godot/assets/art/objects/outlet/plug_2slot.png`
+- `godot/assets/art/maps/apartment/map_base_no_wires.png`
+- `godot/assets/art/maps/apartment/wires/wire_fan.png`
+- `godot/assets/art/maps/apartment/wires/wire_communication.png`
+- `godot/assets/art/maps/apartment/wires/wire_laptop.png`
+- `godot/assets/art/maps/apartment/wires/wire_laptop_desk.png`
+- `godot/assets/art/maps/apartment/wires/wire_charger.png`
+- `godot/assets/art/maps/apartment/wires/wire_lamp.png`
+- `godot/assets/art/objects/powerstrip/powerstrip_4slot.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_1_fan.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_2_comm.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_2slot_laptop-Photoroom.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_3_charger.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_4_lamp.png`
 - `godot/assets/art/ui/panels/ui_panel_dialogue.png`
 - `godot/assets/art/ui/panels/ui_panel_interaction.png`
 - `godot/assets/art/ui/icons/icon_power.png`
@@ -72,6 +93,8 @@ This pass replaces the previous scale-only back-facing treatment with a transpar
 
 - None of the requested P0 PNG paths are intentionally left unused.
 - The direct reference map pass no longer needs separate primitive fallback drawing for bed, desk, window, door, shelf, rug, and clutter in the apartment view.
+- `docs/reference/Fix/map_reference_all_wires.jpeg` is reference-only for wire routing and is not drawn as the runtime apartment map.
+- Refrigerator wiring from the all-wires reference is intentionally excluded from the current multitap connection targets.
 
 ## Filename Corrections
 
@@ -107,6 +130,13 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
 - Power strip:
   - No connected devices: `powerstrip_empty.png`
   - One or more connected devices: `powerstrip_connected.png`
+- Fix multitap UI:
+  - Base strip: `powerstrip_4slot.png`
+  - Fan adapter: `adapter_1_fan.png`
+  - Communication adapter: `adapter_2_comm.png`
+  - Laptop adapter: `adapter_2slot_laptop-Photoroom.png`
+  - Charger adapter: `adapter_3_charger.png`
+  - Lamp adapter: `adapter_4_lamp.png`
 
 ## Scale And Position Notes
 
@@ -130,6 +160,21 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
 - Laptop, fan, charger, communication device, and power strip world display sizes were adjusted again to match the `map ui` object proportions.
 - Apartment-view cable visuals now come from `apartment_map_reference.png`; dynamic cable drawing is not called in the direct map pass.
 - The direct map pass hides current world object placeholders; the visible furniture, devices, and cables come from `apartment_map_reference.png`.
+- `docs/reference/Fix/map_base_no_wires.png` is copied to `godot/assets/art/maps/apartment/map_base_no_wires.png` and is now the apartment background, so no device wires appear by default.
+- `docs/reference/Fix/map_reference_all_wires.jpeg` remains in `docs/reference/Fix/` as the all-wire reference map. It is not drawn as the runtime background.
+- Runtime wire overlays are independent PNG sprites under `godot/assets/art/maps/apartment/wires/`:
+  - `wire_fan.png`
+  - `wire_communication.png`
+  - `wire_laptop.png`
+  - `wire_laptop_desk.png`
+  - `wire_charger.png`
+  - `wire_lamp.png`
+- Dynamic map wires are separate `Sprite2D` overlay nodes named `WireFan`, `WireCommunication`, `WireLaptopFloor`, `WireLaptopDesk`, `WireCharger`, and `WireLamp`.
+- Wire visibility is synced from the shared power strip connection state in `SurvivalState.gd`; disconnected devices hide their corresponding wire node.
+- Wire overlays are dark physical wires, not glowing power lines. The Laptop uses separate floor and desk segments so the final desk-to-laptop portion can draw above the map.
+- Laptop remains a 2-slot adapter in the multitap UI and visually spans the adjacent slot area.
+- Fan, communication device, charger, and lamp are 1-slot adapters.
+- Connecting adapters updates outlet load/current connected devices, but it does not spend the DAY 1 action power budget until the matching object is used.
 
 ## Remaining Art Issues
 
@@ -153,10 +198,27 @@ Some incoming P0 PNG files had accidental double-dot filenames. They were rename
   - `docs/validation/yui_runtime_back_walk_02.png`
   - `docs/validation/yui_runtime_front.png`
   - `docs/validation/yui_runtime_right.png`
+- Multitap UI and dynamic wire validation images were captured at:
+  - `docs/validation/powerstrip_ui_empty_inserted.png`
+  - `docs/validation/powerstrip_ui_single_inserted.png`
+  - `docs/validation/powerstrip_ui_laptop_inserted.png`
+  - `docs/validation/powerstrip_ui_laptop_lamp_charger_inserted.png`
+  - `docs/validation/map_wires_none.png`
+  - `docs/validation/map_wires_fan_only.png`
+  - `docs/validation/map_wires_multiple.png`
+  - `docs/validation/map_wires_after_disconnect.png`
+  - `docs/validation/map_wires_laptop_charger_complete.png`
+  - `docs/validation/map_wires_lamp_laptop_complete.png`
+  - `docs/validation/map_wires_laptop_charger_lamp_complete.png`
+  - `docs/validation/map_laptop_split_wire_fixed_only.png`
+  - `docs/validation/map_laptop_split_wire_anchor_compare.png`
+  - `docs/validation/map_laptop_split_wire_with_lamp_charger.png`
+- Godot runtime validation for the dynamic wire sync is still required because no Godot executable was available in this environment.
 - Manual directional movement should still be checked in-editor because the screenshot capture forces direction animations but does not press movement keys.
 - Interaction hotspots should be checked against the visible objects in the map background.
 - The result panel does not yet use a dedicated final diary/log skin.
-- Multitap device cards are still drawn UI cards; only slots, plugs, badges, and icons use PNGs.
+- Multitap adapters now use the provided PNGs in both the bottom available list and the connected-slot view, but socket insertion masking still needs in-editor visual review.
+- The Laptop wire desk segment may still need endpoint/anchor tuning after in-editor screenshots.
 - In-editor screenshots are needed to tune scale, alignment, prompt overlap, and panel readability.
 
 ## Processing Scripts

@@ -34,16 +34,40 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] Opening the power strip shows `오늘 남은 전력: 10 / 10`.
 - [ ] Opening the power strip shows `현재 부하: 0W / 3000W` before any device is connected.
 - [ ] Opening the power strip shows `콘센트: 0 / 4` before any device is connected.
+- [ ] The center power strip uses the provided `powerstrip_4slot.png`.
+- [ ] The bottom adapter row shows Fan, Communication Device, Laptop, Charger, and Lamp adapter PNGs.
+- [ ] Dragging a 1-slot adapter highlights valid and invalid socket positions.
+- [ ] Dropping a 1-slot adapter on an empty slot connects it.
+- [ ] Clicking or dragging an already connected adapter disconnects it.
 - [ ] Connecting a device increases current load watts.
 - [ ] Connecting a device increases used outlet slots.
+- [ ] Fan uses 1 outlet slot.
+- [ ] Communication Device uses 1 outlet slot.
+- [ ] Charger uses 1 outlet slot.
+- [ ] Lamp/Light uses 1 outlet slot.
 - [ ] Laptop uses 2 outlet slots.
-- [ ] Communication Device uses 2 outlet slots.
-- [ ] Laptop + Communication Device fills `4 / 4` slots.
+- [ ] Laptop can start from slot 1, 2, or 3.
+- [ ] Laptop cannot start from slot 4.
 - [ ] Laptop + Light + Charger fills `4 / 4` slots.
 - [ ] Connecting a device does not decrease today's remaining power.
 - [ ] Disconnecting a device decreases current load watts and used outlet slots.
 - [ ] A device that would exceed load or slot limits cannot be connected.
 - [ ] The power strip does not feel like a separate resource minigame; it only controls which room objects can be used.
+
+## Dynamic Map Wire Test
+
+- [ ] The apartment map starts from `map_base_no_wires.png` with no device wires visible.
+- [ ] Fan-only connection shows only `WireFan`.
+- [ ] Communication-only connection shows only `WireCommunication`.
+- [ ] Laptop-only connection shows `WireLaptopFloor` and `WireLaptopDesk` together.
+- [ ] Charger-only connection shows only `WireCharger`.
+- [ ] Lamp-only connection shows only `WireLamp`.
+- [ ] Laptop + Charger shows both wires fully, with neither line cut off by the other.
+- [ ] Lamp + Laptop shows both wires fully, with the Laptop wire still visible.
+- [ ] Laptop + Charger + Lamp shows all three wires fully.
+- [ ] Disconnecting a device hides only that device's wire.
+- [ ] Refrigerator wiring never appears as a connection target.
+- [ ] Laptop desk wire reaches the laptop body and does not stop at the desk edge.
 
 ## Power Object Test
 

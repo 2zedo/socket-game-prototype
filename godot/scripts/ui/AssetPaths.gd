@@ -2,7 +2,7 @@ extends RefCounted
 class_name AssetPaths
 
 const YUI_PORTRAIT_NEUTRAL := preload("res://assets/art/portraits/yui/yui_portrait_neutral.png")
-const APARTMENT_MAP_REFERENCE := preload("res://assets/art/maps/apartment/apartment_map_reference.png")
+const APARTMENT_MAP_REFERENCE := preload("res://assets/art/maps/apartment/map_base_no_wires.png")
 const YUI_PLAYER_IDLE_BACK := preload("res://assets/art/characters/yui/yui_player_idle_back.png")
 const YUI_WALK_4DIR_RGBA := preload("res://assets/art/characters/yui/yui_walk_4dir_rgba.png")
 const YUI_IDLE_DOWN_PATH := "res://assets/art/characters/yui/idle/yui_idle_down.png"
@@ -37,6 +37,18 @@ const COMM_DEVICE_OFF := preload("res://assets/art/objects/comm_device/comm_devi
 const COMM_DEVICE_ON := preload("res://assets/art/objects/comm_device/comm_device_on.png")
 const POWERSTRIP_EMPTY := preload("res://assets/art/objects/powerstrip/powerstrip_empty.png")
 const POWERSTRIP_CONNECTED := preload("res://assets/art/objects/powerstrip/powerstrip_connected.png")
+const POWERSTRIP_4SLOT := preload("res://assets/art/objects/powerstrip/powerstrip_4slot.png")
+const ADAPTER_FAN := preload("res://assets/art/objects/powerstrip/adapters/adapter_1_fan.png")
+const ADAPTER_COMMUNICATION := preload("res://assets/art/objects/powerstrip/adapters/adapter_2_comm.png")
+const ADAPTER_LAPTOP := preload("res://assets/art/objects/powerstrip/adapters/adapter_2slot_laptop-Photoroom.png")
+const ADAPTER_CHARGER := preload("res://assets/art/objects/powerstrip/adapters/adapter_3_charger.png")
+const ADAPTER_LAMP := preload("res://assets/art/objects/powerstrip/adapters/adapter_4_lamp.png")
+const WIRE_FAN := preload("res://assets/art/maps/apartment/wires/wire_fan.png")
+const WIRE_COMMUNICATION := preload("res://assets/art/maps/apartment/wires/wire_communication.png")
+const WIRE_LAPTOP := preload("res://assets/art/maps/apartment/wires/wire_laptop.png")
+const WIRE_LAPTOP_DESK := preload("res://assets/art/maps/apartment/wires/wire_laptop_desk.png")
+const WIRE_CHARGER := preload("res://assets/art/maps/apartment/wires/wire_charger.png")
+const WIRE_LAMP := preload("res://assets/art/maps/apartment/wires/wire_lamp.png")
 
 const OUTLET_SLOT_EMPTY := preload("res://assets/art/objects/outlet/outlet_slot_empty.png")
 const OUTLET_SLOT_ACTIVE := preload("res://assets/art/objects/outlet/outlet_slot_active.png")

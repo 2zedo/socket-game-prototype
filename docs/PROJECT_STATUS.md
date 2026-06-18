@@ -5,9 +5,9 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Main target: Godot project under `godot/`
 - Web prototype: React/Vite/Phaser prototype is reference only
-- Current phase: Yui fixed-cell back-row preservation
+- Current phase: Multitap asset UI and dynamic map wire sync
 - Current branch: `main`
-- Latest commit at task start: `14821a7 fix: tune back-facing YUI frame scale`
+- Latest commit at task start: `5631e26 fix: preserve YUI back row with fixed source grid`
 
 ## Latest Completed Work
 
@@ -102,12 +102,22 @@
   - Confirmed the final generated back row is pixel-identical to the transparent `1256x1256` fixed-grid cell copy result
   - Confirmed front/down, left, and right rows are unchanged from the previous committed sheet
   - Saved fixed-cell, source-vs-final, full runtime, and cropped runtime validation screenshots under `docs/validation/`
+- Applied the `docs/reference/Fix/` multitap asset set and dynamic map wire sync:
+  - Replaced the runtime apartment map reference with the no-wire `map_base_no_wires.png` asset
+  - Added the provided `powerstrip_4slot.png` and adapter PNGs to the Godot asset tree without image recreation
+  - Used `map_reference_all_wires.jpeg` as reference-only wire source material; it is not drawn as the runtime map background
+  - Rebuilt the multitap management overlay around draggable adapter images, 4-slot occupancy, 1-slot devices, and 2-slot Laptop placement
+  - Added shared power strip connection state for slot occupancy, connected device slots, connection flags, and slot counts
+  - Added separate map wire sprite nodes `WireFan`, `WireCommunication`, `WireLaptopFloor`, `WireLaptopDesk`, `WireCharger`, and `WireLamp`
+  - Synced visible map wires from the same connection state used by the multitap UI; disconnected devices keep their wires hidden
+  - Kept the refrigerator excluded from the connection target list
+  - Added static validation screenshots for empty, single-device, Laptop 2-slot, multi-device, disconnect, and Laptop desk-wire states
 
 ## Current Goal
 
-- Keep Yui's active player sprite readable in the up/back direction by preserving the source back-row silhouette without changing map, UI, object placement, interaction logic, or other direction frames
-- Keep Godot source assets reproducible by tracking source-side `.import` and necessary `.uid` metadata
-- Continue focusing active Godot work on DAY 1 MVP readability, outlet/power decisions, and reference-aligned apartment presentation
+- Keep the Godot multitap loop readable by syncing draggable adapter connections to map wire visibility through one shared connection state
+- Preserve the no-wire base map as the visible apartment background and keep wire overlays separate per device
+- Keep the DAY 1 MVP focused on power decisions without adding save/load, new rooms, or unrelated UI systems
 
 ## Not Doing Yet
 
@@ -120,24 +130,45 @@
 
 ## Changed Files
 
-- `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
-- `tools/process_yui_sprite_sheet.py`
-- `docs/validation/yui_back_row_enlarged.png`
-- `docs/validation/yui_back_source_vs_final_compare.png`
-- `docs/validation/yui_fixed_1256_back_row_source.png`
-- `docs/validation/yui_runtime_back_idle.png`
-- `docs/validation/yui_runtime_back_walk_01.png`
-- `docs/validation/yui_runtime_back_walk_02.png`
-- `docs/validation/yui_runtime_front.png`
-- `docs/validation/yui_runtime_right.png`
-- `docs/validation/yui_runtime_back_idle_crop.png`
-- `docs/validation/yui_runtime_back_walk_01_crop.png`
-- `docs/validation/yui_runtime_back_walk_02_crop.png`
-- `docs/validation/yui_runtime_front_crop.png`
-- `docs/validation/yui_runtime_right_crop.png`
+- `godot/scripts/Apartment.gd`
+- `godot/scripts/Main.gd`
+- `godot/scripts/SurvivalState.gd`
+- `godot/scripts/ui/AssetPaths.gd`
+- `godot/scripts/ui/OutletMode.gd`
+- `godot/assets/art/maps/apartment/map_base_no_wires.png`
+- `godot/assets/art/maps/apartment/wires/wire_fan.png`
+- `godot/assets/art/maps/apartment/wires/wire_communication.png`
+- `godot/assets/art/maps/apartment/wires/wire_laptop.png`
+- `godot/assets/art/maps/apartment/wires/wire_laptop_desk.png`
+- `godot/assets/art/maps/apartment/wires/wire_charger.png`
+- `godot/assets/art/maps/apartment/wires/wire_lamp.png`
+- `godot/assets/art/objects/powerstrip/powerstrip_4slot.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_1_fan.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_2_comm.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_2slot_laptop-Photoroom.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_3_charger.png`
+- `godot/assets/art/objects/powerstrip/adapters/adapter_4_lamp.png`
+- `docs/reference/Fix/`
+- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
+- `docs/ASSET_APPLICATION_NOTES.md`
+- `docs/GODOT_DAY1_MVP_PLAN.md`
+- `docs/GODOT_PLAYTEST_CHECKLIST.md`
+- `docs/validation/powerstrip_ui_empty_inserted.png`
+- `docs/validation/powerstrip_ui_single_inserted.png`
+- `docs/validation/powerstrip_ui_laptop_inserted.png`
+- `docs/validation/powerstrip_ui_laptop_lamp_charger_inserted.png`
+- `docs/validation/map_wires_none.png`
+- `docs/validation/map_wires_fan_only.png`
+- `docs/validation/map_wires_multiple.png`
+- `docs/validation/map_wires_after_disconnect.png`
+- `docs/validation/map_wires_laptop_charger_complete.png`
+- `docs/validation/map_wires_lamp_laptop_complete.png`
+- `docs/validation/map_wires_laptop_charger_lamp_complete.png`
+- `docs/validation/map_laptop_split_wire_fixed_only.png`
+- `docs/validation/map_laptop_split_wire_anchor_compare.png`
+- `docs/validation/map_laptop_split_wire_with_lamp_charger.png`
 - `docs/PROJECT_STATUS.md`
 - `docs/ASSET_APPLICATION_NOTES.md`
-- `docs/YUI_ANIMATION_NOTES.md`
 
 ## Validation Results
 
@@ -239,6 +270,52 @@
 - `Godot --path . --scene res://scenes/Main.tscn --resolution 1280x720 --fixed-fps 1 --quit-after 1 --write-movie ...`: completed successfully
 - Runtime screenshot saved at `docs/validation/yui_1_runtime_screenshot00000000.png`
 - Web validation was not run because no web files were changed
+- `git status --short --branch`: confirmed current branch is `main` at this task start, with uncommitted multitap asset/UI work from the previous step still present
+- `git rev-parse --short HEAD`: recorded task-start commit `5631e26`
+- `git fetch origin`: updated remote refs before this task
+- `git log --oneline HEAD..origin/main`: confirmed no new remote commits before editing
+- Opened and inspected the `docs/reference/Fix/` asset set before editing:
+  - actual base map file: `docs/reference/Fix/map_base_no_wires.png`
+  - actual wire reference file: `docs/reference/Fix/map_reference_all_wires.jpeg`
+  - runtime power strip/adapters: `powerstrip_4slot.png`, `adapter_1_fan.png`, `adapter_2_comm.png`, `adapter_2slot_laptop-Photoroom.png`, `adapter_3_charger.png`, `adapter_4_lamp.png`
+- Static wire validation images saved at:
+  - `docs/validation/map_wires_none.png`
+  - `docs/validation/map_wires_fan_only.png`
+  - `docs/validation/map_wires_multiple.png`
+  - `docs/validation/map_wires_after_disconnect.png`
+  - `docs/validation/map_wires_laptop_2slot.png`
+  - `docs/validation/map_wires_laptop_charger_complete.png`
+  - `docs/validation/map_wires_lamp_laptop_complete.png`
+  - `docs/validation/map_wires_laptop_charger_lamp_complete.png`
+  - `docs/validation/map_laptop_split_wire_fixed_only.png`
+  - `docs/validation/map_laptop_split_wire_anchor_compare.png`
+  - `docs/validation/map_laptop_split_wire_with_lamp_charger.png`
+- Static validation confirmed:
+  - empty connection state shows no map wires
+  - fan-only state shows only the fan wire
+  - multiple-device state shows only connected-device wires
+  - disconnect state hides the removed fan wire while leaving other connected wires visible
+  - laptop uses two adjacent slots and cannot start from the fourth slot
+  - `WireFan`, `WireCommunication`, `WireLaptopFloor`, `WireLaptopDesk`, `WireCharger`, and `WireLamp` are independent sprite overlays driven by shared connection state
+  - Laptop desk segment is split from the floor segment so it can draw above the desk/map layer
+  - fridge wiring is excluded
+- `docs/validation/powerstrip_ui_validation_states.png`: saved a static preview covering empty strip, 1-slot adapter connection, Laptop 2-slot connection, collision-slot rejection, and disconnect state
+- Additional power strip validation screenshots saved at:
+  - `docs/validation/powerstrip_ui_empty_inserted.png`
+  - `docs/validation/powerstrip_ui_single_inserted.png`
+  - `docs/validation/powerstrip_ui_laptop_inserted.png`
+  - `docs/validation/powerstrip_ui_laptop_lamp_charger_inserted.png`
+- `git diff --stat`: reviewed code/document deltas since `5631e26`
+- `git diff`: inspected the current local change set; the full diff is large, so individual script and document sections were reviewed before staging
+- Bundled Python/Pillow asset check: confirmed all `docs/reference/Fix/` source assets and copied Godot runtime assets exist; no missing Fix map, power strip, adapter, or wire overlay images
+  - `map_base_no_wires.png`: `1448x1086`, RGB
+  - `map_reference_all_wires.jpeg`: `1446x1088`, RGB, reference-only
+  - `powerstrip_4slot.png`: `1448x1086`, RGBA
+  - wire overlays: `1446x1088`, RGBA
+  - latest Laptop adapter: `adapter_2slot_laptop-Photoroom.png`, `1254x1254`, RGBA
+- `git diff --check`: passed with CRLF normalization warnings only
+- `Get-Command Godot_v4.5.1-stable_win64_console.exe,Godot_v4.5.1-stable_win64.exe,Godot,Godot.exe,godot,godot4`: no Godot executable was available in PATH, including the escalated PATH check
+- Godot import, Main scene launch, live multitap UI input, live 1-slot connect/disconnect, live Laptop 2-slot occupancy, live multi-device connection, and live map wire show/hide are `Manual check required` because no Godot executable was available in PATH during closeout
 
 ## Current Risks or Known Issues
 
@@ -257,56 +334,66 @@
 - Explicit End Day now exists, but still needs manual playtesting in Godot.
 - Visual similarity guardrails are documented, but future UI/art passes must continue checking against them.
 - The temporary device data still lives in script constants and should move to `.tres` or data files after the loop is validated.
-- Godot source-side `.png.import` and necessary `.uid` metadata are now tracked; generated `.godot/` cache files remain excluded.
+- Existing Godot source-side `.png.import` and necessary `.uid` metadata remain tracked where already committed; newly generated untracked `.png.import` files from this multitap asset pass are excluded from this closeout per the current task request. Generated `.godot/` cache files remain excluded.
 - `PROJECT_STATUS.md` still carries a long accumulated completed-work list; if it becomes harder to scan, propose a split before deleting history.
+- The dynamic wire sync has static image and code-path validation, but it still needs a real Godot 4.5.1 runtime playtest because this environment could not find a Godot executable.
+- The current working tree contains the multitap asset/UI work and dynamic wire work together; if runtime validation fails later, review those files as one connected work unit.
+- The Laptop wire now has a separate desk segment, but the final desk-entry-to-laptop connection may still need visual tuning after in-editor review.
+- Some wire endpoints and object anchors may still need small 2-6px adjustments so every wire reads as physically connected to the device body.
+- The power strip adapter images are reduced and aligned to socket centers, but socket insertion/masking still needs visual review so adapters do not feel like images placed on top of the strip.
 
 ## Next Recommended Task
 
-1. Manual movement check for the fixed-cell `yui-1` back row
+1. Manual Godot playtest for multitap wire sync
 
 Reason:
-Automated runtime screenshots force specific animation frames and confirm the back silhouette is no longer clipped, but they do not press movement keys through the live input loop.
+Static validation confirms the intended slot and wire states, but the actual Godot scene still needs live input testing because the local environment could not find a Godot executable during closeout.
 
 Start with:
 
-- `docs/GODOT_PLAYTEST_CHECKLIST.md`
 - `godot/scenes/Main.tscn`
-- `godot/scenes/Player.tscn`
-- `godot/assets/art/characters/yui/yui_walk_4dir_rgba.png`
+- `godot/scripts/ui/OutletMode.gd`
+- `godot/scripts/Apartment.gd`
+- `godot/scripts/SurvivalState.gd`
 
 Completion criteria:
 
-- Up, down, left, and right walk animations still play in the correct directions
-- The up/back walk cycle keeps the rounded head top visible throughout movement
-- The sprite does not visibly jump during movement
-- Interaction prompts still trigger from the expected player position
+- Start state shows no device wires on the map
+- Connecting one device shows only that device wire
+- Connecting multiple devices shows only those device wires
+- Disconnecting a device immediately hides only that device wire
+- Laptop occupies two adjacent slots and cannot be placed from the fourth slot
 
-2. Adjust Yui scale/pivot only if the runtime screenshot shows issues
-
-Reason:
-The visual scale changed without touching collision. If the sprite feet do not line up with the collision origin in Godot, only the `Visual` offset/scale should be tuned.
-
-Start with:
-
-- `godot/scenes/Player.tscn`
-- `godot/scripts/Player.gd`
-
-Completion criteria:
-
-- Collision still feels foot-based
-- Proximity interaction still works from the expected distance
-- No map, UI, object placement, or gameplay logic changes are included
-
-3. Remove unused primitive room drawing helpers
+2. Tune final wire anchors
 
 Reason:
-The actual map image now provides the apartment art, so the old primitive room drawing helpers are no longer part of the visible scene.
+The current Laptop desk segment and several endpoint anchors may still look slightly disconnected even though the independent overlay structure is in place.
 
 Start with:
 
 - `godot/scripts/Apartment.gd`
+- `godot/assets/art/maps/apartment/wires/wire_laptop_desk.png`
+- `docs/reference/Fix/map_reference_all_wires.jpeg`
 
 Completion criteria:
 
-- Dead draw helpers are removed without touching interaction, movement, power strip mode, result screen, or HUD behavior
-- `git diff --check` passes
+- Laptop, charger, and lamp wires overlap their target device body by a few pixels
+- No wire endpoint appears to stop in empty floor/table space
+- Updated screenshots compare the adjusted wire endpoints against the reference
+
+3. Review power strip adapter insertion masks
+
+Reason:
+The draggable adapter UI uses real PNGs and reduced connected sizes, but the socket insertion illusion still needs in-Godot visual review and possible masking adjustment.
+
+Start with:
+
+- `godot/scripts/ui/OutletMode.gd`
+- `docs/reference/Fix/powerstrip_4slot.png`
+- `godot/assets/art/objects/powerstrip/adapters/`
+
+Completion criteria:
+
+- 1-slot adapters visually cover the intended socket holes without oversized selection boxes
+- Laptop adapter occupies two slots while its plug anchor remains aligned to the insertion slot
+- Invalid drop, valid drop, and click/drag disconnect still work after visual tuning

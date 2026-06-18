@@ -19,8 +19,8 @@ const DAY1_ACTIONS: Dictionary = {
 		"label": "조명",
 		"cost": 1,
 		"watt_usage": 60,
-		"outlet_size": 0,
-		"requires_connection": false,
+		"outlet_size": 1,
+		"requires_connection": true,
 		"flag": "used_light",
 		"power_key": "light",
 		"feedback": "약한 조명이 방을 겨우 밝힙니다. 오래 버티지는 못할 빛입니다.",
@@ -63,12 +63,42 @@ const DAY1_ACTIONS: Dictionary = {
 		"label": "통신 장치",
 		"cost": 4,
 		"watt_usage": 300,
-		"outlet_size": 2,
+		"outlet_size": 1,
 		"requires_connection": true,
 		"flag": "sent_or_received_signal",
 		"power_key": "communication_device",
 		"feedback": "끊어진 신호 사이로 안내 방송이 섞여 들어옵니다. 아직 바깥에는 누군가 있습니다.",
 		"already_used": "잡음만 반복됩니다. 오늘 새 신호는 더 잡히지 않습니다.",
+	},
+}
+
+const POWERSTRIP_DEVICE_ORDER: Array[String] = [
+	"fan",
+	"communication_device",
+	"laptop",
+	"charger",
+	"light",
+]
+const POWERSTRIP_DEVICE_DEFINITIONS: Dictionary = {
+	"fan": {
+		"slot_count": 1,
+		"action_key": "fan",
+	},
+	"communication_device": {
+		"slot_count": 1,
+		"action_key": "communication_device",
+	},
+	"laptop": {
+		"slot_count": 2,
+		"action_key": "laptop",
+	},
+	"charger": {
+		"slot_count": 1,
+		"action_key": "charger",
+	},
+	"light": {
+		"slot_count": 1,
+		"action_key": "light",
 	},
 }
 
@@ -94,6 +124,10 @@ var max_power_watts: int = DAY1_MAX_LOAD_WATTS
 var current_power_watts: int = 0
 var current_power_units: int = DAY1_STARTING_POWER_UNITS
 var powered_devices: Array[String] = []
+var powerstrip_slot_occupancy: Array = []
+var powerstrip_device_slots: Dictionary = {}
+var powerstrip_device_connected: Dictionary = {}
+var powerstrip_device_slot_counts: Dictionary = {}
 var used_day1_actions: Array[String] = []
 var day1_flags: Dictionary = {}
 var day1_day_ended: bool = false
@@ -102,6 +136,7 @@ var update_accumulator: float = 0.0
 
 
 func _ready() -> void:
+	_reset_powerstrip_connection_state()
 	changed.emit()
 
 
@@ -119,9 +154,52 @@ func _process(delta: float) -> void:
 
 
 func set_powered_devices(device_keys: Array[String]) -> void:
-	powered_devices = device_keys.duplicate()
+	_reset_powerstrip_connection_state()
+	for raw_key in device_keys:
+		var key: String = str(raw_key)
+		if not POWERSTRIP_DEVICE_DEFINITIONS.has(key):
+			continue
+
+		var slot_count: int = int(powerstrip_device_slot_counts.get(key, 1))
+		var start_slot: int = _find_available_powerstrip_slot(slot_count)
+		if start_slot < 0:
+			continue
+
+		_place_powerstrip_device(key, start_slot, slot_count)
+
+	_refresh_powered_devices_from_powerstrip_state()
 	_recalculate_outlet_state()
 	changed.emit()
+
+
+func set_powerstrip_slot_occupancy(slot_occupancy: Array) -> void:
+	_reset_powerstrip_connection_state()
+	var slot_limit: int = mini(slot_occupancy.size(), DAY1_MAX_OUTLET_SLOTS)
+	for slot in range(slot_limit):
+		var raw_key: Variant = slot_occupancy[slot]
+		if raw_key == null:
+			continue
+
+		var key: String = str(raw_key)
+		if not POWERSTRIP_DEVICE_DEFINITIONS.has(key):
+			continue
+
+		powerstrip_slot_occupancy[slot] = key
+
+	_refresh_powerstrip_device_state_from_slots()
+	_refresh_powered_devices_from_powerstrip_state()
+	_recalculate_outlet_state()
+	changed.emit()
+
+
+func get_powerstrip_connection_state() -> Dictionary:
+	_ensure_powerstrip_connection_state()
+	return {
+		"slots": powerstrip_slot_occupancy.duplicate(),
+		"device_slots": powerstrip_device_slots.duplicate(true),
+		"device_connected": powerstrip_device_connected.duplicate(),
+		"device_slot_counts": powerstrip_device_slot_counts.duplicate(),
+	}
 
 
 func record_overload() -> void:
@@ -465,6 +543,81 @@ func _apply_day1_action_effect(action_key: String) -> void:
 			battery = clampf(battery + 12.0, MIN_STAT, MAX_STAT)
 		"communication_device":
 			fun = clampf(fun + 3.0, MIN_STAT, MAX_STAT)
+
+
+func _ensure_powerstrip_connection_state() -> void:
+	if powerstrip_slot_occupancy.size() != DAY1_MAX_OUTLET_SLOTS:
+		_reset_powerstrip_connection_state()
+
+
+func _reset_powerstrip_connection_state() -> void:
+	powerstrip_slot_occupancy.clear()
+	for _slot in range(DAY1_MAX_OUTLET_SLOTS):
+		powerstrip_slot_occupancy.append(null)
+
+	powerstrip_device_slots.clear()
+	powerstrip_device_connected.clear()
+	powerstrip_device_slot_counts.clear()
+	for key in POWERSTRIP_DEVICE_ORDER:
+		var definition: Dictionary = POWERSTRIP_DEVICE_DEFINITIONS.get(key, {})
+		var slot_count: int = int(definition.get("slot_count", 1))
+		powerstrip_device_slots[key] = []
+		powerstrip_device_connected[key] = false
+		powerstrip_device_slot_counts[key] = slot_count
+
+
+func _place_powerstrip_device(key: String, start_slot: int, slot_count: int) -> void:
+	var placed_slots: Array = []
+	for slot in range(start_slot, start_slot + slot_count):
+		powerstrip_slot_occupancy[slot] = key
+		placed_slots.append(slot)
+
+	powerstrip_device_slots[key] = placed_slots
+	powerstrip_device_connected[key] = true
+
+
+func _refresh_powerstrip_device_state_from_slots() -> void:
+	for key in POWERSTRIP_DEVICE_ORDER:
+		var definition: Dictionary = POWERSTRIP_DEVICE_DEFINITIONS.get(key, {})
+		powerstrip_device_slots[key] = []
+		powerstrip_device_connected[key] = false
+		powerstrip_device_slot_counts[key] = int(definition.get("slot_count", 1))
+
+	for slot in range(powerstrip_slot_occupancy.size()):
+		var raw_key: Variant = powerstrip_slot_occupancy[slot]
+		if raw_key == null:
+			continue
+
+		var key: String = str(raw_key)
+		if not POWERSTRIP_DEVICE_DEFINITIONS.has(key):
+			continue
+
+		var slots_for_device: Array = powerstrip_device_slots.get(key, [])
+		slots_for_device.append(slot)
+		powerstrip_device_slots[key] = slots_for_device
+		powerstrip_device_connected[key] = true
+
+
+func _refresh_powered_devices_from_powerstrip_state() -> void:
+	powered_devices.clear()
+	for key in POWERSTRIP_DEVICE_ORDER:
+		if bool(powerstrip_device_connected.get(key, false)):
+			powered_devices.append(key)
+
+
+func _find_available_powerstrip_slot(slot_count: int) -> int:
+	var last_start: int = DAY1_MAX_OUTLET_SLOTS - slot_count
+	for start_slot in range(last_start + 1):
+		var is_available: bool = true
+		for slot in range(start_slot, start_slot + slot_count):
+			if powerstrip_slot_occupancy[slot] != null:
+				is_available = false
+				break
+
+		if is_available:
+			return start_slot
+
+	return -1
 
 
 func _reset_day1_power_loop() -> void:

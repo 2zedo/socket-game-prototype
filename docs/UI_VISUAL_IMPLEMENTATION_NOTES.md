@@ -44,6 +44,10 @@ This pass uses `docs/reference/map ui.png` and `docs/reference/YUI Sprite Sheet.
 
 This pass uses the actual `docs/reference/map.png` and `docs/reference/YUI.png` files as runtime art assets. It does not redesign the power strip UI, HUD, day/night systems, survival systems, or result flow.
 
+## Fix Multitap UI And Wire Overlay Pass
+
+This pass applies the provided `docs/reference/Fix/` multitap image set to the existing Godot power strip flow. It does not change player movement, apartment object placement, day/result flow, phone UI, or non-multitap gameplay systems.
+
 ## Improved Screens
 
 - Exploration: darker apartment frame, lived-in room layout, weaker warm light, clearer object placement, smaller proximity prompt.
@@ -59,6 +63,7 @@ This pass uses the actual `docs/reference/map.png` and `docs/reference/YUI.png` 
 - Reference apartment rebuild pass: expands the one-room apartment composition into a more lived-in layout with bed, bathroom-door hint, window, desk/work area, kitchen/appliance area, central rug/table, and a more intentional multitap hub with bundled non-glowing cables.
 - Map UI specification pass: aligns the implemented objects to the `map ui` numbered guide, with bed/end-day on the left, communication device below the window, laptop on the right desk, fan on the right floor, charger near the rug table, and the multitap as the central power hub.
 - Direct reference asset pass: draws the copied map image directly as the apartment background and keeps interaction/collision as invisible overlays instead of redrawing placeholder room geometry.
+- Fix multitap pass: uses the no-wire apartment map as the room background, draws connected-device wires as independent overlays, and presents the power strip UI with the provided 4-slot strip and adapter PNGs.
 
 ## Pass 2 Adjustments
 
@@ -183,6 +188,23 @@ This pass uses the actual `docs/reference/map.png` and `docs/reference/YUI.png` 
 - Cables and device art are provided by the map image itself for this pass, avoiding duplicate glowing or placeholder cable drawings.
 - This pass preserves existing movement, proximity interaction, power strip entry, power state syncing, phone UI, HUD, and result flow.
 
+## Fix Multitap UI And Wire Overlay Adjustments
+
+- `docs/reference/Fix/map_base_no_wires.png` is the visible apartment map; `docs/reference/Fix/map_reference_all_wires.jpeg` remains a reference-only all-wire guide.
+- `OutletMode.gd` now draws `powerstrip_4slot.png` in the center and five adapter PNGs along the bottom.
+- Adapter interaction is drag-based:
+  - Fan, communication device, charger, and lamp use 1 slot.
+  - Laptop uses 2 adjacent slots and cannot be placed starting from slot 4.
+  - Occupied slots reject new drops, and invalid drops return adapters to their bottom home positions.
+  - Connected adapters can be dragged again, and a short click on a connected adapter disconnects it.
+- Connected adapter drawing uses smaller slot-display sizes, plug anchor ratios, subtle contact shadow, and a small insert cover so the PNGs read closer to inserted plugs than oversized cards.
+- Connection state and DAY 1 power use remain separated: connecting a plug updates outlet load/slot use, but it does not spend today's action power.
+- `Apartment.gd` now creates independent wire overlay sprites for `WireFan`, `WireCommunication`, `WireLaptopFloor`, `WireLaptopDesk`, `WireCharger`, and `WireLamp`.
+- Wire visibility is driven by the shared connection state in `SurvivalState.gd`, so disconnected devices keep their wires hidden and connected devices reveal only their own overlays.
+- Laptop wire presentation is split into a floor segment and a desk segment so the final section can draw above the desk/map layer.
+- Static validation screenshots were saved for empty strip, 1-slot adapter, Laptop adapter, Laptop/Lamp/Charger strip state, no-wire map, single-wire map, multi-wire map, disconnect state, and Laptop desk-wire comparisons.
+- Manual Godot playtest is still required because no local Godot executable was available during closeout.
+
 ## Common UI Style
 
 - Added `godot/scripts/ui/UIStyle.gd` for shared colors and simple panel styles.
@@ -201,6 +223,8 @@ This pass uses the actual `docs/reference/map.png` and `docs/reference/YUI.png` 
 - Interaction and dialogue panel art is intentionally subtle so Korean text remains readable.
 - Result panel still uses drawn panels and a snapshot placeholder.
 - Multitap device cards still use drawn rectangles and text, with PNG badges/plugs layered in.
+- Multitap plug insertion is improved but still needs in-editor visual review; 1-slot adapter masking and Laptop 2-slot insertion may need small anchor/cover adjustments.
+- Laptop desk wire endpoint may still need a final 2-6px anchor tune so it clearly touches the laptop body.
 - Communication device world art should be remade or adapted for the room perspective; current PNG is better suited to UI preview than world placement.
 - The fan and laptop are usable as temporary world sprites, but their perspective still differs from the primitive room and should be reviewed when final object art starts.
 - The current map and YUI reference images are imported as project-local runtime assets.
@@ -216,3 +240,5 @@ This pass uses the actual `docs/reference/map.png` and `docs/reference/YUI.png` 
 - Move device/object presentation data into resources after the loop is manually validated.
 - Continue screenshot-based spacing checks for the multitap overlay and result screen at the target resolution.
 - Add state-specific object polish for connected-but-unused versus used/on visuals.
+- Playtest the draggable power strip UI in Godot and adjust adapter insertion masks only after confirming drag/drop still works.
+- Tune Laptop, charger, and lamp wire endpoints against `map_reference_all_wires.jpeg` using small endpoint-only adjustments.

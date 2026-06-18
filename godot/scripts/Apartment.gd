@@ -15,8 +15,10 @@ var powered_device_keys: Array[String] = []
 var used_day1_action_keys: Array[String] = []
 var current_power_units: int = SurvivalState.DAY1_STARTING_POWER_UNITS
 var phase_key: String = "day"
+var wire_nodes_by_power_key: Dictionary = {}
 
 const MAP_SOURCE_SIZE: Vector2 = Vector2(1464.0, 1074.0)
+const WIRE_SOURCE_SIZE: Vector2 = Vector2(1446.0, 1088.0)
 const MAP_SCALE: float = 0.670391
 const MAP_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
 const ROOM_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
@@ -28,6 +30,7 @@ func _ready() -> void:
 	_build_room_collision()
 	_add_environment_blockers()
 	_spawn_placeholder_furniture()
+	_create_wire_nodes()
 	_spawn_player()
 	queue_redraw()
 
@@ -59,6 +62,7 @@ func set_powered_devices(device_keys: Array[String]) -> void:
 			is_powered = not device_keys.is_empty()
 		interactable.set_powered(is_powered)
 
+	_sync_wire_visibility()
 	queue_redraw()
 
 
@@ -104,6 +108,44 @@ func _map_point(source_position: Vector2) -> Vector2:
 
 func _map_size(source_size: Vector2) -> Vector2:
 	return source_size * MAP_SCALE
+
+
+func _create_wire_nodes() -> void:
+	wire_nodes_by_power_key.clear()
+	_add_wire_overlay_node("WireFan", "fan", AssetPaths.WIRE_FAN)
+	_add_wire_overlay_node("WireCommunication", "communication_device", AssetPaths.WIRE_COMMUNICATION)
+	_add_wire_overlay_node("WireLaptopFloor", "laptop", AssetPaths.WIRE_LAPTOP, 2)
+	_add_wire_overlay_node("WireLaptopDesk", "laptop", AssetPaths.WIRE_LAPTOP_DESK, 4)
+	_add_wire_overlay_node("WireCharger", "charger", AssetPaths.WIRE_CHARGER)
+	_add_wire_overlay_node("WireLamp", "light", AssetPaths.WIRE_LAMP)
+	_sync_wire_visibility()
+
+
+func _add_wire_overlay_node(node_name: String, power_key: String, texture: Texture2D, z_index: int = 2) -> void:
+	var wire_sprite: Sprite2D = Sprite2D.new()
+	wire_sprite.name = node_name
+	wire_sprite.texture = texture
+	wire_sprite.centered = false
+	wire_sprite.position = MAP_RECT.position
+	wire_sprite.scale = Vector2(MAP_RECT.size.x / WIRE_SOURCE_SIZE.x, MAP_RECT.size.y / WIRE_SOURCE_SIZE.y)
+	wire_sprite.z_index = z_index
+	wire_sprite.visible = false
+	add_child(wire_sprite)
+	if not wire_nodes_by_power_key.has(power_key):
+		wire_nodes_by_power_key[power_key] = []
+
+	var wire_nodes: Array = wire_nodes_by_power_key[power_key] as Array
+	wire_nodes.append(wire_sprite)
+
+
+func _sync_wire_visibility() -> void:
+	for power_key in wire_nodes_by_power_key.keys():
+		var is_connected: bool = powered_device_keys.has(str(power_key))
+		var wire_nodes: Array = wire_nodes_by_power_key[power_key] as Array
+		for raw_wire_node in wire_nodes:
+			var wire_sprite: Sprite2D = raw_wire_node as Sprite2D
+			if wire_sprite != null:
+				wire_sprite.visible = is_connected
 
 
 func _spawn_player() -> void:
@@ -492,68 +534,6 @@ func _draw_light_pool() -> void:
 	for index in range(3, 0, -1):
 		var alpha: float = 0.008 * float(index)
 		draw_circle(floor_center, 42.0 * float(index), Color(0.92, 0.62, 0.26, alpha))
-
-
-func _draw_power_cables() -> void:
-	var power_strip: ApartmentInteractable = interactables_by_id.get("power_strip") as ApartmentInteractable
-	if power_strip == null:
-		return
-
-	for object_id in interactables_by_id.keys():
-		if object_id == "power_strip" or object_id == "light":
-			continue
-
-		var power_key: String = _get_power_key_for_object(object_id)
-		if not powered_device_keys.has(power_key):
-			continue
-
-		var interactable: ApartmentInteractable = interactables_by_id[object_id] as ApartmentInteractable
-		if interactable == null:
-			continue
-
-		_draw_power_cable(power_strip.position, interactable.position, object_id)
-
-
-func _draw_power_cable(start_position: Vector2, end_position: Vector2, object_id: String) -> void:
-	var points: PackedVector2Array = PackedVector2Array()
-	match object_id:
-		"laptop":
-			points = PackedVector2Array([
-				start_position + Vector2(28.0, -28.0),
-				Vector2(612.0, 360.0),
-				Vector2(746.0, 314.0),
-				end_position + Vector2(-36.0, 22.0),
-			])
-		"charger":
-			points = PackedVector2Array([
-				start_position + Vector2(44.0, 20.0),
-				Vector2(650.0, 510.0),
-				Vector2(742.0, 500.0),
-				end_position + Vector2(-24.0, 10.0),
-			])
-		"communication_device":
-			points = PackedVector2Array([
-				start_position + Vector2(2.0, -30.0),
-				Vector2(570.0, 406.0),
-				Vector2(575.0, 338.0),
-				end_position + Vector2(0.0, 24.0),
-			])
-		"fan":
-			points = PackedVector2Array([
-				start_position + Vector2(58.0, -8.0),
-				Vector2(720.0, 448.0),
-				Vector2(914.0, 404.0),
-				end_position + Vector2(-32.0, 16.0),
-			])
-
-	if points.size() == 0:
-		var midpoint: Vector2 = (start_position + end_position) * 0.5
-		var bend: Vector2 = midpoint + Vector2(0.0, 24.0)
-		points = PackedVector2Array([start_position, bend, end_position])
-
-	var cable_alpha: float = 0.78 if phase_key == "day" else 0.9
-	draw_polyline(points, Color(0.015, 0.011, 0.009, cable_alpha), 4.4, true)
-	draw_polyline(points, Color(0.13, 0.095, 0.065, 0.45), 1.2, true)
 
 
 func _get_power_key_for_object(object_id: String) -> String:
