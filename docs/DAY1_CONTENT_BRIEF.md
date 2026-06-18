@@ -28,13 +28,26 @@ DAY 1 uses two linked values:
 - Connecting a device enables later use, but it does not spend today's power.
 - A power object cannot be used unless it is connected, has enough remaining daily power, and has not already been used today.
 
+## Current Outlet Decisions
+
+- Laptop uses `2` adjacent outlet slots. This is intentional so DAY 1 includes meaningful space pressure.
+- Communication Device uses `1` outlet slot. Laptop already supplies the main two-slot constraint, so a second two-slot information device would make the tutorial unnecessarily restrictive.
+- Light requires a design decision. Current code implements a connected `1`-slot Lamp/Light, but the current room art and narrative description read as a built-in fluorescent ceiling light.
+- The active multitap UI uses draggable adapter PNGs, not device-selection cards.
+- `SurvivalState.gd` is the source of truth for slot occupancy, connected devices, outlet load, and daily power state.
+- Only connected devices show their matching map wire overlays.
+- Laptop cannot start from slot 4 because it needs two adjacent slots.
+
 ## Initial Interactable Objects
 
 ### Light
 
 - Gameplay purpose: teaches that power can improve room safety/readability.
 - Suggested power cost: `1 unit`
-- Suggested load data: `60W`, `1` outlet slot
+- Current implementation: `60W`, `1` outlet slot, connection required.
+- Decision required:
+  - Built-in fluorescent/ceiling light: use `0` outlet slots, do not require multitap connection, and spend only DAY power.
+  - Plug-in Lamp: rename to `스탠드 조명` or `작업등`, retain `1` outlet slot and connection requirement.
 - Sample feedback/dialogue direction: "The room softens under the weak light. It will not last forever."
 - Possible result flag: `used_light`
 
@@ -42,7 +55,8 @@ DAY 1 uses two linked values:
 
 - Gameplay purpose: introduces information gathering and the Grid mystery.
 - Suggested power cost: `3 units`
-- Suggested load data: `1300W`, `1` outlet slot
+- Current load data: `1300W`, `2` adjacent outlet slots
+- Slot rationale: the large adapter creates the primary space constraint in the DAY 1 multitap puzzle.
 - Sample feedback/dialogue direction: "Old logs flicker on the screen. Some entries mention Grid."
 - Possible result flag: `checked_laptop`
 
@@ -66,7 +80,8 @@ DAY 1 uses two linked values:
 
 - Gameplay purpose: introduces outside contact and the management office / delivery robot thread.
 - Suggested power cost: `4 units`
-- Suggested load data: `300W`, `1` outlet slot
+- Current load data: `300W`, `1` outlet slot
+- Slot rationale: keeping this device at one slot avoids excessive early restriction while Laptop already occupies two slots.
 - Sample feedback/dialogue direction: "A broken signal cuts through. Someone is still broadcasting notices."
 - Possible result flag: `sent_or_received_signal`
 

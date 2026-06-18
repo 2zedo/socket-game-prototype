@@ -166,6 +166,14 @@ Initial interactable objects may include:
 
 ## Documentation Rules
 
+- Keep `docs/PROJECT_STATUS.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, and `docs/ASSET_APPLICATION_NOTES.md` focused on current decisions and active work. Do not let them grow into indefinite work diaries.
+- Archive detailed work logs older than 7 days and completed visual-pass history under `docs/old/` when the active document becomes difficult to scan.
+- Name archived documents as `<ORIGINAL_NAME>_YYYYMMDD.md`, for example `PROJECT_STATUS_20260619.md`.
+- Preserve archived content instead of deleting it. After archiving, keep only the latest status summary, current decisions, remaining risks, and next work in the active document.
+- Do not archive `AGENTS.md`, `docs/ROADMAP.md`, or `docs/CONCENT_GAME_SPEC.md` unless the user explicitly requests it.
+- When a game-design decision changes, update `docs/DAY1_CONTENT_BRIEF.md` and every directly related current planning or test document in the same work unit.
+- Never commit Godot's `.godot/` import cache or generated cache output.
+- Before ignoring or staging source-side Godot `.png.import` files, check the repository's tracked metadata pattern. If equivalent source-side metadata is already tracked and the files belong to the current asset change, include them explicitly; do not use `git add .`.
 - Update documentation after a meaningful work unit is complete, not after every tiny edit.
 - Meaningful work units include examples such as player scale/walk animation improvement, apartment map tone revision, multitap placement/cable presentation, multitap UI revision, or dialogue portrait structure revision.
 - At the end of every completed development task, update `docs/PROJECT_STATUS.md`.

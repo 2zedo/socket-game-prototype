@@ -62,7 +62,7 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 
 Temporary DAY 1 device data:
 
-- Light: `60W`, `1` outlet slot, use cost `1`
+- Light: current code uses `60W`, `1` outlet slot, use cost `1`; built-in fluorescent versus plug-in Lamp is still a design decision
 - Laptop: `1300W`, `2` outlet slots, use cost `3`
 - Fan: `900W`, `1` outlet slot, use cost `2`
 - Charger: `20W`, `1` outlet slot, use cost `2`
@@ -89,7 +89,9 @@ Temporary DAY 1 device data:
 - `SurvivalState.gd` now owns temporary DAY 1 power units, object costs, use flags, and result-summary data.
 - `SurvivalState.gd` now treats outlet connection state as the prerequisite for DAY 1 object use.
 - `SurvivalState.gd` is the source of truth for outlet slot sizes; Laptop currently occupies `2` slots, while Light/Lamp, Fan, Charger, and Communication device occupy `1` slot each.
-- `OutletMode.gd` is the draggable adapter connection/load panel: it changes current load watts and outlet slots, but it does not spend today's power.
+- Light/Lamp's current one-slot behavior is implemented but not yet accepted as the final design; resolve built-in fluorescent versus plug-in Lamp before further balancing.
+- `OutletMode.gd` is the draggable adapter PNG connection/load panel: it changes current load watts and outlet slots, but it does not spend today's power.
+- Connected-device wires are separate overlays whose visibility follows the same connection state in `SurvivalState.gd`.
 - `Apartment.gd` now exposes the five DAY 1 interactables: Light, Laptop, Fan, Charger, and Communication device.
 - `Player.gd` and `project.godot` already support keyboard top-down movement through WASD and arrow input actions.
 - `Apartment.gd` tracks the nearest interactable by player proximity, so `E` only opens interaction UI near an object.

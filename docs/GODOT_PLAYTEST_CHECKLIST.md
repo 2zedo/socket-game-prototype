@@ -44,7 +44,7 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] Fan uses 1 outlet slot.
 - [ ] Communication Device uses 1 outlet slot.
 - [ ] Charger uses 1 outlet slot.
-- [ ] Lamp/Light uses 1 outlet slot.
+- [ ] Current implementation: Lamp/Light uses 1 outlet slot. Record this result separately because the final Light model is still a design decision.
 - [ ] Laptop uses 2 outlet slots.
 - [ ] Laptop can start from slot 1, 2, or 3.
 - [ ] Laptop cannot start from slot 4.
@@ -138,6 +138,7 @@ Target objects:
 
 - [ ] The player can progress from DAY 1 start to End Day result summary.
 - [ ] All five power objects support use, cancel, insufficient-power, and duplicate-use flows.
-- [ ] All five power objects require outlet connection before use.
+- [ ] Laptop, Fan, Charger, and Communication Device require outlet connection before use.
+- [ ] Light follows the currently implemented connection rule; update this criterion after the built-in fluorescent versus plug-in Lamp decision.
 - [ ] Movement and interaction UI do not conflict.
 - [ ] No fatal errors occur during Godot play.
