@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `e0de6f7`
+- Current commit at task start: `8f6ba84`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -24,6 +24,8 @@
 - `Tab` opens the existing Phone UI during exploration; it closes with `Tab` or `ESC` and locks Yui movement while visible.
 - The Phone UI clock maps the existing 60-second day timer from `08:00` to `20:00`; normal HUD clock details stay hidden.
 - Apartment outer-wall collision now follows the walkable floor inside the map art, with overlapping corners to prevent diagonal escape gaps.
+- Exploration hides the left status HUD; Phone UI is the primary status view while prompts, controls, and Test Mode remain visible.
+- The in-game clock advances only during free exploration and pauses for Phone, Outlet, Interaction, End Day, and Result modals.
 
 ## Current DAY 1 Decisions
 
@@ -43,6 +45,8 @@
 - `godot/scripts/Main.gd`: routes `open_phone` plus a raw `KEY_TAB` edge through the existing Phone UI toggle and logs each received toggle.
 - `godot/scripts/SurvivalState.gd`: provides the Phone UI clock text and daytime period while the HUD omits those details.
 - `godot/scripts/Apartment.gd`: aligns only the four outer wall blockers to the interior floor boundary.
+- `godot/scenes/ui/SurvivalHUD.tscn`, `godot/scripts/ui/SurvivalHUD.gd`: hide exploration status panels and their power icon.
+- `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`: pause only the display clock while modal UI is active.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results

@@ -32,10 +32,6 @@ func _ready() -> void:
 	queue_redraw()
 
 
-func _draw() -> void:
-	draw_texture_rect(AssetPaths.ICON_POWER, Rect2(Vector2(24, 132), Vector2(20, 20)), false, Color(1, 1, 1, 0.82))
-
-
 func set_interaction_prompt(text: String, world_position: Vector2 = NO_PROMPT_POSITION) -> void:
 	prompt_label.text = text
 	prompt_label.visible = text.strip_edges() != ""

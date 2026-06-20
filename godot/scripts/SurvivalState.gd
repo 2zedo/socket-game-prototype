@@ -111,6 +111,7 @@ var remaining_phase_seconds: int = int(DAY_SECONDS)
 var total_points: int = 0
 var overloads_today: int = 0
 var is_time_paused: bool = false
+var is_clock_paused_by_modal: bool = false
 var battery: float = 68.0
 var temperature: float = 52.0
 var fatigue: float = 34.0
@@ -142,7 +143,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if is_time_paused:
+	if is_time_paused or is_clock_paused_by_modal:
 		return
 
 	_update_time(delta)
@@ -171,6 +172,10 @@ func set_powered_devices(device_keys: Array[String]) -> void:
 	_refresh_powered_devices_from_powerstrip_state()
 	_recalculate_outlet_state()
 	changed.emit()
+
+
+func set_clock_paused_by_modal(is_paused: bool) -> void:
+	is_clock_paused_by_modal = is_paused
 
 
 func set_powerstrip_slot_occupancy(slot_occupancy: Array) -> void:
@@ -216,6 +221,7 @@ func continue_to_next_day() -> void:
 	overloads_today = 0
 	_reset_day1_power_loop()
 	is_time_paused = false
+	is_clock_paused_by_modal = false
 	changed.emit()
 
 

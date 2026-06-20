@@ -28,6 +28,9 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] Phone UI time advances toward `20:00` and uses 아침/낮/오후/저녁 periods.
 - [ ] The normal HUD does not show current time or time period details.
 - [ ] Reaching `20:00` does not automatically end the day or switch to night.
+- [ ] Time advances during exploration and while only Test Mode is enabled.
+- [ ] Time pauses in Phone, Outlet, Interaction, End Day confirmation, and Result screens.
+- [ ] Closing a modal resumes the clock.
 
 ## Test Mode And Input Routing Test
 
@@ -144,6 +147,7 @@ Target objects:
 - [ ] Power strip UI clearly separates daily power budget from current outlet load.
 - [ ] The one-room apartment, power shortage, survival log, and power-panel tone remain visible.
 - [ ] Exploration state shows only room, compact HUD, nearby prompt, and minimal controls.
+- [ ] Exploration does not show the left status HUD; nearby prompt and bottom controls remain visible.
 - [ ] Interaction state dims the room and uses the right-side info panel plus Yui comment panel.
 - [ ] Multitap state reads as a dark power connection panel, not a separate arcade screen.
 - [ ] Result state reads as `DAY 1 기록` / survival log, not a score results screen.

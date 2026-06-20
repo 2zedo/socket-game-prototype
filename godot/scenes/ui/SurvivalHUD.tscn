@@ -13,6 +13,7 @@ mouse_filter = 2
 script = ExtResource("1_hud")
 
 [node name="StatsPanel" type="ColorRect" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.0
@@ -27,6 +28,7 @@ mouse_filter = 2
 color = Color(0.78, 0.61, 0.38, 0.16)
 
 [node name="TitleLabel" type="Label" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.0
@@ -42,6 +44,7 @@ theme_override_font_sizes/font_size = 15
 text = "생존 로그"
 
 [node name="StatsLabel" type="Label" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.0
@@ -56,6 +59,7 @@ theme_override_colors/font_color = Color(0.917647, 0.87451, 0.792157, 1)
 theme_override_font_sizes/font_size = 14
 
 [node name="TimePanel" type="ColorRect" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.0
@@ -70,6 +74,7 @@ mouse_filter = 2
 color = Color(0.78, 0.61, 0.38, 0.1)
 
 [node name="TimeLabel" type="Label" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.0
@@ -114,6 +119,7 @@ mouse_filter = 2
 color = Color(0.66, 0.32, 0.16, 0.28)
 
 [node name="WarningLabel" type="Label" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5

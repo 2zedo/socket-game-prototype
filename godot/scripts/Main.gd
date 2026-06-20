@@ -216,7 +216,7 @@ func _close_interaction_panel() -> void:
 
 
 func _refresh_survival_ui() -> void:
-	survival_hud.set_warnings(survival_state.get_warning_lines())
+	survival_hud.set_warnings([])
 	survival_hud.set_stats(survival_state.get_hud_stat_text())
 	survival_hud.set_time("")
 	survival_hud.set_phase_effect(survival_state.get_phase_effect_text())
@@ -341,6 +341,7 @@ func _sync_player_movement_with_modal_state() -> void:
 		or phone_ui.visible
 	)
 	apartment.set_player_movement_enabled(not modal_open)
+	survival_state.set_clock_paused_by_modal(modal_open)
 
 
 func _is_space_pressed(event: InputEvent) -> bool:
