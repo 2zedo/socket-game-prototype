@@ -1,12 +1,15 @@
 extends Control
 class_name InteractionPanel
 
+signal confirm_requested
+signal cancel_requested
+
 @onready var panel: Panel = $Panel
 @onready var title_label: Label = $Panel/TitleLabel
 @onready var body_label: Label = $Panel/BodyLabel
-@onready var use_button: Panel = $Panel/UseButton
+@onready var use_button: Button = $Panel/UseButton
 @onready var use_button_label: Label = $Panel/UseButton/UseButtonLabel
-@onready var cancel_button: Panel = $Panel/CancelButton
+@onready var cancel_button: Button = $Panel/CancelButton
 @onready var cancel_button_label: Label = $Panel/CancelButton/CancelButtonLabel
 @onready var dialogue_panel: Panel = $DialoguePanel
 @onready var portrait_panel: Panel = $DialoguePanel/PortraitPanel
@@ -20,8 +23,10 @@ func _ready() -> void:
 	dialogue_panel.add_theme_stylebox_override("panel", UIStyle.make_panel_style(Color(0.035, 0.033, 0.03, 0.92), UIStyle.LINE_DIM, 1, 2))
 	portrait_panel.add_theme_stylebox_override("panel", UIStyle.make_panel_style(Color(0.045, 0.04, 0.035, 0.88), UIStyle.LINE_DIM, 1, 8))
 	_install_texture_backplates()
-	use_button.add_theme_stylebox_override("panel", UIStyle.make_button_style(true))
-	cancel_button.add_theme_stylebox_override("panel", UIStyle.make_button_style(false))
+	_apply_button_styles(use_button, true)
+	_apply_button_styles(cancel_button, false)
+	use_button.pressed.connect(func() -> void: confirm_requested.emit())
+	cancel_button.pressed.connect(func() -> void: cancel_requested.emit())
 	UIStyle.apply_label(title_label, UIStyle.TEXT, 24)
 	UIStyle.apply_label(body_label, UIStyle.TEXT, 15)
 	UIStyle.apply_label(use_button_label, UIStyle.TEXT, 14)
@@ -29,6 +34,13 @@ func _ready() -> void:
 	UIStyle.apply_label(portrait_label, UIStyle.MUTED, 13)
 	UIStyle.apply_label(speaker_label, UIStyle.ELECTRIC, 17)
 	UIStyle.apply_label(dialogue_label, UIStyle.TEXT, 16)
+
+
+func _apply_button_styles(button: Button, is_primary: bool) -> void:
+	button.add_theme_stylebox_override("normal", UIStyle.make_button_style(is_primary))
+	button.add_theme_stylebox_override("hover", UIStyle.make_button_style(is_primary))
+	button.add_theme_stylebox_override("pressed", UIStyle.make_button_style(is_primary))
+	button.add_theme_stylebox_override("focus", UIStyle.make_button_style(is_primary))
 
 
 func _install_texture_backplates() -> void:

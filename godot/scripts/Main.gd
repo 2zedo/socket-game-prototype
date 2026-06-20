@@ -16,6 +16,8 @@ var phone_tab_was_pressed: bool = false
 func _ready() -> void:
 	apartment.nearest_interactable_changed.connect(_on_nearest_interactable_changed)
 	apartment.interaction_requested.connect(_on_interaction_requested)
+	interaction_panel.confirm_requested.connect(_on_interaction_panel_confirm_requested)
+	interaction_panel.cancel_requested.connect(_on_interaction_panel_cancel_requested)
 	survival_state.changed.connect(_refresh_survival_ui)
 	outlet_mode.closed.connect(_on_outlet_mode_closed)
 	outlet_mode.power_changed.connect(_on_outlet_power_changed)
@@ -174,6 +176,20 @@ func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
 	var watts: int = data.get("watts", 0)
 	_open_interaction_panel(data.get("title", "상호작용"), _build_interaction_body(data))
 	survival_state.preview_power_use(watts)
+
+
+func _on_interaction_panel_confirm_requested() -> void:
+	if not interaction_panel.visible:
+		return
+	if pending_interaction_data.is_empty():
+		_close_interaction_panel()
+		return
+	_confirm_pending_interaction()
+
+
+func _on_interaction_panel_cancel_requested() -> void:
+	if interaction_panel.visible:
+		_close_interaction_panel()
 
 
 func _build_interaction_body(data: Dictionary) -> String:
