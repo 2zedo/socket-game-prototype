@@ -218,7 +218,6 @@ func _draw_device(device: Dictionary, is_dragging: bool) -> void:
 
 	if is_connected:
 		_draw_adapter_insert_cover(device, rect)
-		draw_rect(visible_rect.grow(2.0), UIStyle.ELECTRIC, false, 1.4)
 	elif is_dragging:
 		draw_rect(visible_rect.grow(2.0), Color(0.95, 0.84, 0.48, 0.76), false, 1.4)
 	else:

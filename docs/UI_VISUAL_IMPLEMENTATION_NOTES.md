@@ -63,6 +63,7 @@ Normal outlet presentation no longer outlines every slot. The built-in LED artwo
 - Empty slots darken the corresponding built-in LED region in the power-strip texture.
 - Occupied slots leave the original green LED artwork visible; two-slot Laptop placement reveals both occupied LEDs.
 - The previously drawn green circles and glow were removed rather than layered over the source art.
+- Connected adapters do not retain an outline after placement; green/red outlines are reserved for active drag targets.
 - Existing drag-time green/red target frames remain visible only while an adapter is moving.
 - Test Mode continues to draw diagnostic slot rectangles independently of normal presentation.
 - Manual checks remain required for connect, two-slot connect, disconnect, and drag-feedback transitions.
