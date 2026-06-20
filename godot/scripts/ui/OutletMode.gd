@@ -162,7 +162,7 @@ func _draw_slot_feedback() -> void:
 	if dragging_device.is_empty():
 		return
 
-	var target_slot: int = _find_feedback_slot(dragging_device)
+	var target_slot: int = _find_target_slot(dragging_device)
 	if target_slot < 0:
 		return
 
@@ -182,7 +182,7 @@ func _draw_slot_feedback() -> void:
 	draw_rect(target_rect, line_color, false, 3.0)
 
 
-func _find_feedback_slot(device: Dictionary) -> int:
+func _find_target_slot(device: Dictionary) -> int:
 	var probe_position: Vector2 = _get_device_plug_position(device)
 	for slot_index in range(OUTLET_COUNT):
 		if _get_slot_rect(slot_index).has_point(probe_position):
@@ -305,7 +305,8 @@ func _finish_drag(mouse_position: Vector2) -> void:
 		queue_redraw()
 		return
 
-	var target_slot: int = _find_best_slot(dragging_device)
+	# Preview and drop must resolve the same start slot, especially for 2-slot devices.
+	var target_slot: int = _find_target_slot(dragging_device)
 	if target_slot >= 0 and _can_use_slots(dragging_device, target_slot):
 		_connect_device(dragging_device, target_slot)
 	else:

@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `234da55`
+- Current commit at task start: `fe9e111`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -33,6 +33,7 @@
 - Outlet dragging highlights only the targeted existing slot hitbox: green for a valid drop and red for an invalid drop, with two-slot adapters spanning both affected slots.
 - Normal outlet presentation hides slot borders and exposes the PNG's built-in green LED only for occupied slots; empty-slot LEDs are darkened while drag-time feedback remains separate.
 - Connected adapters no longer retain a selection-like border after placement; borders remain limited to active drag feedback and Test Mode diagnostics.
+- Outlet preview and drop now resolve the same target slot, preventing valid two-slot Laptop feedback from disagreeing with placement.
 
 ## Current DAY 1 Decisions
 
@@ -61,6 +62,7 @@
 - `godot/scripts/ui/OutletMode.gd`: draws valid/invalid drag feedback above the power-strip art without changing slot coordinates or connection rules.
 - `godot/scripts/ui/OutletMode.gd`: maps occupancy onto the existing LED artwork in `powerstrip_4slot.png` without adding new LED shapes.
 - `godot/scripts/ui/OutletMode.gd`: removes the normal connected-adapter outline while preserving drag feedback.
+- `godot/scripts/ui/OutletMode.gd`: shares one target-slot resolver between drag preview and actual drop.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -78,6 +80,7 @@
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after replacing normal slot borders with LEDs.
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after mapping occupancy to the PNG's built-in LEDs.
 - Godot 4.5.1 headless Main scene startup completed after removing connected-adapter borders.
+- Godot 4.5.1 headless Main scene startup completed after unifying outlet preview/drop target selection.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -94,6 +97,7 @@
 - Outlet valid/invalid colors and two-slot span feedback require manual drag confirmation; connection logic was not changed.
 - Outlet LED off/on states, including two-slot Laptop occupancy, require manual visual confirmation.
 - Built-in LED mask alignment and two-slot LED exposure require manual visual confirmation at the target resolution.
+- Two-slot Laptop drops require manual checks at valid starts 1-3 and invalid start 4.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
 
 ## Next Recommended Task
