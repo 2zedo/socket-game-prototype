@@ -37,10 +37,14 @@ func _ready() -> void:
 
 
 func _apply_button_styles(button: Button, is_primary: bool) -> void:
-	button.add_theme_stylebox_override("normal", UIStyle.make_button_style(is_primary))
-	button.add_theme_stylebox_override("hover", UIStyle.make_button_style(is_primary))
-	button.add_theme_stylebox_override("pressed", UIStyle.make_button_style(is_primary))
-	button.add_theme_stylebox_override("focus", UIStyle.make_button_style(is_primary))
+	var normal_style := UIStyle.make_button_style(is_primary)
+	var hover_fill := Color(0.13, 0.105, 0.06, 0.9) if is_primary else Color(0.075, 0.07, 0.062, 0.9)
+	var hover_border := UIStyle.ELECTRIC.lightened(0.24) if is_primary else UIStyle.LINE.lightened(0.3)
+	var hover_style := UIStyle.make_panel_style(hover_fill, hover_border, 2, 2)
+	button.add_theme_stylebox_override("normal", normal_style)
+	button.add_theme_stylebox_override("hover", hover_style)
+	button.add_theme_stylebox_override("pressed", hover_style)
+	button.add_theme_stylebox_override("focus", normal_style)
 
 
 func _install_texture_backplates() -> void:

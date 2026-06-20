@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `106d87a`
+- Current commit at task start: `1b620d5`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -28,6 +28,7 @@
 - The in-game clock advances only during free exploration and pauses for Phone, Outlet, Interaction, End Day, and Result modals.
 - Room objects can be activated by left-clicking their existing interaction rectangle while Yui is within the same proximity range used by `E`; room clicks are ignored while a modal is open.
 - Interaction panels expose clickable use and cancel/close buttons that reuse the existing `E` and `ESC` action paths.
+- Interaction buttons brighten their border on hover/press; informational panels without a primary action close with either `E`, `ESC`, or the close button.
 
 ## Current DAY 1 Decisions
 
@@ -51,6 +52,7 @@
 - `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`: pause only the display clock while modal UI is active.
 - `godot/scripts/Main.gd`: routes eligible left-clicks through the existing nearest-interactable request used by `E`.
 - `godot/scenes/ui/InteractionPanel.tscn`, `godot/scripts/ui/InteractionPanel.gd`, `godot/scripts/Main.gd`: connect real panel buttons to the existing confirm and cancel handlers.
+- `godot/scripts/ui/InteractionPanel.gd`: adds distinct hover/pressed feedback while preserving existing button actions.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -62,6 +64,7 @@
 - `git diff --check` passed. Web files were not modified.
 - Godot 4.5.1 headless editor initialization completed after adding mouse interaction routing.
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after converting interaction controls to clickable buttons.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after adding interaction-button hover feedback.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -74,6 +77,7 @@
 - Interaction and blocker overlays require manual alignment review against the map image before collision changes are made.
 - Mouse interaction requires manual checks for all six room targets and out-of-range clicks; no GUI input simulation was run.
 - Interaction-panel button clicks require manual confirmation; GUI input simulation was intentionally not run.
+- Interaction-button hover colors require manual visual confirmation; no GUI or screenshot validation was run.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
 
 ## Next Recommended Task
