@@ -26,6 +26,15 @@ const SLOT_CENTER_RATIOS: Array[Vector2] = [
 ]
 const BUILT_IN_LED_Y_RATIO: float = 0.6372
 const BUILT_IN_LED_MASK_SIZE: Vector2 = Vector2(13.0, 10.0)
+# Connected-only visual tuning. Adjust these values while reviewing the outlet
+# screen; zero offset and unit scale preserve the current adapter placement.
+const CONNECTED_ADAPTER_TUNING: Dictionary = {
+	"fan": {"offset": Vector2.ZERO, "scale": Vector2.ONE},
+	"charger": {"offset": Vector2.ZERO, "scale": Vector2.ONE},
+	"communication_device": {"offset": Vector2.ZERO, "scale": Vector2.ONE},
+	"light": {"offset": Vector2.ZERO, "scale": Vector2.ONE},
+	"laptop": {"offset": Vector2.ZERO, "scale": Vector2.ONE},
+}
 
 var survival_state: SurvivalState
 var occupied_slots: Array = []
@@ -406,9 +415,13 @@ func _get_device_rect(device: Dictionary) -> Rect2:
 
 func _get_connected_device_rect(device: Dictionary) -> Rect2:
 	var start_slot: int = int(device["connected_start"])
-	var device_size: Vector2 = _get_connected_device_size(str(device["key"]))
-	var insert_position: Vector2 = _get_slot_insert_position(start_slot)
-	var anchor_ratio: Vector2 = _get_insert_anchor_ratio(str(device["key"]))
+	var key: String = str(device["key"])
+	var tuning: Dictionary = CONNECTED_ADAPTER_TUNING.get(key, {})
+	var connected_scale: Vector2 = tuning.get("scale", Vector2.ONE)
+	var connected_offset: Vector2 = tuning.get("offset", Vector2.ZERO)
+	var device_size: Vector2 = _get_connected_device_size(key) * connected_scale
+	var insert_position: Vector2 = _get_slot_insert_position(start_slot) + connected_offset
+	var anchor_ratio: Vector2 = _get_insert_anchor_ratio(key)
 	return Rect2(insert_position - Vector2(device_size.x * anchor_ratio.x, device_size.y * anchor_ratio.y), device_size)
 
 

@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `fe9e111`
+- Current commit at task start: `2cffc80`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -34,6 +34,7 @@
 - Normal outlet presentation hides slot borders and exposes the PNG's built-in green LED only for occupied slots; empty-slot LEDs are darkened while drag-time feedback remains separate.
 - Connected adapters no longer retain a selection-like border after placement; borders remain limited to active drag feedback and Test Mode diagnostics.
 - Outlet preview and drop now resolve the same target slot, preventing valid two-slot Laptop feedback from disagreeing with placement.
+- Connected adapter placement exposes per-device offset and scale tuning while retaining the previous zero-offset/unit-scale defaults.
 
 ## Current DAY 1 Decisions
 
@@ -63,6 +64,7 @@
 - `godot/scripts/ui/OutletMode.gd`: maps occupancy onto the existing LED artwork in `powerstrip_4slot.png` without adding new LED shapes.
 - `godot/scripts/ui/OutletMode.gd`: removes the normal connected-adapter outline while preserving drag feedback.
 - `godot/scripts/ui/OutletMode.gd`: shares one target-slot resolver between drag preview and actual drop.
+- `godot/scripts/ui/OutletMode.gd`: centralizes connected visual offset/scale tuning for Fan, Charger, Communication Device, Lamp, and Laptop.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -81,6 +83,7 @@
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after mapping occupancy to the PNG's built-in LEDs.
 - Godot 4.5.1 headless Main scene startup completed after removing connected-adapter borders.
 - Godot 4.5.1 headless Main scene startup completed after unifying outlet preview/drop target selection.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after exposing connected-adapter tuning values.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 

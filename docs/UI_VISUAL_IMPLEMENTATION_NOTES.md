@@ -68,6 +68,13 @@ Normal outlet presentation no longer outlines every slot. The built-in LED artwo
 - Test Mode continues to draw diagnostic slot rectangles independently of normal presentation.
 - Manual checks remain required for connect, two-slot connect, disconnect, and drag-feedback transitions.
 
+## Connected Adapter Placement Tuning
+
+- `OutletMode.gd` keeps per-device connected `offset` and `scale` values in `CONNECTED_ADAPTER_TUNING`.
+- Fan, Charger, Communication Device, Lamp, and Laptop can be adjusted independently without changing slot coordinates.
+- Laptop retains its separate two-slot base size and anchor, with an additional independent connected scale and offset.
+- All tuning defaults are zero offset and unit scale, preserving the current presentation until manually adjusted.
+
 ## Archive
 
 - Previous visual-pass history: `docs/old/UI_VISUAL_IMPLEMENTATION_NOTES_20260619.md`
