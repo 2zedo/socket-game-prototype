@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8f8b506`
+- Current commit at task start: `0f08c08`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -22,6 +22,7 @@
 - Pressing `P` toggles a developer Test Mode with gameplay-state text and collision/interaction overlays.
 - Modal input is routed through `Main.gd`; movement is locked while interaction, outlet, end-day, phone, or result UI is active.
 - `Tab` opens the existing Phone UI during exploration; it closes with `Tab` or `ESC` and locks Yui movement while visible.
+- The display-only in-game clock maps the existing 60-second day timer from `08:00` to `20:00`, then stops without automatic End Day.
 
 ## Current DAY 1 Decisions
 
@@ -39,6 +40,7 @@
 - `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: added the Test Mode status/readout.
 - `godot/scenes/ui/PhoneUI.tscn`: updated the reserved phone key hint to `Tab`.
 - `godot/scripts/Main.gd`: routes `open_phone` plus a raw `KEY_TAB` edge through the existing Phone UI toggle and logs each received toggle.
+- `godot/scripts/SurvivalState.gd`: provides the shared HUD/Phone clock text and daytime period.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results

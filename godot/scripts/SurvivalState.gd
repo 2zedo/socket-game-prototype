@@ -7,7 +7,8 @@ signal day_ended(result: Dictionary)
 const MIN_STAT: float = 0.0
 const MAX_STAT: float = 100.0
 const DAY_SECONDS: float = 60.0
-const PHASE_SECONDS: float = 30.0
+const DAY_START_MINUTES: int = 8 * 60
+const DAY_END_MINUTES: int = 20 * 60
 const DAY1_STARTING_POWER_UNITS: int = 10
 const DAY1_MAX_LOAD_WATTS: int = 3000
 const DAY1_MAX_OUTLET_SLOTS: int = 4
@@ -106,7 +107,7 @@ var day: int = 1
 var current_event: String = "없음"
 var phase: String = "day"
 var elapsed_seconds: float = 0.0
-var remaining_phase_seconds: int = 30
+var remaining_phase_seconds: int = int(DAY_SECONDS)
 var total_points: int = 0
 var overloads_today: int = 0
 var is_time_paused: bool = false
@@ -211,7 +212,7 @@ func continue_to_next_day() -> void:
 	day += 1
 	elapsed_seconds = 0.0
 	phase = "day"
-	remaining_phase_seconds = int(PHASE_SECONDS)
+	remaining_phase_seconds = int(DAY_SECONDS)
 	overloads_today = 0
 	_reset_day1_power_loop()
 	is_time_paused = false
@@ -219,11 +220,27 @@ func continue_to_next_day() -> void:
 
 
 func get_phase_label() -> String:
-	return "낮" if phase == "day" else "밤"
+	return get_current_time_period()
 
 
 func get_time_text() -> String:
-	return ""
+	return "DAY %d - %s / %s" % [day, get_current_clock_text(), get_current_time_period()]
+
+
+func get_current_clock_text() -> String:
+	var current_minutes: int = _get_current_day_minutes()
+	return "%02d:%02d" % [current_minutes / 60, current_minutes % 60]
+
+
+func get_current_time_period() -> String:
+	var current_minutes: int = _get_current_day_minutes()
+	if current_minutes < 11 * 60:
+		return "아침"
+	if current_minutes < 16 * 60:
+		return "낮"
+	if current_minutes < 18 * 60:
+		return "오후"
+	return "저녁"
 
 
 func get_phase_effect_text() -> String:
@@ -245,9 +262,7 @@ func get_warning_lines() -> Array[String]:
 
 
 func get_hud_stat_text() -> String:
-	return "DAY %d - %s\n\n오늘 남은 전력\n⚡ %d / %d  %s\n\n사용한 기기\n%s" % [
-		day,
-		get_phase_label(),
+	return "오늘 남은 전력\n⚡ %d / %d  %s\n\n사용한 기기\n%s" % [
 		current_power,
 		max_power,
 		_get_power_bar_text(),
@@ -258,6 +273,8 @@ func get_hud_stat_text() -> String:
 func get_phone_text() -> String:
 	var lines: Array[String] = [
 		"DAY %d" % day,
+		"현재 시간: %s" % get_current_clock_text(),
+		"시간대: %s" % get_current_time_period(),
 		"현재 이벤트: %s" % current_event,
 		"",
 		"배터리: %d%%" % roundi(battery),
@@ -431,21 +448,21 @@ func _update_needs(delta: float) -> void:
 
 
 func _update_time(delta: float) -> void:
-	elapsed_seconds += delta
+	# DAY 1 MVP clock is display-only: it stops at 20:00 without ending the day.
+	elapsed_seconds = minf(elapsed_seconds + delta, DAY_SECONDS)
+	phase = "day"
+	remaining_phase_seconds = maxi(0, int(ceil(DAY_SECONDS - elapsed_seconds)))
 
-	if elapsed_seconds >= DAY_SECONDS:
-		elapsed_seconds = DAY_SECONDS
-		_end_day()
-		return
 
-	phase = "day" if elapsed_seconds < PHASE_SECONDS else "night"
-	var phase_elapsed: float = fmod(elapsed_seconds, PHASE_SECONDS)
-	remaining_phase_seconds = maxi(1, int(ceil(PHASE_SECONDS - phase_elapsed)))
+func _get_current_day_minutes() -> int:
+	var day_progress: float = clampf(elapsed_seconds / DAY_SECONDS, 0.0, 1.0)
+	var playable_minutes: int = DAY_END_MINUTES - DAY_START_MINUTES
+	return DAY_START_MINUTES + int(floor(day_progress * float(playable_minutes)))
 
 
 func _end_day() -> void:
 	is_time_paused = true
-	phase = "night"
+	phase = "day"
 	remaining_phase_seconds = 0
 	day1_day_ended = true
 
