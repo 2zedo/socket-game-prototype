@@ -17,6 +17,8 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] Yui moves with arrow keys.
 - [ ] Diagonal movement does not pass through wall corners or object blocker corners.
 - [ ] Walls and object blockers do not trap or push Yui strangely.
+- [ ] Yui cannot enter the black margins beyond the left, right, top, or bottom apartment boundary.
+- [ ] Rubbing diagonally against each outer corner does not escape through a gap.
 - [ ] Movement stops while the interaction panel is open.
 - [ ] Movement resumes after the interaction panel is closed.
 

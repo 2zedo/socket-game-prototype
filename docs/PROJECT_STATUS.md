@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `f1efbce`
+- Current commit at task start: `e0de6f7`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -23,6 +23,7 @@
 - Modal input is routed through `Main.gd`; movement is locked while interaction, outlet, end-day, phone, or result UI is active.
 - `Tab` opens the existing Phone UI during exploration; it closes with `Tab` or `ESC` and locks Yui movement while visible.
 - The Phone UI clock maps the existing 60-second day timer from `08:00` to `20:00`; normal HUD clock details stay hidden.
+- Apartment outer-wall collision now follows the walkable floor inside the map art, with overlapping corners to prevent diagonal escape gaps.
 
 ## Current DAY 1 Decisions
 
@@ -41,6 +42,7 @@
 - `godot/scenes/ui/PhoneUI.tscn`: updated the reserved phone key hint to `Tab`.
 - `godot/scripts/Main.gd`: routes `open_phone` plus a raw `KEY_TAB` edge through the existing Phone UI toggle and logs each received toggle.
 - `godot/scripts/SurvivalState.gd`: provides the Phone UI clock text and daytime period while the HUD omits those details.
+- `godot/scripts/Apartment.gd`: aligns only the four outer wall blockers to the interior floor boundary.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results

@@ -24,7 +24,9 @@ const MAP_SCALE: float = 0.670391
 const MAP_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
 const ROOM_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
 const FLOOR_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
-const WALL_THICKNESS: float = 28.0
+const PLAYABLE_BOUNDARY_SOURCE_RECT: Rect2 = Rect2(105.0, 345.0, 1270.0, 715.0)
+const WALL_THICKNESS: float = 32.0
+const WALL_CORNER_OVERLAP: float = 12.0
 
 
 func _ready() -> void:
@@ -106,10 +108,29 @@ func _draw() -> void:
 
 
 func _build_room_collision() -> void:
-	_add_wall(Rect2(ROOM_RECT.position.x, ROOM_RECT.position.y - WALL_THICKNESS, ROOM_RECT.size.x, WALL_THICKNESS))
-	_add_wall(Rect2(ROOM_RECT.position.x, ROOM_RECT.end.y, ROOM_RECT.size.x, WALL_THICKNESS))
-	_add_wall(Rect2(ROOM_RECT.position.x - WALL_THICKNESS, ROOM_RECT.position.y, WALL_THICKNESS, ROOM_RECT.size.y))
-	_add_wall(Rect2(ROOM_RECT.end.x, ROOM_RECT.position.y, WALL_THICKNESS, ROOM_RECT.size.y))
+	# The visible PNG includes walls and black margins, so collision follows the
+	# inner walkable floor rather than the full texture rectangle.
+	var playable_rect := Rect2(
+		_map_point(PLAYABLE_BOUNDARY_SOURCE_RECT.position),
+		_map_size(PLAYABLE_BOUNDARY_SOURCE_RECT.size)
+	)
+	var horizontal_span := Rect2(
+		playable_rect.position.x - WALL_CORNER_OVERLAP,
+		playable_rect.position.y - WALL_THICKNESS,
+		playable_rect.size.x + WALL_CORNER_OVERLAP * 2.0,
+		WALL_THICKNESS
+	)
+	var vertical_span := Rect2(
+		playable_rect.position.x - WALL_THICKNESS,
+		playable_rect.position.y - WALL_CORNER_OVERLAP,
+		WALL_THICKNESS,
+		playable_rect.size.y + WALL_CORNER_OVERLAP * 2.0
+	)
+
+	_add_wall(horizontal_span)
+	_add_wall(Rect2(horizontal_span.position.x, playable_rect.end.y, horizontal_span.size.x, WALL_THICKNESS))
+	_add_wall(vertical_span)
+	_add_wall(Rect2(playable_rect.end.x, vertical_span.position.y, WALL_THICKNESS, vertical_span.size.y))
 
 
 func _map_point(source_position: Vector2) -> Vector2:
