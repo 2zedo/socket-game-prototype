@@ -15,9 +15,27 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 
 - [ ] Yui moves with WASD.
 - [ ] Yui moves with arrow keys.
+- [ ] Diagonal movement does not pass through wall corners or object blocker corners.
 - [ ] Walls and object blockers do not trap or push Yui strangely.
 - [ ] Movement stops while the interaction panel is open.
 - [ ] Movement resumes after the interaction panel is closed.
+
+## Test Mode And Input Routing Test
+
+- [ ] Pressing `P` toggles `TEST MODE: ON` and the debug readout.
+- [ ] The readout shows player position, velocity, day, power, load watts, used slots, nearest interactable, and modal state.
+- [ ] Player collision is outlined in blue and the interaction range in green.
+- [ ] Wall blockers are outlined in red and object blockers in orange-red.
+- [ ] Interactable ranges are outlined in green and the nearest interactable is highlighted in yellow.
+- [ ] Connected wire/device anchors are visible as debug points when applicable.
+- [ ] Moving between nearby objects prints nearest-object changes in the Godot output.
+- [ ] Opening the power strip shows outlet slot and adapter hitboxes in the Test Mode overlay.
+- [ ] Pressing `ESC` closes Outlet Mode before affecting any lower-priority UI.
+- [ ] Pressing `ESC` closes an interaction or End Day confirmation and restores movement.
+- [ ] Pressing `ESC` on the result screen does not accidentally return to exploration.
+- [ ] Player movement remains locked while any modal UI is active and resumes after it closes.
+- [ ] Pressing `Tab` does not open a phone screen yet; the input remains reserved for the future phone/status UI.
+- [ ] With no modal open, `ESC` does not create a pause menu yet.
 
 ## Proximity Interaction Test
 
@@ -141,4 +159,5 @@ Target objects:
 - [ ] Laptop, Fan, Charger, and Communication Device require outlet connection before use.
 - [ ] Light follows the currently implemented connection rule; update this criterion after the built-in fluorescent versus plug-in Lamp decision.
 - [ ] Movement and interaction UI do not conflict.
+- [ ] Test Mode can expose collision and interaction bounds without changing gameplay state.
 - [ ] No fatal errors occur during Godot play.

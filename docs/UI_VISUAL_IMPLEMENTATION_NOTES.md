@@ -27,11 +27,20 @@
 - Communication Device, Fan, and Laptop may eventually need dedicated world variants separate from UI preview art.
 - Result presentation still needs a dedicated final survival-log skin.
 
+## Developer Test Overlay
+
+- `P` toggles a developer-only overlay; it is hidden during normal presentation.
+- The upper-right readout reports movement, power/outlet state, nearest interaction, and the active modal.
+- Colored world overlays distinguish player collision, interaction range, blockers, interactables, the nearest target, and wire anchors.
+- Outlet Mode uses the same Test Mode state to reveal slot, adapter, and plug-anchor hitboxes.
+- These overlays are diagnostic only and do not replace the final interaction prompts or visual treatment.
+
 ## Next Visual Check
 
 - Verify empty, one-device, Laptop two-slot, multiple-device, and disconnect states in Godot.
 - Confirm each wire appears and disappears with the matching adapter state.
 - Confirm no adapter or prompt overlaps the surrounding UI at the target resolution.
+- Use Test Mode to capture exact collision gaps before changing blocker geometry.
 
 ## Archive
 

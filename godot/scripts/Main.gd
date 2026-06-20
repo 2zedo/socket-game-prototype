@@ -9,6 +9,7 @@ extends Node2D
 @onready var day_result_panel: DayResultPanel = $UI/DayResultPanel
 
 var pending_interaction_data: Dictionary = {}
+var test_mode_enabled: bool = false
 
 
 func _ready() -> void:
@@ -23,28 +24,40 @@ func _ready() -> void:
 	survival_state.day_ended.connect(_on_day_ended)
 
 	survival_hud.set_interaction_prompt("")
+	survival_hud.set_test_mode_enabled(false)
 	_refresh_survival_ui()
 
 
+func _process(_delta: float) -> void:
+	if test_mode_enabled:
+		survival_hud.set_test_debug_text(_build_test_debug_text())
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_test_mode"):
+		_toggle_test_mode()
+		get_viewport().set_input_as_handled()
+		return
+
 	if day_result_panel.visible:
 		if event.is_action_pressed("interact") or _is_space_pressed(event):
 			_continue_to_next_day()
 			get_viewport().set_input_as_handled()
-		elif event.is_action_pressed("ui_cancel"):
+		elif event.is_action_pressed("cancel_or_menu"):
 			get_viewport().set_input_as_handled()
 		return
 
-	if event.is_action_pressed("phone_toggle"):
-		if interaction_panel.visible:
-			get_viewport().set_input_as_handled()
-			return
-		if outlet_mode.visible:
-			get_viewport().set_input_as_handled()
-			return
-		phone_ui.set_open(not phone_ui.visible, survival_state)
+	if event.is_action_pressed("cancel_or_menu"):
+		_handle_cancel_or_menu()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("interact"):
+		return
+
+	if event.is_action_pressed("open_phone"):
+		# TODO: Open phone/status UI with Tab after core movement and modal handling are stable.
+		get_viewport().set_input_as_handled()
+		return
+
+	if event.is_action_pressed("interact"):
 		if outlet_mode.visible:
 			get_viewport().set_input_as_handled()
 			return
@@ -57,19 +70,31 @@ func _unhandled_input(event: InputEvent) -> void:
 			apartment.request_nearest_interaction()
 
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_cancel"):
-		if outlet_mode.visible:
-			outlet_mode.close()
-			get_viewport().set_input_as_handled()
-		elif phone_ui.visible:
-			phone_ui.set_open(false, survival_state)
-			get_viewport().set_input_as_handled()
-		elif interaction_panel.visible:
-			_close_interaction_panel()
-			get_viewport().set_input_as_handled()
+
+
+func _handle_cancel_or_menu() -> void:
+	# Result is terminal for the current day; ESC is intentionally consumed there.
+	if day_result_panel.visible:
+		return
+	if outlet_mode.visible:
+		outlet_mode.close()
+		return
+	if interaction_panel.visible:
+		_close_interaction_panel()
+		return
+	if phone_ui.visible:
+		phone_ui.set_open(false, survival_state)
+		_sync_player_movement_with_modal_state()
+		return
+
+	# TODO: Open the pause/menu screen when that system is implemented.
 
 
 func _on_nearest_interactable_changed(interactable: ApartmentInteractable) -> void:
+	if test_mode_enabled:
+		var nearest_text: String = "none" if interactable == null else "%s (%s)" % [interactable.object_id, interactable.display_name]
+		print("nearest_interactable=", nearest_text)
+
 	if interactable == null:
 		survival_hud.set_interaction_prompt("")
 		return
@@ -160,14 +185,15 @@ func _confirm_pending_interaction() -> void:
 func _open_interaction_panel(title: String, body: String, footer_text: String = "E 또는 ESC: 닫기") -> void:
 	# Exploration is keyboard-driven, so modal interaction text pauses Yui until
 	# the player confirms or cancels the nearby object's action.
-	apartment.set_player_movement_enabled(false)
+	phone_ui.set_open(false, survival_state)
 	interaction_panel.open(title, body, footer_text)
+	_sync_player_movement_with_modal_state()
 
 
 func _close_interaction_panel() -> void:
 	pending_interaction_data = {}
 	interaction_panel.close()
-	apartment.set_player_movement_enabled(true)
+	_sync_player_movement_with_modal_state()
 
 
 func _refresh_survival_ui() -> void:
@@ -190,12 +216,13 @@ func _refresh_survival_ui() -> void:
 func _open_outlet_mode() -> void:
 	_close_interaction_panel()
 	phone_ui.set_open(false, survival_state)
-	apartment.set_player_movement_enabled(false)
 	outlet_mode.open(survival_state)
+	outlet_mode.set_test_mode_enabled(test_mode_enabled)
+	_sync_player_movement_with_modal_state()
 
 
 func _on_outlet_mode_closed() -> void:
-	apartment.set_player_movement_enabled(true)
+	_sync_player_movement_with_modal_state()
 
 
 func _on_outlet_power_changed(total_power: int) -> void:
@@ -220,14 +247,81 @@ func _on_day_ended(result: Dictionary) -> void:
 
 	phone_ui.set_open(false, survival_state)
 	_close_interaction_panel()
-	apartment.set_player_movement_enabled(false)
 	day_result_panel.open(result)
+	_sync_player_movement_with_modal_state()
 
 
 func _continue_to_next_day() -> void:
 	day_result_panel.close()
 	survival_state.continue_to_next_day()
-	apartment.set_player_movement_enabled(true)
+	_sync_player_movement_with_modal_state()
+
+
+func _toggle_test_mode() -> void:
+	test_mode_enabled = not test_mode_enabled
+	apartment.set_test_mode_enabled(test_mode_enabled)
+	outlet_mode.set_test_mode_enabled(test_mode_enabled)
+	survival_hud.set_test_mode_enabled(test_mode_enabled)
+	if test_mode_enabled:
+		survival_hud.set_test_debug_text(_build_test_debug_text())
+		if apartment.player != null:
+			print("player_pos=", apartment.player.global_position)
+	print("test_mode=", "ON" if test_mode_enabled else "OFF")
+
+
+func _build_test_debug_text() -> String:
+	var player_position: Vector2 = Vector2.ZERO
+	var player_velocity: Vector2 = Vector2.ZERO
+	if apartment.player != null:
+		player_position = apartment.player.global_position
+		player_velocity = apartment.player.velocity
+
+	var nearest_text: String = "none"
+	if apartment.nearest_interactable != null:
+		nearest_text = "%s / %s" % [
+			apartment.nearest_interactable.object_id,
+			apartment.nearest_interactable.display_name,
+		]
+
+	return "Player pos: (%.1f, %.1f)\nVelocity: (%.1f, %.1f)\nDay: %d\nPower: %d / %d\nLoad: %dW / %dW\nSlots: %d / %d\nNearest: %s\nModal: %s" % [
+		player_position.x,
+		player_position.y,
+		player_velocity.x,
+		player_velocity.y,
+		survival_state.day,
+		survival_state.current_power,
+		survival_state.max_power,
+		survival_state.current_load_watts,
+		survival_state.max_load_watts,
+		survival_state.used_outlet_slots,
+		survival_state.max_outlet_slots,
+		nearest_text,
+		_get_modal_state(),
+	]
+
+
+func _get_modal_state() -> String:
+	if day_result_panel.visible:
+		return "result_screen"
+	if outlet_mode.visible:
+		return "outlet_mode"
+	if interaction_panel.visible and pending_interaction_data.get("interaction_type", "") == "end_day":
+		return "end_day_confirm"
+	if interaction_panel.visible:
+		return "interaction_panel"
+	if phone_ui.visible:
+		return "phone_ui"
+	return "exploration"
+
+
+func _sync_player_movement_with_modal_state() -> void:
+	var modal_open: bool = (
+		day_result_panel.visible
+		or outlet_mode.visible
+		or interaction_panel.visible
+		or phone_ui.visible
+	)
+	apartment.set_player_movement_enabled(not modal_open)
 
 
 func _is_space_pressed(event: InputEvent) -> bool:

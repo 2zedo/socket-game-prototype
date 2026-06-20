@@ -10,6 +10,8 @@ class_name SurvivalHUD
 @onready var time_label: Label = $TimeLabel
 @onready var phase_effect_label: Label = $PhaseEffectLabel
 @onready var hint_label: Label = $HintLabel
+@onready var test_mode_label: Label = $TestModeLabel
+@onready var test_debug_label: Label = $TestDebugLabel
 
 const NO_PROMPT_POSITION: Vector2 = Vector2(-99999.0, -99999.0)
 
@@ -25,6 +27,8 @@ func _ready() -> void:
 	UIStyle.apply_label(prompt_label, UIStyle.TEXT, 13)
 	UIStyle.apply_label(hint_label, UIStyle.MUTED, 13)
 	prompt_label.add_theme_stylebox_override("normal", UIStyle.make_panel_style(Color(0.035, 0.032, 0.028, 0.88), UIStyle.LINE, 1, 2))
+	test_mode_label.add_theme_stylebox_override("normal", UIStyle.make_panel_style(Color(0.12, 0.06, 0.02, 0.9), Color(1.0, 0.52, 0.12, 0.9), 1, 2))
+	test_debug_label.add_theme_stylebox_override("normal", UIStyle.make_panel_style(Color(0.02, 0.025, 0.03, 0.9), Color(0.28, 0.66, 1.0, 0.82), 1, 2))
 	queue_redraw()
 
 
@@ -78,3 +82,16 @@ func set_phase_style(phase_key: String) -> void:
 	stats_label.add_theme_color_override("font_color", UIStyle.TEXT)
 	time_label.add_theme_color_override("font_color", UIStyle.MUTED)
 	phase_effect_label.add_theme_color_override("font_color", UIStyle.MUTED)
+
+
+func set_test_mode_enabled(is_enabled: bool) -> void:
+	test_mode_label.visible = is_enabled
+	test_debug_label.visible = is_enabled
+	if not is_enabled:
+		test_debug_label.text = ""
+
+
+func set_test_debug_text(text: String) -> void:
+	if not test_debug_label.visible:
+		return
+	test_debug_label.text = text

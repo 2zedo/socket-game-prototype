@@ -16,6 +16,7 @@ var used_day1_action_keys: Array[String] = []
 var current_power_units: int = SurvivalState.DAY1_STARTING_POWER_UNITS
 var phase_key: String = "day"
 var wire_nodes_by_power_key: Dictionary = {}
+var test_mode_enabled: bool = false
 
 const MAP_SOURCE_SIZE: Vector2 = Vector2(1464.0, 1074.0)
 const WIRE_SOURCE_SIZE: Vector2 = Vector2(1446.0, 1088.0)
@@ -37,6 +38,8 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_nearest_interactable()
+	if test_mode_enabled:
+		queue_redraw()
 
 
 func request_nearest_interaction() -> void:
@@ -47,6 +50,11 @@ func request_nearest_interaction() -> void:
 func set_player_movement_enabled(is_enabled: bool) -> void:
 	if player != null:
 		player.set_movement_enabled(is_enabled)
+
+
+func set_test_mode_enabled(is_enabled: bool) -> void:
+	test_mode_enabled = is_enabled
+	queue_redraw()
 
 
 func set_powered_devices(device_keys: Array[String]) -> void:
@@ -93,6 +101,8 @@ func set_phase(next_phase_key: String) -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("#100e0c"), true)
 	draw_texture_rect(AssetPaths.APARTMENT_MAP_REFERENCE, MAP_RECT, false, Color.WHITE)
+	if test_mode_enabled:
+		_draw_test_overlay()
 
 
 func _build_room_collision() -> void:
@@ -263,6 +273,7 @@ func _add_interactable(config: Dictionary) -> void:
 
 func _add_wall(rect: Rect2) -> void:
 	var wall: StaticBody2D = StaticBody2D.new()
+	wall.add_to_group("debug_wall_blockers")
 	var shape: CollisionShape2D = CollisionShape2D.new()
 	var rectangle: RectangleShape2D = RectangleShape2D.new()
 	rectangle.size = rect.size
@@ -274,6 +285,7 @@ func _add_wall(rect: Rect2) -> void:
 
 func _add_furniture_blocker(center: Vector2, size: Vector2) -> void:
 	var blocker: StaticBody2D = StaticBody2D.new()
+	blocker.add_to_group("debug_object_blockers")
 	var shape: CollisionShape2D = CollisionShape2D.new()
 	var rectangle: RectangleShape2D = RectangleShape2D.new()
 	rectangle.size = size * 0.86
@@ -548,3 +560,78 @@ func _distance_to_interactable_edge(world_position: Vector2, interactable: Apart
 		maxf(absf(local_delta.y) - half_size.y, 0.0)
 	)
 	return outside.length()
+
+
+func _draw_test_overlay() -> void:
+	_draw_debug_blocker_group("debug_wall_blockers", Color(0.95, 0.18, 0.18, 0.2), Color(1.0, 0.24, 0.24, 0.9))
+	_draw_debug_blocker_group("debug_object_blockers", Color(0.95, 0.32, 0.16, 0.16), Color(1.0, 0.42, 0.18, 0.88))
+
+	for interactable in interactables:
+		var body_rect: Rect2 = Rect2(interactable.position - interactable.body_size * 0.5, interactable.body_size)
+		draw_rect(body_rect.grow(58.0), Color(0.2, 0.95, 0.42, 0.42), false, 1.0)
+		draw_rect(body_rect, Color(0.18, 0.9, 0.36, 0.18), true)
+		draw_rect(body_rect, Color(0.22, 1.0, 0.42, 0.9), false, 1.5)
+
+	if nearest_interactable != null:
+		var nearest_rect: Rect2 = Rect2(
+			nearest_interactable.position - nearest_interactable.body_size * 0.5,
+			nearest_interactable.body_size
+		).grow(5.0)
+		draw_rect(nearest_rect, Color(1.0, 0.88, 0.12, 0.96), false, 3.0)
+
+	_draw_player_debug_shapes()
+	_draw_wire_debug_anchors()
+
+
+func _draw_debug_blocker_group(group_name: String, fill_color: Color, line_color: Color) -> void:
+	for raw_node in get_tree().get_nodes_in_group(group_name):
+		var blocker: StaticBody2D = raw_node as StaticBody2D
+		if blocker == null or blocker.get_parent() != self:
+			continue
+
+		for raw_child in blocker.get_children():
+			var collision_shape: CollisionShape2D = raw_child as CollisionShape2D
+			if collision_shape == null:
+				continue
+			var rectangle: RectangleShape2D = collision_shape.shape as RectangleShape2D
+			if rectangle == null:
+				continue
+			var center: Vector2 = to_local(collision_shape.global_position)
+			var rect: Rect2 = Rect2(center - rectangle.size * 0.5, rectangle.size)
+			draw_rect(rect, fill_color, true)
+			draw_rect(rect, line_color, false, 2.0)
+
+
+func _draw_player_debug_shapes() -> void:
+	if player == null:
+		return
+
+	var body_shape: CollisionShape2D = player.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if body_shape != null:
+		var body_circle: CircleShape2D = body_shape.shape as CircleShape2D
+		if body_circle != null:
+			var body_center: Vector2 = to_local(body_shape.global_position)
+			draw_circle(body_center, body_circle.radius, Color(0.12, 0.48, 1.0, 0.24))
+			draw_arc(body_center, body_circle.radius, 0.0, TAU, 32, Color(0.2, 0.62, 1.0, 0.96), 2.0, true)
+
+	var range_shape: CollisionShape2D = player.get_node_or_null("InteractionRange/CollisionShape2D") as CollisionShape2D
+	if range_shape != null:
+		var range_circle: CircleShape2D = range_shape.shape as CircleShape2D
+		if range_circle != null:
+			var range_center: Vector2 = to_local(range_shape.global_position)
+			draw_circle(range_center, range_circle.radius, Color(0.18, 0.9, 0.38, 0.06))
+			draw_arc(range_center, range_circle.radius, 0.0, TAU, 48, Color(0.2, 1.0, 0.44, 0.82), 1.5, true)
+
+
+func _draw_wire_debug_anchors() -> void:
+	var power_strip: ApartmentInteractable = interactables_by_id.get("power_strip") as ApartmentInteractable
+	if power_strip != null:
+		draw_circle(power_strip.position, 5.0, Color(1.0, 0.36, 0.86, 0.95))
+
+	for power_key in powered_device_keys:
+		var interactable: ApartmentInteractable = interactables_by_id.get(power_key) as ApartmentInteractable
+		if interactable == null:
+			continue
+		draw_circle(interactable.position, 5.0, Color(1.0, 0.36, 0.86, 0.95))
+		if power_strip != null:
+			draw_line(power_strip.position, interactable.position, Color(1.0, 0.36, 0.86, 0.42), 1.0, true)

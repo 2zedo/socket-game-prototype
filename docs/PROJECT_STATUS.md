@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8c37a87`
-- Phase: Godot DAY 1 MVP visual integration and live playtest preparation
+- Current commit at task start: `4d524aa`
+- Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -19,6 +19,9 @@
 - Connected devices reveal their matching map wire overlays; disconnected devices keep those overlays hidden.
 - Laptop occupies two adjacent slots and cannot start from slot 4.
 - Communication Device currently occupies one slot.
+- Pressing `P` toggles a developer Test Mode with gameplay-state text and collision/interaction overlays.
+- Modal input is routed through `Main.gd`; movement is locked while interaction, outlet, end-day, phone, or result UI is active.
+- `Tab` is reserved as the future phone/status input and does not open a new UI yet.
 
 ## Current DAY 1 Decisions
 
@@ -27,38 +30,39 @@
 - Light: decision required. Current code treats it as a connected `1`-slot Lamp/Light, while the narrative art still reads as a built-in fluorescent ceiling light.
 - Until the Light decision is resolved, current documents must distinguish implemented behavior from intended design.
 
-## Changed Documents
+## Changed Files
 
-- `AGENTS.md`
-- `docs/PROJECT_STATUS.md`
-- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
-- `docs/ASSET_APPLICATION_NOTES.md`
-- `docs/DAY1_CONTENT_BRIEF.md`
-- `docs/GODOT_DAY1_MVP_PLAN.md`
-- `docs/GODOT_PLAYTEST_CHECKLIST.md`
-- `docs/old/PROJECT_STATUS_20260619.md`
-- `docs/old/UI_VISUAL_IMPLEMENTATION_NOTES_20260619.md`
-- `docs/old/ASSET_APPLICATION_NOTES_20260619.md`
+- `godot/project.godot`: added Test Mode, reserved phone, and shared cancel input actions.
+- `godot/scripts/Main.gd`: centralized Test Mode and modal input routing.
+- `godot/scripts/Apartment.gd`: added collision, interaction, nearest-object, and wire-anchor overlays.
+- `godot/scripts/ui/OutletMode.gd`: added slot/adapter debug overlays and delegated ESC handling to `Main.gd`.
+- `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: added the Test Mode status/readout.
+- `godot/scenes/ui/PhoneUI.tscn`: updated the reserved phone key hint to `Tab`.
+- `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
 
-- Documentation-only cleanup; no Godot scripts, scenes, assets, or web files changed.
 - Local `main` was aligned with `origin/main` at task start.
-- Pre-existing untracked source-side `.png.import` files were not staged as part of this documentation task.
+- Godot 4.5.1 headless import and Main scene run completed without script or runtime errors.
+- Automated scene checks passed for Test Mode toggle, modal labels, movement locking, outlet/end-day ESC cancellation, and result-screen ESC consumption.
+- A rendered Test Mode capture confirmed that debug text and colored overlays are visible at `1280x720`.
+- `git diff --check` passed. Web files were not modified.
+- Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 
 ## Current Risks Or Known Issues
 
 - The Light model is unresolved: built-in fluorescent circuit versus plug-in Lamp.
-- Dynamic adapter drag/drop and wire visibility still require a live Godot playtest.
+- Reported wall/object pass-through and diagonal collision behavior is now observable but has not been redesigned or fixed in this pass.
+- Dynamic adapter drag/drop, outlet hitboxes, and wire visibility still require hands-on mouse testing in Godot.
 - Laptop desk-wire and several device endpoints may need small visual anchor adjustments.
-- Interaction and collision overlays still require manual alignment review against the direct map image.
+- Interaction and blocker overlays require manual alignment review against the map image before collision changes are made.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
 
 ## Next Recommended Task
 
-1. Decide the Light model, then update code and all current DAY 1 documents together.
-2. Run the multitap and dynamic-wire sections of `docs/GODOT_PLAYTEST_CHECKLIST.md` in Godot.
-3. After the playtest, fix only confirmed slot, wire-anchor, or interaction-overlay issues.
+1. Run the Test Mode collision checks in `docs/GODOT_PLAYTEST_CHECKLIST.md`, especially walls, furniture, and diagonal movement.
+2. Record exact blocker rectangles/ranges from the overlay, then fix only confirmed collision gaps.
+3. Run the multitap hitbox and dynamic-wire checks before adding any force-state debug tools.
 
 ## Archive
 

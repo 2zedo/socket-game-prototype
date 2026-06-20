@@ -33,6 +33,7 @@ var drag_offset: Vector2 = Vector2.ZERO
 var drag_start_mouse_position: Vector2 = Vector2.ZERO
 var drag_started_connected: bool = false
 var status_text: String = "어댑터를 끌어 멀티탭 슬롯에 꽂으세요"
+var test_mode_enabled: bool = false
 
 
 func _ready() -> void:
@@ -83,12 +84,6 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
-		close()
-		get_viewport().set_input_as_handled()
-
-
 func _draw() -> void:
 	if not visible:
 		return
@@ -102,6 +97,30 @@ func _draw() -> void:
 	_draw_power_strip()
 	_draw_devices()
 	_draw_text(Vector2(PANEL_MARGIN, size.y - 38.0), status_text, 16, UIStyle.TEXT)
+	if test_mode_enabled:
+		_draw_test_hitboxes()
+
+
+func set_test_mode_enabled(is_enabled: bool) -> void:
+	test_mode_enabled = is_enabled
+	queue_redraw()
+
+
+func _draw_test_hitboxes() -> void:
+	for index in range(OUTLET_COUNT):
+		var slot_rect: Rect2 = _get_slot_rect(index)
+		draw_rect(slot_rect, Color(1.0, 0.52, 0.08, 0.14), true)
+		draw_rect(slot_rect, Color(1.0, 0.58, 0.12, 0.95), false, 2.0)
+
+	for device in devices:
+		var device_rect: Rect2 = _get_device_rect(device)
+		draw_rect(device_rect, Color(1.0, 0.7, 0.2, 0.82), false, 1.5)
+		var plug_position: Vector2 = _get_device_plug_position(device)
+		draw_circle(plug_position, 4.0, Color(1.0, 0.32, 0.12, 0.95))
+
+	if not dragging_device.is_empty():
+		var dragging_rect: Rect2 = _get_device_rect(dragging_device)
+		draw_rect(dragging_rect, Color(1.0, 0.9, 0.25, 0.95), false, 2.5)
 
 
 func _draw_connection_summary() -> void:
