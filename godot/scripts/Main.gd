@@ -218,7 +218,7 @@ func _close_interaction_panel() -> void:
 func _refresh_survival_ui() -> void:
 	survival_hud.set_warnings(survival_state.get_warning_lines())
 	survival_hud.set_stats(survival_state.get_hud_stat_text())
-	survival_hud.set_time(survival_state.get_time_text())
+	survival_hud.set_time("")
 	survival_hud.set_phase_effect(survival_state.get_phase_effect_text())
 	survival_hud.set_phase_style(survival_state.phase)
 	apartment.set_powered_devices(survival_state.powered_devices)

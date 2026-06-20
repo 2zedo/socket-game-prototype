@@ -23,8 +23,8 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 ## In-Game Clock Test
 
 - [ ] A new day starts at `08:00 / 아침`.
-- [ ] HUD time advances toward `20:00` and uses 아침/낮/오후/저녁 periods.
-- [ ] Phone UI shows the same current time and period as the HUD.
+- [ ] Phone UI time advances toward `20:00` and uses 아침/낮/오후/저녁 periods.
+- [ ] The normal HUD does not show current time or time period details.
 - [ ] Reaching `20:00` does not automatically end the day or switch to night.
 
 ## Test Mode And Input Routing Test
