@@ -46,6 +46,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	if _try_room_object_mouse_interaction(event):
+		get_viewport().set_input_as_handled()
+		return
+
 	if day_result_panel.visible:
 		if event.is_action_pressed("interact") or _is_space_pressed(event):
 			_continue_to_next_day()
@@ -72,6 +76,26 @@ func _unhandled_input(event: InputEvent) -> void:
 			apartment.request_nearest_interaction()
 
 		get_viewport().set_input_as_handled()
+
+
+func _try_room_object_mouse_interaction(event: InputEvent) -> bool:
+	var mouse_button: InputEventMouseButton = event as InputEventMouseButton
+	if mouse_button == null or not mouse_button.pressed or mouse_button.button_index != MOUSE_BUTTON_LEFT:
+		return false
+	if _get_modal_state() != "exploration" or apartment.nearest_interactable == null:
+		return false
+
+	# Mouse clicks reuse the same nearest-object range gate and request signal as E.
+	var interactable: ApartmentInteractable = apartment.nearest_interactable
+	var interaction_rect := Rect2(
+		interactable.global_position - interactable.body_size * 0.5,
+		interactable.body_size
+	)
+	if not interaction_rect.has_point(apartment.get_global_mouse_position()):
+		return false
+
+	apartment.request_nearest_interaction()
+	return true
 
 
 func _handle_cancel_or_menu() -> void:

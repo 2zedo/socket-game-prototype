@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8f6ba84`
+- Current commit at task start: `fa369a3`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -26,6 +26,7 @@
 - Apartment outer-wall collision now follows the walkable floor inside the map art, with overlapping corners to prevent diagonal escape gaps.
 - Exploration hides the left status HUD; Phone UI is the primary status view while prompts, controls, and Test Mode remain visible.
 - The in-game clock advances only during free exploration and pauses for Phone, Outlet, Interaction, End Day, and Result modals.
+- Room objects can be activated by left-clicking their existing interaction rectangle while Yui is within the same proximity range used by `E`; room clicks are ignored while a modal is open.
 
 ## Current DAY 1 Decisions
 
@@ -47,6 +48,7 @@
 - `godot/scripts/Apartment.gd`: aligns only the four outer wall blockers to the interior floor boundary.
 - `godot/scenes/ui/SurvivalHUD.tscn`, `godot/scripts/ui/SurvivalHUD.gd`: hide exploration status panels and their power icon.
 - `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`: pause only the display clock while modal UI is active.
+- `godot/scripts/Main.gd`: routes eligible left-clicks through the existing nearest-interactable request used by `E`.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -56,6 +58,7 @@
 - Automated scene checks passed for Test Mode toggle, modal labels, movement locking, outlet/end-day ESC cancellation, and result-screen ESC consumption.
 - A rendered Test Mode capture confirmed that debug text and colored overlays are visible at `1280x720`.
 - `git diff --check` passed. Web files were not modified.
+- Godot 4.5.1 headless editor initialization completed after adding mouse interaction routing.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -66,6 +69,7 @@
 - Dynamic adapter drag/drop, outlet hitboxes, and wire visibility still require hands-on mouse testing in Godot.
 - Laptop desk-wire and several device endpoints may need small visual anchor adjustments.
 - Interaction and blocker overlays require manual alignment review against the map image before collision changes are made.
+- Mouse interaction requires manual checks for all six room targets and out-of-range clicks; no GUI input simulation was run.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
 
 ## Next Recommended Task
