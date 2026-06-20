@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `1b620d5`
+- Current commit at task start: `bcaeea3`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -29,6 +29,7 @@
 - Room objects can be activated by left-clicking their existing interaction rectangle while Yui is within the same proximity range used by `E`; room clicks are ignored while a modal is open.
 - Interaction panels expose clickable use and cancel/close buttons that reuse the existing `E` and `ESC` action paths.
 - Interaction buttons brighten their border on hover/press; informational panels without a primary action close with either `E`, `ESC`, or the close button.
+- Informational interaction panels label their shared close action as `[E / ESC] 닫기`.
 
 ## Current DAY 1 Decisions
 
@@ -53,6 +54,7 @@
 - `godot/scripts/Main.gd`: routes eligible left-clicks through the existing nearest-interactable request used by `E`.
 - `godot/scenes/ui/InteractionPanel.tscn`, `godot/scripts/ui/InteractionPanel.gd`, `godot/scripts/Main.gd`: connect real panel buttons to the existing confirm and cancel handlers.
 - `godot/scripts/ui/InteractionPanel.gd`: adds distinct hover/pressed feedback while preserving existing button actions.
+- `godot/scripts/ui/InteractionPanel.gd`: aligns the no-primary-action hint with its existing `E` and `ESC` close behavior.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -65,6 +67,7 @@
 - Godot 4.5.1 headless editor initialization completed after adding mouse interaction routing.
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after converting interaction controls to clickable buttons.
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after adding interaction-button hover feedback.
+- Godot 4.5.1 headless Main scene startup completed after updating the interaction close hint.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 

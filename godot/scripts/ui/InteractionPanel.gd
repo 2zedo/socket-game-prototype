@@ -106,7 +106,7 @@ func _apply_footer(footer_text: String) -> void:
 		cancel_button_label.text = "[ESC] 취소"
 		return
 
-	cancel_button_label.text = "[ESC] 닫기"
+	cancel_button_label.text = "[E / ESC] 닫기"
 
 
 func _make_yui_line(title: String, body: String) -> String:
