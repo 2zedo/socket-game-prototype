@@ -145,11 +145,13 @@ func _draw_power_strip() -> void:
 	for index in range(OUTLET_COUNT):
 		var slot_rect: Rect2 = _get_slot_rect(index)
 		var occupied: bool = occupied_slots[index] != null
-		var border_color: Color = UIStyle.ELECTRIC if occupied else Color(0.9, 0.82, 0.62, 0.32)
+		var led_position := Vector2(slot_rect.get_center().x, slot_rect.end.y + 18.0)
 		if occupied:
-			draw_rect(slot_rect.grow(5.0), Color(0.95, 0.68, 0.24, 0.16), true)
-		draw_rect(slot_rect, border_color, false, 1.6)
-		_draw_centered_text(Vector2(slot_rect.get_center().x, slot_rect.end.y + 19.0), "%d" % (index + 1), 12, UIStyle.MUTED)
+			draw_circle(led_position, 8.0, Color(0.2, 0.86, 0.38, 0.16))
+			draw_circle(led_position, 4.5, Color(0.32, 0.9, 0.46, 1.0))
+		else:
+			draw_circle(led_position, 4.5, Color(0.07, 0.09, 0.07, 0.9))
+			draw_arc(led_position, 4.5, 0.0, TAU, 20, Color(0.45, 0.43, 0.36, 0.55), 1.0)
 
 
 func _draw_slot_feedback() -> void:

@@ -54,6 +54,18 @@ The existing outlet hitboxes and connection rules remain unchanged. Drag feedbac
 - Releasing or cancelling the drag clears feedback through the existing empty `dragging_device` state.
 - Manual drag checks remain required for one-slot, occupied-slot, Laptop two-slot, slot-4 rejection, connect, and disconnect behavior.
 
+## Outlet Slot LED Pass
+
+Normal outlet presentation no longer outlines every slot. Slot coordinates, adapter placement, hitboxes, and drag/drop rules were preserved.
+
+## Outlet Slot LED Adjustments
+
+- Empty slots show a small unlit LED below the socket.
+- Occupied slots show a green LED and subtle glow; two-slot Laptop placement lights both occupied LEDs.
+- Existing drag-time green/red target frames remain visible only while an adapter is moving.
+- Test Mode continues to draw diagnostic slot rectangles independently of normal presentation.
+- Manual checks remain required for connect, two-slot connect, disconnect, and drag-feedback transitions.
+
 ## Archive
 
 - Previous visual-pass history: `docs/old/UI_VISUAL_IMPLEMENTATION_NOTES_20260619.md`
