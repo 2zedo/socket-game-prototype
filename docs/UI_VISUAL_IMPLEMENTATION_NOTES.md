@@ -56,12 +56,13 @@ The existing outlet hitboxes and connection rules remain unchanged. Drag feedbac
 
 ## Outlet Slot LED Pass
 
-Normal outlet presentation no longer outlines every slot. Slot coordinates, adapter placement, hitboxes, and drag/drop rules were preserved.
+Normal outlet presentation no longer outlines every slot. The built-in LED artwork in `powerstrip_4slot.png` is now the visual source, while slot coordinates, adapter placement, hitboxes, and drag/drop rules remain unchanged.
 
 ## Outlet Slot LED Adjustments
 
-- Empty slots show a small unlit LED below the socket.
-- Occupied slots show a green LED and subtle glow; two-slot Laptop placement lights both occupied LEDs.
+- Empty slots darken the corresponding built-in LED region in the power-strip texture.
+- Occupied slots leave the original green LED artwork visible; two-slot Laptop placement reveals both occupied LEDs.
+- The previously drawn green circles and glow were removed rather than layered over the source art.
 - Existing drag-time green/red target frames remain visible only while an adapter is moving.
 - Test Mode continues to draw diagnostic slot rectangles independently of normal presentation.
 - Manual checks remain required for connect, two-slot connect, disconnect, and drag-feedback transitions.

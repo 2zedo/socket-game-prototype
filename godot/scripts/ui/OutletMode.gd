@@ -24,6 +24,8 @@ const SLOT_CENTER_RATIOS: Array[Vector2] = [
 	Vector2(0.587017, 0.418048),
 	Vector2(0.755525, 0.418048),
 ]
+const BUILT_IN_LED_Y_RATIO: float = 0.6372
+const BUILT_IN_LED_MASK_SIZE: Vector2 = Vector2(13.0, 10.0)
 
 var survival_state: SurvivalState
 var occupied_slots: Array = []
@@ -143,15 +145,17 @@ func _draw_power_strip() -> void:
 	draw_texture_rect(AssetPaths.POWERSTRIP_4SLOT, strip_rect, false, Color.WHITE)
 
 	for index in range(OUTLET_COUNT):
-		var slot_rect: Rect2 = _get_slot_rect(index)
-		var occupied: bool = occupied_slots[index] != null
-		var led_position := Vector2(slot_rect.get_center().x, slot_rect.end.y + 18.0)
-		if occupied:
-			draw_circle(led_position, 8.0, Color(0.2, 0.86, 0.38, 0.16))
-			draw_circle(led_position, 4.5, Color(0.32, 0.9, 0.46, 1.0))
-		else:
-			draw_circle(led_position, 4.5, Color(0.07, 0.09, 0.07, 0.9))
-			draw_arc(led_position, 4.5, 0.0, TAU, 20, Color(0.45, 0.43, 0.36, 0.55), 1.0)
+		if occupied_slots[index] != null:
+			continue
+
+		# The texture already contains one green LED per slot. Empty slots only mask
+		# that exact artwork so occupied slots reveal the original lit LED unchanged.
+		var led_center := strip_rect.position + Vector2(
+			strip_rect.size.x * SLOT_CENTER_RATIOS[index].x,
+			strip_rect.size.y * BUILT_IN_LED_Y_RATIO
+		)
+		var led_mask := Rect2(led_center - BUILT_IN_LED_MASK_SIZE * 0.5, BUILT_IN_LED_MASK_SIZE)
+		draw_rect(led_mask, Color(0.015, 0.018, 0.014, 0.82), true)
 
 
 func _draw_slot_feedback() -> void:
