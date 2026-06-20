@@ -53,7 +53,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("open_phone"):
-		# TODO: Open phone/status UI with Tab after core movement and modal handling are stable.
+		_toggle_phone_ui()
 		get_viewport().set_input_as_handled()
 		return
 
@@ -88,6 +88,20 @@ func _handle_cancel_or_menu() -> void:
 		return
 
 	# TODO: Open the pause/menu screen when that system is implemented.
+
+
+func _toggle_phone_ui() -> void:
+	if phone_ui.visible:
+		phone_ui.set_open(false, survival_state)
+		_sync_player_movement_with_modal_state()
+		return
+
+	# Phone is an exploration modal and must not overlap interaction, outlet, or result UI.
+	if day_result_panel.visible or outlet_mode.visible or interaction_panel.visible:
+		return
+
+	phone_ui.set_open(true, survival_state)
+	_sync_player_movement_with_modal_state()
 
 
 func _on_nearest_interactable_changed(interactable: ApartmentInteractable) -> void:
