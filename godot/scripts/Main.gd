@@ -10,6 +10,7 @@ extends Node2D
 
 var pending_interaction_data: Dictionary = {}
 var test_mode_enabled: bool = false
+var phone_tab_was_pressed: bool = false
 
 
 func _ready() -> void:
@@ -29,15 +30,14 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	var phone_tab_is_pressed: bool = Input.is_key_pressed(KEY_TAB)
+	if Input.is_action_just_pressed("open_phone") or (phone_tab_is_pressed and not phone_tab_was_pressed):
+		print("phone_input_received: Tab/open_phone")
+		_toggle_phone_ui()
+	phone_tab_was_pressed = phone_tab_is_pressed
+
 	if test_mode_enabled:
 		survival_hud.set_test_debug_text(_build_test_debug_text())
-
-
-func _input(event: InputEvent) -> void:
-	# Tab is a UI focus-navigation key, so handle it before Control nodes can consume it.
-	if event.is_action_pressed("open_phone"):
-		_toggle_phone_ui()
-		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -96,18 +96,17 @@ func _toggle_phone_ui() -> void:
 	if phone_ui.visible:
 		phone_ui.set_open(false, survival_state)
 		_sync_player_movement_with_modal_state()
-		if test_mode_enabled:
-			print("phone_ui=closed")
+		print("phone_ui_visible=", phone_ui.visible, " modal=", _get_modal_state())
 		return
 
 	# Phone is an exploration modal and must not overlap interaction, outlet, or result UI.
 	if day_result_panel.visible or outlet_mode.visible or interaction_panel.visible:
+		print("phone_ui_toggle_blocked modal=", _get_modal_state())
 		return
 
 	phone_ui.set_open(true, survival_state)
 	_sync_player_movement_with_modal_state()
-	if test_mode_enabled:
-		print("phone_ui=opened")
+	print("phone_ui_visible=", phone_ui.visible, " modal=", _get_modal_state())
 
 
 func _on_nearest_interactable_changed(interactable: ApartmentInteractable) -> void:

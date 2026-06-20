@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `4d524aa`
+- Current commit at task start: `8f8b506`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -21,7 +21,7 @@
 - Communication Device currently occupies one slot.
 - Pressing `P` toggles a developer Test Mode with gameplay-state text and collision/interaction overlays.
 - Modal input is routed through `Main.gd`; movement is locked while interaction, outlet, end-day, phone, or result UI is active.
-- `Tab` is reserved as the future phone/status input and does not open a new UI yet.
+- `Tab` opens the existing Phone UI during exploration; it closes with `Tab` or `ESC` and locks Yui movement while visible.
 
 ## Current DAY 1 Decisions
 
@@ -38,6 +38,7 @@
 - `godot/scripts/ui/OutletMode.gd`: added slot/adapter debug overlays and delegated ESC handling to `Main.gd`.
 - `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: added the Test Mode status/readout.
 - `godot/scenes/ui/PhoneUI.tscn`: updated the reserved phone key hint to `Tab`.
+- `godot/scripts/Main.gd`: routes `open_phone` plus a raw `KEY_TAB` edge through the existing Phone UI toggle and logs each received toggle.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -48,6 +49,7 @@
 - A rendered Test Mode capture confirmed that debug text and colored overlays are visible at `1280x720`.
 - `git diff --check` passed. Web files were not modified.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
+- Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
 
