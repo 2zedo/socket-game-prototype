@@ -14,6 +14,9 @@ class_name SurvivalHUD
 @onready var test_debug_label: Label = $TestDebugLabel
 
 const NO_PROMPT_POSITION: Vector2 = Vector2(-99999.0, -99999.0)
+const WARNING_DURATION_SECONDS: float = 3.0
+
+var warning_revision: int = 0
 
 
 func _ready() -> void:
@@ -42,11 +45,22 @@ func set_interaction_prompt(text: String, world_position: Vector2 = NO_PROMPT_PO
 func set_warnings(warnings: Array[String]) -> void:
 	if warnings.is_empty():
 		warning_panel.visible = false
+		warning_label.visible = false
 		warning_label.text = ""
 		return
 
 	warning_panel.visible = true
+	warning_label.visible = true
 	warning_label.text = " / ".join(warnings)
+
+
+func show_temporary_warning(message: String) -> void:
+	warning_revision += 1
+	var current_revision: int = warning_revision
+	set_warnings([message])
+	await get_tree().create_timer(WARNING_DURATION_SECONDS).timeout
+	if current_revision == warning_revision:
+		set_warnings([])
 
 
 func set_stats(text: String) -> void:

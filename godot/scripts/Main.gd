@@ -19,6 +19,7 @@ func _ready() -> void:
 	interaction_panel.confirm_requested.connect(_on_interaction_panel_confirm_requested)
 	interaction_panel.cancel_requested.connect(_on_interaction_panel_cancel_requested)
 	survival_state.changed.connect(_refresh_survival_ui)
+	survival_state.phone_battery_warning.connect(_on_phone_battery_warning)
 	outlet_mode.closed.connect(_on_outlet_mode_closed)
 	outlet_mode.power_changed.connect(_on_outlet_power_changed)
 	outlet_mode.powered_devices_changed.connect(_on_powered_devices_changed)
@@ -256,7 +257,6 @@ func _close_interaction_panel() -> void:
 
 
 func _refresh_survival_ui() -> void:
-	survival_hud.set_warnings([])
 	survival_hud.set_stats(survival_state.get_hud_stat_text())
 	survival_hud.set_time("")
 	survival_hud.set_phase_effect(survival_state.get_phase_effect_text())
@@ -270,6 +270,10 @@ func _refresh_survival_ui() -> void:
 
 	if outlet_mode.visible:
 		outlet_mode.queue_redraw()
+
+
+func _on_phone_battery_warning(message: String) -> void:
+	survival_hud.show_temporary_warning(message)
 
 
 func _open_outlet_mode() -> void:

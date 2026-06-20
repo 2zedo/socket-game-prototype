@@ -5,7 +5,7 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
 - Current commit at task start: `2cffc80`
-- Phase: Godot DAY 1 MVP stability testing and collision diagnosis
+- Phase: Godot DAY 1 MVP stability testing and phone-status feedback
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -35,6 +35,8 @@
 - Connected adapters no longer retain a selection-like border after placement; borders remain limited to active drag feedback and Test Mode diagnostics.
 - Outlet preview and drop now resolve the same target slot, preventing valid two-slot Laptop feedback from disagreeing with placement.
 - Connected adapter placement exposes per-device offset and scale tuning while retaining the previous zero-offset/unit-scale defaults.
+- Phone battery warnings appear once per day when battery crosses `20%`, `10%`, `5%`, and `0%`.
+- At `0%`, Phone UI remains accessible but hides status details until charging restores the battery.
 
 ## Current DAY 1 Decisions
 
@@ -65,6 +67,8 @@
 - `godot/scripts/ui/OutletMode.gd`: removes the normal connected-adapter outline while preserving drag feedback.
 - `godot/scripts/ui/OutletMode.gd`: shares one target-slot resolver between drag preview and actual drop.
 - `godot/scripts/ui/OutletMode.gd`: centralizes connected visual offset/scale tuning for Fan, Charger, Communication Device, Lamp, and Laptop.
+- `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: track daily battery-warning thresholds and route warning messages to the HUD.
+- `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: show short battery warnings above the screen center.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -84,6 +88,7 @@
 - Godot 4.5.1 headless Main scene startup completed after removing connected-adapter borders.
 - Godot 4.5.1 headless Main scene startup completed after unifying outlet preview/drop target selection.
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after exposing connected-adapter tuning values.
+- Godot 4.5.1 headless Main scene startup completed after adding Phone battery warnings and the empty-battery view.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -102,12 +107,13 @@
 - Built-in LED mask alignment and two-slot LED exposure require manual visual confirmation at the target resolution.
 - Two-slot Laptop drops require manual checks at valid starts 1-3 and invalid start 4.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
+- Battery-warning timing, daily one-shot behavior, the `0%` Phone view, and recovery after charging require manual GUI confirmation.
 
 ## Next Recommended Task
 
-1. Run the Test Mode collision checks in `docs/GODOT_PLAYTEST_CHECKLIST.md`, especially walls, furniture, and diagonal movement.
-2. Record exact blocker rectangles/ranges from the overlay, then fix only confirmed collision gaps.
-3. Run the multitap hitbox and dynamic-wire checks before adding any force-state debug tools.
+1. Manually verify the `20%`, `10%`, `5%`, and `0%` Phone battery warnings and confirm each appears once per day.
+2. Confirm the `0%` Phone view hides details and charging restores the normal status view.
+3. Continue the Test Mode collision checks in `docs/GODOT_PLAYTEST_CHECKLIST.md` after Phone feedback passes.
 
 ## Archive
 

@@ -75,6 +75,17 @@ Normal outlet presentation no longer outlines every slot. The built-in LED artwo
 - Laptop retains its separate two-slot base size and anchor, with an additional independent connected scale and offset.
 - All tuning defaults are zero offset and unit scale, preserving the current presentation until manually adjusted.
 
+## Phone Battery Feedback Pass
+
+Phone battery thresholds now use the existing HUD warning area for short, non-modal messages. The Phone UI remains openable at zero battery but replaces its detailed status readout with a charging-required message.
+
+## Phone Battery Feedback Adjustments
+
+- Warnings appear slightly above the screen center when battery crosses `20%`, `10%`, `5%`, or `0%`.
+- Each threshold is limited to one warning per day and the warning clears automatically after a short delay.
+- Charging restores the regular Phone status readout without changing the existing Phone modal flow.
+- Manual checks remain required for warning timing, daily duplicate suppression, zero-battery display, and recovery after charging.
+
 ## Archive
 
 - Previous visual-pass history: `docs/old/UI_VISUAL_IMPLEMENTATION_NOTES_20260619.md`

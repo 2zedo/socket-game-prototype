@@ -3,6 +3,7 @@ class_name SurvivalState
 
 signal changed
 signal day_ended(result: Dictionary)
+signal phone_battery_warning(message: String)
 
 const MIN_STAT: float = 0.0
 const MAX_STAT: float = 100.0
@@ -12,6 +13,13 @@ const DAY_END_MINUTES: int = 20 * 60
 const DAY1_STARTING_POWER_UNITS: int = 10
 const DAY1_MAX_LOAD_WATTS: int = 3000
 const DAY1_MAX_OUTLET_SLOTS: int = 4
+const PHONE_BATTERY_WARNING_THRESHOLDS: Array[int] = [20, 10, 5, 0]
+const PHONE_BATTERY_WARNING_MESSAGES: Dictionary = {
+	20: "휴대폰 배터리가 얼마 남지 않았다.",
+	10: "배터리가 거의 없다. 필요한 정보는 지금 확인해 두자.",
+	5: "곧 꺼질 것 같다.",
+	0: "휴대폰이 꺼졌다.",
+}
 
 # DAY 1 object tuning is grouped here so the MVP can move it into a Resource
 # or data file later without searching through scene flow code.
@@ -135,6 +143,7 @@ var day1_flags: Dictionary = {}
 var day1_day_ended: bool = false
 var last_day1_message: String = ""
 var update_accumulator: float = 0.0
+var phone_battery_warning_thresholds_shown: Array[int] = []
 
 
 func _ready() -> void:
@@ -277,6 +286,9 @@ func get_hud_stat_text() -> String:
 
 
 func get_phone_text() -> String:
+	if battery <= MIN_STAT:
+		return "배터리가 없습니다.\n충전이 필요합니다."
+
 	var lines: Array[String] = [
 		"DAY %d" % day,
 		"현재 시간: %s" % get_current_clock_text(),
@@ -447,7 +459,7 @@ func _update_needs(delta: float) -> void:
 	if fun <= 25.0:
 		fatigue_delta += 0.18
 
-	battery = clampf(battery + battery_delta * delta, MIN_STAT, MAX_STAT)
+	_set_battery(battery + battery_delta * delta)
 	temperature = clampf(temperature + temperature_delta * delta, MIN_STAT, MAX_STAT)
 	fatigue = clampf(fatigue + fatigue_delta * delta, MIN_STAT, MAX_STAT)
 	fun = clampf(fun + fun_delta * delta, MIN_STAT, MAX_STAT)
@@ -563,7 +575,7 @@ func _apply_day1_action_effect(action_key: String) -> void:
 		"fan":
 			temperature = clampf(temperature - 6.0, MIN_STAT, MAX_STAT)
 		"charger":
-			battery = clampf(battery + 12.0, MIN_STAT, MAX_STAT)
+			_set_battery(battery + 12.0)
 		"communication_device":
 			fun = clampf(fun + 3.0, MIN_STAT, MAX_STAT)
 
@@ -650,7 +662,21 @@ func _reset_day1_power_loop() -> void:
 	day1_flags.clear()
 	day1_day_ended = false
 	last_day1_message = ""
+	phone_battery_warning_thresholds_shown.clear()
 	_recalculate_outlet_state()
+
+
+func _set_battery(next_battery: float) -> void:
+	var previous_battery: float = battery
+	battery = clampf(next_battery, MIN_STAT, MAX_STAT)
+	if battery >= previous_battery:
+		return
+
+	# Each threshold is announced once per day when the battery crosses it downward.
+	for threshold in PHONE_BATTERY_WARNING_THRESHOLDS:
+		if previous_battery > threshold and battery <= threshold and not phone_battery_warning_thresholds_shown.has(threshold):
+			phone_battery_warning_thresholds_shown.append(threshold)
+			phone_battery_warning.emit(str(PHONE_BATTERY_WARNING_MESSAGES.get(threshold, "")))
 
 
 func _recalculate_outlet_state() -> void:
