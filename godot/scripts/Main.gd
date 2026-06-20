@@ -33,6 +33,13 @@ func _process(_delta: float) -> void:
 		survival_hud.set_test_debug_text(_build_test_debug_text())
 
 
+func _input(event: InputEvent) -> void:
+	# Tab is a UI focus-navigation key, so handle it before Control nodes can consume it.
+	if event.is_action_pressed("open_phone"):
+		_toggle_phone_ui()
+		get_viewport().set_input_as_handled()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_test_mode"):
 		_toggle_test_mode()
@@ -49,11 +56,6 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("cancel_or_menu"):
 		_handle_cancel_or_menu()
-		get_viewport().set_input_as_handled()
-		return
-
-	if event.is_action_pressed("open_phone"):
-		_toggle_phone_ui()
 		get_viewport().set_input_as_handled()
 		return
 
@@ -94,6 +96,8 @@ func _toggle_phone_ui() -> void:
 	if phone_ui.visible:
 		phone_ui.set_open(false, survival_state)
 		_sync_player_movement_with_modal_state()
+		if test_mode_enabled:
+			print("phone_ui=closed")
 		return
 
 	# Phone is an exploration modal and must not overlap interaction, outlet, or result UI.
@@ -102,6 +106,8 @@ func _toggle_phone_ui() -> void:
 
 	phone_ui.set_open(true, survival_state)
 	_sync_player_movement_with_modal_state()
+	if test_mode_enabled:
+		print("phone_ui=opened")
 
 
 func _on_nearest_interactable_changed(interactable: ApartmentInteractable) -> void:
@@ -324,7 +330,7 @@ func _get_modal_state() -> String:
 	if interaction_panel.visible:
 		return "interaction_panel"
 	if phone_ui.visible:
-		return "phone_ui"
+		return "phone"
 	return "exploration"
 
 
