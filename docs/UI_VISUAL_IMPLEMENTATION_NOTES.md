@@ -42,6 +42,18 @@
 - Confirm no adapter or prompt overlaps the surrounding UI at the target resolution.
 - Use Test Mode to capture exact collision gaps before changing blocker geometry.
 
+## Outlet Drag Feedback Pass
+
+The existing outlet hitboxes and connection rules remain unchanged. Drag feedback now renders above the power-strip art and focuses on the adapter's current target rather than coloring every possible slot.
+
+## Outlet Drag Feedback Adjustments
+
+- Valid targets use a bright green fill and outline; invalid or occupied targets use red.
+- Two-slot adapters highlight both affected slots and receive one shared outer frame.
+- Starting a two-slot Laptop at slot 4 shows an invalid red target instead of implying a valid placement.
+- Releasing or cancelling the drag clears feedback through the existing empty `dragging_device` state.
+- Manual drag checks remain required for one-slot, occupied-slot, Laptop two-slot, slot-4 rejection, connect, and disconnect behavior.
+
 ## Archive
 
 - Previous visual-pass history: `docs/old/UI_VISUAL_IMPLEMENTATION_NOTES_20260619.md`

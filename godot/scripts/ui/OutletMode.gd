@@ -93,8 +93,8 @@ func _draw() -> void:
 	_draw_text(Vector2(PANEL_MARGIN, 56.0), "멀티탭 관리", 28, UIStyle.TEXT)
 	_draw_text(Vector2(PANEL_MARGIN, 84.0), "ESC: 아파트로 돌아가기", 14, UIStyle.MUTED)
 	_draw_connection_summary()
-	_draw_slot_feedback()
 	_draw_power_strip()
+	_draw_slot_feedback()
 	_draw_devices()
 	_draw_text(Vector2(PANEL_MARGIN, size.y - 38.0), status_text, 16, UIStyle.TEXT)
 	if test_mode_enabled:
@@ -156,28 +156,34 @@ func _draw_slot_feedback() -> void:
 	if dragging_device.is_empty():
 		return
 
-	var slots: int = int(dragging_device["slots"])
-	for start_slot in range(OUTLET_COUNT):
-		var can_start_here: bool = _can_use_slots(dragging_device, start_slot)
-		var display_slots: int = mini(slots, OUTLET_COUNT - start_slot)
-		if display_slots <= 0:
-			display_slots = 1
+	var target_slot: int = _find_feedback_slot(dragging_device)
+	if target_slot < 0:
+		return
 
-		var group_rect: Rect2 = _get_slot_group_rect(start_slot, display_slots).grow(8.0)
-		var fill_color: Color = Color(0.42, 0.78, 0.36, 0.14) if can_start_here else Color(0.88, 0.24, 0.2, 0.16)
-		var line_color: Color = Color(0.52, 0.9, 0.42, 0.8) if can_start_here else Color(0.95, 0.28, 0.22, 0.75)
-		draw_rect(group_rect, fill_color, true)
-		draw_rect(group_rect, line_color, false, 2.0)
+	var target_valid: bool = _can_use_slots(dragging_device, target_slot)
+	var requested_slots: int = int(dragging_device["slots"])
+	var visible_slots: int = mini(requested_slots, OUTLET_COUNT - target_slot)
+	var fill_color: Color = Color(0.48, 0.88, 0.38, 0.3) if target_valid else Color(0.9, 0.18, 0.14, 0.34)
+	var line_color: Color = Color(0.72, 1.0, 0.52, 1.0) if target_valid else Color(1.0, 0.25, 0.18, 1.0)
 
-	var target_slot: int = _find_best_slot(dragging_device)
-	if target_slot >= 0:
-		var target_valid: bool = _can_use_slots(dragging_device, target_slot)
-		var target_slots: int = int(dragging_device["slots"])
-		if target_slot + target_slots > OUTLET_COUNT:
-			target_slots = OUTLET_COUNT - target_slot
-		var target_rect: Rect2 = _get_slot_group_rect(target_slot, target_slots).grow(14.0)
-		var target_color: Color = Color(0.68, 1.0, 0.45, 0.95) if target_valid else Color(1.0, 0.22, 0.18, 0.95)
-		draw_rect(target_rect, target_color, false, 3.0)
+	# Draw each occupied slot, then bind multi-slot adapters with one outer frame.
+	for slot_offset in range(visible_slots):
+		var slot_rect: Rect2 = _get_slot_rect(target_slot + slot_offset).grow(5.0)
+		draw_rect(slot_rect, fill_color, true)
+		draw_rect(slot_rect, line_color, false, 2.5)
+
+	var target_rect: Rect2 = _get_slot_group_rect(target_slot, maxi(visible_slots, 1)).grow(11.0)
+	draw_rect(target_rect, line_color, false, 3.0)
+
+
+func _find_feedback_slot(device: Dictionary) -> int:
+	var probe_position: Vector2 = _get_device_plug_position(device)
+	for slot_index in range(OUTLET_COUNT):
+		if _get_slot_rect(slot_index).has_point(probe_position):
+			return slot_index
+
+	# Preserve the existing nearby-drop affordance outside the exact hit rectangle.
+	return _find_best_slot(device)
 
 
 func _draw_devices() -> void:

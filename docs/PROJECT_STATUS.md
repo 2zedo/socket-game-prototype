@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `bcaeea3`
+- Current commit at task start: `8a82824`
 - Phase: Godot DAY 1 MVP stability testing and collision diagnosis
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -30,6 +30,7 @@
 - Interaction panels expose clickable use and cancel/close buttons that reuse the existing `E` and `ESC` action paths.
 - Interaction buttons brighten their border on hover/press; informational panels without a primary action close with either `E`, `ESC`, or the close button.
 - Informational interaction panels label their shared close action as `[E / ESC] 닫기`.
+- Outlet dragging highlights only the targeted existing slot hitbox: green for a valid drop and red for an invalid drop, with two-slot adapters spanning both affected slots.
 
 ## Current DAY 1 Decisions
 
@@ -55,6 +56,7 @@
 - `godot/scenes/ui/InteractionPanel.tscn`, `godot/scripts/ui/InteractionPanel.gd`, `godot/scripts/Main.gd`: connect real panel buttons to the existing confirm and cancel handlers.
 - `godot/scripts/ui/InteractionPanel.gd`: adds distinct hover/pressed feedback while preserving existing button actions.
 - `godot/scripts/ui/InteractionPanel.gd`: aligns the no-primary-action hint with its existing `E` and `ESC` close behavior.
+- `godot/scripts/ui/OutletMode.gd`: draws valid/invalid drag feedback above the power-strip art without changing slot coordinates or connection rules.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -68,6 +70,7 @@
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after converting interaction controls to clickable buttons.
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after adding interaction-button hover feedback.
 - Godot 4.5.1 headless Main scene startup completed after updating the interaction close hint.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after the outlet drag-feedback change.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -81,6 +84,7 @@
 - Mouse interaction requires manual checks for all six room targets and out-of-range clicks; no GUI input simulation was run.
 - Interaction-panel button clicks require manual confirmation; GUI input simulation was intentionally not run.
 - Interaction-button hover colors require manual visual confirmation; no GUI or screenshot validation was run.
+- Outlet valid/invalid colors and two-slot span feedback require manual drag confirmation; connection logic was not changed.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
 
 ## Next Recommended Task
