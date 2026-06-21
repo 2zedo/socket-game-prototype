@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `500a9d2`
-- Phase: Godot DAY 1 MVP active-power model stabilization
+- Current commit at task start: `55ad71c`
+- Phase: Godot DAY 1 MVP hourly active-power tuning
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -37,7 +37,8 @@
 - Connected adapter placement exposes per-device offset and scale tuning while retaining the previous zero-offset/unit-scale defaults.
 - Phone battery warnings appear once per day when battery crosses `20%`, `10%`, `5%`, and `0%`.
 - At `0%`, Phone UI remains accessible but hides status details until charging restores the battery.
-- Existing action costs now represent full-day active consumption over the `60`-second playable day; first activation records use without blocking later toggles.
+- Active drain uses per-game-hour tuning: Light `0.5`, Laptop `3.0`, Fan `1.0`, Charger `1.0`, and Communication Device `2.0` units per game hour.
+- The `60`-second playable day maps to `12` game hours; first activation records use without blocking later toggles.
 - Disconnecting a device clears its active state, while map wire overlays continue to follow connection state.
 
 ## Current DAY 1 Decisions
@@ -71,8 +72,8 @@
 - `godot/scripts/ui/OutletMode.gd`: centralizes connected visual offset/scale tuning for Fan, Charger, Communication Device, Lamp, and Laptop.
 - `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: track daily battery-warning thresholds and route warning messages to the HUD.
 - `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: show short battery warnings above the screen center.
-- `godot/scripts/SurvivalState.gd`: owns active device state, time-proportional power drain, zero-power shutdown, and first-activation history.
-- `godot/scripts/Main.gd`, `godot/scripts/ui/InteractionPanel.gd`: expose state-aware `켜기` / `끄기` interaction flow and keep room visuals synced to active state.
+- `godot/scripts/SurvivalState.gd`: defines hourly device drain, converts elapsed real time to game hours, and exposes decimal remaining power plus current active drain.
+- `godot/scripts/Main.gd`: shows hourly drain and decimal remaining power in interaction and Test Mode readouts.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -94,6 +95,7 @@
 - Godot 4.5.1 headless editor initialization and Main scene startup completed after exposing connected-adapter tuning values.
 - Godot 4.5.1 headless Main scene startup completed after adding Phone battery warnings and the empty-battery view.
 - Godot 4.5.1 headless Main scene startup completed after separating connected and active power states.
+- Godot 4.5.1 headless Main scene startup completed after converting active drain to per-game-hour units.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -114,11 +116,12 @@
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
 - Battery-warning timing, daily one-shot behavior, the `0%` Phone view, and recovery after charging require manual GUI confirmation.
 - Continuous drain rate, modal pause, repeated on/off control, disconnect shutdown, and zero-power shutdown require manual gameplay confirmation.
+- Hourly drain totals and one-decimal Phone display require manual timing confirmation, especially Laptop-only and Laptop-plus-Fan cases.
 
 ## Next Recommended Task
 
-1. Manually verify all five devices can be connected, switched on/off repeatedly, and disconnected while active without stale state.
-2. Confirm active power drain pauses in every modal and stops all devices safely at zero power.
+1. Verify Laptop reports `-3.0 / h`, Laptop plus Fan reports `-4.0 / h`, and remaining power drops at the game-hour rate.
+2. Confirm hourly drain pauses in every modal and stops all devices safely at zero power.
 3. Verify Phone history remains first-use based while its active-device line follows current on/off state.
 
 ## Archive

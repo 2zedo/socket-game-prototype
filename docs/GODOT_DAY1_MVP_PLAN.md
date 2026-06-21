@@ -45,11 +45,11 @@ The initial object list should stay small and match `docs/DAY1_CONTENT_BRIEF.md`
 These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or data file when practical instead of hard-coding them into scene logic.
 
 - Starting power: `10 units`
-- Light: `1 unit`
-- Laptop: `3 units`
-- Fan: `2 units`
-- Charger: `2 units`
-- Communication device: `4 units`
+- Light: `0.5 unit / game hour`
+- Laptop: `3.0 units / game hour`
+- Fan: `1.0 unit / game hour`
+- Charger: `1.0 unit / game hour`
+- Communication device: `2.0 units / game hour`
 
 ## Outlet Load Model
 
@@ -59,17 +59,17 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 - `현재 부하: 0W / 3000W` is the sum of devices currently connected to the outlet/power strip. It is not a second power meter.
 - `콘센트: 0 / 4` is the number of outlet slots occupied by connected devices.
 - Connecting or disconnecting a device does not spend today's power.
-- The temporary `cost` values are full-day active costs over the current `60`-second playable day.
+- `drain_per_game_hour` is the tuning source. The current `60` real seconds map to `12` game hours, so elapsed real time is converted to elapsed game hours before consumption.
 - Connected devices can be switched on and off; only active devices drain the daily budget, and modal-paused time does not drain it.
 - First activation records the device in the daily history, but the record does not block later on/off control.
 
 Temporary DAY 1 device data:
 
-- Light: current code uses `60W`, `1` outlet slot, use cost `1`; built-in fluorescent versus plug-in Lamp is still a design decision
-- Laptop: `1300W`, `2` outlet slots, use cost `3`
-- Fan: `900W`, `1` outlet slot, use cost `2`
-- Charger: `20W`, `1` outlet slot, use cost `2`
-- Communication device: `300W`, `1` outlet slot, use cost `4`
+- Light: `60W`, `1` outlet slot, `0.5 / game hour`; built-in fluorescent versus plug-in Lamp is still a design decision
+- Laptop: `1300W`, `2` outlet slots, `3.0 / game hour`
+- Fan: `900W`, `1` outlet slot, `1.0 / game hour`
+- Charger: `20W`, `1` outlet slot, `1.0 / game hour`
+- Communication device: `300W`, `1` outlet slot, `2.0 / game hour`
 
 ## Minimum Flags / State To Track
 

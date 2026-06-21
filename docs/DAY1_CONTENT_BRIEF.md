@@ -15,7 +15,7 @@ The first day should feel quiet and practical: learn the room, test devices, not
 ## Starting Power Assumption
 
 - Temporary starting power: `10 units`
-- Temporary object costs represent the amount consumed when a device remains active for the full `60`-second playable day. They should later move into a Godot Resource (`.tres`) or data file.
+- Temporary device drain values are measured per game hour. The `60`-second playable day represents `12` game hours from `08:00` to `20:00`; values should later move into a Godot Resource (`.tres`) or data file.
 - The exact values are placeholders for MVP testing and balance.
 
 ## Power And Outlet Meaning
@@ -45,7 +45,7 @@ DAY 1 uses two linked values:
 ### Light
 
 - Gameplay purpose: teaches that power can improve room safety/readability.
-- Full-day active cost: `1 unit`
+- Active drain: `0.5 unit / game hour`
 - Current implementation: `60W`, `1` outlet slot, connection required.
 - Decision required:
   - Built-in fluorescent/ceiling light: use `0` outlet slots, do not require multitap connection, and spend only DAY power.
@@ -56,7 +56,7 @@ DAY 1 uses two linked values:
 ### Laptop
 
 - Gameplay purpose: introduces information gathering and the Grid mystery.
-- Full-day active cost: `3 units`
+- Active drain: `3.0 units / game hour`
 - Current load data: `1300W`, `2` adjacent outlet slots
 - Slot rationale: the large adapter creates the primary space constraint in the DAY 1 multitap puzzle.
 - Sample feedback/dialogue direction: "Old logs flicker on the screen. Some entries mention Grid."
@@ -65,7 +65,7 @@ DAY 1 uses two linked values:
 ### Fan
 
 - Gameplay purpose: introduces comfort/survival tradeoff.
-- Full-day active cost: `2 units`
+- Active drain: `1.0 unit / game hour`
 - Suggested load data: `900W`, `1` outlet slot
 - Sample feedback/dialogue direction: "The fan turns slowly. The air moves, but the meter drops."
 - Possible result flag: `used_fan`
@@ -73,7 +73,7 @@ DAY 1 uses two linked values:
 ### Charger
 
 - Gameplay purpose: introduces practical survival maintenance.
-- Full-day active cost: `2 units`
+- Active drain: `1.0 unit / game hour`
 - Suggested load data: `20W`, `1` outlet slot
 - Sample feedback/dialogue direction: "The phone battery crawls upward. It feels like buying time."
 - Possible result flag: `charged_device`
@@ -81,7 +81,7 @@ DAY 1 uses two linked values:
 ### Communication Device
 
 - Gameplay purpose: introduces outside contact and the management office / delivery robot thread.
-- Full-day active cost: `4 units`
+- Active drain: `2.0 units / game hour`
 - Current load data: `300W`, `1` outlet slot
 - Slot rationale: keeping this device at one slot avoids excessive early restriction while Laptop already occupies two slots.
 - Sample feedback/dialogue direction: "A broken signal cuts through. Someone is still broadcasting notices."

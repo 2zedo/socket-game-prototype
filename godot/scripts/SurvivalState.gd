@@ -11,6 +11,8 @@ const MAX_STAT: float = 100.0
 const DAY_SECONDS: float = 60.0
 const DAY_START_MINUTES: int = 8 * 60
 const DAY_END_MINUTES: int = 20 * 60
+const DAY_GAME_HOURS: float = float(DAY_END_MINUTES - DAY_START_MINUTES) / 60.0
+const GAME_HOURS_PER_REAL_SECOND: float = DAY_GAME_HOURS / DAY_SECONDS
 const DAY1_STARTING_POWER_UNITS: int = 10
 const DAY1_MAX_LOAD_WATTS: int = 3000
 const DAY1_MAX_OUTLET_SLOTS: int = 4
@@ -27,7 +29,7 @@ const PHONE_BATTERY_WARNING_MESSAGES: Dictionary = {
 const DAY1_ACTIONS: Dictionary = {
 	"light": {
 		"label": "조명",
-		"cost": 1,
+		"drain_per_game_hour": 0.5,
 		"watt_usage": 60,
 		"outlet_size": 1,
 		"requires_connection": true,
@@ -38,7 +40,7 @@ const DAY1_ACTIONS: Dictionary = {
 	},
 	"laptop": {
 		"label": "노트북",
-		"cost": 3,
+		"drain_per_game_hour": 3.0,
 		"watt_usage": 1300,
 		"outlet_size": 2,
 		"requires_connection": true,
@@ -49,7 +51,7 @@ const DAY1_ACTIONS: Dictionary = {
 	},
 	"fan": {
 		"label": "선풍기",
-		"cost": 2,
+		"drain_per_game_hour": 1.0,
 		"watt_usage": 900,
 		"outlet_size": 1,
 		"requires_connection": true,
@@ -60,7 +62,7 @@ const DAY1_ACTIONS: Dictionary = {
 	},
 	"charger": {
 		"label": "충전기",
-		"cost": 2,
+		"drain_per_game_hour": 1.0,
 		"watt_usage": 20,
 		"outlet_size": 1,
 		"requires_connection": true,
@@ -71,7 +73,7 @@ const DAY1_ACTIONS: Dictionary = {
 	},
 	"communication_device": {
 		"label": "통신 장치",
-		"cost": 4,
+		"drain_per_game_hour": 2.0,
 		"watt_usage": 300,
 		"outlet_size": 1,
 		"requires_connection": true,
@@ -281,10 +283,11 @@ func get_warning_lines() -> Array[String]:
 
 
 func get_hud_stat_text() -> String:
-	return "오늘 남은 전력\n⚡ %d / %d  %s\n\n사용한 기기\n%s" % [
-		current_power,
+	return "오늘 남은 전력\n⚡ %.1f / %d  %s\n현재 소비: -%.1f / h\n\n사용한 기기\n%s" % [
+		current_power_units,
 		max_power,
 		_get_power_bar_text(),
+		get_active_power_drain_per_game_hour(),
 		get_used_day1_action_summary(),
 	]
 
@@ -304,7 +307,8 @@ func get_phone_text() -> String:
 		"피로: %d%%" % roundi(fatigue),
 		"재미: %d%%" % roundi(fun),
 		"",
-		"오늘 남은 전력: %d / %d" % [current_power, max_power],
+		"오늘 남은 전력: %.1f / %d" % [current_power_units, max_power],
+		"현재 소비: -%.1f / h" % get_active_power_drain_per_game_hour(),
 		"사용 기록: %s" % get_used_day1_action_summary(),
 		"작동 중: %s" % get_active_day1_action_summary(),
 		"",
@@ -387,6 +391,14 @@ func get_active_day1_action_summary() -> String:
 	return ", ".join(labels)
 
 
+func get_active_power_drain_per_game_hour() -> float:
+	var drain_rate: float = 0.0
+	for action_key in active_day1_actions:
+		var action_data := get_day1_action_data(action_key)
+		drain_rate += float(action_data.get("drain_per_game_hour", 0.0))
+	return drain_rate
+
+
 func toggle_day1_action_active(action_key: String) -> Dictionary:
 	var action_data := get_day1_action_data(action_key)
 	if action_data.is_empty():
@@ -432,9 +444,9 @@ func toggle_day1_action_active(action_key: String) -> Dictionary:
 	return {
 		"success": true,
 		"active": true,
-		"message": "%s\n\n오늘 남은 전력: %d / %d" % [
+		"message": "%s\n\n오늘 남은 전력: %.1f / %d" % [
 			last_day1_message,
-			current_power,
+			current_power_units,
 			max_power,
 		],
 		"remaining_power": current_power,
@@ -502,12 +514,9 @@ func _update_active_power(delta: float) -> void:
 	if delta <= 0.0 or active_day1_actions.is_empty() or current_power_units <= 0.0:
 		return
 
-	var full_day_cost: float = 0.0
-	for action_key in active_day1_actions:
-		var action_data := get_day1_action_data(action_key)
-		full_day_cost += float(action_data.get("cost", 0))
-
-	current_power_units = maxf(0.0, current_power_units - full_day_cost / DAY_SECONDS * delta)
+	var elapsed_game_hours: float = delta * GAME_HOURS_PER_REAL_SECOND
+	var consumed_power: float = get_active_power_drain_per_game_hour() * elapsed_game_hours
+	current_power_units = maxf(0.0, current_power_units - consumed_power)
 	current_power = ceili(current_power_units)
 	if current_power_units > 0.0:
 		return
@@ -540,7 +549,7 @@ func _calculate_day_result() -> Dictionary:
 	var lines: Array[String] = []
 	var total: int = 0
 
-	lines.append("오늘 남은 전력: %d / %d" % [current_power, max_power])
+	lines.append("오늘 남은 전력: %.1f / %d" % [current_power_units, max_power])
 	lines.append("사용 기록: %s" % get_used_day1_action_summary())
 	lines.append("현재 부하: %dW / %dW" % [current_load_watts, max_load_watts])
 	lines.append("콘센트: %d / %d" % [used_outlet_slots, max_outlet_slots])

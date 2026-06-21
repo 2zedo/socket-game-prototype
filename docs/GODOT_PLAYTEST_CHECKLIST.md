@@ -112,6 +112,8 @@ For each object below, verify the full flow:
 - [ ] Press `ESC` to cancel.
 - [ ] Approach again, press `E`, then confirm `켜기`.
 - [ ] Current power does not drop as an immediate one-time charge, but decreases while exploration time advances.
+- [ ] Laptop alone reports `-3.0 / h`; Fan plus Laptop reports `-4.0 / h`.
+- [ ] Remaining power is displayed to one decimal place in Phone UI and decreases according to elapsed game hours.
 - [ ] Open Phone, Outlet, Interaction, End Day, and Result modals and confirm active power drain pauses with the clock.
 - [ ] Interact with the active device again and confirm `끄기` stops further power drain.
 - [ ] Turn the same device on again and confirm the historical used record does not block it.

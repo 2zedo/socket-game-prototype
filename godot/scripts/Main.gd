@@ -202,14 +202,14 @@ func _build_interaction_body(data: Dictionary) -> String:
 
 	if action_key != "":
 		var action_data := survival_state.get_day1_action_data(action_key)
-		var full_day_cost: int = int(action_data.get("cost", 0))
+		var hourly_drain: float = float(action_data.get("drain_per_game_hour", 0.0))
 		var watt_usage: int = int(action_data.get("watt_usage", watts))
 		var is_active: bool = survival_state.is_day1_action_active(action_key)
 		body += "\n\n현재 상태: %s" % ("켜짐" if is_active else "꺼짐")
 		body += "\n소비전력: %dW" % watt_usage
-		body += "\n하루 최대 소비량: %d" % full_day_cost
-		body += "\n현재 남은 전력: %d / %d" % [
-			survival_state.current_power,
+		body += "\n시간당 소비량: %.1f / h" % hourly_drain
+		body += "\n현재 남은 전력: %.1f / %d" % [
+			survival_state.current_power_units,
 			survival_state.max_power,
 		]
 		body += "\n\n%s" % ("끄면 전력 소비가 멈춥니다." if is_active else "켜져 있는 동안 전력이 계속 줄어듭니다.")
@@ -221,8 +221,8 @@ func _build_interaction_body(data: Dictionary) -> String:
 
 	if data.get("interaction_type", "") == "end_day":
 		body += "\n\n오늘을 마칠까요?"
-		body += "\n오늘 남은 전력: %d / %d" % [
-			survival_state.current_power,
+		body += "\n오늘 남은 전력: %.1f / %d" % [
+			survival_state.current_power_units,
 			survival_state.max_power,
 		]
 		body += "\n사용 기록: %s" % survival_state.get_used_day1_action_summary()
@@ -356,14 +356,15 @@ func _build_test_debug_text() -> String:
 			apartment.nearest_interactable.display_name,
 		]
 
-	return "Player pos: (%.1f, %.1f)\nVelocity: (%.1f, %.1f)\nDay: %d\nPower: %d / %d\nLoad: %dW / %dW\nSlots: %d / %d\nNearest: %s\nModal: %s" % [
+	return "Player pos: (%.1f, %.1f)\nVelocity: (%.1f, %.1f)\nDay: %d\nPower: %.1f / %d\nDrain: %.1f / h\nLoad: %dW / %dW\nSlots: %d / %d\nNearest: %s\nModal: %s" % [
 		player_position.x,
 		player_position.y,
 		player_velocity.x,
 		player_velocity.y,
 		survival_state.day,
-		survival_state.current_power,
+		survival_state.current_power_units,
 		survival_state.max_power,
+		survival_state.get_active_power_drain_per_game_hour(),
 		survival_state.current_load_watts,
 		survival_state.max_load_watts,
 		survival_state.used_outlet_slots,
