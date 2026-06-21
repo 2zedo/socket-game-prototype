@@ -11,6 +11,7 @@ extends Node2D
 var pending_interaction_data: Dictionary = {}
 var test_mode_enabled: bool = false
 var phone_tab_was_pressed: bool = false
+var automatic_end_day_prompt_active: bool = false
 
 
 func _ready() -> void:
@@ -21,6 +22,7 @@ func _ready() -> void:
 	survival_state.changed.connect(_refresh_survival_ui)
 	survival_state.phone_battery_warning.connect(_on_phone_battery_warning)
 	survival_state.day1_power_warning.connect(_on_day1_power_warning)
+	survival_state.day_time_limit_reached.connect(_on_day_time_limit_reached)
 	outlet_mode.closed.connect(_on_outlet_mode_closed)
 	outlet_mode.power_changed.connect(_on_outlet_power_changed)
 	outlet_mode.powered_devices_changed.connect(_on_powered_devices_changed)
@@ -160,6 +162,7 @@ func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
 		return
 
 	if data.get("interaction_type", "") == "end_day":
+		automatic_end_day_prompt_active = false
 		pending_interaction_data = data
 		_open_interaction_panel(data.get("title", "오늘을 마친다"), _build_interaction_body(data), "E: 하루 종료 / ESC: 취소")
 		return
@@ -233,6 +236,7 @@ func _build_interaction_body(data: Dictionary) -> String:
 
 func _confirm_pending_interaction() -> void:
 	if pending_interaction_data.get("interaction_type", "") == "end_day":
+		automatic_end_day_prompt_active = false
 		pending_interaction_data = {}
 		survival_state.end_current_day()
 		return
@@ -257,8 +261,12 @@ func _open_interaction_panel(title: String, body: String, footer_text: String = 
 
 
 func _close_interaction_panel() -> void:
+	var should_reopen_time_limit_prompt: bool = automatic_end_day_prompt_active and not survival_state.day1_day_ended
 	pending_interaction_data = {}
 	interaction_panel.close()
+	if should_reopen_time_limit_prompt:
+		_open_time_limit_end_day_prompt()
+		return
 	_sync_player_movement_with_modal_state()
 
 
@@ -284,6 +292,20 @@ func _on_phone_battery_warning(message: String) -> void:
 
 func _on_day1_power_warning(message: String) -> void:
 	survival_hud.show_temporary_warning(message)
+
+
+func _on_day_time_limit_reached() -> void:
+	automatic_end_day_prompt_active = true
+	_open_time_limit_end_day_prompt()
+
+
+func _open_time_limit_end_day_prompt() -> void:
+	pending_interaction_data = {
+		"interaction_type": "end_day",
+		"title": "오늘을 마친다",
+		"body": "피곤하니 슬슬 자야겠다.",
+	}
+	_open_interaction_panel("오늘을 마친다", _build_interaction_body(pending_interaction_data), "E: 하루 종료 / ESC: 취소")
 
 
 func _open_outlet_mode() -> void:
@@ -319,6 +341,7 @@ func _on_day_ended(result: Dictionary) -> void:
 		outlet_mode.close()
 
 	phone_ui.set_open(false, survival_state)
+	automatic_end_day_prompt_active = false
 	_close_interaction_panel()
 	day_result_panel.open(result)
 	_sync_player_movement_with_modal_state()

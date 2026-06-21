@@ -59,7 +59,7 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 - `현재 부하: 0W / 3000W` is the sum of devices currently connected to the outlet/power strip. It is not a second power meter.
 - `콘센트: 0 / 4` is the number of outlet slots occupied by connected devices.
 - Connecting or disconnecting a device does not spend today's power.
-- `drain_per_game_hour` is the tuning source. The current `60` real seconds map to `12` game hours, so elapsed real time is converted to elapsed game hours before consumption.
+- `drain_per_game_hour`가 소비량 기준이다. 현재 `60`초 DAY는 `08:00`부터 다음 날 `02:00`까지 18시간으로 변환된다.
 - Connected devices can be switched on and off; only active devices drain the daily budget, and modal-paused time does not drain it.
 - First activation records the device in the daily history, but the record does not block later on/off control.
 
@@ -104,6 +104,7 @@ Temporary DAY 1 device data:
 - `SurvivalHUD.tscn` has enough status label space to show current DAY 1 power and use records.
 - `Apartment.gd` now includes a bed/rest interactable that opens an explicit `End Day` confirmation through the same proximity `E` model.
 - `SurvivalState.gd` exposes `end_current_day()` so the explicit rest interaction can enter the existing result summary flow.
+- `02:00` 도달 시 기존 하루 마침 확인 패널이 자동으로 열리며, 확인하면 동일한 `end_current_day()` 결과 흐름을 사용한다.
 - HUD wording now prioritizes `DAY 1`, `오늘 남은 전력`, and used devices instead of debug-like points/time/status bars.
 - Temporary action costs still live in script constants and should move to a Resource or data file after in-editor validation.
 

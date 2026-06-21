@@ -15,7 +15,7 @@ The first day should feel quiet and practical: learn the room, test devices, not
 ## Starting Power Assumption
 
 - Temporary starting power: `10 units`
-- Temporary device drain values are measured per game hour. The `60`-second playable day represents `12` game hours from `08:00` to `20:00`; values should later move into a Godot Resource (`.tres`) or data file.
+- 임시 장치 소비량은 게임 시간 1시간 기준이다. 현재 `60`초 DAY는 `08:00`부터 다음 날 `02:00`까지 18시간을 나타내며, 실제 DAY 길이는 기존 설정값을 사용한다.
 - The exact values are placeholders for MVP testing and balance.
 
 ## Power And Outlet Meaning
@@ -94,6 +94,8 @@ DAY 1 uses two linked values:
 - The bed/rest point should use the same top-down proximity + `E` confirmation model as power objects.
 - Optional later condition: the day can also end when power reaches `0` or all core interactions are resolved.
 - The first implementation should prefer an explicit `End Day` action for clarity.
+- `02:00`에 도달하면 시간이 멈추고 `피곤하니 슬슬 자야겠다.` 안내와 함께 기존 하루 마침 확인 패널이 자동으로 열린다.
+- 수면 버프, 커피, 피로도 확장은 현재 구현 범위가 아니다.
 
 ## Result Summary Direction
 

@@ -3,6 +3,7 @@ class_name SurvivalState
 
 signal changed
 signal day_ended(result: Dictionary)
+signal day_time_limit_reached
 signal phone_battery_warning(message: String)
 signal day1_power_warning(message: String)
 
@@ -10,7 +11,8 @@ const MIN_STAT: float = 0.0
 const MAX_STAT: float = 100.0
 const DAY_SECONDS: float = 60.0
 const DAY_START_MINUTES: int = 8 * 60
-const DAY_END_MINUTES: int = 20 * 60
+# 다음 날 02:00을 26:00으로 다뤄 자정을 지나는 진행 시간을 단순하게 유지한다.
+const DAY_END_MINUTES: int = 26 * 60
 const DAY_GAME_HOURS: float = float(DAY_END_MINUTES - DAY_START_MINUTES) / 60.0
 const GAME_HOURS_PER_REAL_SECOND: float = DAY_GAME_HOURS / DAY_SECONDS
 const DAY1_STARTING_POWER_UNITS: int = 10
@@ -145,6 +147,7 @@ var powerstrip_device_slot_counts: Dictionary = {}
 var used_day1_actions: Array[String] = []
 var day1_flags: Dictionary = {}
 var day1_day_ended: bool = false
+var day_time_limit_announced: bool = false
 var last_day1_message: String = ""
 var update_accumulator: float = 0.0
 
@@ -159,7 +162,7 @@ func _process(delta: float) -> void:
 		return
 
 	var active_time_delta: float = minf(delta, maxf(0.0, DAY_SECONDS - elapsed_seconds))
-	_update_time(delta)
+	var reached_time_limit: bool = _update_time(delta)
 	_update_active_power(active_time_delta)
 	_update_needs(active_time_delta)
 	update_accumulator += delta
@@ -167,6 +170,10 @@ func _process(delta: float) -> void:
 	if update_accumulator >= 0.2:
 		update_accumulator = 0.0
 		changed.emit()
+
+	if reached_time_limit:
+		changed.emit()
+		day_time_limit_reached.emit()
 
 
 func set_powered_devices(device_keys: Array[String]) -> void:
@@ -249,18 +256,20 @@ func get_time_text() -> String:
 
 func get_current_clock_text() -> String:
 	var current_minutes: int = _get_current_day_minutes()
-	return "%02d:%02d" % [current_minutes / 60, current_minutes % 60]
+	return "%02d:%02d" % [(current_minutes / 60) % 24, current_minutes % 60]
 
 
 func get_current_time_period() -> String:
 	var current_minutes: int = _get_current_day_minutes()
-	if current_minutes < 11 * 60:
+	if current_minutes < 12 * 60:
 		return "아침"
-	if current_minutes < 16 * 60:
+	if current_minutes < 17 * 60:
 		return "낮"
-	if current_minutes < 18 * 60:
-		return "오후"
-	return "저녁"
+	if current_minutes < 21 * 60:
+		return "저녁"
+	if current_minutes < 24 * 60:
+		return "밤"
+	return "새벽"
 
 
 func get_phase_effect_text() -> String:
@@ -493,11 +502,16 @@ func _update_needs(delta: float) -> void:
 	fun = clampf(fun + fun_delta * delta, MIN_STAT, MAX_STAT)
 
 
-func _update_time(delta: float) -> void:
-	# DAY 1 MVP clock is display-only: it stops at 20:00 without ending the day.
+func _update_time(delta: float) -> bool:
+	var previous_elapsed_seconds: float = elapsed_seconds
 	elapsed_seconds = minf(elapsed_seconds + delta, DAY_SECONDS)
 	phase = "day"
 	remaining_phase_seconds = maxi(0, int(ceil(DAY_SECONDS - elapsed_seconds)))
+
+	if previous_elapsed_seconds < DAY_SECONDS and elapsed_seconds >= DAY_SECONDS and not day_time_limit_announced:
+		day_time_limit_announced = true
+		return true
+	return false
 
 
 func _update_active_power(delta: float) -> void:
@@ -714,6 +728,7 @@ func _reset_day1_power_loop() -> void:
 	active_day1_actions.clear()
 	day1_flags.clear()
 	day1_day_ended = false
+	day_time_limit_announced = false
 	last_day1_message = ""
 	_recalculate_outlet_state()
 

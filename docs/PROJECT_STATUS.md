@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8c90bc0`
-- Phase: Godot DAY 1 MVP Phone battery warning stabilization
+- Current commit at task start: `f89eec0`
+- Phase: Godot DAY 1 MVP 하루 시간 한계 및 종료 흐름 정리
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -22,7 +22,8 @@
 - Pressing `P` toggles a developer Test Mode with gameplay-state text and collision/interaction overlays.
 - Modal input is routed through `Main.gd`; movement is locked while interaction, outlet, end-day, phone, or result UI is active.
 - `Tab` opens the existing Phone UI during exploration; it closes with `Tab` or `ESC` and locks Yui movement while visible.
-- The Phone UI clock maps the existing 60-second day timer from `08:00` to `20:00`; normal HUD clock details stay hidden.
+- Phone UI 시간은 기존 DAY 길이를 유지하면서 `08:00`부터 다음 날 `02:00`까지 표시되며, 일반 HUD에는 시간 정보를 표시하지 않는다.
+- `02:00` 도달 시 시간과 전력 소비가 멈추고 `피곤하니 슬슬 자야겠다.` 안내가 포함된 기존 하루 마침 확인 패널이 자동으로 열린다.
 - Apartment outer-wall collision now follows the walkable floor inside the map art, with overlapping corners to prevent diagonal escape gaps.
 - Exploration hides the left status HUD; Phone UI is the primary status view while prompts, controls, and Test Mode remain visible.
 - The in-game clock advances only during free exploration and pauses for Phone, Outlet, Interaction, End Day, and Result modals.
@@ -76,6 +77,7 @@
 - `godot/scripts/SurvivalState.gd`: defines hourly device drain, converts elapsed real time to game hours, and exposes decimal remaining power plus current active drain.
 - `godot/scripts/Main.gd`: shows hourly drain and decimal remaining power in interaction and Test Mode readouts.
 - `godot/scripts/SurvivalState.gd`: removes first-use history and unrelated daily summary fields from Phone text while preserving Result data.
+- `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: `08:00 → 02:00` 시간 매핑과 자동 하루 마침 확인 흐름을 연결한다.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -99,6 +101,7 @@
 - Godot 4.5.1 headless Main scene startup completed after separating connected and active power states.
 - Godot 4.5.1 headless Main scene startup completed after converting active drain to per-game-hour units.
 - Godot 4.5.1 headless Main scene startup completed after changing Phone battery warnings to repeatable downward crossings.
+- DAY 시간 확장과 자동 하루 마침 확인 연결 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -117,16 +120,16 @@
 - Built-in LED mask alignment and two-slot LED exposure require manual visual confirmation at the target resolution.
 - Two-slot Laptop drops require manual checks at valid starts 1-3 and invalid start 4.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
-- Battery-warning downward crossings, recharge rearming, active-charging suppression, and the unchanged `0%` Phone view require manual GUI confirmation.
+- `02:00` 자동 하루 마침 문구, 취소 시 재표시, 확인 후 Result 전환은 수동 GUI 확인이 필요하다.
 - Continuous drain rate, modal pause, repeated on/off control, disconnect shutdown, and zero-power shutdown require manual gameplay confirmation.
 - Hourly drain totals and one-decimal Phone display require manual timing confirmation, especially Laptop-only and Laptop-plus-Fan cases.
 - Phone current-status-only content and unchanged Result history require manual GUI confirmation.
 
 ## Next Recommended Task
 
-1. Verify each Phone battery warning triggers on a downward `20%`, `10%`, `5%`, or `0%` crossing without repeating below that threshold.
-2. Recharge above a threshold, stop charging, and confirm crossing it downward again produces a new warning while active charging suppresses warnings.
-3. Confirm the `0%` Phone view and recovery behavior remain unchanged.
+1. Phone UI 시간이 `08:00`부터 `02:00`까지 자정을 넘어 자연스럽게 표시되는지 확인한다.
+2. `02:00` 자동 확인 패널의 취소 재표시와 확인 후 Result 전환을 확인한다.
+3. 침대 상호작용을 통한 기존 수동 하루 종료가 그대로 동작하는지 확인한다.
 
 ## Archive
 
