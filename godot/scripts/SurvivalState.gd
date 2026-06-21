@@ -26,64 +26,12 @@ const PHONE_BATTERY_WARNING_MESSAGES: Dictionary = {
 	0: "휴대폰이 꺼졌다.",
 }
 
-# DAY 1 object tuning is grouped here so the MVP can move it into a Resource
-# or data file later without searching through scene flow code.
-const DAY1_ACTIONS: Dictionary = {
-	"light": {
-		"label": "조명",
-		"drain_per_game_hour": 0.5,
-		"watt_usage": 60,
-		"outlet_size": 1,
-		"requires_connection": true,
-		"flag": "used_light",
-		"power_key": "light",
-		"feedback": "약한 조명이 방을 겨우 밝힙니다. 오래 버티지는 못할 빛입니다.",
-		"already_used": "조명은 이미 켜져 있습니다. 전력을 더 쓰지는 않습니다.",
-	},
-	"laptop": {
-		"label": "노트북",
-		"drain_per_game_hour": 3.0,
-		"watt_usage": 1300,
-		"outlet_size": 2,
-		"requires_connection": true,
-		"flag": "checked_laptop",
-		"power_key": "laptop",
-		"feedback": "낡은 로그가 화면에 떠오릅니다. 몇 줄은 Grid라는 이름을 반복합니다.",
-		"already_used": "오늘 확인할 수 있는 로그는 이미 훑었습니다.",
-	},
-	"fan": {
-		"label": "선풍기",
-		"drain_per_game_hour": 1.0,
-		"watt_usage": 900,
-		"outlet_size": 1,
-		"requires_connection": true,
-		"flag": "used_fan",
-		"power_key": "fan",
-		"feedback": "선풍기가 느리게 돌기 시작합니다. 공기가 움직이지만 계량기는 내려갑니다.",
-		"already_used": "선풍기는 이미 돌아가고 있습니다.",
-	},
-	"charger": {
-		"label": "충전기",
-		"drain_per_game_hour": 1.0,
-		"watt_usage": 20,
-		"outlet_size": 1,
-		"requires_connection": true,
-		"flag": "charged_device",
-		"power_key": "charger",
-		"feedback": "배터리가 조금씩 차오릅니다. 시간을 산 느낌입니다.",
-		"already_used": "오늘 필요한 만큼은 이미 충전했습니다.",
-	},
-	"communication_device": {
-		"label": "통신 장치",
-		"drain_per_game_hour": 2.0,
-		"watt_usage": 300,
-		"outlet_size": 1,
-		"requires_connection": true,
-		"flag": "sent_or_received_signal",
-		"power_key": "communication_device",
-		"feedback": "끊어진 신호 사이로 안내 방송이 섞여 들어옵니다. 아직 바깥에는 누군가 있습니다.",
-		"already_used": "잡음만 반복됩니다. 오늘 새 신호는 더 잡히지 않습니다.",
-	},
+const DAY1_DEVICE_DEFINITIONS: Dictionary = {
+	"light": preload("res://resources/devices/light.tres"),
+	"laptop": preload("res://resources/devices/laptop.tres"),
+	"fan": preload("res://resources/devices/fan.tres"),
+	"charger": preload("res://resources/devices/charger.tres"),
+	"communication_device": preload("res://resources/devices/communication_device.tres"),
 }
 
 const POWERSTRIP_DEVICE_ORDER: Array[String] = [
@@ -93,29 +41,6 @@ const POWERSTRIP_DEVICE_ORDER: Array[String] = [
 	"charger",
 	"light",
 ]
-const POWERSTRIP_DEVICE_DEFINITIONS: Dictionary = {
-	"fan": {
-		"slot_count": 1,
-		"action_key": "fan",
-	},
-	"communication_device": {
-		"slot_count": 1,
-		"action_key": "communication_device",
-	},
-	"laptop": {
-		"slot_count": 2,
-		"action_key": "laptop",
-	},
-	"charger": {
-		"slot_count": 1,
-		"action_key": "charger",
-	},
-	"light": {
-		"slot_count": 1,
-		"action_key": "light",
-	},
-}
-
 var day: int = 1
 var current_event: String = "없음"
 var phase: String = "day"
@@ -180,7 +105,7 @@ func set_powered_devices(device_keys: Array[String]) -> void:
 	_reset_powerstrip_connection_state()
 	for raw_key in device_keys:
 		var key: String = str(raw_key)
-		if not POWERSTRIP_DEVICE_DEFINITIONS.has(key):
+		if get_day1_device_definition(key) == null:
 			continue
 
 		var slot_count: int = int(powerstrip_device_slot_counts.get(key, 1))
@@ -291,7 +216,7 @@ func set_powerstrip_slot_occupancy(slot_occupancy: Array) -> void:
 			continue
 
 		var key: String = str(raw_key)
-		if not POWERSTRIP_DEVICE_DEFINITIONS.has(key):
+		if get_day1_device_definition(key) == null:
 			continue
 
 		powerstrip_slot_occupancy[slot] = key
@@ -424,7 +349,16 @@ func end_current_day() -> void:
 
 
 func get_day1_action_data(action_key: String) -> Dictionary:
-	return DAY1_ACTIONS.get(action_key, {})
+	return get_day1_device_data(action_key)
+
+
+static func get_day1_device_definition(action_key: String) -> DeviceDefinition:
+	return DAY1_DEVICE_DEFINITIONS.get(action_key) as DeviceDefinition
+
+
+static func get_day1_device_data(action_key: String) -> Dictionary:
+	var definition: DeviceDefinition = get_day1_device_definition(action_key)
+	return {} if definition == null else definition.to_action_data()
 
 
 func is_day1_action_connected(action_key: String) -> bool:
@@ -736,8 +670,8 @@ func _reset_powerstrip_connection_state() -> void:
 	powerstrip_device_connected.clear()
 	powerstrip_device_slot_counts.clear()
 	for key in POWERSTRIP_DEVICE_ORDER:
-		var definition: Dictionary = POWERSTRIP_DEVICE_DEFINITIONS.get(key, {})
-		var slot_count: int = int(definition.get("slot_count", 1))
+		var definition: DeviceDefinition = get_day1_device_definition(key)
+		var slot_count: int = 1 if definition == null else definition.outlet_slots
 		powerstrip_device_slots[key] = []
 		powerstrip_device_connected[key] = false
 		powerstrip_device_slot_counts[key] = slot_count
@@ -755,10 +689,10 @@ func _place_powerstrip_device(key: String, start_slot: int, slot_count: int) -> 
 
 func _refresh_powerstrip_device_state_from_slots() -> void:
 	for key in POWERSTRIP_DEVICE_ORDER:
-		var definition: Dictionary = POWERSTRIP_DEVICE_DEFINITIONS.get(key, {})
+		var definition: DeviceDefinition = get_day1_device_definition(key)
 		powerstrip_device_slots[key] = []
 		powerstrip_device_connected[key] = false
-		powerstrip_device_slot_counts[key] = int(definition.get("slot_count", 1))
+		powerstrip_device_slot_counts[key] = 1 if definition == null else definition.outlet_slots
 
 	for slot in range(powerstrip_slot_occupancy.size()):
 		var raw_key: Variant = powerstrip_slot_occupancy[slot]
@@ -766,7 +700,7 @@ func _refresh_powerstrip_device_state_from_slots() -> void:
 			continue
 
 		var key: String = str(raw_key)
-		if not POWERSTRIP_DEVICE_DEFINITIONS.has(key):
+		if get_day1_device_definition(key) == null:
 			continue
 
 		var slots_for_device: Array = powerstrip_device_slots.get(key, [])
@@ -837,8 +771,8 @@ func _recalculate_outlet_state() -> void:
 
 	# The outlet panel owns connection gestures, but SurvivalState is the source
 	# of truth for what those connections mean to the DAY 1 power loop.
-	for action_key in DAY1_ACTIONS.keys():
-		var action_data: Dictionary = DAY1_ACTIONS[action_key]
+	for action_key in DAY1_DEVICE_DEFINITIONS.keys():
+		var action_data: Dictionary = get_day1_action_data(action_key)
 		if not bool(action_data.get("requires_connection", false)):
 			continue
 

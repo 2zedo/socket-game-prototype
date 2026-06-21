@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `6a58c49`
-- Phase: Godot DAY 1 MVP Test Mode 2차 확장
+- Current commit at task start: `8e5f17e`
+- Phase: Godot DAY 1 장치 데이터 Resource화
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -16,6 +16,7 @@
 - The apartment uses `map_base_no_wires.png` as its visible base map.
 - The multitap screen uses draggable adapter PNGs rather than card-based device selection.
 - `SurvivalState.gd` is the source of truth for slot occupancy, connected devices, outlet load, and daily power state.
+- DAY 1 장치의 이름, 부하, 슬롯, 시간당 소비량, Result 플래그는 `godot/resources/devices/*.tres`가 소유한다.
 - Connected devices reveal their matching map wire overlays; disconnected devices keep those overlays hidden.
 - Laptop occupies two adjacent slots and cannot start from slot 4.
 - Communication Device currently occupies one slot.
@@ -85,6 +86,9 @@
 - `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`, `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: Test Mode 2차 키 라우팅, 상태 세팅 함수, 상태 출력, 기본 `F1` 안내와 도움말 전환을 추가한다.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: Test Mode 2차 수동 확인 항목과 표시 정책을 기록한다.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
+- `godot/scripts/resources/DeviceDefinition.gd`, `godot/resources/devices/*.tres`: 다섯 DAY 1 장치의 공통 데이터 구조와 기존 MVP 값을 정의한다.
+- `godot/scripts/SurvivalState.gd`, `godot/scripts/ui/OutletMode.gd`: Resource 기반 장치 조회를 슬롯, 부하, 소비율, 표시명, Result 플래그에 연결한다.
+- `docs/GODOT_DAY1_MVP_PLAN.md`, `docs/DAY1_CONTENT_BRIEF.md`, `docs/ASSET_PIPELINE.md`: 장치 데이터의 현재 Resource 경로와 유지된 값을 기록한다.
 
 ## Validation Results
 
@@ -111,6 +115,7 @@
 - 자동 하루 종료 대사-only 흐름 분리 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - 테스트 모드 조작과 한국어 도움말 추가 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - Test Mode 2차 확장 후 `git diff --check`, Godot 4.5.1 headless 편집기 초기화, Main scene 시작이 완료됐다.
+- 장치 Resource화 후 Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -128,7 +133,7 @@
 - Outlet LED off/on states, including two-slot Laptop occupancy, require manual visual confirmation.
 - Built-in LED mask alignment and two-slot LED exposure require manual visual confirmation at the target resolution.
 - Two-slot Laptop drops require manual checks at valid starts 1-3 and invalid start 4.
-- Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
+- 장치 Resource 값과 Outlet 연결 결과가 같은지 GUI 수동 확인이 필요하며, adapter 시각 튜닝은 계속 `OutletMode.gd`에 남는다.
 - `02:00` 대사-only 표시, `[E] 계속`, `ESC` 무시, Result 전환은 수동 GUI 확인이 필요하다.
 - 테스트 모드 도움말 토글과 시간·배터리·전력 조정 키는 수동 GUI 확인이 필요하다.
 - Test Mode 2차의 `O`/`U`/`F8`/숫자 세팅/`L` 출력과 모달 차단은 수동 입력 확인이 필요하다.
@@ -138,9 +143,9 @@
 
 ## Next Recommended Task
 
-1. Test Mode에서 `O`와 `U`가 각각 작동 상태와 연결 상태만 의도대로 초기화하는지 확인한다.
-2. `F8` 이후 실제 진행 또는 `PageUp`으로 `02:00` 자동 종료 대사-only 흐름에 진입하는지 확인한다.
-3. 배터리·전력 세팅과 `L` 출력, Test Mode OFF 및 모달 중 입력 차단을 확인한다.
+1. Outlet에서 다섯 장치의 부하와 슬롯 수가 Resource 값과 일치하는지 확인한다.
+2. Laptop이 2칸을 차지하고 slot 4에서 시작할 수 없는 기존 규칙을 확인한다.
+3. 장치별 작동 소비율, Phone 합산 표시, Result 플래그가 기존과 동일한지 확인한다.
 
 ## Archive
 

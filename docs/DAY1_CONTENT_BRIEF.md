@@ -37,6 +37,7 @@ DAY 1 uses two linked values:
 - Light requires a design decision. Current code implements a connected `1`-slot Lamp/Light, but the current room art and narrative description read as a built-in fluorescent ceiling light.
 - The active multitap UI uses draggable adapter PNGs, not device-selection cards.
 - `SurvivalState.gd` is the source of truth for slot occupancy, connected devices, outlet load, and daily power state.
+- 장치별 부하, 슬롯, 시간당 소비량, Result 플래그는 `godot/resources/devices/*.tres`에서 관리한다.
 - Only connected devices show their matching map wire overlays.
 - Laptop cannot start from slot 4 because it needs two adjacent slots.
 

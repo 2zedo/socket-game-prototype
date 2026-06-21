@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="DeviceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/DeviceDefinition.gd" id="1_device"]
+
+[resource]
+script = ExtResource("1_device")
+device_key = "fan"
+display_name = "선풍기"
+result_flag = "used_fan"
+load_watts = 900
+outlet_slots = 1
+drain_per_game_hour = 1.0

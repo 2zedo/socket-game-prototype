@@ -13,7 +13,7 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 - `godot/assets/ui/panels/`: reusable panel skins, frames, diary/log paper textures, and button backplates.
 - `godot/assets/ui/fonts/`: approved `.ttf` or `.otf` fonts.
 - `godot/themes/`: Godot Theme resources for shared UI styling.
-- `godot/data/devices/`: future `.tres` device definitions and tuning data.
+- `godot/resources/devices/`: current `.tres` DAY 1 device definitions and gameplay tuning data.
 
 ## Needed Art Assets
 
@@ -54,7 +54,8 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 - The Yui portrait placeholder in `InteractionPanel.tscn` is filled at runtime with `godot/assets/art/portraits/yui/yui_portrait_neutral.png`.
 - HUD and multitap power/plug icons are loaded from `godot/assets/art/ui/icons/`.
 - Interaction and dialogue panel art is used as low-alpha TextureRect backplates so text remains readable.
-- Device tuning currently in `SurvivalState.gd` should later move into `.tres` resources under `godot/data/devices/`.
+- DAY 1 device name, load, slot count, hourly drain, and Result flag live in `.tres` resources under `godot/resources/devices/`.
+- Adapter textures, connected offsets, and scale tuning remain separate from gameplay Resources and are not part of this data move.
 
 ## P0 Applied Assets
 

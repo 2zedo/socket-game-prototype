@@ -479,7 +479,7 @@ func _create_devices() -> void:
 
 
 func _make_day1_device(key: String) -> Dictionary:
-	var action_data: Dictionary = SurvivalState.DAY1_ACTIONS.get(key, {})
+	var action_data: Dictionary = SurvivalState.get_day1_device_data(key)
 	return {
 		"key": key,
 		"label": _get_display_label(key, str(action_data.get("label", key))),

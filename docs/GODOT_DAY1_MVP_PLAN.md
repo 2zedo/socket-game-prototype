@@ -42,7 +42,7 @@ The initial object list should stay small and match `docs/DAY1_CONTENT_BRIEF.md`
 
 ## Suggested Temporary Power Costs
 
-These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or data file when practical instead of hard-coding them into scene logic.
+These placeholder MVP values are stored in Godot Resources under `godot/resources/devices/`.
 
 - Starting power: `10 units`
 - Light: `0.5 unit / game hour`
@@ -63,7 +63,7 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 - Connected devices can be switched on and off; only active devices drain the daily budget, and modal-paused time does not drain it.
 - First activation records the device in the daily history, but the record does not block later on/off control.
 
-Temporary DAY 1 device data:
+Current DAY 1 device Resource values:
 
 - Light: `60W`, `1` outlet slot, `0.5 / game hour`; built-in fluorescent versus plug-in Lamp is still a design decision
 - Laptop: `1300W`, `2` outlet slots, `3.0 / game hour`
@@ -91,6 +91,7 @@ Temporary DAY 1 device data:
 ## Current Implementation Status
 
 - `SurvivalState.gd` owns connected state, active state, continuous DAY 1 power drain, first-use flags, and result-summary data.
+- `DeviceDefinition.gd`와 `godot/resources/devices/*.tres`가 장치별 표시명, 부하, 슬롯, 시간당 소비량, Result 플래그를 정의한다.
 - `SurvivalState.gd` now treats outlet connection state as the prerequisite for DAY 1 object use.
 - `SurvivalState.gd` is the source of truth for outlet slot sizes; Laptop currently occupies `2` slots, while Light/Lamp, Fan, Charger, and Communication device occupy `1` slot each.
 - Light/Lamp's current one-slot behavior is implemented but not yet accepted as the final design; resolve built-in fluorescent versus plug-in Lamp before further balancing.
@@ -106,7 +107,7 @@ Temporary DAY 1 device data:
 - `SurvivalState.gd` exposes `end_current_day()` so the explicit rest interaction can enter the existing result summary flow.
 - `02:00` 도달 시 확인/취소 패널 대신 유이 대사와 `[E] 계속` 힌트만 표시되며, `E` 입력으로 동일한 `end_current_day()` 결과 흐름을 사용한다.
 - HUD wording now prioritizes `DAY 1`, `오늘 남은 전력`, and used devices instead of debug-like points/time/status bars.
-- Temporary action costs still live in script constants and should move to a Resource or data file after in-editor validation.
+- `SurvivalState.gd`와 `OutletMode.gd`는 동일한 장치 Resource를 조회하며 adapter 이미지 경로와 연결 위치 튜닝은 별도 시각 데이터로 유지한다.
 
 ## Suggested Godot Files To Inspect First
 

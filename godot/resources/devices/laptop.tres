@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="DeviceDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/DeviceDefinition.gd" id="1_device"]
+
+[resource]
+script = ExtResource("1_device")
+device_key = "laptop"
+display_name = "노트북"
+result_flag = "checked_laptop"
+load_watts = 1300
+outlet_slots = 2
+drain_per_game_hour = 3.0
