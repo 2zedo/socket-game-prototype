@@ -2,7 +2,7 @@
 
 ## DAY 1 Purpose
 
-DAY 1 is the tutorial and core loop proof. It should teach the player that power is limited, objects have costs, choices produce feedback, and the day ends with a simple summary.
+DAY 1 is the tutorial and core loop proof. It should teach the player that power is limited, connected devices can be switched on or off, active time consumes power, and the day ends with a simple summary.
 
 Do not overload DAY 1 with many events. The goal is a playable power-choice loop, not full story delivery.
 
@@ -15,18 +15,20 @@ The first day should feel quiet and practical: learn the room, test devices, not
 ## Starting Power Assumption
 
 - Temporary starting power: `10 units`
-- Temporary object costs should later move into a Godot Resource (`.tres`) or data file.
+- Temporary object costs represent the amount consumed when a device remains active for the full `60`-second playable day. They should later move into a Godot Resource (`.tres`) or data file.
 - The exact values are placeholders for MVP testing and balance.
 
 ## Power And Outlet Meaning
 
 DAY 1 uses two linked values:
 
-- `오늘 남은 전력` is the action budget for the day. It starts at `10 / 10` and decreases only when Yui actually uses a powered object.
+- `오늘 남은 전력` is the action budget for the day. It starts at `10 / 10` and decreases over time only while one or more devices are active.
 - `현재 부하` is the watt total of devices currently connected to the power strip. It starts at `0W / 3000W` and changes when devices are plugged in or unplugged.
 - `콘센트` tracks occupied outlet slots. The current MVP uses `0 / 4`.
-- Connecting a device enables later use, but it does not spend today's power.
-- A power object cannot be used unless it is connected, has enough remaining daily power, and has not already been used today.
+- Connecting a device enables later activation, but it does not spend today's power.
+- A connected device can be switched on and off repeatedly while power remains. Disconnecting it forces its active state off.
+- `used` flags are historical records set on first activation; they do not block later on/off control.
+- Wire overlays continue to follow connection state, not active state.
 
 ## Current Outlet Decisions
 
@@ -43,7 +45,7 @@ DAY 1 uses two linked values:
 ### Light
 
 - Gameplay purpose: teaches that power can improve room safety/readability.
-- Suggested power cost: `1 unit`
+- Full-day active cost: `1 unit`
 - Current implementation: `60W`, `1` outlet slot, connection required.
 - Decision required:
   - Built-in fluorescent/ceiling light: use `0` outlet slots, do not require multitap connection, and spend only DAY power.
@@ -54,7 +56,7 @@ DAY 1 uses two linked values:
 ### Laptop
 
 - Gameplay purpose: introduces information gathering and the Grid mystery.
-- Suggested power cost: `3 units`
+- Full-day active cost: `3 units`
 - Current load data: `1300W`, `2` adjacent outlet slots
 - Slot rationale: the large adapter creates the primary space constraint in the DAY 1 multitap puzzle.
 - Sample feedback/dialogue direction: "Old logs flicker on the screen. Some entries mention Grid."
@@ -63,7 +65,7 @@ DAY 1 uses two linked values:
 ### Fan
 
 - Gameplay purpose: introduces comfort/survival tradeoff.
-- Suggested power cost: `2 units`
+- Full-day active cost: `2 units`
 - Suggested load data: `900W`, `1` outlet slot
 - Sample feedback/dialogue direction: "The fan turns slowly. The air moves, but the meter drops."
 - Possible result flag: `used_fan`
@@ -71,7 +73,7 @@ DAY 1 uses two linked values:
 ### Charger
 
 - Gameplay purpose: introduces practical survival maintenance.
-- Suggested power cost: `2 units`
+- Full-day active cost: `2 units`
 - Suggested load data: `20W`, `1` outlet slot
 - Sample feedback/dialogue direction: "The phone battery crawls upward. It feels like buying time."
 - Possible result flag: `charged_device`
@@ -79,7 +81,7 @@ DAY 1 uses two linked values:
 ### Communication Device
 
 - Gameplay purpose: introduces outside contact and the management office / delivery robot thread.
-- Suggested power cost: `4 units`
+- Full-day active cost: `4 units`
 - Current load data: `300W`, `1` outlet slot
 - Slot rationale: keeping this device at one slot avoids excessive early restriction while Laptop already occupies two slots.
 - Sample feedback/dialogue direction: "A broken signal cuts through. Someone is still broadcasting notices."

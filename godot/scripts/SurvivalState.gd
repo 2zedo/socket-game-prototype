@@ -4,6 +4,7 @@ class_name SurvivalState
 signal changed
 signal day_ended(result: Dictionary)
 signal phone_battery_warning(message: String)
+signal day1_power_warning(message: String)
 
 const MIN_STAT: float = 0.0
 const MAX_STAT: float = 100.0
@@ -132,8 +133,9 @@ var max_outlet_slots: int = DAY1_MAX_OUTLET_SLOTS
 var used_outlet_slots: int = 0
 var max_power_watts: int = DAY1_MAX_LOAD_WATTS
 var current_power_watts: int = 0
-var current_power_units: int = DAY1_STARTING_POWER_UNITS
+var current_power_units: float = float(DAY1_STARTING_POWER_UNITS)
 var powered_devices: Array[String] = []
+var active_day1_actions: Array[String] = []
 var powerstrip_slot_occupancy: Array = []
 var powerstrip_device_slots: Dictionary = {}
 var powerstrip_device_connected: Dictionary = {}
@@ -155,8 +157,10 @@ func _process(delta: float) -> void:
 	if is_time_paused or is_clock_paused_by_modal:
 		return
 
+	var active_time_delta: float = minf(delta, maxf(0.0, DAY_SECONDS - elapsed_seconds))
 	_update_time(delta)
-	_update_needs(delta)
+	_update_active_power(active_time_delta)
+	_update_needs(active_time_delta)
 	update_accumulator += delta
 
 	if update_accumulator >= 0.2:
@@ -302,6 +306,7 @@ func get_phone_text() -> String:
 		"",
 		"오늘 남은 전력: %d / %d" % [current_power, max_power],
 		"사용 기록: %s" % get_used_day1_action_summary(),
+		"작동 중: %s" % get_active_day1_action_summary(),
 		"",
 		"현재 부하: %dW / %dW" % [current_load_watts, max_load_watts],
 		"콘센트: %d / %d" % [used_outlet_slots, max_outlet_slots],
@@ -348,6 +353,10 @@ func is_day1_action_connected(action_key: String) -> bool:
 	return powered_devices.has(power_key)
 
 
+func is_day1_action_active(action_key: String) -> bool:
+	return active_day1_actions.has(action_key)
+
+
 func get_day1_disconnected_message(action_key: String) -> String:
 	var action_data := get_day1_action_data(action_key)
 	var label: String = str(action_data.get("label", action_key))
@@ -366,7 +375,19 @@ func get_used_day1_action_summary() -> String:
 	return ", ".join(labels)
 
 
-func try_use_day1_action(action_key: String) -> Dictionary:
+func get_active_day1_action_summary() -> String:
+	if active_day1_actions.is_empty():
+		return "없음"
+
+	var labels: Array[String] = []
+	for action_key in active_day1_actions:
+		var action_data := get_day1_action_data(action_key)
+		labels.append(str(action_data.get("label", action_key)))
+
+	return ", ".join(labels)
+
+
+func toggle_day1_action_active(action_key: String) -> Dictionary:
 	var action_data := get_day1_action_data(action_key)
 	if action_data.is_empty():
 		return {
@@ -374,53 +395,58 @@ func try_use_day1_action(action_key: String) -> Dictionary:
 			"message": "아직 사용할 수 없는 오브젝트입니다.",
 		}
 
-	var cost: int = int(action_data.get("cost", 0))
 	var label: String = str(action_data.get("label", action_key))
+	if is_day1_action_active(action_key):
+		active_day1_actions.erase(action_key)
+		last_day1_message = "%s을 껐다. 전력 소비가 멈췄다." % label
+		changed.emit()
+		return {
+			"success": true,
+			"active": false,
+			"message": last_day1_message,
+			"remaining_power": current_power,
+		}
+
 	if not is_day1_action_connected(action_key):
 		return {
 			"success": false,
 			"message": "전원이 연결되어 있지 않다.\n먼저 멀티탭에서 이 기기를 연결해야 한다.",
 		}
 
-	if used_day1_actions.has(action_key):
-		return {
-			"success": false,
-			"message": "오늘은 이미 사용했다.",
-		}
-
-	if current_power_units < cost:
+	if current_power_units <= 0.0:
 		return {
 			"success": false,
 			"message": "오늘 남은 전력이 부족하다.",
 		}
 
-	current_power_units = maxi(0, current_power_units - cost)
-	current_power = current_power_units
-	used_day1_actions.append(action_key)
+	active_day1_actions.append(action_key)
 	var flag_key: String = str(action_data.get("flag", action_key))
-	day1_flags[flag_key] = true
+	if not used_day1_actions.has(action_key):
+		used_day1_actions.append(action_key)
+		day1_flags[flag_key] = true
+		_apply_day1_action_effect(action_key)
 
-	_apply_day1_action_effect(action_key)
-	last_day1_message = str(action_data.get("feedback", "%s을 사용했습니다." % label))
+	last_day1_message = "%s을 켰다. 켜져 있는 동안 전력이 계속 줄어든다." % label
 	changed.emit()
 
 	return {
 		"success": true,
+		"active": true,
 		"message": "%s\n\n오늘 남은 전력: %d / %d" % [
 			last_day1_message,
 			current_power,
 			max_power,
 		],
-		"remaining_power": current_power_units,
+		"remaining_power": current_power,
 		"flag": flag_key,
 	}
 
 
 func _update_needs(delta: float) -> void:
-	var has_phone_charger: bool = powered_devices.has("charger") or powered_devices.has("phone")
-	var has_fan: bool = powered_devices.has("fan")
-	var has_laptop: bool = powered_devices.has("laptop")
-	var has_microwave: bool = powered_devices.has("microwave")
+	var has_phone_charger: bool = active_day1_actions.has("charger")
+	var has_fan: bool = active_day1_actions.has("fan")
+	var has_laptop: bool = active_day1_actions.has("laptop")
+	var has_microwave: bool = active_day1_actions.has("microwave")
 
 	var battery_delta: float = -0.45
 	var temperature_delta: float = 0.32
@@ -470,6 +496,26 @@ func _update_time(delta: float) -> void:
 	elapsed_seconds = minf(elapsed_seconds + delta, DAY_SECONDS)
 	phase = "day"
 	remaining_phase_seconds = maxi(0, int(ceil(DAY_SECONDS - elapsed_seconds)))
+
+
+func _update_active_power(delta: float) -> void:
+	if delta <= 0.0 or active_day1_actions.is_empty() or current_power_units <= 0.0:
+		return
+
+	var full_day_cost: float = 0.0
+	for action_key in active_day1_actions:
+		var action_data := get_day1_action_data(action_key)
+		full_day_cost += float(action_data.get("cost", 0))
+
+	current_power_units = maxf(0.0, current_power_units - full_day_cost / DAY_SECONDS * delta)
+	current_power = ceili(current_power_units)
+	if current_power_units > 0.0:
+		return
+
+	active_day1_actions.clear()
+	last_day1_message = "오늘 남은 전력이 바닥났다. 켜진 기기가 모두 꺼졌다."
+	changed.emit()
+	day1_power_warning.emit(last_day1_message)
 
 
 func _get_current_day_minutes() -> int:
@@ -522,7 +568,7 @@ func _calculate_day_result() -> Dictionary:
 		"lines": lines,
 		"total": total,
 		"total_points": total_points + total,
-		"remaining_power": current_power_units,
+		"remaining_power": current_power,
 		"used_day1_actions": used_day1_actions.duplicate(),
 		"day1_flags": day1_flags.duplicate(),
 	}
@@ -638,6 +684,13 @@ func _refresh_powered_devices_from_powerstrip_state() -> void:
 	for key in POWERSTRIP_DEVICE_ORDER:
 		if bool(powerstrip_device_connected.get(key, false)):
 			powered_devices.append(key)
+	_deactivate_disconnected_day1_actions()
+
+
+func _deactivate_disconnected_day1_actions() -> void:
+	for action_key in active_day1_actions.duplicate():
+		if not is_day1_action_connected(action_key):
+			active_day1_actions.erase(action_key)
 
 
 func _find_available_powerstrip_slot(slot_count: int) -> int:
@@ -656,9 +709,10 @@ func _find_available_powerstrip_slot(slot_count: int) -> int:
 
 
 func _reset_day1_power_loop() -> void:
-	current_power_units = DAY1_STARTING_POWER_UNITS
-	current_power = current_power_units
+	current_power_units = float(DAY1_STARTING_POWER_UNITS)
+	current_power = DAY1_STARTING_POWER_UNITS
 	used_day1_actions.clear()
+	active_day1_actions.clear()
 	day1_flags.clear()
 	day1_day_ended = false
 	last_day1_message = ""

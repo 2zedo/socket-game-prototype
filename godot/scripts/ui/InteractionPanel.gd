@@ -102,7 +102,14 @@ func _apply_footer(footer_text: String) -> void:
 	var has_primary := footer_text.find("E") >= 0 and footer_text.find("닫기") < 0
 	use_button.visible = has_primary
 	if has_primary:
-		use_button_label.text = "[E] 하루 종료" if footer_text.find("하루") >= 0 else "[E] 사용하기"
+		if footer_text.find("하루") >= 0:
+			use_button_label.text = "[E] 하루 종료"
+		elif footer_text.find("끄기") >= 0:
+			use_button_label.text = "[E] 끄기"
+		elif footer_text.find("켜기") >= 0:
+			use_button_label.text = "[E] 켜기"
+		else:
+			use_button_label.text = "[E] 사용하기"
 		cancel_button_label.text = "[ESC] 취소"
 		return
 
@@ -114,8 +121,10 @@ func _make_yui_line(title: String, body: String) -> String:
 		return "전원이 없으면 아무것도 시작할 수 없어. 먼저 연결부터 확인하자."
 	if body.find("오늘 남은 전력이 부족하다") >= 0:
 		return "오늘 쓸 수 있는 전력이 얼마 남지 않았어. 다른 선택을 해야 해."
-	if title.find("사용 완료") >= 0:
+	if title.find("켜기 완료") >= 0:
 		return "전력을 쓴 만큼 오늘은 조금 더 버틸 수 있을지도 몰라."
+	if title.find("끄기 완료") >= 0:
+		return "필요하지 않을 때는 꺼 두자. 남은 전력은 한정되어 있어."
 	if title.find("오늘을 마친다") >= 0:
 		return "더 쓸 전력이 남아 있어도, 오늘은 여기서 멈출 수 있어."
 

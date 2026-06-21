@@ -10,7 +10,8 @@ Define the smallest Godot implementation that proves the core `CONCENT / 전력 
 - Current power is visible.
 - The player can interact with a small set of room objects.
 - Room objects require a matching outlet connection before use.
-- Confirmed choices spend power.
+- Connected devices can be switched on and off.
+- Active devices spend power continuously while game time advances.
 - Choices are blocked when power is insufficient.
 - Each choice gives clear dialogue or event feedback.
 - The day can end.
@@ -54,11 +55,13 @@ These are placeholder MVP values. Store them in a Godot Resource (`.tres`) or da
 
 `오늘 남은 전력` and `현재 부하` are one connected system, but they mean different things:
 
-- `오늘 남은 전력: 10 / 10` is the DAY 1 action budget. It decreases only when a connected object is actually used.
+- `오늘 남은 전력: 10 / 10` is the DAY 1 action budget. It decreases over elapsed exploration time while connected devices are active.
 - `현재 부하: 0W / 3000W` is the sum of devices currently connected to the outlet/power strip. It is not a second power meter.
 - `콘센트: 0 / 4` is the number of outlet slots occupied by connected devices.
 - Connecting or disconnecting a device does not spend today's power.
-- Power objects can be used only when the matching device is connected, today's remaining power is enough, and the object has not already been used today.
+- The temporary `cost` values are full-day active costs over the current `60`-second playable day.
+- Connected devices can be switched on and off; only active devices drain the daily budget, and modal-paused time does not drain it.
+- First activation records the device in the daily history, but the record does not block later on/off control.
 
 Temporary DAY 1 device data:
 
@@ -77,6 +80,7 @@ Temporary DAY 1 device data:
 - `max_outlet_slots`
 - `used_outlet_slots`
 - connected device keys
+- active device keys
 - `used_light`
 - `checked_laptop`
 - `used_fan`
@@ -86,7 +90,7 @@ Temporary DAY 1 device data:
 
 ## Current Implementation Status
 
-- `SurvivalState.gd` now owns temporary DAY 1 power units, object costs, use flags, and result-summary data.
+- `SurvivalState.gd` owns connected state, active state, continuous DAY 1 power drain, first-use flags, and result-summary data.
 - `SurvivalState.gd` now treats outlet connection state as the prerequisite for DAY 1 object use.
 - `SurvivalState.gd` is the source of truth for outlet slot sizes; Laptop currently occupies `2` slots, while Light/Lamp, Fan, Charger, and Communication device occupy `1` slot each.
 - Light/Lamp's current one-slot behavior is implemented but not yet accepted as the final design; resolve built-in fluorescent versus plug-in Lamp before further balancing.
@@ -95,7 +99,7 @@ Temporary DAY 1 device data:
 - `Apartment.gd` now exposes the five DAY 1 interactables: Light, Laptop, Fan, Charger, and Communication device.
 - `Player.gd` and `project.godot` already support keyboard top-down movement through WASD and arrow input actions.
 - `Apartment.gd` tracks the nearest interactable by player proximity, so `E` only opens interaction UI near an object.
-- `Main.gd` now routes nearby interactables through a simple `E: use / ESC: cancel` confirmation flow and pauses Yui while the modal panel is open.
+- `Main.gd` routes nearby powered objects through `E: 켜기` / `E: 끄기` confirmation and pauses both time and power drain while a modal is open.
 - `InteractionPanel.gd` supports context-specific footer text for use/cancel prompts.
 - `SurvivalHUD.tscn` has enough status label space to show current DAY 1 power and use records.
 - `Apartment.gd` now includes a bed/rest interactable that opens an explicit `End Day` confirmation through the same proximity `E` model.

@@ -20,6 +20,7 @@ func _ready() -> void:
 	interaction_panel.cancel_requested.connect(_on_interaction_panel_cancel_requested)
 	survival_state.changed.connect(_refresh_survival_ui)
 	survival_state.phone_battery_warning.connect(_on_phone_battery_warning)
+	survival_state.day1_power_warning.connect(_on_day1_power_warning)
 	outlet_mode.closed.connect(_on_outlet_mode_closed)
 	outlet_mode.power_changed.connect(_on_outlet_power_changed)
 	outlet_mode.powered_devices_changed.connect(_on_powered_devices_changed)
@@ -171,7 +172,8 @@ func _on_interaction_requested(interactable: ApartmentInteractable) -> void:
 			return
 
 		pending_interaction_data = data
-		_open_interaction_panel(data.get("title", "상호작용"), _build_interaction_body(data), "E: 사용하기 / ESC: 취소")
+		var action_footer: String = "E: 끄기 / ESC: 취소" if survival_state.is_day1_action_active(day1_action_key) else "E: 켜기 / ESC: 취소"
+		_open_interaction_panel(data.get("title", "상호작용"), _build_interaction_body(data), action_footer)
 		return
 
 	var watts: int = data.get("watts", 0)
@@ -196,24 +198,26 @@ func _on_interaction_panel_cancel_requested() -> void:
 func _build_interaction_body(data: Dictionary) -> String:
 	var body: String = data.get("body", "")
 	var watts: int = data.get("watts", 0)
+	var action_key: String = data.get("day1_action_key", "")
 
-	if watts > 0:
-		body += "\n\n예상 전력: %dW" % watts
-		body += "\n전력은 늘 부족합니다. 무엇을 켤지 선택해야 합니다."
-
-	var power_units: int = int(data.get("power_units", 0))
-	if power_units > 0:
-		var action_key: String = data.get("day1_action_key", "")
+	if action_key != "":
 		var action_data := survival_state.get_day1_action_data(action_key)
-		var cost: int = int(action_data.get("cost", power_units))
+		var full_day_cost: int = int(action_data.get("cost", 0))
 		var watt_usage: int = int(action_data.get("watt_usage", watts))
-		body += "\n\n오늘 전력 사용량: %d" % cost
+		var is_active: bool = survival_state.is_day1_action_active(action_key)
+		body += "\n\n현재 상태: %s" % ("켜짐" if is_active else "꺼짐")
 		body += "\n소비전력: %dW" % watt_usage
+		body += "\n하루 최대 소비량: %d" % full_day_cost
 		body += "\n현재 남은 전력: %d / %d" % [
 			survival_state.current_power,
 			survival_state.max_power,
 		]
-		body += "\n\n사용하려면 E, 취소하려면 ESC를 누르세요."
+		body += "\n\n%s" % ("끄면 전력 소비가 멈춥니다." if is_active else "켜져 있는 동안 전력이 계속 줄어듭니다.")
+		return body
+
+	if watts > 0:
+		body += "\n\n예상 전력: %dW" % watts
+		body += "\n전력은 늘 부족합니다. 무엇을 켤지 선택해야 합니다."
 
 	if data.get("interaction_type", "") == "end_day":
 		body += "\n\n오늘을 마칠까요?"
@@ -235,8 +239,10 @@ func _confirm_pending_interaction() -> void:
 
 	var action_key: String = pending_interaction_data.get("day1_action_key", "")
 	var title: String = pending_interaction_data.get("title", "상호작용")
-	var result := survival_state.try_use_day1_action(action_key)
-	var prefix := "사용 완료" if bool(result.get("success", false)) else "사용 불가"
+	var result := survival_state.toggle_day1_action_active(action_key)
+	var prefix := "작동 불가"
+	if bool(result.get("success", false)):
+		prefix = "켜기 완료" if bool(result.get("active", false)) else "끄기 완료"
 
 	pending_interaction_data = {}
 	_open_interaction_panel("%s - %s" % [title, prefix], str(result.get("message", "")), "E 또는 ESC: 닫기")
@@ -262,7 +268,7 @@ func _refresh_survival_ui() -> void:
 	survival_hud.set_phase_effect(survival_state.get_phase_effect_text())
 	survival_hud.set_phase_style(survival_state.phase)
 	apartment.set_powered_devices(survival_state.powered_devices)
-	apartment.set_day1_visual_state(survival_state.used_day1_actions, survival_state.current_power)
+	apartment.set_day1_visual_state(survival_state.active_day1_actions, survival_state.current_power)
 	apartment.set_phase(survival_state.phase)
 
 	if phone_ui.visible:
@@ -273,6 +279,10 @@ func _refresh_survival_ui() -> void:
 
 
 func _on_phone_battery_warning(message: String) -> void:
+	survival_hud.show_temporary_warning(message)
+
+
+func _on_day1_power_warning(message: String) -> void:
 	survival_hud.show_temporary_warning(message)
 
 

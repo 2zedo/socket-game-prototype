@@ -80,6 +80,7 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] Laptop cannot start from slot 4.
 - [ ] Laptop + Light + Charger fills `4 / 4` slots.
 - [ ] Connecting a device does not decrease today's remaining power.
+- [ ] Disconnecting an active device also turns that device off.
 - [ ] Disconnecting a device decreases current load watts and used outlet slots.
 - [ ] A device that would exceed load or slot limits cannot be connected.
 - [ ] The power strip does not feel like a separate resource minigame; it only controls which room objects can be used.
@@ -107,14 +108,15 @@ For each object below, verify the full flow:
 - [ ] The disconnected message says the device must be connected through the power strip first.
 - [ ] Today's remaining power does not decrease when disconnected use is blocked.
 - [ ] Connect the matching device through the power strip.
-- [ ] Press `E` to open `InteractionPanel`.
+- [ ] Press `E` to open `InteractionPanel` and confirm the connected device shows `꺼짐` with a `켜기` action.
 - [ ] Press `ESC` to cancel.
-- [ ] Approach again, press `E`, then press `E` again to confirm use.
-- [ ] Current power decreases by the expected amount.
-- [ ] Power strip `오늘 남은 전력` and room HUD `오늘 남은 전력` show the same value after use.
-- [ ] HUD use record updates.
-- [ ] Trying the same object again is blocked as already used.
-- [ ] When power is insufficient, use is blocked and a clear message appears.
+- [ ] Approach again, press `E`, then confirm `켜기`.
+- [ ] Current power does not drop as an immediate one-time charge, but decreases while exploration time advances.
+- [ ] Open Phone, Outlet, Interaction, End Day, and Result modals and confirm active power drain pauses with the clock.
+- [ ] Interact with the active device again and confirm `끄기` stops further power drain.
+- [ ] Turn the same device on again and confirm the historical used record does not block it.
+- [ ] Phone use record updates on first activation and active-device status reflects current on/off state.
+- [ ] When power reaches zero, active devices switch off safely and a clear warning appears.
 
 Target objects:
 
@@ -168,7 +170,7 @@ Target objects:
 ## Pass Criteria
 
 - [ ] The player can progress from DAY 1 start to End Day result summary.
-- [ ] All five power objects support use, cancel, insufficient-power, and duplicate-use flows.
+- [ ] All five power objects support connected-only activation, cancel, on/off control, continuous drain, and zero-power shutdown.
 - [ ] Laptop, Fan, Charger, and Communication Device require outlet connection before use.
 - [ ] Light follows the currently implemented connection rule; update this criterion after the built-in fluorescent versus plug-in Lamp decision.
 - [ ] Movement and interaction UI do not conflict.
