@@ -41,12 +41,24 @@ const WALL_BLOCKERS := [
 	{"name": "upper_right_corner", "rect": Rect2(Vector2(940, 78), Vector2(102, 96))},
 ]
 
+const LAYER_Z_INDEX := {
+	"FloorLayer": 0,
+	"WallBackLayer": 10,
+	"FurnitureBackLayer": 20,
+	"ObjectLayer": 30,
+	"PlayerLayer": 40,
+	"FurnitureFrontLayer": 50,
+	"InteractionDebugLayer": 80,
+	"LabelLayer": 90,
+}
+
 const PLACEHOLDERS := [
 	{
 		"key": "bed",
 		"label": "BED",
 		"zone": "living",
 		"role": "manual_end_day",
+		"layer": "FurnitureBackLayer",
 		"position": Vector2(344, 386),
 		"size": Vector2(205, 132),
 		"blocks": true,
@@ -63,6 +75,7 @@ const PLACEHOLDERS := [
 		"label": "DESK",
 		"zone": "work",
 		"role": "support_device",
+		"layer": "FurnitureBackLayer",
 		"position": Vector2(762, 272),
 		"size": Vector2(275, 92),
 		"blocks": true,
@@ -77,6 +90,7 @@ const PLACEHOLDERS := [
 		"label": "LAPTOP",
 		"zone": "work",
 		"role": "laptop_job",
+		"layer": "ObjectLayer",
 		"position": Vector2(748, 238),
 		"size": Vector2(74, 36),
 		"blocks": false,
@@ -92,6 +106,7 @@ const PLACEHOLDERS := [
 		"label": "FRIDGE",
 		"zone": "kitchen",
 		"role": "living_appliance",
+		"layer": "FurnitureBackLayer",
 		"position": Vector2(994, 288),
 		"size": Vector2(78, 152),
 		"blocks": true,
@@ -108,6 +123,7 @@ const PLACEHOLDERS := [
 		"label": "MICROWAVE",
 		"zone": "kitchen",
 		"role": "living_appliance",
+		"layer": "ObjectLayer",
 		"position": Vector2(940, 448),
 		"size": Vector2(104, 44),
 		"blocks": true,
@@ -120,10 +136,11 @@ const PLACEHOLDERS := [
 		"thickness": 10.0,
 	},
 	{
-		"key": "air_conditioner",
+		"key": "aircon",
 		"label": "AC",
 		"zone": "utility",
 		"role": "living_appliance",
+		"layer": "WallBackLayer",
 		"position": Vector2(880, 122),
 		"size": Vector2(128, 30),
 		"blocks": false,
@@ -139,6 +156,7 @@ const PLACEHOLDERS := [
 		"label": "POWER",
 		"zone": "power",
 		"role": "power_management",
+		"layer": "ObjectLayer",
 		"position": Vector2(742, 462),
 		"size": Vector2(126, 38),
 		"blocks": false,
@@ -150,10 +168,11 @@ const PLACEHOLDERS := [
 		"thickness": 8.0,
 	},
 	{
-		"key": "communication_device",
+		"key": "comm",
 		"label": "COMM",
 		"zone": "work",
 		"role": "communication",
+		"layer": "ObjectLayer",
 		"position": Vector2(902, 326),
 		"size": Vector2(88, 48),
 		"blocks": false,
@@ -165,10 +184,11 @@ const PLACEHOLDERS := [
 		"thickness": 10.0,
 	},
 	{
-		"key": "node_17",
+		"key": "node17",
 		"label": "NODE-17",
 		"zone": "work",
 		"role": "mystery_device",
+		"layer": "ObjectLayer",
 		"position": Vector2(890, 242),
 		"size": Vector2(64, 64),
 		"blocks": false,
@@ -184,6 +204,7 @@ const PLACEHOLDERS := [
 		"label": "PHONE",
 		"zone": "living",
 		"role": "phone_charge",
+		"layer": "ObjectLayer",
 		"position": Vector2(498, 438),
 		"size": Vector2(52, 30),
 		"blocks": false,
@@ -194,16 +215,101 @@ const PLACEHOLDERS := [
 		"sort_y": 476,
 		"thickness": 5.0,
 	},
+	{
+		"key": "door",
+		"label": "DOOR",
+		"zone": "entrance",
+		"role": "background_life_hint",
+		"layer": "WallBackLayer",
+		"position": Vector2(204, 520),
+		"size": Vector2(64, 118),
+		"blocks": false,
+		"interactable": false,
+		"color": Color(0.18, 0.12, 0.09, 1.0),
+		"sort_y": 216,
+		"thickness": 8.0,
+	},
+	{
+		"key": "bathroom_door",
+		"label": "BATH DOOR",
+		"zone": "entrance",
+		"role": "background_life_hint",
+		"layer": "WallBackLayer",
+		"position": Vector2(276, 575),
+		"size": Vector2(68, 104),
+		"blocks": false,
+		"interactable": false,
+		"color": Color(0.16, 0.14, 0.12, 1.0),
+		"sort_y": 232,
+		"thickness": 8.0,
+	},
+	{
+		"key": "speaker",
+		"label": "SPEAKER",
+		"zone": "work",
+		"role": "audio_hacking_device",
+		"layer": "ObjectLayer",
+		"position": Vector2(832, 258),
+		"size": Vector2(34, 52),
+		"blocks": false,
+		"interactable": true,
+		"color": Color(0.08, 0.09, 0.10, 1.0),
+		"interaction_position": Vector2(825, 342),
+		"interaction_radius": 56.0,
+		"sort_y": 338,
+		"thickness": 8.0,
+	},
+	{
+		"key": "ups",
+		"label": "UPS",
+		"zone": "power",
+		"role": "support_device",
+		"layer": "ObjectLayer",
+		"position": Vector2(836, 484),
+		"size": Vector2(64, 52),
+		"blocks": false,
+		"interactable": true,
+		"color": Color(0.12, 0.13, 0.14, 1.0),
+		"interaction_position": Vector2(820, 536),
+		"interaction_radius": 60.0,
+		"sort_y": 536,
+		"thickness": 10.0,
+	},
+	{
+		"key": "signal_booster",
+		"label": "SIGNAL",
+		"zone": "work",
+		"role": "support_device",
+		"layer": "ObjectLayer",
+		"position": Vector2(942, 280),
+		"size": Vector2(48, 42),
+		"blocks": false,
+		"interactable": true,
+		"color": Color(0.10, 0.16, 0.18, 1.0),
+		"interaction_position": Vector2(900, 334),
+		"interaction_radius": 58.0,
+		"sort_y": 334,
+		"thickness": 8.0,
+	},
 ]
 
 @onready var world: Node2D = $World
-@onready var player: CharacterBody2D = $World/Player
+@onready var floor_layer: Node2D = $World/FloorLayer
+@onready var wall_back_layer: Node2D = $World/WallBackLayer
+@onready var furniture_back_layer: Node2D = $World/FurnitureBackLayer
+@onready var object_layer: Node2D = $World/ObjectLayer
+@onready var player_layer: Node2D = $World/PlayerLayer
+@onready var furniture_front_layer: Node2D = $World/FurnitureFrontLayer
+@onready var interaction_debug_layer: Node2D = $World/InteractionDebugLayer
+@onready var label_layer: Node2D = $World/LabelLayer
+@onready var player: CharacterBody2D = $World/PlayerLayer/Player
 @onready var prompt_label: Label = $UI/PromptLabel
 
 var nearest_object: Dictionary = {}
 
 
 func _ready() -> void:
+	_configure_layers()
 	_build_collision()
 	_build_placeholder_objects()
 	_configure_labels()
@@ -211,6 +317,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_nearest_interactable()
+	_apply_depth_order()
 	queue_redraw()
 
 
@@ -244,10 +351,10 @@ func _build_placeholder_objects() -> void:
 		object_node.position = object_data["position"]
 		object_node.z_as_relative = false
 		object_node.z_index = int(object_data["sort_y"])
-		world.add_child(object_node)
+		_get_placeholder_layer(object_data).add_child(object_node)
 
 		_add_placeholder_shape(object_node, object_data)
-		_add_placeholder_label(object_node, object_data)
+		_add_placeholder_label(object_data)
 
 
 func _add_placeholder_shape(parent: Node2D, object_data: Dictionary) -> void:
@@ -301,15 +408,15 @@ func _add_placeholder_shape(parent: Node2D, object_data: Dictionary) -> void:
 	parent.add_child(outline)
 
 
-func _add_placeholder_label(parent: Node2D, object_data: Dictionary) -> void:
+func _add_placeholder_label(object_data: Dictionary) -> void:
 	var size: Vector2 = object_data["size"]
 	var label := Label.new()
 	label.text = object_data["label"]
-	label.position = Vector2(-size.x * 0.5, -size.y * 0.5 - 25.0)
+	label.position = object_data["position"] + Vector2(-size.x * 0.5, -size.y * 0.5 - 25.0)
 	label.add_theme_color_override("font_color", Color(0.94, 0.84, 0.66, 1.0))
 	label.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 1.0))
 	label.add_theme_constant_override("outline_size", 3)
-	parent.add_child(label)
+	label_layer.add_child(label)
 
 
 func _add_blocker(blocker_name: String, rect: Rect2) -> void:
@@ -327,6 +434,41 @@ func _add_blocker(blocker_name: String, rect: Rect2) -> void:
 
 func _configure_labels() -> void:
 	prompt_label.text = ""
+
+
+func _configure_layers() -> void:
+	for layer_name in LAYER_Z_INDEX.keys():
+		var layer := world.get_node_or_null(layer_name) as Node2D
+		if layer == null:
+			continue
+		layer.z_as_relative = false
+		layer.z_index = LAYER_Z_INDEX[layer_name]
+		layer.y_sort_enabled = layer_name in ["FurnitureBackLayer", "ObjectLayer", "PlayerLayer", "FurnitureFrontLayer"]
+
+
+func _get_placeholder_layer(object_data: Dictionary) -> Node2D:
+	match String(object_data.get("layer", "ObjectLayer")):
+		"FloorLayer":
+			return floor_layer
+		"WallBackLayer":
+			return wall_back_layer
+		"FurnitureBackLayer":
+			return furniture_back_layer
+		"PlayerLayer":
+			return player_layer
+		"FurnitureFrontLayer":
+			return furniture_front_layer
+		"InteractionDebugLayer":
+			return interaction_debug_layer
+		"LabelLayer":
+			return label_layer
+		_:
+			return object_layer
+
+
+func _apply_depth_order() -> void:
+	player.z_as_relative = false
+	player.z_index = int(player.global_position.y)
 
 
 func _update_nearest_interactable() -> void:

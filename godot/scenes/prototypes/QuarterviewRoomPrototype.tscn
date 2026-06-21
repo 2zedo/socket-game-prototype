@@ -28,14 +28,42 @@ enabled = true
 [node name="World" type="Node2D" parent="."]
 y_sort_enabled = true
 
-[node name="Player" type="CharacterBody2D" parent="World"]
+[node name="FloorLayer" type="Node2D" parent="World"]
+z_as_relative = false
+
+[node name="WallBackLayer" type="Node2D" parent="World"]
+z_as_relative = false
+
+[node name="FurnitureBackLayer" type="Node2D" parent="World"]
+z_as_relative = false
+y_sort_enabled = true
+
+[node name="ObjectLayer" type="Node2D" parent="World"]
+z_as_relative = false
+y_sort_enabled = true
+
+[node name="PlayerLayer" type="Node2D" parent="World"]
+z_as_relative = false
+y_sort_enabled = true
+
+[node name="Player" type="CharacterBody2D" parent="World/PlayerLayer"]
 position = Vector2(590, 520)
 z_as_relative = false
 script = ExtResource("2_player")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/PlayerLayer/Player"]
 position = Vector2(0, 0)
 shape = SubResource("CircleShape2D_player")
+
+[node name="FurnitureFrontLayer" type="Node2D" parent="World"]
+z_as_relative = false
+y_sort_enabled = true
+
+[node name="InteractionDebugLayer" type="Node2D" parent="World"]
+z_as_relative = false
+
+[node name="LabelLayer" type="Node2D" parent="World"]
+z_as_relative = false
 
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 10
