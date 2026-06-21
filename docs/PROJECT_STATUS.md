@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `62025cd`
-- Phase: Quarterview prototype object registry and transition contract
+- Current commit at task start: `235bc2b`
+- Phase: Hacking action prototype scene
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -52,6 +52,7 @@
 - 쿼터뷰 prototype object registry는 `display_name`, `future_source`, `visual_state`를 포함하며, object contract는 `docs/QUARTERVIEW_OBJECT_CONTRACT.md`에서 추적한다.
 - 쿼터뷰 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`에서 room layer, atlas, Yui spritesheet, visual mapping Resource 후보 기준으로 계획한다.
 - 채택된 쿼터뷰 방 콘티는 최종 아트가 아니라 `docs/QUARTERVIEW_ROOM_DIRECTION.md`의 layout mood reference로 고정한다.
+- 해킹 액션은 기존 Main과 연결하지 않은 독립 prototype scene `res://scenes/prototypes/HackingActionPrototype.tscn`에서 조작, 전투, objective, exit 흐름을 먼저 검증한다.
 
 ## Current DAY 1 Decisions
 
@@ -111,6 +112,8 @@
 - `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: 쿼터뷰 prototype object registry에 `display_name`, `future_source`, `visual_state`와 조회 helper를 추가한다.
 - `docs/QUARTERVIEW_OBJECT_CONTRACT.md`: 쿼터뷰 object key, role, future source, visual state 후보와 구현 상태 기준을 기록한다.
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`: object contract 문서 위치를 구조 검토 항목에 연결한다.
+- `godot/scenes/prototypes/HackingActionPrototype.tscn`, `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/HackingPrototypePlayer.gd`, `godot/scripts/prototypes/HackingPrototypeEnemy.gd`, `godot/scripts/prototypes/HackingPrototypeProjectile.gd`: 독립 해킹 액션 prototype scene과 placeholder combat loop를 추가한다.
+- `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`: prototype scene 경로, 조작, 흐름, 아직 연결하지 않은 시스템을 기록한다.
 
 ## Validation Results
 
@@ -145,6 +148,7 @@
 - 채택된 쿼터뷰 방 콘티 기준 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - 쿼터뷰 prototype 레이어 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
 - 쿼터뷰 object registry와 contract 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
+- 해킹 액션 prototype 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -171,11 +175,12 @@
 - Phone current-status-only content and unchanged Result history require manual GUI confirmation.
 - 결과 화면의 한국어 줄바꿈, 빈 사용 기록, 수동 종료와 `02:00` 자동 종료 진입은 GUI 수동 확인이 필요하다.
 - 전용 정전 일지/생존 기록 이미지 스킨은 아직 적용하지 않았다.
+- 해킹 액션 prototype은 GUI 수동 확인이 필요하며, Laptop, Reward, Result, Story flag와 아직 연결하지 않았다.
 
 ## Next Recommended Task
 
-1. 채택 콘티 기준을 `QuarterviewRoomPrototype.tscn`의 placeholder 구역과 비교해 현관 / 침대 / 작업 책상 / 주방 / 전력 구역의 방향이 맞는지 확인한다.
-2. `docs/QUARTERVIEW_ART_ASSET_PLAN.md`와 `docs/QUARTERVIEW_ROOM_DIRECTION.md`를 기준으로 P1 room shell과 furniture / devices atlas 제작 순서를 확정한다.
+1. `HackingActionPrototype.tscn`을 GUI로 실행해 이동, shot, roll, hop, objective extraction, success/failure, restart 감각을 확인한다.
+2. 채택 콘티 기준을 `QuarterviewRoomPrototype.tscn`의 placeholder 구역과 비교해 현관 / 침대 / 작업 책상 / 주방 / 전력 구역의 방향이 맞는지 확인한다.
 3. Yui 쿼터뷰 spritesheet의 기준 크기, 발밑 pivot, 4방향 idle / walk 요구사항을 별도 문서나 아트 브리프로 정리한다.
 
 ## Archive
