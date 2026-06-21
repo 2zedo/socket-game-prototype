@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8e5f17e`
-- Phase: Godot DAY 1 장치 데이터 Resource화
+- Current commit at task start: `2d9043f`
+- Phase: Godot DAY 1 결과 화면 1차 개선
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -45,6 +45,7 @@
 - 현재 `60`초 DAY는 `08:00`부터 다음 날 `02:00`까지 18시간으로 변환되며, 최초 작동 기록은 이후 켜기/끄기를 막지 않는다.
 - Disconnecting a device clears its active state, while map wire overlays continue to follow connection state.
 - Phone UI is a current-status view only: time, period, battery, remaining power, hourly drain, and active devices. Historical use remains exclusive to Result.
+- 결과 화면은 기존 계산 데이터를 유지하면서 `DAY n 생존 기록`, 한국어 하루 요약, 장치·정보·상태 자연문을 표시한다.
 
 ## Current DAY 1 Decisions
 
@@ -89,6 +90,8 @@
 - `godot/scripts/resources/DeviceDefinition.gd`, `godot/resources/devices/*.tres`: 다섯 DAY 1 장치의 공통 데이터 구조와 기존 MVP 값을 정의한다.
 - `godot/scripts/SurvivalState.gd`, `godot/scripts/ui/OutletMode.gd`: Resource 기반 장치 조회를 슬롯, 부하, 소비율, 표시명, Result 플래그에 연결한다.
 - `docs/GODOT_DAY1_MVP_PLAN.md`, `docs/DAY1_CONTENT_BRIEF.md`, `docs/ASSET_PIPELINE.md`: 장치 데이터의 현재 Resource 경로와 유지된 값을 기록한다.
+- `godot/scripts/ui/DayResultPanel.gd`, `godot/scenes/ui/DayResultPanel.tscn`: 기존 결과 데이터를 생존 기록 문장과 `[E] 계속` 안내로 재구성한다.
+- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/GODOT_PLAYTEST_CHECKLIST.md`: Result 표현 정책과 수동 확인 항목을 기록한다.
 
 ## Validation Results
 
@@ -116,6 +119,7 @@
 - 테스트 모드 조작과 한국어 도움말 추가 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - Test Mode 2차 확장 후 `git diff --check`, Godot 4.5.1 headless 편집기 초기화, Main scene 시작이 완료됐다.
 - 장치 Resource화 후 Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
+- 결과 화면 1차 개선 후 `git diff --check`, Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -140,12 +144,14 @@
 - Continuous drain rate, modal pause, repeated on/off control, disconnect shutdown, and zero-power shutdown require manual gameplay confirmation.
 - Hourly drain totals and one-decimal Phone display require manual timing confirmation, especially Laptop-only and Laptop-plus-Fan cases.
 - Phone current-status-only content and unchanged Result history require manual GUI confirmation.
+- 결과 화면의 한국어 줄바꿈, 빈 사용 기록, 수동 종료와 `02:00` 자동 종료 진입은 GUI 수동 확인이 필요하다.
+- 전용 정전 일지/생존 기록 이미지 스킨은 아직 적용하지 않았다.
 
 ## Next Recommended Task
 
-1. Outlet에서 다섯 장치의 부하와 슬롯 수가 Resource 값과 일치하는지 확인한다.
-2. Laptop이 2칸을 차지하고 slot 4에서 시작할 수 없는 기존 규칙을 확인한다.
-3. 장치별 작동 소비율, Phone 합산 표시, Result 플래그가 기존과 동일한지 확인한다.
+1. 장치를 사용하지 않은 결과와 여러 장치를 사용한 결과에서 문장과 줄바꿈이 읽기 좋은지 확인한다.
+2. 침대 수동 종료와 `02:00` 자동 종료가 모두 같은 생존 기록 화면으로 진입하는지 확인한다.
+3. 향후 전용 정전 일지 스킨을 적용하되 현재 결과 계산과 한국어 정보 구조를 유지한다.
 
 ## Archive
 

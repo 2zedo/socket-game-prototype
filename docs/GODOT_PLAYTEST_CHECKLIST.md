@@ -155,10 +155,12 @@ Target objects:
 - [ ] Press `ESC` to cancel and return to exploration.
 - [ ] Open the panel again and press `E` to confirm.
 - [ ] Result summary appears.
+- [ ] 결과 제목이 `DAY n 생존 기록`으로 표시되고 짧은 하루 요약 문장이 보인다.
 - [ ] Summary shows remaining power.
 - [ ] Summary shows used objects.
 - [ ] Summary shows discovered information.
 - [ ] Summary shows simple state changes.
+- [ ] 결과 화면에 내부 key나 flag 이름이 노출되지 않고 `[E] 계속` 안내가 보인다.
 - [ ] Connected device visuals remain synced in the room after continuing to the next day.
 
 ## Visual Direction Check
@@ -174,7 +176,7 @@ Target objects:
 - [ ] Exploration does not show the left status HUD; nearby prompt and bottom controls remain visible.
 - [ ] Interaction state dims the room and uses the right-side info panel plus Yui comment panel.
 - [ ] Multitap state reads as a dark power connection panel, not a separate arcade screen.
-- [ ] Result state reads as `DAY 1 기록` / survival log, not a score results screen.
+- [ ] 결과 화면이 점수표가 아니라 `DAY 1 생존 기록` / 정전 일지처럼 보인다.
 
 ## Bug Report Template
 
