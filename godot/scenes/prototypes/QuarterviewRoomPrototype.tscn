@@ -29,7 +29,7 @@ enabled = true
 y_sort_enabled = true
 
 [node name="Player" type="CharacterBody2D" parent="World"]
-position = Vector2(585, 480)
+position = Vector2(590, 520)
 z_as_relative = false
 script = ExtResource("2_player")
 
