@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `4b503cd`
-- Phase: QuarterviewRoomPrototype 레이어 구조 정리와 이식 준비
+- Current commit at task start: `62025cd`
+- Phase: Quarterview prototype object registry and transition contract
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -49,6 +49,7 @@
 - 쿼터뷰 방 전환은 기존 Main을 대체하지 않고 `res://scenes/prototypes/QuarterviewRoomPrototype.tscn` 독립 prototype에서 먼저 검증한다.
 - 쿼터뷰 prototype placeholder는 `key`, `zone`, `role`, `blocks`, `interactable` 중심으로 정리하고, 기존 Apartment 기능 대응은 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
 - 쿼터뷰 prototype은 `World/FloorLayer`, `WallBackLayer`, `FurnitureBackLayer`, `ObjectLayer`, `PlayerLayer`, `FurnitureFrontLayer`, `InteractionDebugLayer`, `LabelLayer` 구조로 Main 이식 전 레이어 책임을 확인한다.
+- 쿼터뷰 prototype object registry는 `display_name`, `future_source`, `visual_state`를 포함하며, object contract는 `docs/QUARTERVIEW_OBJECT_CONTRACT.md`에서 추적한다.
 - 쿼터뷰 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`에서 room layer, atlas, Yui spritesheet, visual mapping Resource 후보 기준으로 계획한다.
 - 채택된 쿼터뷰 방 콘티는 최종 아트가 아니라 `docs/QUARTERVIEW_ROOM_DIRECTION.md`의 layout mood reference로 고정한다.
 
@@ -107,6 +108,9 @@
 - `docs/QUARTERVIEW_ROOM_DIRECTION.md`: 채택 콘티 기준, 공간 배치, 피해야 할 디자인, 스피커 / 현관 / 욕실 기준을 기록한다.
 - `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: 독립 쿼터뷰 prototype의 레이어 노드 구조와 placeholder `layer/zone/role` 정의를 정리한다.
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`: 쿼터뷰 prototype의 레이어 검증 기준을 본 전환 전 확인 항목에 추가한다.
+- `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: 쿼터뷰 prototype object registry에 `display_name`, `future_source`, `visual_state`와 조회 helper를 추가한다.
+- `docs/QUARTERVIEW_OBJECT_CONTRACT.md`: 쿼터뷰 object key, role, future source, visual state 후보와 구현 상태 기준을 기록한다.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: object contract 문서 위치를 구조 검토 항목에 연결한다.
 
 ## Validation Results
 
@@ -140,6 +144,7 @@
 - 쿼터뷰 아트 에셋 계획 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - 채택된 쿼터뷰 방 콘티 기준 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - 쿼터뷰 prototype 레이어 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
+- 쿼터뷰 object registry와 contract 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 

@@ -52,12 +52,14 @@ const LAYER_Z_INDEX := {
 	"LabelLayer": 90,
 }
 
-const PLACEHOLDERS := [
+const OBJECT_REGISTRY := [
 	{
 		"key": "bed",
-		"label": "BED",
+		"display_name": "Bed",
 		"zone": "living",
 		"role": "manual_end_day",
+		"future_source": "apartment_bed",
+		"visual_state": "idle",
 		"layer": "FurnitureBackLayer",
 		"position": Vector2(344, 386),
 		"size": Vector2(205, 132),
@@ -72,9 +74,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "desk",
-		"label": "DESK",
+		"display_name": "Desk",
 		"zone": "work",
 		"role": "support_device",
+		"future_source": "future_desk",
+		"visual_state": "idle",
 		"layer": "FurnitureBackLayer",
 		"position": Vector2(762, 272),
 		"size": Vector2(275, 92),
@@ -87,9 +91,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "laptop",
-		"label": "LAPTOP",
+		"display_name": "Laptop",
 		"zone": "work",
 		"role": "laptop_job",
+		"future_source": "apartment_laptop",
+		"visual_state": "on",
 		"layer": "ObjectLayer",
 		"position": Vector2(748, 238),
 		"size": Vector2(74, 36),
@@ -103,9 +109,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "fridge",
-		"label": "FRIDGE",
+		"display_name": "Fridge",
 		"zone": "kitchen",
 		"role": "living_appliance",
+		"future_source": "future_fridge",
+		"visual_state": "idle",
 		"layer": "FurnitureBackLayer",
 		"position": Vector2(994, 288),
 		"size": Vector2(78, 152),
@@ -120,9 +128,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "microwave",
-		"label": "MICROWAVE",
+		"display_name": "Microwave",
 		"zone": "kitchen",
 		"role": "living_appliance",
+		"future_source": "future_microwave",
+		"visual_state": "idle",
 		"layer": "ObjectLayer",
 		"position": Vector2(940, 448),
 		"size": Vector2(104, 44),
@@ -137,9 +147,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "aircon",
-		"label": "AC",
+		"display_name": "AC",
 		"zone": "utility",
 		"role": "living_appliance",
+		"future_source": "future_aircon",
+		"visual_state": "off",
 		"layer": "WallBackLayer",
 		"position": Vector2(880, 122),
 		"size": Vector2(128, 30),
@@ -153,9 +165,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "power",
-		"label": "POWER",
+		"display_name": "Power",
 		"zone": "power",
 		"role": "power_management",
+		"future_source": "apartment_outlet",
+		"visual_state": "idle",
 		"layer": "ObjectLayer",
 		"position": Vector2(742, 462),
 		"size": Vector2(126, 38),
@@ -169,9 +183,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "comm",
-		"label": "COMM",
+		"display_name": "Comm",
 		"zone": "work",
 		"role": "communication",
+		"future_source": "apartment_communication",
+		"visual_state": "off",
 		"layer": "ObjectLayer",
 		"position": Vector2(902, 326),
 		"size": Vector2(88, 48),
@@ -185,9 +201,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "node17",
-		"label": "NODE-17",
+		"display_name": "NODE-17",
 		"zone": "work",
 		"role": "mystery_device",
+		"future_source": "future_node17",
+		"visual_state": "off",
 		"layer": "ObjectLayer",
 		"position": Vector2(890, 242),
 		"size": Vector2(64, 64),
@@ -201,9 +219,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "phone",
-		"label": "PHONE",
+		"display_name": "Phone",
 		"zone": "living",
 		"role": "phone_charge",
+		"future_source": "apartment_phone_or_charger",
+		"visual_state": "idle",
 		"layer": "ObjectLayer",
 		"position": Vector2(498, 438),
 		"size": Vector2(52, 30),
@@ -217,9 +237,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "door",
-		"label": "DOOR",
+		"display_name": "Door",
 		"zone": "entrance",
-		"role": "background_life_hint",
+		"role": "background_structure",
+		"future_source": "none",
+		"visual_state": "idle",
 		"layer": "WallBackLayer",
 		"position": Vector2(204, 520),
 		"size": Vector2(64, 118),
@@ -231,9 +253,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "bathroom_door",
-		"label": "BATH DOOR",
-		"zone": "entrance",
-		"role": "background_life_hint",
+		"display_name": "Bath Door",
+		"zone": "utility",
+		"role": "background_structure",
+		"future_source": "none",
+		"visual_state": "idle",
 		"layer": "WallBackLayer",
 		"position": Vector2(276, 575),
 		"size": Vector2(68, 104),
@@ -245,9 +269,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "speaker",
-		"label": "SPEAKER",
+		"display_name": "Speaker",
 		"zone": "work",
 		"role": "audio_hacking_device",
+		"future_source": "future_audio_hacking",
+		"visual_state": "off",
 		"layer": "ObjectLayer",
 		"position": Vector2(832, 258),
 		"size": Vector2(34, 52),
@@ -261,9 +287,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "ups",
-		"label": "UPS",
+		"display_name": "UPS",
 		"zone": "power",
 		"role": "support_device",
+		"future_source": "future_ups",
+		"visual_state": "idle",
 		"layer": "ObjectLayer",
 		"position": Vector2(836, 484),
 		"size": Vector2(64, 52),
@@ -277,9 +305,11 @@ const PLACEHOLDERS := [
 	},
 	{
 		"key": "signal_booster",
-		"label": "SIGNAL",
+		"display_name": "Signal",
 		"zone": "work",
 		"role": "support_device",
+		"future_source": "future_signal_booster",
+		"visual_state": "off",
 		"layer": "ObjectLayer",
 		"position": Vector2(942, 280),
 		"size": Vector2(48, 42),
@@ -290,6 +320,38 @@ const PLACEHOLDERS := [
 		"interaction_radius": 58.0,
 		"sort_y": 334,
 		"thickness": 8.0,
+	},
+	{
+		"key": "shelf",
+		"display_name": "Shelf",
+		"zone": "background",
+		"role": "background_life_hint",
+		"future_source": "future_room_prop",
+		"visual_state": "idle",
+		"layer": "WallBackLayer",
+		"position": Vector2(410, 190),
+		"size": Vector2(150, 38),
+		"blocks": false,
+		"interactable": false,
+		"color": Color(0.26, 0.18, 0.11, 1.0),
+		"sort_y": 228,
+		"thickness": 7.0,
+	},
+	{
+		"key": "small_table",
+		"display_name": "Small Table",
+		"zone": "living",
+		"role": "background_life_hint",
+		"future_source": "future_room_prop",
+		"visual_state": "idle",
+		"layer": "FurnitureFrontLayer",
+		"position": Vector2(590, 555),
+		"size": Vector2(108, 64),
+		"blocks": false,
+		"interactable": false,
+		"color": Color(0.28, 0.18, 0.10, 1.0),
+		"sort_y": 626,
+		"thickness": 12.0,
 	},
 ]
 
@@ -324,8 +386,14 @@ func _process(_delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and not nearest_object.is_empty():
 		print(
-			"Quarterview prototype interact: %s / zone=%s / role=%s"
-			% [nearest_object["key"], nearest_object["zone"], nearest_object["role"]]
+			"Quarterview prototype interact: %s / zone=%s / role=%s / future=%s / state=%s"
+			% [
+				nearest_object["key"],
+				nearest_object["zone"],
+				nearest_object["role"],
+				nearest_object["future_source"],
+				nearest_object["visual_state"],
+			]
 		)
 
 
@@ -339,13 +407,13 @@ func _build_collision() -> void:
 	for wall_data in WALL_BLOCKERS:
 		_add_blocker(wall_data["name"], wall_data["rect"])
 
-	for placeholder_data in PLACEHOLDERS:
+	for placeholder_data in OBJECT_REGISTRY:
 		if placeholder_data["blocks"] and placeholder_data.has("blocker_rect"):
 			_add_blocker("%s_blocker" % placeholder_data["key"], placeholder_data["blocker_rect"])
 
 
 func _build_placeholder_objects() -> void:
-	for object_data in PLACEHOLDERS:
+	for object_data in OBJECT_REGISTRY:
 		var object_node := Node2D.new()
 		object_node.name = "%sPlaceholder" % object_data["key"].capitalize().replace("_", "")
 		object_node.position = object_data["position"]
@@ -411,7 +479,7 @@ func _add_placeholder_shape(parent: Node2D, object_data: Dictionary) -> void:
 func _add_placeholder_label(object_data: Dictionary) -> void:
 	var size: Vector2 = object_data["size"]
 	var label := Label.new()
-	label.text = object_data["label"]
+	label.text = _get_object_display_name(object_data).to_upper()
 	label.position = object_data["position"] + Vector2(-size.x * 0.5, -size.y * 0.5 - 25.0)
 	label.add_theme_color_override("font_color", Color(0.94, 0.84, 0.66, 1.0))
 	label.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 1.0))
@@ -471,11 +539,46 @@ func _apply_depth_order() -> void:
 	player.z_index = int(player.global_position.y)
 
 
+func get_object_definition(key: String) -> Dictionary:
+	for object_data in OBJECT_REGISTRY:
+		if object_data["key"] == key:
+			return object_data
+	return {}
+
+
+func get_interactable_keys() -> Array[String]:
+	var keys: Array[String] = []
+	for object_data in OBJECT_REGISTRY:
+		if object_data["interactable"]:
+			keys.append(String(object_data["key"]))
+	return keys
+
+
+func get_objects_by_zone(zone: String) -> Array:
+	var results := []
+	for object_data in OBJECT_REGISTRY:
+		if object_data["zone"] == zone:
+			results.append(object_data)
+	return results
+
+
+func get_objects_by_role(role: String) -> Array:
+	var results := []
+	for object_data in OBJECT_REGISTRY:
+		if object_data["role"] == role:
+			results.append(object_data)
+	return results
+
+
+func _get_object_display_name(object_data: Dictionary) -> String:
+	return String(object_data.get("display_name", object_data["key"]))
+
+
 func _update_nearest_interactable() -> void:
 	var next_nearest: Dictionary = {}
 	var closest_distance := INF
 
-	for object_data in PLACEHOLDERS:
+	for object_data in OBJECT_REGISTRY:
 		if not object_data["interactable"]:
 			continue
 
@@ -491,7 +594,7 @@ func _update_nearest_interactable() -> void:
 	if nearest_object.is_empty():
 		prompt_label.text = ""
 	else:
-		prompt_label.text = "E: %s" % nearest_object["label"]
+		prompt_label.text = "E: %s" % _get_object_display_name(nearest_object)
 
 
 func _draw_room_shell() -> void:
@@ -541,14 +644,14 @@ func _draw_collision_guides() -> void:
 		draw_rect(wall_data["rect"], Color(0.95, 0.18, 0.12, 0.14), true)
 		draw_rect(wall_data["rect"], Color(1.0, 0.26, 0.18, 0.55), false, 2.0)
 
-	for object_data in PLACEHOLDERS:
+	for object_data in OBJECT_REGISTRY:
 		if object_data["blocks"] and object_data.has("blocker_rect"):
 			draw_rect(object_data["blocker_rect"], Color(1.0, 0.42, 0.10, 0.10), true)
 			draw_rect(object_data["blocker_rect"], Color(1.0, 0.42, 0.10, 0.58), false, 2.0)
 
 
 func _draw_interaction_ranges() -> void:
-	for object_data in PLACEHOLDERS:
+	for object_data in OBJECT_REGISTRY:
 		if not object_data["interactable"]:
 			continue
 

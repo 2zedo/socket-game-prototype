@@ -56,6 +56,7 @@
 - 침대, 책상, 냉장고, 전자레인지, 에어컨 같은 큰 가구는 충돌과 가림 처리를 고려해 분리한다.
 - 노트북, Phone, 멀티탭, 통신 장치 같은 상호작용 오브젝트는 위치, 상호작용 범위, 충돌 범위를 scene 또는 data 구조로 관리한다.
 - 기존 탑뷰 Apartment 기능과 쿼터뷰 placeholder의 대응 관계는 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
+- 쿼터뷰 prototype의 object key, role, future source, visual state 계약은 `docs/QUARTERVIEW_OBJECT_CONTRACT.md`에서 추적한다.
 - 쿼터뷰 prototype은 `FloorLayer`, `WallBackLayer`, `FurnitureBackLayer`, `ObjectLayer`, `PlayerLayer`, `FurnitureFrontLayer`, `InteractionDebugLayer`, `LabelLayer`를 분리해 본 전환 전 레이어 책임과 가림 방식을 확인한다.
 - 비주얼 에셋은 나중에 교체 가능하도록 gameplay 영역과 분리한다.
 - 시점과 캐릭터 크기 기준을 먼저 고정하고, 세부 그래픽 스타일은 이후 교체 가능하게 유지한다.
