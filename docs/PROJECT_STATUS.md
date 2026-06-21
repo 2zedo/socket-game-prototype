@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `46abe3f`
-- Phase: 쿼터뷰 전환용 아트 에셋 계획 문서화
+- Current commit at task start: `6d178b8`
+- Phase: 채택된 쿼터뷰 방 콘티 기준 문서화
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -49,6 +49,7 @@
 - 쿼터뷰 방 전환은 기존 Main을 대체하지 않고 `res://scenes/prototypes/QuarterviewRoomPrototype.tscn` 독립 prototype에서 먼저 검증한다.
 - 쿼터뷰 prototype placeholder는 `key`, `zone`, `role`, `blocks`, `interactable` 중심으로 정리하고, 기존 Apartment 기능 대응은 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
 - 쿼터뷰 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`에서 room layer, atlas, Yui spritesheet, visual mapping Resource 후보 기준으로 계획한다.
+- 채택된 쿼터뷰 방 콘티는 최종 아트가 아니라 `docs/QUARTERVIEW_ROOM_DIRECTION.md`의 layout mood reference로 고정한다.
 
 ## Current DAY 1 Decisions
 
@@ -102,6 +103,7 @@
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`: 쿼터뷰 대응표 문서 위치를 구조 검토 항목에 연결한다.
 - `docs/QUARTERVIEW_ART_ASSET_PLAN.md`: 쿼터뷰 전환용 P0-P3 아트 우선순위와 atlas / spritesheet 원칙을 기록한다.
 - `docs/ASSET_PIPELINE.md`: 쿼터뷰 아트 계획 문서를 에셋 교체 기준에 짧게 연결한다.
+- `docs/QUARTERVIEW_ROOM_DIRECTION.md`: 채택 콘티 기준, 공간 배치, 피해야 할 디자인, 스피커 / 현관 / 욕실 기준을 기록한다.
 
 ## Validation Results
 
@@ -133,6 +135,7 @@
 - 장치 Resource화 후 Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
 - 결과 화면 1차 개선 후 `git diff --check`, Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
 - 쿼터뷰 아트 에셋 계획 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- 채택된 쿼터뷰 방 콘티 기준 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -162,8 +165,8 @@
 
 ## Next Recommended Task
 
-1. `QuarterviewRoomPrototype.tscn`을 GUI에서 열어 P1 room shell과 furniture / devices atlas로 교체할 때 필요한 레이어 분리가 충분한지 확인한다.
-2. `docs/QUARTERVIEW_ART_ASSET_PLAN.md` 기준으로 P1 최소 에셋의 제작 순서와 atlas region 이름을 확정한다.
+1. 채택 콘티 기준을 `QuarterviewRoomPrototype.tscn`의 placeholder 구역과 비교해 현관 / 침대 / 작업 책상 / 주방 / 전력 구역의 방향이 맞는지 확인한다.
+2. `docs/QUARTERVIEW_ART_ASSET_PLAN.md`와 `docs/QUARTERVIEW_ROOM_DIRECTION.md`를 기준으로 P1 room shell과 furniture / devices atlas 제작 순서를 확정한다.
 3. Yui 쿼터뷰 spritesheet의 기준 크기, 발밑 pivot, 4방향 idle / walk 요구사항을 별도 문서나 아트 브리프로 정리한다.
 
 ## Archive
