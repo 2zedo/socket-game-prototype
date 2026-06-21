@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `0f20e6d`
-- Phase: 쿼터뷰 방 Prototype Scene 1차 생성
+- Current commit at task start: `4818689`
+- Phase: 쿼터뷰 prototype 구조 정리와 기존 Apartment 기능 대응표 작성
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -47,6 +47,7 @@
 - Phone UI is a current-status view only: time, period, battery, remaining power, hourly drain, and active devices. Historical use remains exclusive to Result.
 - 결과 화면은 기존 계산 데이터를 유지하면서 `DAY n 생존 기록`, 한국어 하루 요약, 장치·정보·상태 자연문을 표시한다.
 - 쿼터뷰 방 전환은 기존 Main을 대체하지 않고 `res://scenes/prototypes/QuarterviewRoomPrototype.tscn` 독립 prototype에서 먼저 검증한다.
+- 쿼터뷰 prototype placeholder는 `key`, `zone`, `role`, `blocks`, `interactable` 중심으로 정리하고, 기존 Apartment 기능 대응은 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
 
 ## Current DAY 1 Decisions
 
@@ -95,6 +96,9 @@
 - `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/GODOT_PLAYTEST_CHECKLIST.md`: Result 표현 정책과 수동 확인 항목을 기록한다.
 - `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/QuarterviewPrototypePlayer.gd`: 쿼터뷰 구도와 이동 / 충돌 / 가림 / 상호작용 포인트 확인용 독립 prototype을 추가한다.
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`: prototype scene 경로와 본 전환 전 유지할 범위를 기록한다.
+- `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: prototype placeholder를 `key`, `zone`, `role`, `blocks`, `interactable` 중심의 `PLACEHOLDERS` 구조로 정리한다.
+- `docs/QUARTERVIEW_APARTMENT_MAPPING.md`: 기존 탑뷰 Apartment 기능과 쿼터뷰 placeholder의 대응표를 기록한다.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: 쿼터뷰 대응표 문서 위치를 구조 검토 항목에 연결한다.
 
 ## Validation Results
 
@@ -122,6 +126,7 @@
 - 테스트 모드 조작과 한국어 도움말 추가 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - Test Mode 2차 확장 후 `git diff --check`, Godot 4.5.1 headless 편집기 초기화, Main scene 시작이 완료됐다.
 - 쿼터뷰 방 prototype scene 추가 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
+- 쿼터뷰 prototype 구조 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
 - 장치 Resource화 후 Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
 - 결과 화면 1차 개선 후 `git diff --check`, Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
@@ -153,9 +158,9 @@
 
 ## Next Recommended Task
 
-1. 장치를 사용하지 않은 결과와 여러 장치를 사용한 결과에서 문장과 줄바꿈이 읽기 좋은지 확인한다.
-2. 침대 수동 종료와 `02:00` 자동 종료가 모두 같은 생존 기록 화면으로 진입하는지 확인한다.
-3. 향후 전용 정전 일지 스킨을 적용하되 현재 결과 계산과 한국어 정보 구조를 유지한다.
+1. `QuarterviewRoomPrototype.tscn`을 GUI에서 열어 `PLACEHOLDERS`의 zone별 배치가 작업 / 생활 / 주방 / 전력 구역으로 읽히는지 확인한다.
+2. 쿼터뷰 prototype에서 `E` placeholder 출력과 충돌 / 가림 테스트가 실제 이식 기준으로 충분한지 확인한다.
+3. `docs/QUARTERVIEW_APARTMENT_MAPPING.md`를 기준으로 다음 이식 후보를 정하되, 아직 기존 Main scene은 교체하지 않는다.
 
 ## Archive
 

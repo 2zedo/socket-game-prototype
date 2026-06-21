@@ -41,17 +41,20 @@ const WALL_BLOCKERS := [
 	{"name": "upper_right_corner", "rect": Rect2(Vector2(940, 78), Vector2(102, 96))},
 ]
 
-const ROOM_OBJECTS := [
+const PLACEHOLDERS := [
 	{
 		"key": "bed",
 		"label": "BED",
 		"zone": "living",
-		"pos": Vector2(344, 386),
+		"role": "manual_end_day",
+		"position": Vector2(344, 386),
 		"size": Vector2(205, 132),
+		"blocks": true,
+		"interactable": true,
 		"color": Color(0.22, 0.34, 0.25, 1.0),
-		"blocker": Rect2(Vector2(246, 326), Vector2(230, 152)),
-		"interact": Vector2(460, 488),
-		"radius": 82.0,
+		"blocker_rect": Rect2(Vector2(246, 326), Vector2(230, 152)),
+		"interaction_position": Vector2(460, 488),
+		"interaction_radius": 82.0,
 		"sort_y": 466,
 		"thickness": 24.0,
 	},
@@ -59,12 +62,13 @@ const ROOM_OBJECTS := [
 		"key": "desk",
 		"label": "DESK",
 		"zone": "work",
-		"pos": Vector2(762, 272),
+		"role": "support_device",
+		"position": Vector2(762, 272),
 		"size": Vector2(275, 92),
+		"blocks": true,
+		"interactable": false,
 		"color": Color(0.36, 0.23, 0.13, 1.0),
-		"blocker": Rect2(Vector2(620, 222), Vector2(300, 122)),
-		"interact": Vector2(760, 368),
-		"radius": 92.0,
+		"blocker_rect": Rect2(Vector2(620, 222), Vector2(300, 122)),
 		"sort_y": 346,
 		"thickness": 18.0,
 	},
@@ -72,49 +76,61 @@ const ROOM_OBJECTS := [
 		"key": "laptop",
 		"label": "LAPTOP",
 		"zone": "work",
-		"pos": Vector2(748, 238),
+		"role": "laptop_job",
+		"position": Vector2(748, 238),
 		"size": Vector2(74, 36),
+		"blocks": false,
+		"interactable": true,
 		"color": Color(0.08, 0.12, 0.15, 1.0),
-		"interact": Vector2(748, 360),
-		"radius": 74.0,
+		"interaction_position": Vector2(748, 360),
+		"interaction_radius": 74.0,
 		"sort_y": 356,
 		"thickness": 7.0,
 	},
 	{
 		"key": "fridge",
 		"label": "FRIDGE",
-		"zone": "appliance",
-		"pos": Vector2(994, 288),
+		"zone": "kitchen",
+		"role": "living_appliance",
+		"position": Vector2(994, 288),
 		"size": Vector2(78, 152),
+		"blocks": true,
+		"interactable": true,
 		"color": Color(0.35, 0.38, 0.39, 1.0),
-		"blocker": Rect2(Vector2(954, 210), Vector2(94, 172)),
-		"interact": Vector2(920, 318),
-		"radius": 78.0,
+		"blocker_rect": Rect2(Vector2(954, 210), Vector2(94, 172)),
+		"interaction_position": Vector2(920, 318),
+		"interaction_radius": 78.0,
 		"sort_y": 382,
 		"thickness": 12.0,
 	},
 	{
 		"key": "microwave",
 		"label": "MICROWAVE",
-		"zone": "appliance",
-		"pos": Vector2(940, 448),
+		"zone": "kitchen",
+		"role": "living_appliance",
+		"position": Vector2(940, 448),
 		"size": Vector2(104, 44),
+		"blocks": true,
+		"interactable": true,
 		"color": Color(0.23, 0.25, 0.27, 1.0),
-		"blocker": Rect2(Vector2(880, 416), Vector2(144, 76)),
-		"interact": Vector2(860, 468),
-		"radius": 68.0,
+		"blocker_rect": Rect2(Vector2(880, 416), Vector2(144, 76)),
+		"interaction_position": Vector2(860, 468),
+		"interaction_radius": 68.0,
 		"sort_y": 492,
 		"thickness": 10.0,
 	},
 	{
 		"key": "air_conditioner",
 		"label": "AC",
-		"zone": "appliance",
-		"pos": Vector2(880, 122),
+		"zone": "utility",
+		"role": "living_appliance",
+		"position": Vector2(880, 122),
 		"size": Vector2(128, 30),
+		"blocks": false,
+		"interactable": true,
 		"color": Color(0.48, 0.50, 0.48, 1.0),
-		"interact": Vector2(870, 186),
-		"radius": 62.0,
+		"interaction_position": Vector2(870, 186),
+		"interaction_radius": 62.0,
 		"sort_y": 168,
 		"thickness": 6.0,
 	},
@@ -122,11 +138,14 @@ const ROOM_OBJECTS := [
 		"key": "power",
 		"label": "POWER",
 		"zone": "power",
-		"pos": Vector2(742, 462),
+		"role": "power_management",
+		"position": Vector2(742, 462),
 		"size": Vector2(126, 38),
+		"blocks": false,
+		"interactable": true,
 		"color": Color(0.18, 0.18, 0.14, 1.0),
-		"interact": Vector2(742, 516),
-		"radius": 78.0,
+		"interaction_position": Vector2(742, 516),
+		"interaction_radius": 78.0,
 		"sort_y": 506,
 		"thickness": 8.0,
 	},
@@ -134,11 +153,14 @@ const ROOM_OBJECTS := [
 		"key": "communication_device",
 		"label": "COMM",
 		"zone": "work",
-		"pos": Vector2(902, 326),
+		"role": "communication",
+		"position": Vector2(902, 326),
 		"size": Vector2(88, 48),
+		"blocks": false,
+		"interactable": true,
 		"color": Color(0.15, 0.19, 0.22, 1.0),
-		"interact": Vector2(862, 372),
-		"radius": 70.0,
+		"interaction_position": Vector2(862, 372),
+		"interaction_radius": 70.0,
 		"sort_y": 374,
 		"thickness": 10.0,
 	},
@@ -146,11 +168,14 @@ const ROOM_OBJECTS := [
 		"key": "node_17",
 		"label": "NODE-17",
 		"zone": "work",
-		"pos": Vector2(890, 242),
+		"role": "mystery_device",
+		"position": Vector2(890, 242),
 		"size": Vector2(64, 64),
+		"blocks": false,
+		"interactable": true,
 		"color": Color(0.16, 0.11, 0.20, 1.0),
-		"interact": Vector2(842, 306),
-		"radius": 74.0,
+		"interaction_position": Vector2(842, 306),
+		"interaction_radius": 74.0,
 		"sort_y": 314,
 		"thickness": 14.0,
 	},
@@ -158,11 +183,14 @@ const ROOM_OBJECTS := [
 		"key": "phone",
 		"label": "PHONE",
 		"zone": "living",
-		"pos": Vector2(498, 438),
+		"role": "phone_charge",
+		"position": Vector2(498, 438),
 		"size": Vector2(52, 30),
+		"blocks": false,
+		"interactable": true,
 		"color": Color(0.04, 0.06, 0.08, 1.0),
-		"interact": Vector2(532, 474),
-		"radius": 62.0,
+		"interaction_position": Vector2(532, 474),
+		"interaction_radius": 62.0,
 		"sort_y": 476,
 		"thickness": 5.0,
 	},
@@ -188,7 +216,10 @@ func _process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and not nearest_object.is_empty():
-		print("Quarterview prototype interact: %s" % nearest_object["key"])
+		print(
+			"Quarterview prototype interact: %s / zone=%s / role=%s"
+			% [nearest_object["key"], nearest_object["zone"], nearest_object["role"]]
+		)
 
 
 func _draw() -> void:
@@ -201,16 +232,16 @@ func _build_collision() -> void:
 	for wall_data in WALL_BLOCKERS:
 		_add_blocker(wall_data["name"], wall_data["rect"])
 
-	for object_data in ROOM_OBJECTS:
-		if object_data.has("blocker"):
-			_add_blocker("%s_blocker" % object_data["key"], object_data["blocker"])
+	for placeholder_data in PLACEHOLDERS:
+		if placeholder_data["blocks"] and placeholder_data.has("blocker_rect"):
+			_add_blocker("%s_blocker" % placeholder_data["key"], placeholder_data["blocker_rect"])
 
 
 func _build_placeholder_objects() -> void:
-	for object_data in ROOM_OBJECTS:
+	for object_data in PLACEHOLDERS:
 		var object_node := Node2D.new()
 		object_node.name = "%sPlaceholder" % object_data["key"].capitalize().replace("_", "")
-		object_node.position = object_data["pos"]
+		object_node.position = object_data["position"]
 		object_node.z_as_relative = false
 		object_node.z_index = int(object_data["sort_y"])
 		world.add_child(object_node)
@@ -302,9 +333,12 @@ func _update_nearest_interactable() -> void:
 	var next_nearest: Dictionary = {}
 	var closest_distance := INF
 
-	for object_data in ROOM_OBJECTS:
-		var interaction_position: Vector2 = object_data["interact"]
-		var radius := float(object_data["radius"])
+	for object_data in PLACEHOLDERS:
+		if not object_data["interactable"]:
+			continue
+
+		var interaction_position: Vector2 = object_data["interaction_position"]
+		var radius := float(object_data["interaction_radius"])
 		var distance := player.global_position.distance_to(interaction_position)
 		if distance <= radius and distance < closest_distance:
 			next_nearest = object_data
@@ -365,16 +399,19 @@ func _draw_collision_guides() -> void:
 		draw_rect(wall_data["rect"], Color(0.95, 0.18, 0.12, 0.14), true)
 		draw_rect(wall_data["rect"], Color(1.0, 0.26, 0.18, 0.55), false, 2.0)
 
-	for object_data in ROOM_OBJECTS:
-		if object_data.has("blocker"):
-			draw_rect(object_data["blocker"], Color(1.0, 0.42, 0.10, 0.10), true)
-			draw_rect(object_data["blocker"], Color(1.0, 0.42, 0.10, 0.58), false, 2.0)
+	for object_data in PLACEHOLDERS:
+		if object_data["blocks"] and object_data.has("blocker_rect"):
+			draw_rect(object_data["blocker_rect"], Color(1.0, 0.42, 0.10, 0.10), true)
+			draw_rect(object_data["blocker_rect"], Color(1.0, 0.42, 0.10, 0.58), false, 2.0)
 
 
 func _draw_interaction_ranges() -> void:
-	for object_data in ROOM_OBJECTS:
-		var interaction_position: Vector2 = object_data["interact"]
-		var radius := float(object_data["radius"])
+	for object_data in PLACEHOLDERS:
+		if not object_data["interactable"]:
+			continue
+
+		var interaction_position: Vector2 = object_data["interaction_position"]
+		var radius := float(object_data["interaction_radius"])
 		var color := Color(0.15, 0.95, 0.46, 0.30)
 		var width := 1.5
 
