@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `f89eec0`
-- Phase: Godot DAY 1 MVP 하루 시간 한계 및 종료 흐름 정리
+- Current commit at task start: `95bc2af`
+- Phase: Godot DAY 1 MVP 자동 하루 종료 대사 흐름 분리
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -23,7 +23,7 @@
 - Modal input is routed through `Main.gd`; movement is locked while interaction, outlet, end-day, phone, or result UI is active.
 - `Tab` opens the existing Phone UI during exploration; it closes with `Tab` or `ESC` and locks Yui movement while visible.
 - Phone UI 시간은 기존 DAY 길이를 유지하면서 `08:00`부터 다음 날 `02:00`까지 표시되며, 일반 HUD에는 시간 정보를 표시하지 않는다.
-- `02:00` 도달 시 시간과 전력 소비가 멈추고 `피곤하니 슬슬 자야겠다.` 안내가 포함된 기존 하루 마침 확인 패널이 자동으로 열린다.
+- `02:00` 도달 시 시간과 전력 소비가 멈추고 오른쪽 확인 패널 없이 유이 대사와 `[E] 계속` 힌트만 표시된다.
 - Apartment outer-wall collision now follows the walkable floor inside the map art, with overlapping corners to prevent diagonal escape gaps.
 - Exploration hides the left status HUD; Phone UI is the primary status view while prompts, controls, and Test Mode remain visible.
 - The in-game clock advances only during free exploration and pauses for Phone, Outlet, Interaction, End Day, and Result modals.
@@ -39,7 +39,7 @@
 - Phone battery warnings appear whenever battery crosses `20%`, `10%`, `5%`, or `0%` downward; charging above a threshold naturally rearms it, while active charging suppresses warnings.
 - At `0%`, Phone UI remains accessible but hides status details until charging restores the battery.
 - Active drain uses per-game-hour tuning: Light `0.5`, Laptop `3.0`, Fan `1.0`, Charger `1.0`, and Communication Device `2.0` units per game hour.
-- The `60`-second playable day maps to `12` game hours; first activation records use without blocking later toggles.
+- 현재 `60`초 DAY는 `08:00`부터 다음 날 `02:00`까지 18시간으로 변환되며, 최초 작동 기록은 이후 켜기/끄기를 막지 않는다.
 - Disconnecting a device clears its active state, while map wire overlays continue to follow connection state.
 - Phone UI is a current-status view only: time, period, battery, remaining power, hourly drain, and active devices. Historical use remains exclusive to Result.
 
@@ -78,6 +78,7 @@
 - `godot/scripts/Main.gd`: shows hourly drain and decimal remaining power in interaction and Test Mode readouts.
 - `godot/scripts/SurvivalState.gd`: removes first-use history and unrelated daily summary fields from Phone text while preserving Result data.
 - `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: `08:00 → 02:00` 시간 매핑과 자동 하루 마침 확인 흐름을 연결한다.
+- `godot/scripts/Main.gd`, `godot/scripts/ui/InteractionPanel.gd`, `godot/scenes/ui/InteractionPanel.tscn`: 자동 한계 종료를 대사-only 모달과 `E` 진행으로 분리한다.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -102,6 +103,7 @@
 - Godot 4.5.1 headless Main scene startup completed after converting active drain to per-game-hour units.
 - Godot 4.5.1 headless Main scene startup completed after changing Phone battery warnings to repeatable downward crossings.
 - DAY 시간 확장과 자동 하루 마침 확인 연결 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
+- 자동 하루 종료 대사-only 흐름 분리 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -120,16 +122,16 @@
 - Built-in LED mask alignment and two-slot LED exposure require manual visual confirmation at the target resolution.
 - Two-slot Laptop drops require manual checks at valid starts 1-3 and invalid start 4.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
-- `02:00` 자동 하루 마침 문구, 취소 시 재표시, 확인 후 Result 전환은 수동 GUI 확인이 필요하다.
+- `02:00` 대사-only 표시, `[E] 계속`, `ESC` 무시, Result 전환은 수동 GUI 확인이 필요하다.
 - Continuous drain rate, modal pause, repeated on/off control, disconnect shutdown, and zero-power shutdown require manual gameplay confirmation.
 - Hourly drain totals and one-decimal Phone display require manual timing confirmation, especially Laptop-only and Laptop-plus-Fan cases.
 - Phone current-status-only content and unchanged Result history require manual GUI confirmation.
 
 ## Next Recommended Task
 
-1. Phone UI 시간이 `08:00`부터 `02:00`까지 자정을 넘어 자연스럽게 표시되는지 확인한다.
-2. `02:00` 자동 확인 패널의 취소 재표시와 확인 후 Result 전환을 확인한다.
-3. 침대 상호작용을 통한 기존 수동 하루 종료가 그대로 동작하는지 확인한다.
+1. `02:00`에 오른쪽 패널 없이 유이 대사와 `[E] 계속`만 표시되는지 확인한다.
+2. 자동 한계 대사에서 `ESC`가 탐색을 재개하지 않고 `E`가 Result로 이동하는지 확인한다.
+3. 침대 상호작용의 기존 수동 확인/취소 흐름이 그대로 동작하는지 확인한다.
 
 ## Archive
 

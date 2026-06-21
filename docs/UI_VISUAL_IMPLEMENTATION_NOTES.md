@@ -86,6 +86,17 @@ Phone battery thresholds now use the existing HUD warning area for short, non-mo
 - Charging restores the regular Phone status readout without changing the existing Phone modal flow.
 - Manual checks remain required for warning timing, daily duplicate suppression, zero-battery display, and recovery after charging.
 
+## 02:00 자동 종료 대사 패스
+
+`02:00` 자동 한계 도달은 플레이어가 선택하는 수동 휴식과 분리한다. 오른쪽 확인 패널을 숨기고 하단 유이 대사 패널만 사용하며, 기존 Result와 수동 침대 종료 흐름은 변경하지 않는다.
+
+## 02:00 자동 종료 대사 조정
+
+- 자동 한계 상태에서는 `피곤하니 슬슬 자야겠다.` 대사와 `[E] 계속` 힌트만 표시한다.
+- `[E] 계속` 힌트는 대사-only 상태에서만 보인다.
+- `ESC` 취소는 제공하지 않으며 `E` 입력으로 기존 Result 흐름에 진입한다.
+- 침대 상호작용의 수동 하루 종료 확인/취소 패널은 그대로 유지한다.
+
 ## Archive
 
 - Previous visual-pass history: `docs/old/UI_VISUAL_IMPLEMENTATION_NOTES_20260619.md`

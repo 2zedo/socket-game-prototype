@@ -94,7 +94,7 @@ DAY 1 uses two linked values:
 - The bed/rest point should use the same top-down proximity + `E` confirmation model as power objects.
 - Optional later condition: the day can also end when power reaches `0` or all core interactions are resolved.
 - The first implementation should prefer an explicit `End Day` action for clarity.
-- `02:00`에 도달하면 시간이 멈추고 `피곤하니 슬슬 자야겠다.` 안내와 함께 기존 하루 마침 확인 패널이 자동으로 열린다.
+- `02:00`에 도달하면 시간이 멈추고 오른쪽 확인 패널 없이 유이의 `피곤하니 슬슬 자야겠다.` 대사와 `[E] 계속` 힌트만 표시된다. `E` 입력 후 기존 Result 흐름으로 이동한다.
 - 수면 버프, 커피, 피로도 확장은 현재 구현 범위가 아니다.
 
 ## Result Summary Direction

@@ -16,6 +16,7 @@ signal cancel_requested
 @onready var portrait_label: Label = $DialoguePanel/PortraitPanel/PortraitLabel
 @onready var speaker_label: Label = $DialoguePanel/SpeakerLabel
 @onready var dialogue_label: Label = $DialoguePanel/DialogueLabel
+@onready var dialogue_continue_hint: Label = $DialoguePanel/ContinueHint
 
 
 func _ready() -> void:
@@ -34,6 +35,7 @@ func _ready() -> void:
 	UIStyle.apply_label(portrait_label, UIStyle.MUTED, 13)
 	UIStyle.apply_label(speaker_label, UIStyle.ELECTRIC, 17)
 	UIStyle.apply_label(dialogue_label, UIStyle.TEXT, 16)
+	UIStyle.apply_label(dialogue_continue_hint, UIStyle.MUTED, 13)
 
 
 func _apply_button_styles(button: Button, is_primary: bool) -> void:
@@ -87,6 +89,9 @@ func _add_panel_texture(parent: Control, texture: Texture2D, alpha: float) -> vo
 
 
 func open(title: String, body: String, footer_text: String = "E 또는 ESC: 닫기") -> void:
+	panel.visible = true
+	dialogue_panel.visible = true
+	dialogue_continue_hint.visible = false
 	title_label.text = title
 	body_label.text = body
 	_apply_footer(footer_text)
@@ -94,8 +99,20 @@ func open(title: String, body: String, footer_text: String = "E 또는 ESC: 닫�
 	visible = true
 
 
+func open_dialogue_only(dialogue_text: String) -> void:
+	panel.visible = false
+	dialogue_panel.visible = true
+	speaker_label.text = "유이"
+	dialogue_label.text = dialogue_text
+	dialogue_continue_hint.text = "[E] 계속"
+	dialogue_continue_hint.visible = true
+	visible = true
+
+
 func close() -> void:
 	visible = false
+	panel.visible = true
+	dialogue_continue_hint.visible = false
 
 
 func _apply_footer(footer_text: String) -> void:

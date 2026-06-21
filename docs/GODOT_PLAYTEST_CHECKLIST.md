@@ -29,8 +29,9 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] 시간대가 아침/낮/저녁/밤/새벽으로 표시된다.
 - [ ] The normal HUD does not show current time or time period details.
 - [ ] `02:00` 도달 시 시간과 지속 전력 소비가 멈추고 `피곤하니 슬슬 자야겠다.` 문구가 표시된다.
-- [ ] `02:00` 도달 시 기존 하루 마침 확인 패널이 자동으로 열린다.
-- [ ] 자동 확인 패널을 취소해도 탐색으로 복귀하지 않고 같은 안내가 다시 표시된다.
+- [ ] `02:00` 도달 시 오른쪽 확인 패널 없이 유이 대사와 `[E] 계속` 힌트만 표시된다.
+- [ ] 자동 한계 대사 상태에서 `ESC`로 탐색에 복귀할 수 없다.
+- [ ] 자동 한계 대사 상태에서 `E`를 누르면 기존 Result 화면으로 이동한다.
 - [ ] Time advances during exploration and while only Test Mode is enabled.
 - [ ] Time pauses in Phone, Outlet, Interaction, End Day confirmation, and Result screens.
 - [ ] Closing a modal resumes the clock.

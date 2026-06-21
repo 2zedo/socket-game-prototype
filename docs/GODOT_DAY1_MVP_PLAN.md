@@ -104,7 +104,7 @@ Temporary DAY 1 device data:
 - `SurvivalHUD.tscn` has enough status label space to show current DAY 1 power and use records.
 - `Apartment.gd` now includes a bed/rest interactable that opens an explicit `End Day` confirmation through the same proximity `E` model.
 - `SurvivalState.gd` exposes `end_current_day()` so the explicit rest interaction can enter the existing result summary flow.
-- `02:00` 도달 시 기존 하루 마침 확인 패널이 자동으로 열리며, 확인하면 동일한 `end_current_day()` 결과 흐름을 사용한다.
+- `02:00` 도달 시 확인/취소 패널 대신 유이 대사와 `[E] 계속` 힌트만 표시되며, `E` 입력으로 동일한 `end_current_day()` 결과 흐름을 사용한다.
 - HUD wording now prioritizes `DAY 1`, `오늘 남은 전력`, and used devices instead of debug-like points/time/status bars.
 - Temporary action costs still live in script constants and should move to a Resource or data file after in-editor validation.
 
