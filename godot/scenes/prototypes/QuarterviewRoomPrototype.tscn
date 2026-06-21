@@ -1,0 +1,61 @@
+[gd_scene load_steps=5 format=3 uid="uid://c8mhu5qjx4f26"]
+
+[ext_resource type="Script" path="res://scripts/prototypes/QuarterviewRoomPrototype.gd" id="1_prototype"]
+[ext_resource type="Script" path="res://scripts/prototypes/QuarterviewPrototypePlayer.gd" id="2_player"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 14.0
+
+[sub_resource type="LabelSettings" id="LabelSettings_help"]
+font_size = 18
+font_color = Color(0.93, 0.86, 0.72, 1)
+outline_size = 4
+outline_color = Color(0.015, 0.012, 0.01, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_prompt"]
+font_size = 24
+font_color = Color(1, 0.86, 0.45, 1)
+outline_size = 5
+outline_color = Color(0.015, 0.012, 0.01, 1)
+
+[node name="QuarterviewRoomPrototype" type="Node2D"]
+script = ExtResource("1_prototype")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 360)
+enabled = true
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Player" type="CharacterBody2D" parent="World"]
+position = Vector2(585, 480)
+z_as_relative = false
+script = ExtResource("2_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player"]
+position = Vector2(0, 0)
+shape = SubResource("CircleShape2D_player")
+
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="HelpLabel" type="Label" parent="UI"]
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 386.0
+offset_bottom = 142.0
+text = "쿼터뷰 방 Prototype
+WASD / 방향키: 이동
+E: 가까운 오브젝트 key 출력
+기존 Main.tscn을 교체하지 않습니다"
+label_settings = SubResource("LabelSettings_help")
+
+[node name="PromptLabel" type="Label" parent="UI"]
+offset_left = 474.0
+offset_top = 642.0
+offset_right = 812.0
+offset_bottom = 692.0
+horizontal_alignment = 1
+text = ""
+label_settings = SubResource("LabelSettings_prompt")

@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `2d9043f`
-- Phase: Godot DAY 1 결과 화면 1차 개선
+- Current commit at task start: `0f20e6d`
+- Phase: 쿼터뷰 방 Prototype Scene 1차 생성
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -46,6 +46,7 @@
 - Disconnecting a device clears its active state, while map wire overlays continue to follow connection state.
 - Phone UI is a current-status view only: time, period, battery, remaining power, hourly drain, and active devices. Historical use remains exclusive to Result.
 - 결과 화면은 기존 계산 데이터를 유지하면서 `DAY n 생존 기록`, 한국어 하루 요약, 장치·정보·상태 자연문을 표시한다.
+- 쿼터뷰 방 전환은 기존 Main을 대체하지 않고 `res://scenes/prototypes/QuarterviewRoomPrototype.tscn` 독립 prototype에서 먼저 검증한다.
 
 ## Current DAY 1 Decisions
 
@@ -92,6 +93,8 @@
 - `docs/GODOT_DAY1_MVP_PLAN.md`, `docs/DAY1_CONTENT_BRIEF.md`, `docs/ASSET_PIPELINE.md`: 장치 데이터의 현재 Resource 경로와 유지된 값을 기록한다.
 - `godot/scripts/ui/DayResultPanel.gd`, `godot/scenes/ui/DayResultPanel.tscn`: 기존 결과 데이터를 생존 기록 문장과 `[E] 계속` 안내로 재구성한다.
 - `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/GODOT_PLAYTEST_CHECKLIST.md`: Result 표현 정책과 수동 확인 항목을 기록한다.
+- `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/QuarterviewPrototypePlayer.gd`: 쿼터뷰 구도와 이동 / 충돌 / 가림 / 상호작용 포인트 확인용 독립 prototype을 추가한다.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: prototype scene 경로와 본 전환 전 유지할 범위를 기록한다.
 
 ## Validation Results
 
@@ -118,6 +121,7 @@
 - 자동 하루 종료 대사-only 흐름 분리 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - 테스트 모드 조작과 한국어 도움말 추가 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - Test Mode 2차 확장 후 `git diff --check`, Godot 4.5.1 headless 편집기 초기화, Main scene 시작이 완료됐다.
+- 쿼터뷰 방 prototype scene 추가 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
 - 장치 Resource화 후 Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
 - 결과 화면 1차 개선 후 `git diff --check`, Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
