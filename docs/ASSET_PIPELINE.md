@@ -49,6 +49,7 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 
 - Current `Apartment.gd` uses `room_floor_base.png` and `room_wall_base.png` as underlay art while preserving existing collision and primitive furniture.
 - `ApartmentInteractable` now maps key DAY 1 objects to P0 PNG state textures through `AssetPaths.gd`.
+- 쿼터뷰 전환용 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`를 기준으로 별도 관리한다. 쿼터뷰 방은 한 장 배경보다 room layer, atlas, spritesheet, visual mapping Resource 후보를 우선 검토한다.
 - Bed, desk, window, door, shelf, fan, multitap, charger/phone, and communication device should remain separate replaceable objects rather than one flattened background image.
 - Cable visuals should become modular cable segment sprites or Line2D-based scenes so connected/off states can update dynamically.
 - The Yui portrait placeholder in `InteractionPanel.tscn` is filled at runtime with `godot/assets/art/portraits/yui/yui_portrait_neutral.png`.
