@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `e47e218`
-- Phase: Godot DAY 1 MVP 테스트 모드 조작 확장
+- Current commit at task start: `6a58c49`
+- Phase: Godot DAY 1 MVP Test Mode 2차 확장
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -21,6 +21,7 @@
 - Communication Device currently occupies one slot.
 - Pressing `P` toggles a developer Test Mode with gameplay-state text and collision/interaction overlays.
 - 테스트 모드에서 `F1` 도움말과 시간·휴대폰 배터리·오늘 전력 조정 키를 사용할 수 있으며, 상태 조정은 탐색 중에만 허용된다.
+- Test Mode 2차 조작은 작동 장치 전체 끄기, 모든 연결 해제, `01:50` 이동, 배터리 경고 직전값, 전력 `0.5`, 현재 상태 출력을 제공한다.
 - Modal input is routed through `Main.gd`; movement is locked while interaction, outlet, end-day, phone, or result UI is active.
 - `Tab` opens the existing Phone UI during exploration; it closes with `Tab` or `ESC` and locks Yui movement while visible.
 - Phone UI 시간은 기존 DAY 길이를 유지하면서 `08:00`부터 다음 날 `02:00`까지 표시되며, 일반 HUD에는 시간 정보를 표시하지 않는다.
@@ -81,6 +82,8 @@
 - `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: `08:00 → 02:00` 시간 매핑과 자동 하루 마침 확인 흐름을 연결한다.
 - `godot/scripts/Main.gd`, `godot/scripts/ui/InteractionPanel.gd`, `godot/scenes/ui/InteractionPanel.tscn`: 자동 한계 종료를 대사-only 모달과 `E` 진행으로 분리한다.
 - `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`, `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: 테스트 모드 전용 조작과 한국어 도움말을 추가한다.
+- `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`, `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: Test Mode 2차 키 라우팅, 상태 세팅 함수, 상태 출력, 기본 `F1` 안내와 도움말 전환을 추가한다.
+- `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: Test Mode 2차 수동 확인 항목과 표시 정책을 기록한다.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -107,6 +110,7 @@
 - DAY 시간 확장과 자동 하루 마침 확인 연결 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - 자동 하루 종료 대사-only 흐름 분리 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
 - 테스트 모드 조작과 한국어 도움말 추가 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
+- Test Mode 2차 확장 후 `git diff --check`, Godot 4.5.1 headless 편집기 초기화, Main scene 시작이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -127,15 +131,16 @@
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
 - `02:00` 대사-only 표시, `[E] 계속`, `ESC` 무시, Result 전환은 수동 GUI 확인이 필요하다.
 - 테스트 모드 도움말 토글과 시간·배터리·전력 조정 키는 수동 GUI 확인이 필요하다.
+- Test Mode 2차의 `O`/`U`/`F8`/숫자 세팅/`L` 출력과 모달 차단은 수동 입력 확인이 필요하다.
 - Continuous drain rate, modal pause, repeated on/off control, disconnect shutdown, and zero-power shutdown require manual gameplay confirmation.
 - Hourly drain totals and one-decimal Phone display require manual timing confirmation, especially Laptop-only and Laptop-plus-Fan cases.
 - Phone current-status-only content and unchanged Result history require manual GUI confirmation.
 
 ## Next Recommended Task
 
-1. 테스트 모드에서 `F1` 도움말과 모든 조정 키가 안내와 동일하게 동작하는지 확인한다.
-2. `PageUp`으로 `02:00`에 도달했을 때 자동 종료 대사-only 흐름이 유지되는지 확인한다.
-3. 테스트 모드 OFF와 모든 모달에서 상태 조정 키가 무시되는지 확인한다.
+1. Test Mode에서 `O`와 `U`가 각각 작동 상태와 연결 상태만 의도대로 초기화하는지 확인한다.
+2. `F8` 이후 실제 진행 또는 `PageUp`으로 `02:00` 자동 종료 대사-only 흐름에 진입하는지 확인한다.
+3. 배터리·전력 세팅과 `L` 출력, Test Mode OFF 및 모달 중 입력 차단을 확인한다.
 
 ## Archive
 

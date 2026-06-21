@@ -235,6 +235,42 @@ func debug_restore_current_power() -> void:
 	_set_debug_current_power(float(max_power))
 
 
+func debug_set_time_before_limit(minutes_before_limit: int = 10) -> void:
+	if day1_day_ended or is_time_paused:
+		return
+
+	# 상태를 대량 시뮬레이션하지 않고 시계만 02:00 직전으로 옮긴다.
+	var target_minutes: int = maxi(DAY_START_MINUTES, DAY_END_MINUTES - minutes_before_limit)
+	var progress: float = float(target_minutes - DAY_START_MINUTES) / float(DAY_END_MINUTES - DAY_START_MINUTES)
+	elapsed_seconds = clampf(progress * DAY_SECONDS, 0.0, DAY_SECONDS)
+	remaining_phase_seconds = maxi(0, int(ceil(DAY_SECONDS - elapsed_seconds)))
+	day_time_limit_announced = false
+	changed.emit()
+
+
+func debug_set_phone_battery(next_battery: float) -> void:
+	# 임계값 바로 위에 배치한 뒤 기존 감소 경로로 crossing 경고를 시험한다.
+	battery = clampf(next_battery, MIN_STAT, MAX_STAT)
+	changed.emit()
+
+
+func debug_set_current_power(next_power: float) -> void:
+	# 0.5 전력 테스트는 작동 중 장치를 강제로 끄지 않는다.
+	current_power_units = clampf(next_power, 0.0, float(max_power))
+	current_power = ceili(current_power_units)
+	changed.emit()
+
+
+func debug_deactivate_all_devices() -> void:
+	active_day1_actions.clear()
+	changed.emit()
+
+
+func debug_disconnect_all_devices() -> void:
+	# 연결 해제는 기존 상태 갱신 경로를 사용해 부하, 슬롯, 전선을 함께 동기화한다.
+	set_powered_devices([])
+
+
 func _set_debug_current_power(next_power: float) -> void:
 	var previous_power: float = current_power_units
 	current_power_units = clampf(next_power, 0.0, float(max_power))

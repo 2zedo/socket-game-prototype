@@ -35,6 +35,20 @@
 - Outlet Mode uses the same Test Mode state to reveal slot, adapter, and plug-anchor hitboxes.
 - These overlays are diagnostic only and do not replace the final interaction prompts or visual treatment.
 - `F1` 도움말은 테스트 모드에서만 우측 진단 정보 아래에 표시되며, 실제 적용된 시간·배터리·전력 조정 키를 한국어로 안내한다.
+- 기본 진단 정보는 도움말을 닫아도 `[F1] 테스트 키 도움말` 안내를 유지한다.
+
+## Test Mode 2차 확장 패스
+
+반복 테스트용 상태 세팅과 진단 출력을 기존 Test Mode 입력 흐름에 추가했다. 일반 플레이 UI와 게임 규칙은 바꾸지 않았고, 상태 변경 키는 탐색 중에만 동작한다.
+
+## Test Mode 2차 확장 조정
+
+- `F8`은 대량 상태 시뮬레이션 없이 시계를 `01:50`으로 옮겨 기존 `02:00` 자동 종료 흐름을 빠르게 확인하게 한다.
+- 숫자 키는 배터리 경고 직전 값과 `0.5` 전력을 세팅하며, 기존 감소·경고·전력 고갈 경로는 그대로 사용한다.
+- `O`는 연결과 기록을 보존한 채 작동 장치만 끄고, `U`는 기존 연결 상태 갱신 경로로 장치·부하·슬롯·전선을 함께 초기화한다.
+- `L`은 현재 시간, 자원, 연결·작동 장치, 모달 상태를 Godot 출력에 기록한다.
+- 신규 상태 변경 키와 기존 조정 키는 Phone, Outlet, Interaction, End Day, 자동 종료 대사, Result 모달 중 무시된다.
+- 키 입력과 도움말 표시에는 수동 확인이 필요하다.
 
 ## Next Visual Check
 

@@ -21,15 +21,28 @@ const TEST_MODE_HELP_TEXT: String = """테스트 모드 도움말
 시간
 [PageUp] 시간 +1시간
 [PageDown] 시간 -1시간
+[F8] 02:00 직전으로 이동
 
 휴대폰
 [-] 배터리 -5%
 [=] 배터리 +5%
+[1] 배터리 21%
+[2] 배터리 11%
+[3] 배터리 6%
+[4] 배터리 1%
 
 전력
 [,] 오늘 전력 -1
 [.] 오늘 전력 +1
-[0] 오늘 전력 최대 회복"""
+[0] 오늘 전력 최대 회복
+[5] 오늘 전력 0.5
+
+장치
+[O] 작동 장치 전체 끄기
+[U] 모든 장치 연결 해제
+
+진단
+[L] 현재 상태 출력"""
 
 
 func _ready() -> void:
@@ -397,6 +410,9 @@ func _try_test_mode_debug_input(event: InputEvent) -> bool:
 	if key_event.keycode == KEY_F1:
 		survival_hud.toggle_test_help(TEST_MODE_HELP_TEXT)
 		return true
+	if key_event.keycode == KEY_L:
+		_print_test_mode_state_dump()
+		return true
 
 	var is_exploration: bool = _get_modal_state() == "exploration"
 	match key_event.keycode:
@@ -407,6 +423,10 @@ func _try_test_mode_debug_input(event: InputEvent) -> bool:
 		KEY_PAGEDOWN:
 			if is_exploration:
 				survival_state.debug_shift_game_hours(-1.0)
+			return true
+		KEY_F8:
+			if is_exploration:
+				survival_state.debug_set_time_before_limit()
 			return true
 		KEY_MINUS:
 			if is_exploration:
@@ -428,6 +448,34 @@ func _try_test_mode_debug_input(event: InputEvent) -> bool:
 			if is_exploration:
 				survival_state.debug_restore_current_power()
 			return true
+		KEY_1:
+			if is_exploration:
+				survival_state.debug_set_phone_battery(21.0)
+			return true
+		KEY_2:
+			if is_exploration:
+				survival_state.debug_set_phone_battery(11.0)
+			return true
+		KEY_3:
+			if is_exploration:
+				survival_state.debug_set_phone_battery(6.0)
+			return true
+		KEY_4:
+			if is_exploration:
+				survival_state.debug_set_phone_battery(1.0)
+			return true
+		KEY_5:
+			if is_exploration:
+				survival_state.debug_set_current_power(0.5)
+			return true
+		KEY_O:
+			if is_exploration:
+				survival_state.debug_deactivate_all_devices()
+			return true
+		KEY_U:
+			if is_exploration:
+				survival_state.debug_disconnect_all_devices()
+			return true
 
 	return false
 
@@ -446,7 +494,7 @@ func _build_test_debug_text() -> String:
 			apartment.nearest_interactable.display_name,
 		]
 
-	return "플레이어 위치: (%.1f, %.1f)\n이동 속도: (%.1f, %.1f)\nDAY: %d\n시간: %s\n전력: %.1f / %d\n소비율: %.1f / h\n부하: %dW / %dW\n슬롯: %d / %d\n가까운 대상: %s\n모달: %s" % [
+	return "[F1] 테스트 키 도움말\n플레이어 위치: (%.1f, %.1f)\n이동 속도: (%.1f, %.1f)\nDAY: %d\n시간: %s\n전력: %.1f / %d\n소비율: %.1f / h\n부하: %dW / %dW\n슬롯: %d / %d\n가까운 대상: %s\n모달: %s" % [
 		player_position.x,
 		player_position.y,
 		player_velocity.x,
@@ -463,6 +511,21 @@ func _build_test_debug_text() -> String:
 		nearest_text,
 		_get_modal_state(),
 	]
+
+
+func _print_test_mode_state_dump() -> void:
+	var elapsed_ratio: float = survival_state.elapsed_seconds / survival_state.DAY_SECONDS
+	print("--- 테스트 모드 현재 상태 ---")
+	print("DAY=", survival_state.day, " 시간=", survival_state.get_current_clock_text())
+	print("경과 초=", snappedf(survival_state.elapsed_seconds, 0.01), " 비율=", snappedf(elapsed_ratio, 0.001))
+	print("전력=", snappedf(survival_state.current_power_units, 0.1), "/", survival_state.max_power)
+	print("배터리=", snappedf(survival_state.battery, 0.1), "%")
+	print("부하=", survival_state.current_load_watts, "/", survival_state.max_load_watts, "W")
+	print("슬롯=", survival_state.used_outlet_slots, "/", survival_state.max_outlet_slots)
+	print("연결 장치=", survival_state.powered_devices)
+	print("작동 장치=", survival_state.active_day1_actions)
+	print("현재 소비=", snappedf(survival_state.get_active_power_drain_per_game_hour(), 0.1), "/h")
+	print("모달=", _get_modal_state(), " 하루 종료=", survival_state.day1_day_ended)
 
 
 func _get_modal_state() -> String:

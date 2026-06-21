@@ -114,3 +114,4 @@ func set_test_debug_text(text: String) -> void:
 func toggle_test_help(help_text: String) -> void:
 	test_help_label.text = help_text
 	test_help_label.visible = not test_help_label.visible
+	test_debug_label.visible = not test_help_label.visible
