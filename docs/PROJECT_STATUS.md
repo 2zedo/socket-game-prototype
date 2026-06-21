@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `c621bc9`
-- Phase: Godot DAY 1 MVP hourly active-power tuning
+- Current commit at task start: `8c90bc0`
+- Phase: Godot DAY 1 MVP Phone battery warning stabilization
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -35,7 +35,7 @@
 - Connected adapters no longer retain a selection-like border after placement; borders remain limited to active drag feedback and Test Mode diagnostics.
 - Outlet preview and drop now resolve the same target slot, preventing valid two-slot Laptop feedback from disagreeing with placement.
 - Connected adapter placement exposes per-device offset and scale tuning while retaining the previous zero-offset/unit-scale defaults.
-- Phone battery warnings appear once per day when battery crosses `20%`, `10%`, `5%`, and `0%`.
+- Phone battery warnings appear whenever battery crosses `20%`, `10%`, `5%`, or `0%` downward; charging above a threshold naturally rearms it, while active charging suppresses warnings.
 - At `0%`, Phone UI remains accessible but hides status details until charging restores the battery.
 - Active drain uses per-game-hour tuning: Light `0.5`, Laptop `3.0`, Fan `1.0`, Charger `1.0`, and Communication Device `2.0` units per game hour.
 - The `60`-second playable day maps to `12` game hours; first activation records use without blocking later toggles.
@@ -71,7 +71,7 @@
 - `godot/scripts/ui/OutletMode.gd`: removes the normal connected-adapter outline while preserving drag feedback.
 - `godot/scripts/ui/OutletMode.gd`: shares one target-slot resolver between drag preview and actual drop.
 - `godot/scripts/ui/OutletMode.gd`: centralizes connected visual offset/scale tuning for Fan, Charger, Communication Device, Lamp, and Laptop.
-- `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: track daily battery-warning thresholds and route warning messages to the HUD.
+- `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: detect repeatable downward battery-threshold crossings and route warning messages to the HUD.
 - `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: show short battery warnings above the screen center.
 - `godot/scripts/SurvivalState.gd`: defines hourly device drain, converts elapsed real time to game hours, and exposes decimal remaining power plus current active drain.
 - `godot/scripts/Main.gd`: shows hourly drain and decimal remaining power in interaction and Test Mode readouts.
@@ -98,6 +98,7 @@
 - Godot 4.5.1 headless Main scene startup completed after adding Phone battery warnings and the empty-battery view.
 - Godot 4.5.1 headless Main scene startup completed after separating connected and active power states.
 - Godot 4.5.1 headless Main scene startup completed after converting active drain to per-game-hour units.
+- Godot 4.5.1 headless Main scene startup completed after changing Phone battery warnings to repeatable downward crossings.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -116,16 +117,16 @@
 - Built-in LED mask alignment and two-slot LED exposure require manual visual confirmation at the target resolution.
 - Two-slot Laptop drops require manual checks at valid starts 1-3 and invalid start 4.
 - Temporary device data still lives in script constants and should move to Resources/data after MVP validation.
-- Battery-warning timing, daily one-shot behavior, the `0%` Phone view, and recovery after charging require manual GUI confirmation.
+- Battery-warning downward crossings, recharge rearming, active-charging suppression, and the unchanged `0%` Phone view require manual GUI confirmation.
 - Continuous drain rate, modal pause, repeated on/off control, disconnect shutdown, and zero-power shutdown require manual gameplay confirmation.
 - Hourly drain totals and one-decimal Phone display require manual timing confirmation, especially Laptop-only and Laptop-plus-Fan cases.
 - Phone current-status-only content and unchanged Result history require manual GUI confirmation.
 
 ## Next Recommended Task
 
-1. Verify Laptop reports `-3.0 / h`, Laptop plus Fan reports `-4.0 / h`, and remaining power drops at the game-hour rate.
-2. Confirm hourly drain pauses in every modal and stops all devices safely at zero power.
-3. Verify Phone shows no historical use list while Result retains first-activation history.
+1. Verify each Phone battery warning triggers on a downward `20%`, `10%`, `5%`, or `0%` crossing without repeating below that threshold.
+2. Recharge above a threshold, stop charging, and confirm crossing it downward again produces a new warning while active charging suppresses warnings.
+3. Confirm the `0%` Phone view and recovery behavior remain unchanged.
 
 ## Archive
 

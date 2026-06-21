@@ -119,6 +119,9 @@ For each object below, verify the full flow:
 - [ ] Turn the same device on again and confirm the historical used record does not block it.
 - [ ] Result use record updates on first activation while Phone shows only the current active-device state.
 - [ ] When power reaches zero, active devices switch off safely and a clear warning appears.
+- [ ] Phone battery warnings trigger once per downward crossing at `20%`, `10%`, `5%`, and `0%`, without repeating while remaining below a threshold.
+- [ ] Charging above a Phone battery threshold rearms it; after charging stops, crossing downward again shows the warning again.
+- [ ] Phone battery threshold warnings remain suppressed while the Charger is currently active.
 
 Target objects:
 

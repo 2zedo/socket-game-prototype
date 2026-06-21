@@ -147,7 +147,6 @@ var day1_flags: Dictionary = {}
 var day1_day_ended: bool = false
 var last_day1_message: String = ""
 var update_accumulator: float = 0.0
-var phone_battery_warning_thresholds_shown: Array[int] = []
 
 
 func _ready() -> void:
@@ -716,7 +715,6 @@ func _reset_day1_power_loop() -> void:
 	day1_flags.clear()
 	day1_day_ended = false
 	last_day1_message = ""
-	phone_battery_warning_thresholds_shown.clear()
 	_recalculate_outlet_state()
 
 
@@ -725,11 +723,13 @@ func _set_battery(next_battery: float) -> void:
 	battery = clampf(next_battery, MIN_STAT, MAX_STAT)
 	if battery >= previous_battery:
 		return
+	# Charging suppresses low-battery warnings even if another effect causes a net decrease.
+	if active_day1_actions.has("charger"):
+		return
 
-	# Each threshold is announced once per day when the battery crosses it downward.
+	# A threshold warns on each downward crossing; charging above it naturally rearms it.
 	for threshold in PHONE_BATTERY_WARNING_THRESHOLDS:
-		if previous_battery > threshold and battery <= threshold and not phone_battery_warning_thresholds_shown.has(threshold):
-			phone_battery_warning_thresholds_shown.append(threshold)
+		if previous_battery > threshold and battery <= threshold:
 			phone_battery_warning.emit(str(PHONE_BATTERY_WARNING_MESSAGES.get(threshold, "")))
 
 
