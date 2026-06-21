@@ -199,6 +199,53 @@ func set_clock_paused_by_modal(is_paused: bool) -> void:
 	is_clock_paused_by_modal = is_paused
 
 
+func debug_shift_game_hours(game_hours: float) -> void:
+	if day1_day_ended or is_time_paused or is_zero_approx(game_hours):
+		return
+
+	# 앞으로 이동할 때는 같은 시간 동안의 전력 소비와 상태 변화도 함께 적용한다.
+	var real_seconds_delta: float = game_hours / GAME_HOURS_PER_REAL_SECOND
+	if real_seconds_delta > 0.0:
+		var active_time_delta: float = minf(real_seconds_delta, maxf(0.0, DAY_SECONDS - elapsed_seconds))
+		var reached_time_limit: bool = _update_time(real_seconds_delta)
+		_update_active_power(active_time_delta)
+		_update_needs(active_time_delta)
+		changed.emit()
+		if reached_time_limit:
+			day_time_limit_reached.emit()
+		return
+
+	elapsed_seconds = clampf(elapsed_seconds + real_seconds_delta, 0.0, DAY_SECONDS)
+	remaining_phase_seconds = maxi(0, int(ceil(DAY_SECONDS - elapsed_seconds)))
+	if elapsed_seconds < DAY_SECONDS:
+		day_time_limit_announced = false
+	changed.emit()
+
+
+func debug_adjust_phone_battery(amount: float) -> void:
+	_set_battery(battery + amount)
+	changed.emit()
+
+
+func debug_adjust_current_power(amount: float) -> void:
+	_set_debug_current_power(current_power_units + amount)
+
+
+func debug_restore_current_power() -> void:
+	_set_debug_current_power(float(max_power))
+
+
+func _set_debug_current_power(next_power: float) -> void:
+	var previous_power: float = current_power_units
+	current_power_units = clampf(next_power, 0.0, float(max_power))
+	current_power = ceili(current_power_units)
+	if previous_power > 0.0 and current_power_units <= 0.0:
+		active_day1_actions.clear()
+		last_day1_message = "오늘 남은 전력이 바닥났다. 켜진 기기가 모두 꺼졌다."
+		day1_power_warning.emit(last_day1_message)
+	changed.emit()
+
+
 func set_powerstrip_slot_occupancy(slot_occupancy: Array) -> void:
 	_reset_powerstrip_connection_state()
 	var slot_limit: int = mini(slot_occupancy.size(), DAY1_MAX_OUTLET_SLOTS)

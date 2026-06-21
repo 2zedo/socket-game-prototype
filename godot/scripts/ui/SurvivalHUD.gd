@@ -12,6 +12,7 @@ class_name SurvivalHUD
 @onready var hint_label: Label = $HintLabel
 @onready var test_mode_label: Label = $TestModeLabel
 @onready var test_debug_label: Label = $TestDebugLabel
+@onready var test_help_label: Label = $TestHelpLabel
 
 const NO_PROMPT_POSITION: Vector2 = Vector2(-99999.0, -99999.0)
 const WARNING_DURATION_SECONDS: float = 3.0
@@ -32,6 +33,8 @@ func _ready() -> void:
 	prompt_label.add_theme_stylebox_override("normal", UIStyle.make_panel_style(Color(0.035, 0.032, 0.028, 0.88), UIStyle.LINE, 1, 2))
 	test_mode_label.add_theme_stylebox_override("normal", UIStyle.make_panel_style(Color(0.12, 0.06, 0.02, 0.9), Color(1.0, 0.52, 0.12, 0.9), 1, 2))
 	test_debug_label.add_theme_stylebox_override("normal", UIStyle.make_panel_style(Color(0.02, 0.025, 0.03, 0.9), Color(0.28, 0.66, 1.0, 0.82), 1, 2))
+	test_help_label.add_theme_stylebox_override("normal", UIStyle.make_panel_style(Color(0.025, 0.023, 0.02, 0.94), Color(1.0, 0.52, 0.12, 0.82), 1, 2))
+	UIStyle.apply_label(test_help_label, UIStyle.TEXT, 12)
 	queue_redraw()
 
 
@@ -99,9 +102,15 @@ func set_test_mode_enabled(is_enabled: bool) -> void:
 	test_debug_label.visible = is_enabled
 	if not is_enabled:
 		test_debug_label.text = ""
+		test_help_label.visible = false
 
 
 func set_test_debug_text(text: String) -> void:
 	if not test_debug_label.visible:
 		return
 	test_debug_label.text = text
+
+
+func toggle_test_help(help_text: String) -> void:
+	test_help_label.text = help_text
+	test_help_label.visible = not test_help_label.visible

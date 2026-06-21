@@ -13,6 +13,24 @@ var test_mode_enabled: bool = false
 var phone_tab_was_pressed: bool = false
 var auto_day_limit_dialogue_active: bool = false
 
+const TEST_MODE_HELP_TEXT: String = """테스트 모드 도움말
+
+[P] 테스트 모드 켜기/끄기
+[F1] 도움말 열기/닫기
+
+시간
+[PageUp] 시간 +1시간
+[PageDown] 시간 -1시간
+
+휴대폰
+[-] 배터리 -5%
+[=] 배터리 +5%
+
+전력
+[,] 오늘 전력 -1
+[.] 오늘 전력 +1
+[0] 오늘 전력 최대 회복"""
+
 
 func _ready() -> void:
 	apartment.nearest_interactable_changed.connect(_on_nearest_interactable_changed)
@@ -49,6 +67,10 @@ func _process(_delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_test_mode"):
 		_toggle_test_mode()
+		get_viewport().set_input_as_handled()
+		return
+
+	if _try_test_mode_debug_input(event):
 		get_viewport().set_input_as_handled()
 		return
 
@@ -364,6 +386,52 @@ func _toggle_test_mode() -> void:
 	print("test_mode=", "ON" if test_mode_enabled else "OFF")
 
 
+func _try_test_mode_debug_input(event: InputEvent) -> bool:
+	if not test_mode_enabled:
+		return false
+
+	var key_event: InputEventKey = event as InputEventKey
+	if key_event == null or not key_event.pressed or key_event.echo:
+		return false
+
+	if key_event.keycode == KEY_F1:
+		survival_hud.toggle_test_help(TEST_MODE_HELP_TEXT)
+		return true
+
+	var is_exploration: bool = _get_modal_state() == "exploration"
+	match key_event.keycode:
+		KEY_PAGEUP:
+			if is_exploration:
+				survival_state.debug_shift_game_hours(1.0)
+			return true
+		KEY_PAGEDOWN:
+			if is_exploration:
+				survival_state.debug_shift_game_hours(-1.0)
+			return true
+		KEY_MINUS:
+			if is_exploration:
+				survival_state.debug_adjust_phone_battery(-5.0)
+			return true
+		KEY_EQUAL:
+			if is_exploration:
+				survival_state.debug_adjust_phone_battery(5.0)
+			return true
+		KEY_COMMA:
+			if is_exploration:
+				survival_state.debug_adjust_current_power(-1.0)
+			return true
+		KEY_PERIOD:
+			if is_exploration:
+				survival_state.debug_adjust_current_power(1.0)
+			return true
+		KEY_0:
+			if is_exploration:
+				survival_state.debug_restore_current_power()
+			return true
+
+	return false
+
+
 func _build_test_debug_text() -> String:
 	var player_position: Vector2 = Vector2.ZERO
 	var player_velocity: Vector2 = Vector2.ZERO
@@ -378,12 +446,13 @@ func _build_test_debug_text() -> String:
 			apartment.nearest_interactable.display_name,
 		]
 
-	return "Player pos: (%.1f, %.1f)\nVelocity: (%.1f, %.1f)\nDay: %d\nPower: %.1f / %d\nDrain: %.1f / h\nLoad: %dW / %dW\nSlots: %d / %d\nNearest: %s\nModal: %s" % [
+	return "플레이어 위치: (%.1f, %.1f)\n이동 속도: (%.1f, %.1f)\nDAY: %d\n시간: %s\n전력: %.1f / %d\n소비율: %.1f / h\n부하: %dW / %dW\n슬롯: %d / %d\n가까운 대상: %s\n모달: %s" % [
 		player_position.x,
 		player_position.y,
 		player_velocity.x,
 		player_velocity.y,
 		survival_state.day,
+		survival_state.get_current_clock_text(),
 		survival_state.current_power_units,
 		survival_state.max_power,
 		survival_state.get_active_power_drain_per_game_hour(),

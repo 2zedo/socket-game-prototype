@@ -183,7 +183,7 @@ mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.72, 0.3, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 14
-text = "TEST MODE: ON  [P]"
+text = "테스트 모드: 켜짐  [P]"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -203,4 +203,21 @@ grow_horizontal = 0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.78, 0.9, 1, 1)
 theme_override_font_sizes/font_size = 13
-text = "Player pos:\nVelocity:\nDay:\nPower:\nLoad:\nSlots:\nNearest:\nModal:"
+text = "플레이어 위치:\n이동 속도:\nDAY:\n시간:\n전력:\n소비율:\n부하:\n슬롯:\n가까운 대상:\n모달:"
+
+[node name="TestHelpLabel" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -324.0
+offset_top = 298.0
+offset_right = -24.0
+offset_bottom = 696.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 2

@@ -50,7 +50,13 @@ Use this checklist to verify that the Godot DAY 1 MVP is actually playable in th
 - [ ] Pressing `ESC` closes an interaction or End Day confirmation and restores movement.
 - [ ] Pressing `ESC` on the result screen does not accidentally return to exploration.
 - [ ] Player movement remains locked while any modal UI is active and resumes after it closes.
-- [ ] Pressing `Tab` does not open a phone screen yet; the input remains reserved for the future phone/status UI.
+- [ ] `Tab`으로 Phone UI를 열고 `Tab` 또는 `ESC`로 닫을 수 있다.
+- [ ] 테스트 모드에서 `F1`로 한국어 도움말을 열고 닫을 수 있다.
+- [ ] `PageUp`/`PageDown`으로 시간을 1시간씩 조정하며 `08:00` 이전으로 내려가지 않는다.
+- [ ] `PageUp`으로 `02:00`에 도달하면 기존 자동 종료 대사-only 흐름이 열린다.
+- [ ] `-`/`=`로 휴대폰 배터리를 5%씩 조정하고 경고 및 0% 화면을 확인할 수 있다.
+- [ ] `,`/`.`/`0`으로 오늘 전력을 감소, 증가, 최대 회복할 수 있다.
+- [ ] 테스트 모드가 꺼져 있거나 모달이 열려 있으면 상태 조정 키가 게임 상태를 바꾸지 않는다.
 - [ ] With no modal open, `ESC` does not create a pause menu yet.
 
 ## Proximity Interaction Test

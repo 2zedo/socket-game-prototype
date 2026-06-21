@@ -34,6 +34,7 @@
 - Colored world overlays distinguish player collision, interaction range, blockers, interactables, the nearest target, and wire anchors.
 - Outlet Mode uses the same Test Mode state to reveal slot, adapter, and plug-anchor hitboxes.
 - These overlays are diagnostic only and do not replace the final interaction prompts or visual treatment.
+- `F1` 도움말은 테스트 모드에서만 우측 진단 정보 아래에 표시되며, 실제 적용된 시간·배터리·전력 조정 키를 한국어로 안내한다.
 
 ## Next Visual Check
 
