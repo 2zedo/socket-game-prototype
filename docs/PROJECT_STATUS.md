@@ -4,7 +4,7 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `55ad71c`
+- Current commit at task start: `c621bc9`
 - Phase: Godot DAY 1 MVP hourly active-power tuning
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
@@ -40,6 +40,7 @@
 - Active drain uses per-game-hour tuning: Light `0.5`, Laptop `3.0`, Fan `1.0`, Charger `1.0`, and Communication Device `2.0` units per game hour.
 - The `60`-second playable day maps to `12` game hours; first activation records use without blocking later toggles.
 - Disconnecting a device clears its active state, while map wire overlays continue to follow connection state.
+- Phone UI is a current-status view only: time, period, battery, remaining power, hourly drain, and active devices. Historical use remains exclusive to Result.
 
 ## Current DAY 1 Decisions
 
@@ -74,6 +75,7 @@
 - `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: show short battery warnings above the screen center.
 - `godot/scripts/SurvivalState.gd`: defines hourly device drain, converts elapsed real time to game hours, and exposes decimal remaining power plus current active drain.
 - `godot/scripts/Main.gd`: shows hourly drain and decimal remaining power in interaction and Test Mode readouts.
+- `godot/scripts/SurvivalState.gd`: removes first-use history and unrelated daily summary fields from Phone text while preserving Result data.
 - `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
 
 ## Validation Results
@@ -117,12 +119,13 @@
 - Battery-warning timing, daily one-shot behavior, the `0%` Phone view, and recovery after charging require manual GUI confirmation.
 - Continuous drain rate, modal pause, repeated on/off control, disconnect shutdown, and zero-power shutdown require manual gameplay confirmation.
 - Hourly drain totals and one-decimal Phone display require manual timing confirmation, especially Laptop-only and Laptop-plus-Fan cases.
+- Phone current-status-only content and unchanged Result history require manual GUI confirmation.
 
 ## Next Recommended Task
 
 1. Verify Laptop reports `-3.0 / h`, Laptop plus Fan reports `-4.0 / h`, and remaining power drops at the game-hour rate.
 2. Confirm hourly drain pauses in every modal and stops all devices safely at zero power.
-3. Verify Phone history remains first-use based while its active-device line follows current on/off state.
+3. Verify Phone shows no historical use list while Result retains first-activation history.
 
 ## Archive
 

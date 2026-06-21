@@ -297,23 +297,14 @@ func get_phone_text() -> String:
 		return "배터리가 없습니다.\n충전이 필요합니다."
 
 	var lines: Array[String] = [
-		"DAY %d" % day,
 		"현재 시간: %s" % get_current_clock_text(),
 		"시간대: %s" % get_current_time_period(),
-		"현재 이벤트: %s" % current_event,
 		"",
 		"배터리: %d%%" % roundi(battery),
-		"온도: %d%%" % roundi(temperature),
-		"피로: %d%%" % roundi(fatigue),
-		"재미: %d%%" % roundi(fun),
 		"",
 		"오늘 남은 전력: %.1f / %d" % [current_power_units, max_power],
 		"현재 소비: -%.1f / h" % get_active_power_drain_per_game_hour(),
-		"사용 기록: %s" % get_used_day1_action_summary(),
 		"작동 중: %s" % get_active_day1_action_summary(),
-		"",
-		"현재 부하: %dW / %dW" % [current_load_watts, max_load_watts],
-		"콘센트: %d / %d" % [used_outlet_slots, max_outlet_slots],
 	]
 
 	return "\n".join(lines)

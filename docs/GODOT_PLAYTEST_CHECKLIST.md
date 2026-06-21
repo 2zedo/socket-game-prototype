@@ -117,7 +117,7 @@ For each object below, verify the full flow:
 - [ ] Open Phone, Outlet, Interaction, End Day, and Result modals and confirm active power drain pauses with the clock.
 - [ ] Interact with the active device again and confirm `끄기` stops further power drain.
 - [ ] Turn the same device on again and confirm the historical used record does not block it.
-- [ ] Phone use record updates on first activation and active-device status reflects current on/off state.
+- [ ] Result use record updates on first activation while Phone shows only the current active-device state.
 - [ ] When power reaches zero, active devices switch off safely and a clear warning appears.
 
 Target objects:
