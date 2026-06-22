@@ -1,0 +1,100 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/prototypes/PrototypeHub.gd" id="1_hub"]
+
+[node name="PrototypeHub" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_hub")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.015, 0.018, 0.026, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 96.0
+offset_top = 72.0
+offset_right = -96.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Margin"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Margin/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.86, 0.72, 1)
+theme_override_font_sizes/font_size = 34
+text = "CONCENT PROTOTYPE HUB"
+
+[node name="Intro" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.70, 0.62, 1)
+theme_override_font_sizes/font_size = 18
+text = "기존 Main/DAY1 흐름과 분리된 prototype 실행 허브입니다."
+
+[node name="QuarterviewTitle" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 24
+text = "[1] Quarterview Room Prototype"
+
+[node name="QuarterviewDescription" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
+theme_override_font_sizes/font_size = 17
+text = "- 쿼터뷰 방 이동 / 레이어 / 오브젝트 / 상호작용 검증"
+
+[node name="QuarterviewButton" type="Button" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Quarterview Room Prototype 실행"
+
+[node name="HackingTitle" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 24
+text = "[2] Hacking Action Prototype"
+
+[node name="HackingDescription" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
+theme_override_font_sizes/font_size = 17
+text = "- 탑뷰 해커모드 액션 / 이동 / 공격 / 회피 / 목표 / 탈출 검증"
+
+[node name="HackingButton" type="Button" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Hacking Action Prototype 실행"
+
+[node name="KeysTitle" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.86, 0.72, 1)
+theme_override_font_sizes/font_size = 20
+text = "키 안내"
+
+[node name="Keys" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
+theme_override_font_sizes/font_size = 17
+text = "1 또는 Q: QuarterviewRoomPrototype 실행
+2 또는 H: HackingActionPrototype 실행
+ESC: 동작 없음 로그 출력"
