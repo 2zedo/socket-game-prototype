@@ -15,7 +15,10 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_ESCAPE:
+		if event.keycode == KEY_B or event.keycode == KEY_BACKSPACE:
+			_go_to_prototype_hub()
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_ESCAPE:
 			_toggle_pause_overlay()
 			get_viewport().set_input_as_handled()
 
@@ -144,7 +147,7 @@ func _build_title_screen() -> void:
 	menu_column.add_child(_make_button("[설정]", _toggle_settings_panel))
 	menu_column.add_child(_make_button("[종료]", _select_exit))
 
-	var hint := _make_label("ESC: SYSTEM MENU", 16, Color(0.52, 0.72, 0.88, 0.90))
+	var hint := _make_label("ESC: SYSTEM MENU\nB / Backspace: Prototype Hub", 16, Color(0.52, 0.72, 0.88, 0.90))
 	hint.position = Vector2(92, 650)
 	add_child(hint)
 
@@ -175,6 +178,7 @@ func _build_pause_overlay() -> void:
 	box.add_child(_make_button("[프로토타입 허브로]", _go_to_prototype_hub))
 	box.add_child(_make_button("[타이틀로]", _reload_title))
 	box.add_child(_make_button("[종료]", _select_exit))
+	box.add_child(_make_label("B / Backspace: Prototype Hub", 14, Color(0.52, 0.72, 0.88, 0.90)))
 
 
 func _build_settings_panel() -> void:

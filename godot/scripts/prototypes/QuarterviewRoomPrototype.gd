@@ -1,5 +1,7 @@
 extends Node2D
 
+const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
+
 var floor_points := PackedVector2Array([
 	Vector2(245, 170),
 	Vector2(965, 170),
@@ -384,6 +386,12 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_B or event.keycode == KEY_BACKSPACE:
+			_go_to_prototype_hub()
+			get_viewport().set_input_as_handled()
+			return
+
 	if event.is_action_pressed("interact") and not nearest_object.is_empty():
 		print(
 			"Quarterview prototype interact: %s / zone=%s / role=%s / future=%s / state=%s"
@@ -395,6 +403,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				nearest_object["visual_state"],
 			]
 		)
+
+
+func _go_to_prototype_hub() -> void:
+	print("Quarterview prototype: PrototypeHub로 돌아갑니다.")
+	get_tree().change_scene_to_file(PROTOTYPE_HUB_SCENE)
 
 
 func _draw() -> void:

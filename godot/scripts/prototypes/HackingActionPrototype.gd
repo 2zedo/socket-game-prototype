@@ -4,6 +4,8 @@ const PLAYER_SCRIPT := preload("res://scripts/prototypes/HackingPrototypePlayer.
 const ENEMY_SCRIPT := preload("res://scripts/prototypes/HackingPrototypeEnemy.gd")
 const PROJECTILE_SCRIPT := preload("res://scripts/prototypes/HackingPrototypeProjectile.gd")
 
+const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
+
 const ARENA_RECT := Rect2(Vector2(130, 90), Vector2(1020, 540))
 const START_POSITION := Vector2(250, 530)
 const OBJECTIVE_POSITION := Vector2(900, 260)
@@ -68,7 +70,10 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_R:
+		if event.keycode == KEY_B or event.keycode == KEY_BACKSPACE:
+			_go_to_prototype_hub()
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_R:
 			reset_prototype()
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_E:
@@ -77,6 +82,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_ESCAPE:
 			print("Hacking action prototype: ESC pressed, no exit is wired in this prototype.")
 			get_viewport().set_input_as_handled()
+
+
+func _go_to_prototype_hub() -> void:
+	print("Hacking action prototype: PrototypeHub로 돌아갑니다.")
+	get_tree().change_scene_to_file(PROTOTYPE_HUB_SCENE)
 
 
 func reset_prototype() -> void:
@@ -293,6 +303,7 @@ func _update_ui() -> void:
 		"Space: Hop",
 		"E: Extract Node",
 		"R: Restart",
+		"B/Backspace: Prototype Hub",
 		"",
 		"HP: %s" % hp_text,
 		"Trace: %d%%" % trace,

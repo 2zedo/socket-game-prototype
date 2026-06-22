@@ -76,6 +76,7 @@ offset_bottom = 142.0
 text = "쿼터뷰 방 Prototype
 WASD / 방향키: 이동
 E: 가까운 오브젝트 key 출력
+B / Backspace: Prototype Hub
 기존 Main.tscn을 교체하지 않습니다"
 label_settings = SubResource("LabelSettings_help")
 

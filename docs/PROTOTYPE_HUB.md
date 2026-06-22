@@ -26,6 +26,7 @@ prototype scene이 늘어날 때 Godot에서 각 prototype을 빠르게 실행�
 - Hacking Action 버튼: Hacking Action Prototype 실행.
 - Title / Pause Menu 버튼: Title / Pause Menu Prototype 실행.
 - `ESC`: 허브 안에서는 종료 동작을 연결하지 않고 로그만 출력한다.
+- 각 prototype 안에서 `B` 또는 `Backspace`: PrototypeHub로 돌아오기.
 
 ## Independence From Main
 
@@ -41,11 +42,11 @@ prototype scene이 늘어날 때 Godot에서 각 prototype을 빠르게 실행�
 1. Prototype scene은 `res://scenes/prototypes/` 아래에 둔다.
 2. Prototype script는 `godot/scripts/prototypes/` 아래에 둔다.
 3. 기존 Main/DAY1 흐름에 직접 연결하지 않는다.
-4. `PrototypeHub.gd`에 scene path 상수를 추가한다.
+4. `PrototypeHub.gd`의 `PROTOTYPES` registry에 scene path, shortcut, description, button path를 추가한다.
 5. `PrototypeHub.tscn`에 버튼과 짧은 설명을 추가한다.
 6. 필요한 경우 키 입력을 추가하되, 기존 prototype 조작과 충돌하지 않게 한다.
 
 ## Current Limit
 
-현재 최소 목표는 `Hub -> 각 prototype 실행`이다.
-각 prototype에서 `Back to Hub`로 돌아오는 입력은 아직 공통 규칙으로 연결하지 않았다.
+현재 최소 목표는 `Hub -> 각 prototype 실행 -> B / Backspace로 Hub 복귀`다.
+각 prototype은 기존 `ESC` 의미를 유지하며, 공통 복귀는 `B` 또는 `Backspace`로만 처리한다.

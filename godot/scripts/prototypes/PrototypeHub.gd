@@ -1,47 +1,57 @@
 extends Control
 
-const QUARTERVIEW_SCENE := "res://scenes/prototypes/QuarterviewRoomPrototype.tscn"
-const HACKING_ACTION_SCENE := "res://scenes/prototypes/HackingActionPrototype.tscn"
-const TITLE_MENU_SCENE := "res://scenes/prototypes/TitleMenuPrototype.tscn"
-
-@onready var quarterview_button: Button = $Margin/Panel/VBox/QuarterviewButton
-@onready var hacking_button: Button = $Margin/Panel/VBox/HackingButton
-@onready var title_button: Button = $Margin/Panel/VBox/TitleMenuButton
+const PROTOTYPES := [
+	{
+		"key": "quarterview",
+		"title": "Quarterview Room Prototype",
+		"path": "res://scenes/prototypes/QuarterviewRoomPrototype.tscn",
+		"shortcut": ["1", "Q"],
+		"description": "쿼터뷰 방 이동 / 레이어 / 오브젝트 / 상호작용 검증",
+		"button_path": "Margin/Panel/VBox/QuarterviewButton",
+		"keycodes": [KEY_1, KEY_Q],
+	},
+	{
+		"key": "hacking_action",
+		"title": "Hacking Action Prototype",
+		"path": "res://scenes/prototypes/HackingActionPrototype.tscn",
+		"shortcut": ["2", "H"],
+		"description": "탑뷰 해커모드 액션 / 이동 / 공격 / 회피 / 목표 / 탈출 검증",
+		"button_path": "Margin/Panel/VBox/HackingButton",
+		"keycodes": [KEY_2, KEY_H],
+	},
+	{
+		"key": "title_menu",
+		"title": "Title / Pause Menu Prototype",
+		"path": "res://scenes/prototypes/TitleMenuPrototype.tscn",
+		"shortcut": ["3", "T"],
+		"description": "시작화면 / ESC 메뉴 / 설정 placeholder 검증",
+		"button_path": "Margin/Panel/VBox/TitleMenuButton",
+		"keycodes": [KEY_3, KEY_T],
+	},
+]
 
 
 func _ready() -> void:
-	quarterview_button.pressed.connect(_open_quarterview)
-	hacking_button.pressed.connect(_open_hacking_action)
-	title_button.pressed.connect(_open_title_menu)
+	for prototype in PROTOTYPES:
+		var button := get_node_or_null(NodePath(prototype["button_path"])) as Button
+		if button == null:
+			continue
+		button.pressed.connect(_open_prototype.bind(prototype))
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_1, KEY_Q:
-				_open_quarterview()
+		for prototype in PROTOTYPES:
+			if prototype["keycodes"].has(event.keycode):
+				_open_prototype(prototype)
 				get_viewport().set_input_as_handled()
-			KEY_2, KEY_H:
-				_open_hacking_action()
-				get_viewport().set_input_as_handled()
-			KEY_3, KEY_T:
-				_open_title_menu()
-				get_viewport().set_input_as_handled()
-			KEY_ESCAPE:
-				print("PrototypeHub: ESC 입력, 이 허브에서는 종료 동작을 연결하지 않았습니다.")
-				get_viewport().set_input_as_handled()
+				return
+
+		if event.keycode == KEY_ESCAPE:
+			print("PrototypeHub: ESC 입력, 이 허브에서는 종료 동작을 연결하지 않았습니다.")
+			get_viewport().set_input_as_handled()
 
 
-func _open_quarterview() -> void:
-	print("PrototypeHub: QuarterviewRoomPrototype 실행")
-	get_tree().change_scene_to_file(QUARTERVIEW_SCENE)
-
-
-func _open_hacking_action() -> void:
-	print("PrototypeHub: HackingActionPrototype 실행")
-	get_tree().change_scene_to_file(HACKING_ACTION_SCENE)
-
-
-func _open_title_menu() -> void:
-	print("PrototypeHub: TitleMenuPrototype 실행")
-	get_tree().change_scene_to_file(TITLE_MENU_SCENE)
+func _open_prototype(prototype: Dictionary) -> void:
+	print("PrototypeHub: %s 실행" % prototype["title"])
+	get_tree().change_scene_to_file(prototype["path"])

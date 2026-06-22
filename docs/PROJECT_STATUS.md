@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `3f2e584`
-- Phase: Title and pause menu prototype
+- Current commit at task start: `0317ab5`
+- Phase: Prototype navigation standardization
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -55,6 +55,7 @@
 - 해킹 액션은 기존 Main과 연결하지 않은 독립 prototype scene `res://scenes/prototypes/HackingActionPrototype.tscn`에서 조작, 전투, objective, exit 흐름을 먼저 검증한다.
 - `res://scenes/prototypes/PrototypeHub.tscn`에서 Quarterview Room과 Hacking Action prototype을 키 또는 버튼으로 실행할 수 있다.
 - Title / Pause 메뉴 방향은 독립 prototype scene `res://scenes/prototypes/TitleMenuPrototype.tscn`에서 검증하며, 아직 실제 Main 시작/ESC 흐름에 연결하지 않는다.
+- Quarterview, Hacking Action, Title / Pause Menu prototype은 `B` 또는 `Backspace`로 `PrototypeHub`에 복귀할 수 있으며, 각 prototype의 기존 `ESC` 의미는 유지한다.
 
 ## Current DAY 1 Decisions
 
@@ -121,6 +122,9 @@
 - `godot/scenes/prototypes/TitleMenuPrototype.tscn`, `godot/scripts/prototypes/TitleMenuPrototype.gd`: 시작화면, ESC overlay, settings placeholder를 독립 UI prototype으로 추가한다.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: Title / Pause Menu prototype을 `3` / `T`와 버튼으로 등록한다.
 - `docs/TITLE_AND_PAUSE_MENU_PROTOTYPE.md`, `docs/PROTOTYPE_HUB.md`: Title / Pause prototype 구조와 Hub 등록 정보를 기록한다.
+- `godot/scripts/prototypes/PrototypeHub.gd`: prototype 목록을 `PROTOTYPES` registry로 정리하고 기존 실행 키와 버튼 연결을 유지한다.
+- `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/TitleMenuPrototype.gd`: `B` / `Backspace` PrototypeHub 복귀 입력을 추가한다.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `docs/PROTOTYPE_HUB.md`: 공통 복귀 안내 문구를 추가한다.
 
 ## Validation Results
 
@@ -158,6 +162,7 @@
 - 해킹 액션 prototype 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
 - PrototypeHub 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
 - Title / Pause Menu prototype 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
+- Prototype navigation 표준화 후 `git diff --check`와 네 prototype scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -187,12 +192,13 @@
 - 해킹 액션 prototype은 GUI 수동 확인이 필요하며, Laptop, Reward, Result, Story flag와 아직 연결하지 않았다.
 - PrototypeHub의 키 입력과 버튼 클릭 scene 전환은 GUI 수동 확인이 필요하다.
 - Title prototype의 버튼, ESC overlay, Settings placeholder는 GUI 수동 확인이 필요하다.
+- 각 prototype의 `B` / `Backspace` 복귀 입력은 GUI 수동 확인이 필요하다.
 
 ## Next Recommended Task
 
-1. `PrototypeHub.tscn`을 GUI로 실행해 `1`/`Q`, `2`/`H`, `3`/`T`와 세 버튼의 scene 전환이 의도대로 동작하는지 확인한다.
-2. `TitleMenuPrototype.tscn`을 GUI로 실행해 새 게임 no-op, 설정 panel, ESC overlay, PrototypeHub 이동을 확인한다.
-3. `HackingActionPrototype.tscn`을 GUI로 실행해 이동, shot, roll, hop, objective extraction, success/failure, restart 감각을 확인한다.
+1. `PrototypeHub.tscn`을 GUI로 실행해 `1`/`Q`, `2`/`H`, `3`/`T`, 세 버튼, 그리고 각 prototype의 `B` / `Backspace` 복귀가 의도대로 동작하는지 확인한다.
+2. `TitleMenuPrototype.tscn`을 GUI로 실행해 새 게임 no-op, 설정 panel, ESC overlay, PrototypeHub 버튼, `B` / `Backspace` 복귀를 확인한다.
+3. `HackingActionPrototype.tscn`을 GUI로 실행해 이동, shot, roll, hop, objective extraction, success/failure, restart, Hub 복귀 감각을 확인한다.
 
 ## Archive
 
