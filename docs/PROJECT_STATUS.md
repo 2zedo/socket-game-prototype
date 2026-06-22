@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `cde7761`
-- Phase: Prototype hub scene
+- Current commit at task start: `3f2e584`
+- Phase: Title and pause menu prototype
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -54,6 +54,7 @@
 - 채택된 쿼터뷰 방 콘티는 최종 아트가 아니라 `docs/QUARTERVIEW_ROOM_DIRECTION.md`의 layout mood reference로 고정한다.
 - 해킹 액션은 기존 Main과 연결하지 않은 독립 prototype scene `res://scenes/prototypes/HackingActionPrototype.tscn`에서 조작, 전투, objective, exit 흐름을 먼저 검증한다.
 - `res://scenes/prototypes/PrototypeHub.tscn`에서 Quarterview Room과 Hacking Action prototype을 키 또는 버튼으로 실행할 수 있다.
+- Title / Pause 메뉴 방향은 독립 prototype scene `res://scenes/prototypes/TitleMenuPrototype.tscn`에서 검증하며, 아직 실제 Main 시작/ESC 흐름에 연결하지 않는다.
 
 ## Current DAY 1 Decisions
 
@@ -117,6 +118,9 @@
 - `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`: prototype scene 경로, 조작, 흐름, 아직 연결하지 않은 시스템을 기록한다.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: 독립 prototype 선택 허브를 추가한다.
 - `docs/PROTOTYPE_HUB.md`: 등록된 prototype, 실행 키, 버튼, 새 prototype 등록 기준을 기록한다.
+- `godot/scenes/prototypes/TitleMenuPrototype.tscn`, `godot/scripts/prototypes/TitleMenuPrototype.gd`: 시작화면, ESC overlay, settings placeholder를 독립 UI prototype으로 추가한다.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: Title / Pause Menu prototype을 `3` / `T`와 버튼으로 등록한다.
+- `docs/TITLE_AND_PAUSE_MENU_PROTOTYPE.md`, `docs/PROTOTYPE_HUB.md`: Title / Pause prototype 구조와 Hub 등록 정보를 기록한다.
 
 ## Validation Results
 
@@ -153,6 +157,7 @@
 - 쿼터뷰 object registry와 contract 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
 - 해킹 액션 prototype 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
 - PrototypeHub 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
+- Title / Pause Menu prototype 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -181,12 +186,13 @@
 - 전용 정전 일지/생존 기록 이미지 스킨은 아직 적용하지 않았다.
 - 해킹 액션 prototype은 GUI 수동 확인이 필요하며, Laptop, Reward, Result, Story flag와 아직 연결하지 않았다.
 - PrototypeHub의 키 입력과 버튼 클릭 scene 전환은 GUI 수동 확인이 필요하다.
+- Title prototype의 버튼, ESC overlay, Settings placeholder는 GUI 수동 확인이 필요하다.
 
 ## Next Recommended Task
 
-1. `PrototypeHub.tscn`을 GUI로 실행해 `1`/`Q`, `2`/`H`, 두 버튼의 scene 전환이 의도대로 동작하는지 확인한다.
-2. `HackingActionPrototype.tscn`을 GUI로 실행해 이동, shot, roll, hop, objective extraction, success/failure, restart 감각을 확인한다.
-3. 채택 콘티 기준을 `QuarterviewRoomPrototype.tscn`의 placeholder 구역과 비교해 현관 / 침대 / 작업 책상 / 주방 / 전력 구역의 방향이 맞는지 확인한다.
+1. `PrototypeHub.tscn`을 GUI로 실행해 `1`/`Q`, `2`/`H`, `3`/`T`와 세 버튼의 scene 전환이 의도대로 동작하는지 확인한다.
+2. `TitleMenuPrototype.tscn`을 GUI로 실행해 새 게임 no-op, 설정 panel, ESC overlay, PrototypeHub 이동을 확인한다.
+3. `HackingActionPrototype.tscn`을 GUI로 실행해 이동, shot, roll, hop, objective extraction, success/failure, restart 감각을 확인한다.
 
 ## Archive
 

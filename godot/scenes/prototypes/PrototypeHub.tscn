@@ -85,6 +85,23 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Hacking Action Prototype 실행"
 
+[node name="TitleMenuTitle" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 24
+text = "[3] Title / Pause Menu Prototype"
+
+[node name="TitleMenuDescription" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
+theme_override_font_sizes/font_size = 17
+text = "- 시작화면 / ESC 메뉴 / 설정 placeholder 검증"
+
+[node name="TitleMenuButton" type="Button" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Title / Pause Menu Prototype 실행"
+
 [node name="KeysTitle" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.93, 0.86, 0.72, 1)
@@ -97,4 +114,5 @@ theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
 theme_override_font_sizes/font_size = 17
 text = "1 또는 Q: QuarterviewRoomPrototype 실행
 2 또는 H: HackingActionPrototype 실행
+3 또는 T: TitleMenuPrototype 실행
 ESC: 동작 없음 로그 출력"
