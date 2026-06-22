@@ -17,10 +17,24 @@
 - panel이 열린 상태에서 `E`를 누르면 Primary button과 같은 no-op action 로그를 출력한다.
 - `ESC` 또는 `Close` button으로 panel을 닫는다.
 - `B` 또는 `Backspace`는 기존 prototype navigation 규칙대로 `PrototypeHub`로 돌아간다.
+- `D`는 이 prototype 안에서만 debug overlay를 켜고 끈다.
+
+## Debug Overlay 정책
+
+기본값은 debug overlay OFF다.
+기본 화면에서는 전체 object label, collision/blocker overlay, interaction range circle을 숨기고 가까운 오브젝트 prompt만 표시한다.
+
+Debug overlay ON에서는 아래 정보를 표시한다.
+
+- object label
+- collision / blocker overlay
+- interaction range circle
+- panel 안의 `key`, `zone`, `role`, `future_source`, `visual_state`
 
 ## 표시하는 Registry 정보
 
 Panel은 `QuarterviewRoomPrototype.gd`의 object registry에서 아래 정보를 읽어 표시한다.
+Debug overlay OFF에서는 기본 화면 가독성을 위해 `state`와 prototype no-op 안내만 보여주고, debug overlay ON에서 상세 registry 정보를 표시한다.
 
 - `display_name`
 - `key`

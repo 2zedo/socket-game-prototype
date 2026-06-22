@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `ce7627d`
-- Phase: Quarterview object interaction prototype
+- Current commit at task start: `dff3b7b`
+- Phase: Quarterview prototype debug display cleanup
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -57,6 +57,7 @@
 - Title / Pause 메뉴 방향은 독립 prototype scene `res://scenes/prototypes/TitleMenuPrototype.tscn`에서 검증하며, 아직 실제 Main 시작/ESC 흐름에 연결하지 않는다.
 - Quarterview, Hacking Action, Title / Pause Menu prototype은 `B` 또는 `Backspace`로 `PrototypeHub`에 복귀할 수 있으며, 각 prototype의 기존 `ESC` 의미는 유지한다.
 - Quarterview Room prototype은 가까운 오브젝트에서 `E`를 누르면 registry 기반 object interaction panel을 열고, Primary / Inspect / Close button은 실제 기능 연결 없이 no-op 로그만 출력한다.
+- Quarterview Room prototype은 기본 화면에서 전체 debug label / collision / interaction range를 숨기고, `D`로 prototype 전용 debug overlay를 토글한다.
 
 ## Current DAY 1 Decisions
 
@@ -129,6 +130,8 @@
 - `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: registry 정보를 표시하는 prototype 전용 object interaction panel과 no-op action buttons를 추가한다.
 - `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md`: panel 흐름, 표시 정보, role별 placeholder action label, 향후 연결 후보를 기록한다.
 - `docs/QUARTERVIEW_OBJECT_CONTRACT.md`: role 기반 Primary action label 기준을 추가한다.
+- `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: `D` debug overlay toggle, 기본 화면 prompt 축약, label/range/blocker 숨김, 오른쪽 중앙 고정 panel 위치를 적용한다.
+- `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md`: debug overlay 표시 정책과 panel 상세 정보 표시 조건을 기록한다.
 
 ## Validation Results
 
@@ -168,6 +171,7 @@
 - Title / Pause Menu prototype 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
 - Prototype navigation 표준화 후 `git diff --check`와 네 prototype scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Quarterview object interaction panel 추가 후 `git diff --check`와 네 prototype scene의 Godot 4.5.1 headless startup이 완료됐다.
+- Quarterview debug 표시 정리 후 `git diff --check`와 Quarterview / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -199,12 +203,13 @@
 - Title prototype의 버튼, ESC overlay, Settings placeholder는 GUI 수동 확인이 필요하다.
 - 각 prototype의 `B` / `Backspace` 복귀 입력은 GUI 수동 확인이 필요하다.
 - Quarterview object interaction panel의 `E` open, Primary / Inspect / Close button, `ESC` close, 이동 잠금은 GUI 수동 확인이 필요하다.
+- Quarterview debug overlay의 `D` toggle, 기본 화면 prompt-only 상태, debug ON label/range/blocker 표시는 GUI 수동 확인이 필요하다.
 
 ## Next Recommended Task
 
-1. `QuarterviewRoomPrototype.tscn`을 GUI로 실행해 각 interactable의 `E` panel open, role별 Primary label, no-op 로그, `ESC` / Close 닫기, panel 중 이동 잠금을 확인한다.
-2. `PrototypeHub.tscn`을 GUI로 실행해 `1`/`Q`, `2`/`H`, `3`/`T`, 세 버튼, 그리고 각 prototype의 `B` / `Backspace` 복귀가 의도대로 동작하는지 확인한다.
-3. `HackingActionPrototype.tscn`과 `TitleMenuPrototype.tscn`을 GUI로 실행해 기존 조작이 prototype navigation 변경 후에도 유지되는지 확인한다.
+1. `QuarterviewRoomPrototype.tscn`을 GUI로 실행해 기본 화면에 전체 label/range가 숨겨지는지, 가까운 오브젝트만 `[E] ObjectName`으로 보이는지, `D` toggle이 label/range/blocker를 켜고 끄는지 확인한다.
+2. Quarterview interaction panel을 열어 오른쪽 중앙 고정 위치, debug OFF 상세 정보 축약, debug ON registry 상세 표시, `ESC` / Close 닫기, panel 중 이동 잠금을 확인한다.
+3. `PrototypeHub.tscn`을 GUI로 실행해 prototype 실행과 각 prototype의 `B` / `Backspace` 복귀가 유지되는지 확인한다.
 
 ## Archive
 

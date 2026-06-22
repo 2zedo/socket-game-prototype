@@ -392,6 +392,7 @@ const OBJECT_REGISTRY := [
 
 var nearest_object: Dictionary = {}
 var panel_object: Dictionary = {}
+var debug_overlay_enabled := false
 
 
 func _ready() -> void:
@@ -412,6 +413,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_B or event.keycode == KEY_BACKSPACE:
 			_go_to_prototype_hub()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_D:
+			_toggle_debug_overlay()
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_ESCAPE and _is_object_panel_open():
@@ -437,8 +442,9 @@ func _go_to_prototype_hub() -> void:
 
 func _draw() -> void:
 	_draw_room_shell()
-	_draw_collision_guides()
-	_draw_interaction_ranges()
+	if debug_overlay_enabled:
+		_draw_collision_guides()
+		_draw_interaction_ranges()
 
 
 func _build_collision() -> void:
@@ -540,6 +546,16 @@ func _add_blocker(blocker_name: String, rect: Rect2) -> void:
 
 func _configure_labels() -> void:
 	prompt_label.text = ""
+	label_layer.visible = debug_overlay_enabled
+
+
+func _toggle_debug_overlay() -> void:
+	debug_overlay_enabled = not debug_overlay_enabled
+	label_layer.visible = debug_overlay_enabled
+	if _is_object_panel_open() and not panel_object.is_empty():
+		_refresh_object_panel_detail()
+	queue_redraw()
+	print("Quarterview prototype debug overlay: %s" % ("ON" if debug_overlay_enabled else "OFF"))
 
 
 func _configure_object_panel() -> void:
@@ -556,13 +572,7 @@ func _is_object_panel_open() -> bool:
 func _open_object_panel(object_data: Dictionary) -> void:
 	panel_object = object_data
 	object_panel_title.text = _get_object_display_name(object_data).to_upper()
-	object_panel_detail.text = "\n".join([
-		"key: %s" % object_data["key"],
-		"zone: %s" % object_data["zone"],
-		"role: %s" % object_data["role"],
-		"future: %s" % object_data["future_source"],
-		"state: %s" % object_data["visual_state"],
-	])
+	_refresh_object_panel_detail()
 	primary_button.text = _get_primary_action_label(String(object_data["role"]))
 	object_panel.visible = true
 	object_panel.move_to_front()
@@ -614,6 +624,26 @@ func _run_inspect_action() -> void:
 
 func _get_primary_action_label(role: String) -> String:
 	return String(PRIMARY_ACTION_LABEL_BY_ROLE.get(role, "Use Device"))
+
+
+func _refresh_object_panel_detail() -> void:
+	if panel_object.is_empty():
+		object_panel_detail.text = ""
+		return
+
+	if debug_overlay_enabled:
+		object_panel_detail.text = "\n".join([
+			"key: %s" % panel_object["key"],
+			"zone: %s" % panel_object["zone"],
+			"role: %s" % panel_object["role"],
+			"future: %s" % panel_object["future_source"],
+			"state: %s" % panel_object["visual_state"],
+		])
+	else:
+		object_panel_detail.text = "\n".join([
+			"state: %s" % panel_object["visual_state"],
+			"prototype no-op action only",
+		])
 
 
 func _configure_layers() -> void:
@@ -710,7 +740,7 @@ func _update_nearest_interactable() -> void:
 	if nearest_object.is_empty():
 		prompt_label.text = ""
 	else:
-		prompt_label.text = "E: %s" % _get_object_display_name(nearest_object)
+		prompt_label.text = "[E] %s" % _get_object_display_name(nearest_object)
 
 
 func _draw_room_shell() -> void:
