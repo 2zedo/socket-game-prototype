@@ -44,6 +44,28 @@
 - `future_source`는 기존 탑뷰 기능 또는 장기 후보와의 연결 힌트다.
 - `visual_state`는 현재 표시 상태의 placeholder key다.
 
+## Prototype Interaction Action 기준
+
+`QuarterviewRoomPrototype`의 object interaction panel은 `role`을 기준으로 Primary button label을 고른다.
+이 label은 실제 기능 연결이 아니라 UX 흐름 확인용 placeholder다.
+
+| role | Primary label | 실제 연결 후보 |
+| --- | --- | --- |
+| `manual_end_day` | `Rest / End Day` | 기존 Bed 수동 하루 종료 흐름 |
+| `laptop_job` | `Open Work` | 해킹 미션 선택 또는 작업 UI |
+| `phone_status` | `Check Phone` | 기존 Phone UI |
+| `phone_charge` | `Charge` | Phone 충전 흐름 |
+| `power_management` | `Open Power` | 기존 Outlet UI |
+| `communication` | `Check Signal` | 의뢰 / 신호 확인 UI |
+| `mystery_device` | `Inspect NODE` | NODE-17 story flag |
+| `audio_hacking_device` | `Enable Audio` | 해커모드 오디오 정보 시스템 |
+| `living_appliance` | `Use Appliance` | 냉장고 / 전자레인지 / 에어컨 |
+| `support_device` | `Use Device` | 보조 장치 |
+| `background_life_hint` | `Inspect` | 생활 배경 조사 |
+| `background_structure` | `Inspect` | 구조물 조사 |
+
+현재 prototype에서는 Primary / Inspect / Close button만 제공하며, Primary와 Inspect는 no-op 로그만 출력한다.
+
 ## 금지 사항
 
 - object key를 화면 표시명 기준으로 바꾸지 않는다.

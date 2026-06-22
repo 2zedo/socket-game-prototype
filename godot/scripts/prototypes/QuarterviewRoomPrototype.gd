@@ -54,6 +54,21 @@ const LAYER_Z_INDEX := {
 	"LabelLayer": 90,
 }
 
+const PRIMARY_ACTION_LABEL_BY_ROLE := {
+	"manual_end_day": "Rest / End Day",
+	"laptop_job": "Open Work",
+	"phone_status": "Check Phone",
+	"phone_charge": "Charge",
+	"power_management": "Open Power",
+	"communication": "Check Signal",
+	"mystery_device": "Inspect NODE",
+	"audio_hacking_device": "Enable Audio",
+	"living_appliance": "Use Appliance",
+	"support_device": "Use Device",
+	"background_life_hint": "Inspect",
+	"background_structure": "Inspect",
+}
+
 const OBJECT_REGISTRY := [
 	{
 		"key": "bed",
@@ -368,8 +383,15 @@ const OBJECT_REGISTRY := [
 @onready var label_layer: Node2D = $World/LabelLayer
 @onready var player: CharacterBody2D = $World/PlayerLayer/Player
 @onready var prompt_label: Label = $UI/PromptLabel
+@onready var object_panel: Control = $UI/ObjectInteractionPanel
+@onready var object_panel_title: Label = $UI/ObjectInteractionPanel/Panel/Margin/VBox/TitleLabel
+@onready var object_panel_detail: Label = $UI/ObjectInteractionPanel/Panel/Margin/VBox/DetailLabel
+@onready var primary_button: Button = $UI/ObjectInteractionPanel/Panel/Margin/VBox/ActionButtonContainer/PrimaryButton
+@onready var inspect_button: Button = $UI/ObjectInteractionPanel/Panel/Margin/VBox/ActionButtonContainer/InspectButton
+@onready var close_button: Button = $UI/ObjectInteractionPanel/Panel/Margin/VBox/ActionButtonContainer/CloseButton
 
 var nearest_object: Dictionary = {}
+var panel_object: Dictionary = {}
 
 
 func _ready() -> void:
@@ -377,6 +399,7 @@ func _ready() -> void:
 	_build_collision()
 	_build_placeholder_objects()
 	_configure_labels()
+	_configure_object_panel()
 
 
 func _process(_delta: float) -> void:
@@ -391,18 +414,20 @@ func _unhandled_input(event: InputEvent) -> void:
 			_go_to_prototype_hub()
 			get_viewport().set_input_as_handled()
 			return
+		if event.keycode == KEY_ESCAPE and _is_object_panel_open():
+			_close_object_panel()
+			get_viewport().set_input_as_handled()
+			return
+
+	if _is_object_panel_open():
+		if event.is_action_pressed("interact"):
+			_run_primary_action()
+			get_viewport().set_input_as_handled()
+		return
 
 	if event.is_action_pressed("interact") and not nearest_object.is_empty():
-		print(
-			"Quarterview prototype interact: %s / zone=%s / role=%s / future=%s / state=%s"
-			% [
-				nearest_object["key"],
-				nearest_object["zone"],
-				nearest_object["role"],
-				nearest_object["future_source"],
-				nearest_object["visual_state"],
-			]
-		)
+		_open_object_panel(nearest_object)
+		get_viewport().set_input_as_handled()
 
 
 func _go_to_prototype_hub() -> void:
@@ -517,6 +542,80 @@ func _configure_labels() -> void:
 	prompt_label.text = ""
 
 
+func _configure_object_panel() -> void:
+	object_panel.visible = false
+	primary_button.pressed.connect(_run_primary_action)
+	inspect_button.pressed.connect(_run_inspect_action)
+	close_button.pressed.connect(_close_object_panel)
+
+
+func _is_object_panel_open() -> bool:
+	return object_panel.visible
+
+
+func _open_object_panel(object_data: Dictionary) -> void:
+	panel_object = object_data
+	object_panel_title.text = _get_object_display_name(object_data).to_upper()
+	object_panel_detail.text = "\n".join([
+		"key: %s" % object_data["key"],
+		"zone: %s" % object_data["zone"],
+		"role: %s" % object_data["role"],
+		"future: %s" % object_data["future_source"],
+		"state: %s" % object_data["visual_state"],
+	])
+	primary_button.text = _get_primary_action_label(String(object_data["role"]))
+	object_panel.visible = true
+	object_panel.move_to_front()
+	prompt_label.text = ""
+	player.velocity = Vector2.ZERO
+	player.set_physics_process(false)
+	print(
+		"Quarterview prototype interact: %s / zone=%s / role=%s / future=%s / state=%s"
+		% [
+			object_data["key"],
+			object_data["zone"],
+			object_data["role"],
+			object_data["future_source"],
+			object_data["visual_state"],
+		]
+	)
+
+
+func _close_object_panel() -> void:
+	object_panel.visible = false
+	panel_object = {}
+	player.set_physics_process(true)
+
+
+func _run_primary_action() -> void:
+	if panel_object.is_empty():
+		return
+	print(
+		"Quarterview object action: %s / action=primary / role=%s / no-op"
+		% [
+			panel_object["key"],
+			panel_object["role"],
+		]
+	)
+
+
+func _run_inspect_action() -> void:
+	if panel_object.is_empty():
+		return
+	print(
+		"Quarterview object inspect: %s / future=%s / state=%s / no-op"
+		% [
+			panel_object["key"],
+			panel_object["future_source"],
+			panel_object["visual_state"],
+		]
+	)
+
+
+func _get_primary_action_label(role: String) -> String:
+	return String(PRIMARY_ACTION_LABEL_BY_ROLE.get(role, "Use Device"))
+
+
 func _configure_layers() -> void:
 	for layer_name in LAYER_Z_INDEX.keys():
 		var layer := world.get_node_or_null(layer_name) as Node2D
@@ -588,6 +687,10 @@ func _get_object_display_name(object_data: Dictionary) -> String:
 
 
 func _update_nearest_interactable() -> void:
+	if _is_object_panel_open():
+		prompt_label.text = ""
+		return
+
 	var next_nearest: Dictionary = {}
 	var closest_distance := INF
 
