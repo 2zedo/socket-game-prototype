@@ -2,9 +2,9 @@
 
 ## 목적
 
-이 체크리스트는 본게임 DAY1 플레이테스트가 아니라, 현재 독립 prototype scene들의 GUI / 조작 / SFX / Input Prompt 확인용이다.
+이 체크리스트는 본게임 DAY1 플레이테스트가 아니라, 현재 독립 prototype scene들의 GUI / 조작 / SFX / Input Prompt / 시점 blockout 확인용이다.
 
-본게임 확인과 prototype 확인은 섞지 않는다. `Main.tscn`, DAY1 전력 루프, Phone / Outlet / Result 흐름은 이 문서의 확인 범위가 아니다.
+본게임 확인과 prototype 확인은 섞지 않는다. 기존 기능 prototype과 신규 perspective blockout의 역할을 구분해서 확인한다. `Main.tscn`, DAY1 전력 루프, Phone / Outlet / Result 흐름은 이 문서의 확인 범위가 아니다.
 
 ## 사전 조건
 
@@ -27,7 +27,10 @@
 
 - [ ] `PrototypeHub` scene이 정상 실행된다.
 - [ ] `Room Object Contract`, `Quarterview Perspective`, `Hacking Action`, `Hacking Perspective`, `Title Menu` 항목이 보인다.
+- [ ] `Quarterview Perspective Blockout` 항목이 보인다.
+- [ ] `Hacking Perspective Blockout` 항목이 보인다.
 - [ ] Hub 설명에서 Room Object Contract Prototype과 Perspective Blockout의 역할 차이가 이해된다.
+- [ ] Hacking Action Prototype과 Hacking Perspective Blockout의 설명이 구분된다.
 - [ ] `W` / `S` 또는 `Up` / `Down`으로 선택 이동이 된다.
 - [ ] `E` 또는 `Enter`로 선택한 prototype에 진입된다.
 - [ ] `1` / `Q`로 Room Object Contract Prototype에 진입된다.
@@ -43,6 +46,8 @@
 - [ ] `B` / `Backspace` 복귀 안내가 이해된다.
 
 ## QuarterviewRoomPrototype
+
+이 scene은 최종 쿼터뷰 시점 검증용이 아니다. object registry, interaction prompt, `ObjectInteractionPanel`, `zone` / `role` / `future_source` 계약 검증용이며, 실제 쿼터뷰 실내 시점 확인은 `QuarterviewPerspectiveBlockout`에서 한다.
 
 - [ ] Scene이 정상 실행된다.
 - [ ] 화면 안내가 `Room Object Contract Prototype`으로 표시되고, 최종 쿼터뷰 아트 / 시점 검증용이 아니라는 점이 이해된다.
@@ -65,24 +70,35 @@
 
 - `QuarterviewRoomPrototype`은 아직 `Main` / DAY1을 대체하지 않는다.
 - `Bed`, `Laptop`, `Power`, `Phone`, `Outlet`, `Result`, `Hacking`은 실제 기능과 연결하지 않은 상태다.
+- 이 scene의 pass 기준은 쿼터뷰처럼 보이는지가 아니라 object / interaction contract가 읽히는지다.
 
-## QuarterviewPerspectiveBlockout
+## QuarterviewPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.
 - [ ] 바닥이 완전 top-down 사각형이 아니라 사선 / 쿼터뷰 평면처럼 보인다.
 - [ ] 뒤쪽 벽과 측면 벽이 보인다.
 - [ ] 앞쪽 벽이 시야를 과하게 막지 않는다.
-- [ ] Bed / Desk / Fridge가 pseudo 3D block처럼 보인다.
+- [ ] Bed / Desk / Fridge / Microwave / AC가 pseudo 3D block처럼 보인다.
 - [ ] Comm / NODE-17 / Speaker / UPS / Signal Booster가 작업 장비 구역에 속한 block으로 읽힌다.
 - [ ] 모든 오브젝트가 같은 방 축을 공유한다.
 - [ ] Player와 가구 크기 비율이 괜찮다.
 - [ ] Player placeholder 이동과 큰 가구 collision이 동작한다.
 - [ ] Desk / Bed 앞뒤를 지나가며 가림 테스트가 가능하다.
+- [ ] 방이 너무 넓은 연구실처럼 보이지 않는다.
+- [ ] 방이 너무 빈민굴처럼 처참해 보이지 않는다.
+- [ ] 좁지만 정돈된 하층민 1인실 + 해커 작업실 느낌이 있는지 확인한다.
 - [ ] 기존 `QuarterviewRoomPrototype`과 달리 object / interaction contract가 아니라 시점 검증용이라는 점이 이해된다.
 - [ ] `D` 키로 debug overlay ON / OFF가 된다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
 
+메모:
+
+- 이 scene은 기능 이식용이 아니라 시점 blockout이다.
+- `Bed`, `Laptop`, `Power`, `Phone`, `Outlet`, `Result` 기능 연결 여부는 확인 대상이 아니다.
+
 ## HackingActionPrototype
+
+이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.
 
 - [ ] Scene이 정상 실행된다.
 - [ ] `WASD` / 방향키 이동이 된다.
@@ -111,18 +127,32 @@
 - [ ] Shot이 맞는 느낌이 있는가.
 - [ ] Trace / HP 실패가 이해되는가.
 
-## HackingPerspectiveBlockout
+주의:
+
+- 이 scene의 pass 기준은 `3/4` 시점처럼 보이는지가 아니라 move / shot / roll / hop / objective / exit / HP / Trace 흐름이 이해되는지다.
+
+## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.
 - [ ] 완전 정수리뷰보다 `3/4 top-down` 느낌이 난다.
-- [ ] 사이버 공간 바닥 / 장벽 / 오브젝트에 높이감이 있다.
-- [ ] 사선 floor / raised barrier / data node / exit gate가 구분된다.
+- [ ] 사이버 공간 바닥이 사선 / 기울어진 평면처럼 보인다.
+- [ ] 보안벽 / 장벽 / 플랫폼에 앞면 또는 측면이 조금 보인다.
+- [ ] Player / Enemy / Data Node / Exit Gate가 평면 도형만으로 보이지 않고 약간의 높이감이 있다.
+- [ ] Cyber arena 축이 일관적이다.
 - [ ] Security Program / Sentry / Signal Relay가 보안 시스템 내부 오브젝트처럼 읽힌다.
+- [ ] 큰 장벽 collision이 있다.
+- [ ] 낮은 벽이나 data node 주변에서 깊이감 테스트가 가능하다.
 - [ ] Foreground barrier 앞뒤를 지나갈 때 깊이감이나 일부 가림 테스트가 가능하다.
 - [ ] Player placeholder 이동이 가능하다.
 - [ ] 기존 `HackingActionPrototype`과 달리 gameplay 조작감 확인이 아니라 시점 확인용이라는 점이 이해된다.
 - [ ] `D` 키로 debug overlay ON / OFF가 된다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
+
+메모:
+
+- 이 scene은 gameplay 조작감 확인용이 아니라 시점 blockout이다.
+- Shot / roll / hop / objective / trace가 없어도 실패가 아니다.
+- Gameplay 확인은 `HackingActionPrototype`에서 한다.
 
 ## TitleMenuPrototype
 
@@ -136,6 +166,8 @@
 
 ## SFX 확인 항목
 
+- 신규 perspective blockout은 SFX가 없어도 된다.
+- SFX 확인은 주로 `PrototypeHub`, `QuarterviewRoomPrototype`, `HackingActionPrototype`에서 한다.
 - [ ] UI select 소리가 너무 자주 나와 거슬리지 않는다.
 - [ ] Confirm / cancel 소리가 구분된다.
 - [ ] Quarterview panel open / close 소리가 어색하지 않다.
@@ -147,6 +179,8 @@ SFX는 현재 prototype 전용이다. Main / DAY1 사운드 시스템으로 확�
 
 ## Input Prompt Icon 확인 항목
 
+- Perspective blockout scene은 input icon이 최소 안내에만 있어도 된다.
+- 시점 확인을 방해할 정도로 icon / label이 많으면 Needs Fix다.
 - [ ] 키 아이콘이 텍스트보다 가독성을 해치지 않는다.
 - [ ] 아이콘 크기가 적절하다.
 - [ ] `PrototypeHub`에서 아이콘이 버튼 / 설명과 겹치지 않는다.
@@ -160,11 +194,15 @@ SFX는 현재 prototype 전용이다. Main / DAY1 사운드 시스템으로 확�
 
 - 각 prototype scene이 실행된다.
 - Hub에서 각 prototype에 진입 / 복귀할 수 있다.
+- PrototypeHub에서 각 prototype의 목적을 구분할 수 있다.
 - Quarterview 기본 화면이 지나치게 지저분하지 않다.
+- 기존 contract prototype과 perspective blockout의 역할 차이가 명확하다.
 - Quarterview Perspective Blockout이 실제 쿼터뷰 시점 검증용으로 구분된다.
+- Quarterview Perspective Blockout이 기존 QuarterviewRoomPrototype보다 실제 쿼터뷰 실내 시점에 가깝다.
 - Quarterview Perspective Blockout이 채택 콘티 방향에 더 가까운 쿼터뷰 실내 느낌을 준다.
 - Hacking prototype의 기본 미션 흐름이 이해된다.
 - Hacking Perspective Blockout이 Hacking Action 조작 prototype과 구분된다.
+- Hacking Perspective Blockout이 기존 HackingActionPrototype보다 완전 정수리뷰에서 벗어난 `3/4 top-down` 느낌을 준다.
 - Hacking Perspective Blockout이 완전 정수리뷰보다 내려다보는 액션 시점에 가깝다.
 - SFX와 input prompt가 prototype 확인을 방해하지 않는다.
 
@@ -176,15 +214,19 @@ SFX는 현재 prototype 전용이다. Main / DAY1 사운드 시스템으로 확�
 - Hacking 조작 안내가 너무 복잡하다.
 - Hub에서 진입 / 복귀가 헷갈린다.
 - Perspective blockout이 다시 평면 / 정수리뷰처럼 보인다.
+- QuarterviewPerspectiveBlockout이 다시 평면 / 정수리뷰처럼 보인다.
+- HackingPerspectiveBlockout이 기존 HackingActionPrototype과 시점 차이가 거의 없다.
 - 오브젝트 축이 서로 다르다.
 - 앞벽이나 가구가 시야를 과하게 막는다.
 - 방이 너무 넓거나 하층 주거 공간보다 기관 연구실처럼 보인다.
+- 방이 너무 빈민굴처럼 처참해 보인다.
+- Perspective blockout에 label / icon이 너무 많아 시점 확인을 방해한다.
 
 ## Bug Report Template
 
 ```text
 [Prototype Bug]
-- Scene:
+- Scene: PrototypeHub / QuarterviewRoomPrototype / QuarterviewPerspectiveBlockout / HackingActionPrototype / HackingPerspectiveBlockout / TitleMenuPrototype
 - Steps:
 - Expected:
 - Actual:
