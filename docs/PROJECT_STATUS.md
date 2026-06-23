@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `bea45e4`
-- Phase: Godot AI MCP setup and metadata hygiene
+- Current commit at task start: `d79c18d`
+- Phase: Third-party Asset Library inventory
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -61,6 +61,7 @@
 - Quarterview Room prototype은 가까운 오브젝트에서 `E`를 누르면 registry 기반 object interaction panel을 열고, Primary / Inspect / Close button은 실제 기능 연결 없이 no-op 로그만 출력한다.
 - Quarterview Room prototype은 기본 화면에서 전체 debug label / collision / interaction range를 숨기고, `D`로 prototype 전용 debug overlay를 토글한다.
 - Godot AI MCP editor plugin is installed under `res://addons/godot_ai`, enabled in `project.godot`, and paired with the `_mcp_game_helper` autoload.
+- Installed third-party Asset Library packages are inventoried in `docs/THIRD_PARTY_ASSET_INVENTORY.md` before any SFX, particle, input prompt, or license UI wiring.
 
 ## Current DAY 1 Decisions
 
@@ -140,6 +141,8 @@
 - `godot/project.godot`, `godot/addons/godot_ai/**`, `godot/godot-ai-LICENSE.txt`: Godot AI MCP editor plugin, runtime helper autoload, and plugin license are tracked for editor/MCP integration.
 - `godot/assets/**/*.png.import`, `godot/scripts/prototypes/*.gd.uid`: source-side Godot metadata generated for tracked assets and prototype scripts is explicitly tracked per repository policy.
 - `.gitignore`: no change required; it already ignores `.godot/` caches while allowing source-side `.import` and `.uid` metadata.
+- `docs/THIRD_PARTY_ASSET_INVENTORY.md`: documents installed Kenney and Simple License packages, license evidence, intended use, current use, and commit status.
+- `docs/ASSET_PIPELINE.md`: points external Asset Library tracking to the third-party asset inventory.
 
 ## Validation Results
 
@@ -183,7 +186,8 @@
 - Hacking Action prototype 구조 정리 후 `git diff --check`와 HackingAction / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Hacking Action feedback 정리 후 `git diff --check`와 HackingAction / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Godot AI MCP setup commit 준비 후 `git diff --check`와 Godot 4.5.1 headless project startup이 완료됐다.
-- Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
+- Third-party asset inventory 문서화 후 `git diff --check`가 완료됐다. Godot scene startup은 문서 작업이라 생략했다.
+- Installed third-party asset folders, their source-side `.import` / `.uid` metadata, and `godot/LICENSE.txt` remain unstaged in this docs-only pass.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -218,6 +222,7 @@
 - Quarterview object interaction panel의 `E` open, Primary / Inspect / Close button, `ESC` close, 이동 잠금은 GUI 수동 확인이 필요하다.
 - Quarterview debug overlay의 `D` toggle, 기본 화면 prompt-only 상태, debug ON label/range/blocker 표시는 GUI 수동 확인이 필요하다.
 - Godot AI MCP plugin was checked through project/headless startup only; editor-side MCP operations still need manual confirmation in the Godot editor when used next.
+- Installed Kenney / Simple License assets are documented but not committed or wired; decide which packages should become tracked project dependencies before applying them.
 
 ## Next Recommended Task
 
