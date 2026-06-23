@@ -8,43 +8,48 @@ const PROTOTYPES := [
 	{
 		"key": "quarterview",
 		"title": "Room Object Contract Prototype",
-		"path": "res://scenes/prototypes/QuarterviewRoomPrototype.tscn",
+		"scene_path": "res://scenes/prototypes/QuarterviewRoomPrototype.tscn",
+		"status": "active",
 		"shortcut": ["1", "Q"],
 		"description": "Object registry, interaction prompt, and panel contract test. Not final quarterview visual blockout.",
 		"button_path": "Margin/Panel/VBox/QuarterviewButton",
 		"keycodes": [KEY_1, KEY_Q],
 	},
 	{
-		"key": "quarterview_perspective",
+		"key": "quarterview_perspective_blockout",
 		"title": "Quarterview Perspective Blockout",
-		"path": "res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn",
+		"scene_path": "res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn",
+		"status": "active",
 		"shortcut": ["2", "V"],
-		"description": "Visual perspective / pseudo 3D room blockout.",
+		"description": "Visual perspective blockout for the future quarterview cutaway room. Tests angled floor, walls, pseudo-3D furniture, and depth. Not gameplay integration.",
 		"button_path": "Margin/Panel/VBox/QuarterviewPerspectiveButton",
 		"keycodes": [KEY_2, KEY_V],
 	},
 	{
 		"key": "hacking_action",
 		"title": "Hacking Action Prototype",
-		"path": "res://scenes/prototypes/HackingActionPrototype.tscn",
+		"scene_path": "res://scenes/prototypes/HackingActionPrototype.tscn",
+		"status": "active",
 		"shortcut": ["3", "H"],
 		"description": "탑뷰 해커모드 액션 / 이동 / 공격 / 회피 / 목표 / 탈출 검증",
 		"button_path": "Margin/Panel/VBox/HackingButton",
 		"keycodes": [KEY_3, KEY_H],
 	},
 	{
-		"key": "hacking_perspective",
+		"key": "hacking_perspective_blockout",
 		"title": "Hacking Perspective Blockout",
-		"path": "res://scenes/prototypes/HackingPerspectiveBlockout.tscn",
+		"scene_path": "res://scenes/prototypes/HackingPerspectiveBlockout.tscn",
+		"status": "active",
 		"shortcut": ["4", "C"],
-		"description": "3/4 top-down cyber action camera/blockout test.",
+		"description": "Visual perspective blockout for future 3/4 top-down cyber action view. Tests cyber arena depth, angled platforms, barriers, and non-topdown camera feel. Not gameplay integration.",
 		"button_path": "Margin/Panel/VBox/HackingPerspectiveButton",
 		"keycodes": [KEY_4, KEY_C],
 	},
 	{
 		"key": "title_menu",
 		"title": "Title / Pause Menu Prototype",
-		"path": "res://scenes/prototypes/TitleMenuPrototype.tscn",
+		"scene_path": "res://scenes/prototypes/TitleMenuPrototype.tscn",
+		"status": "active",
 		"shortcut": ["5", "T"],
 		"description": "시작화면 / ESC 메뉴 / 설정 placeholder 검증",
 		"button_path": "Margin/Panel/VBox/TitleMenuButton",
@@ -67,6 +72,7 @@ func _ready() -> void:
 		var button := get_node_or_null(NodePath(prototype["button_path"])) as Button
 		if button == null:
 			continue
+		button.disabled = prototype.get("status", "active") != "active"
 		button.pressed.connect(_open_prototype.bind(prototype))
 		button.mouse_entered.connect(sfx.play_select)
 		button.focus_entered.connect(sfx.play_select)
@@ -121,8 +127,12 @@ func _set_focused_prototype(index: int) -> void:
 func _open_prototype(prototype: Dictionary) -> void:
 	if is_changing_scene:
 		return
+	if prototype.get("status", "active") != "active":
+		sfx.play_error()
+		print("PrototypeHub: %s is not active." % prototype["title"])
+		return
 	is_changing_scene = true
 	sfx.play_confirm()
 	print("PrototypeHub: %s 실행" % prototype["title"])
 	await get_tree().create_timer(SFX_SCENE_CHANGE_DELAY).timeout
-	get_tree().change_scene_to_file(prototype["path"])
+	get_tree().change_scene_to_file(prototype["scene_path"])

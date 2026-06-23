@@ -99,6 +99,7 @@
 - 실제 쿼터뷰 시점 검증은 `res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`에서 진행한다.
 - 현재 `HackingActionPrototype`은 조작 / 상태 prototype으로 유지한다.
 - 해킹모드 시점 검증은 `res://scenes/prototypes/HackingPerspectiveBlockout.tscn`에서 진행한다.
+- 두 perspective blockout은 `PrototypeHub`에 contract / gameplay prototype과 구분되는 시점 검증용 항목으로 등록한다.
 - 기존 prototype rename은 하지 않는다.
 - Main / DAY1 흐름과 prototype scene은 계속 분리한다.
 

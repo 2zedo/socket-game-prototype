@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `ebc3d76`
-- Phase: Hacking perspective blockout completion
+- Current commit at task start: `fb11633`
+- Phase: PrototypeHub perspective blockout registration
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -177,7 +177,7 @@
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: record the new perspective blockout path while keeping `QuarterviewRoomPrototype` as the object / interaction contract prototype.
 - `godot/scenes/prototypes/HackingPerspectiveBlockout.tscn`, `godot/scripts/prototypes/HackingPerspectiveBlockout.gd`, `godot/scripts/prototypes/HackingPerspectivePlayer.gd`: add an independent cyber perspective blockout with angled arena floor, raised barriers, scan / hazard / data node / exit placeholders, player movement, debug overlay, and Hub return.
 - `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: distinguish the existing Hacking Action control prototype from the new `3/4 top-down` perspective blockout.
-- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Perspective Blockout and Hacking Perspective Blockout while preserving existing prototype entries.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Perspective Blockout and Hacking Perspective Blockout with explicit `scene_path` / `status` registry data and clearer contract-vs-perspective descriptions while preserving existing prototype entries.
 - `docs/PROTOTYPE_HUB_OVERVIEW.md`, `docs/PROTOTYPE_HUB.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the five Hub entries, shortcut keys, and contract-vs-perspective distinction.
 - `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: expand Quarterview and Hacking perspective blockout GUI checks with viewpoint, axis, scale, occlusion, and role-separation criteria.
 - `docs/PROJECT_STATUS.md`: records the checklist update and keeps next manual validation focused on the perspective blockouts.

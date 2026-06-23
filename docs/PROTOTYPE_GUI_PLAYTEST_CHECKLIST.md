@@ -27,6 +27,7 @@
 
 - [ ] `PrototypeHub` scene이 정상 실행된다.
 - [ ] `Room Object Contract`, `Quarterview Perspective`, `Hacking Action`, `Hacking Perspective`, `Title Menu` 항목이 보인다.
+- [ ] Hub 설명에서 Room Object Contract Prototype과 Perspective Blockout의 역할 차이가 이해된다.
 - [ ] `W` / `S` 또는 `Up` / `Down`으로 선택 이동이 된다.
 - [ ] `E` 또는 `Enter`로 선택한 prototype에 진입된다.
 - [ ] `1` / `Q`로 Room Object Contract Prototype에 진입된다.
@@ -34,6 +35,7 @@
 - [ ] `3` / `H`로 Hacking Action Prototype에 진입된다.
 - [ ] `4` / `C`로 Hacking Perspective Blockout에 진입된다.
 - [ ] `5` / `T`로 Title / Pause Menu Prototype에 진입된다.
+- [ ] 포커스된 `E` / `Enter` 실행으로 Quarterview Perspective와 Hacking Perspective 항목에도 진입된다.
 - [ ] 선택 이동 시 SFX가 너무 크거나 거슬리지 않는다.
 - [ ] 실행 confirm SFX가 들린다.
 - [ ] Input Prompt icon이 텍스트와 겹치지 않는다.

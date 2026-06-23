@@ -78,7 +78,7 @@ text = "[2] Quarterview Perspective Blockout"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
 theme_override_font_sizes/font_size = 15
-text = "- Visual perspective / pseudo 3D room blockout"
+text = "- Future quarterview cutaway room perspective: angled floor, walls, pseudo-3D furniture, depth"
 
 [node name="QuarterviewPerspectiveButton" type="Button" parent="Margin/Panel/VBox"]
 layout_mode = 2
@@ -112,7 +112,7 @@ text = "[4] Hacking Perspective Blockout"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
 theme_override_font_sizes/font_size = 15
-text = "- 3/4 top-down cyber action camera/blockout test"
+text = "- Future 3/4 top-down cyber action view: arena depth, angled platforms, barriers"
 
 [node name="HackingPerspectiveButton" type="Button" parent="Margin/Panel/VBox"]
 layout_mode = 2

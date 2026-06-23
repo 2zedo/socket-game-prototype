@@ -14,9 +14,9 @@ prototype scene이 늘어날 때 Godot에서 각 prototype을 빠르게 실행�
 | 키 | Prototype | Scene | 목적 |
 | --- | --- | --- | --- |
 | `1` / `Q` | Room Object Contract Prototype | `res://scenes/prototypes/QuarterviewRoomPrototype.tscn` | Object registry, interaction prompt, panel contract 검증. 최종 쿼터뷰 아트 아님 |
-| `2` / `V` | Quarterview Perspective Blockout | `res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn` | 쿼터뷰 실내 시점, pseudo 3D 방 blockout, 가구 비율 검증 |
+| `2` / `V` | Quarterview Perspective Blockout | `res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn` | 미래 쿼터뷰 cutaway room 시점 검증. 사선 바닥, 벽, pseudo 3D 가구, 깊이감 확인 |
 | `3` / `H` | Hacking Action Prototype | `res://scenes/prototypes/HackingActionPrototype.tscn` | 탑뷰 해커모드 액션, 이동, 공격, 회피, 목표, 탈출 검증 |
-| `4` / `C` | Hacking Perspective Blockout | `res://scenes/prototypes/HackingPerspectiveBlockout.tscn` | `3/4 top-down` cyber action 시점과 arena blockout 검증 |
+| `4` / `C` | Hacking Perspective Blockout | `res://scenes/prototypes/HackingPerspectiveBlockout.tscn` | 미래 `3/4 top-down` cyber action 시점 검증. arena 깊이, 사선 platform, barrier 확인 |
 | `5` / `T` | Title / Pause Menu Prototype | `res://scenes/prototypes/TitleMenuPrototype.tscn` | 시작화면, ESC 메뉴, 설정 placeholder 검증 |
 
 ## Controls
@@ -49,7 +49,7 @@ prototype scene이 늘어날 때 Godot에서 각 prototype을 빠르게 실행�
 1. Prototype scene은 `res://scenes/prototypes/` 아래에 둔다.
 2. Prototype script는 `godot/scripts/prototypes/` 아래에 둔다.
 3. 기존 Main/DAY1 흐름에 직접 연결하지 않는다.
-4. `PrototypeHub.gd`의 `PROTOTYPES` registry에 scene path, shortcut, description, button path를 추가한다.
+4. `PrototypeHub.gd`의 `PROTOTYPES` registry에 `scene_path`, `status`, shortcut, description, button path를 추가한다.
 5. `PrototypeHub.tscn`에 버튼과 짧은 설명을 추가한다.
 6. 필요한 경우 키 입력을 추가하되, 기존 prototype 조작과 충돌하지 않게 한다.
 
