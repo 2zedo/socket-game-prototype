@@ -1,6 +1,6 @@
 extends Node2D
 
-const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
+const PROTOTYPE_UTILS := preload("res://scripts/prototypes/PrototypeSceneUtils.gd")
 
 const WALL_BLOCKERS := [
 	{"name": "top_wall", "rect": Rect2(Vector2(220, 78), Vector2(810, 70))},
@@ -150,12 +150,12 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_B or event.keycode == KEY_BACKSPACE:
+		if PROTOTYPE_UTILS.is_hub_back_event(event):
 			print("Quarterview perspective blockout: PrototypeHub로 돌아갑니다.")
-			get_tree().change_scene_to_file(PROTOTYPE_HUB_SCENE)
+			PROTOTYPE_UTILS.go_to_hub(self)
 			get_viewport().set_input_as_handled()
 			return
-		if event.keycode == KEY_D:
+		if PROTOTYPE_UTILS.is_debug_toggle_event(event):
 			debug_enabled = not debug_enabled
 			debug_layer.visible = debug_enabled
 			print("Quarterview perspective blockout debug: %s" % ("ON" if debug_enabled else "OFF"))

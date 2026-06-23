@@ -2,7 +2,7 @@ extends Node2D
 
 const INPUT_PROMPTS_SCRIPT := preload("res://scripts/prototypes/PrototypeInputPrompts.gd")
 const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd")
-const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
+const PROTOTYPE_UTILS := preload("res://scripts/prototypes/PrototypeSceneUtils.gd")
 
 var floor_points := PackedVector2Array([
 	Vector2(245, 170),
@@ -425,26 +425,26 @@ func _process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_B or event.keycode == KEY_BACKSPACE:
+		if PROTOTYPE_UTILS.is_hub_back_event(event):
 			_go_to_prototype_hub()
 			get_viewport().set_input_as_handled()
 			return
-		if event.keycode == KEY_D:
+		if PROTOTYPE_UTILS.is_debug_toggle_event(event):
 			_toggle_debug_overlay()
 			get_viewport().set_input_as_handled()
 			return
-		if event.keycode == KEY_ESCAPE and _is_object_panel_open():
+		if PROTOTYPE_UTILS.is_cancel_event(event) and _is_object_panel_open():
 			_close_object_panel()
 			get_viewport().set_input_as_handled()
 			return
 
 	if _is_object_panel_open():
-		if event.is_action_pressed("interact"):
+		if PROTOTYPE_UTILS.is_confirm_event(event):
 			_run_primary_action()
 			get_viewport().set_input_as_handled()
 		return
 
-	if event.is_action_pressed("interact") and not nearest_object.is_empty():
+	if PROTOTYPE_UTILS.is_confirm_event(event) and not nearest_object.is_empty():
 		_open_object_panel(nearest_object)
 		get_viewport().set_input_as_handled()
 
@@ -452,7 +452,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _go_to_prototype_hub() -> void:
 	sfx.play_cancel()
 	print("Quarterview prototype: PrototypeHub로 돌아갑니다.")
-	get_tree().change_scene_to_file(PROTOTYPE_HUB_SCENE)
+	PROTOTYPE_UTILS.go_to_hub(self)
 
 
 func _draw() -> void:

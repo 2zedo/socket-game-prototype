@@ -5,8 +5,7 @@ const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd"
 const PLAYER_SCRIPT := preload("res://scripts/prototypes/HackingPrototypePlayer.gd")
 const ENEMY_SCRIPT := preload("res://scripts/prototypes/HackingPrototypeEnemy.gd")
 const PROJECTILE_SCRIPT := preload("res://scripts/prototypes/HackingPrototypeProjectile.gd")
-
-const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
+const PROTOTYPE_UTILS := preload("res://scripts/prototypes/PrototypeSceneUtils.gd")
 
 enum MissionState {
 	READY,
@@ -117,20 +116,20 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_B or event.keycode == KEY_BACKSPACE:
+		if PROTOTYPE_UTILS.is_hub_back_event(event):
 			_go_to_prototype_hub()
 			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_R:
+		elif PROTOTYPE_UTILS.is_restart_event(event):
 			reset_prototype()
 			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_E:
+		elif PROTOTYPE_UTILS.is_confirm_event(event):
 			_try_extract_objective()
 			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_D:
+		elif PROTOTYPE_UTILS.is_debug_toggle_event(event):
 			debug_overlay_enabled = not debug_overlay_enabled
 			_show_event_message("Debug overlay: %s" % ("ON" if debug_overlay_enabled else "OFF"))
 			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_ESCAPE:
+		elif PROTOTYPE_UTILS.is_cancel_event(event):
 			sfx.play_error()
 			print("Hacking action prototype: ESC pressed, no exit is wired in this prototype.")
 			get_viewport().set_input_as_handled()
@@ -139,7 +138,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _go_to_prototype_hub() -> void:
 	sfx.play_cancel()
 	print("Hacking action prototype: PrototypeHub로 돌아갑니다.")
-	get_tree().change_scene_to_file(PROTOTYPE_HUB_SCENE)
+	PROTOTYPE_UTILS.go_to_hub(self)
 
 
 func reset_prototype() -> void:

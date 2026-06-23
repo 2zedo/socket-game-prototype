@@ -1,6 +1,6 @@
 extends Control
 
-const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
+const PROTOTYPE_UTILS := preload("res://scripts/prototypes/PrototypeSceneUtils.gd")
 const TITLE_SCENE := "res://scenes/prototypes/TitleMenuPrototype.tscn"
 
 var pause_overlay: Control
@@ -15,10 +15,10 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_B or event.keycode == KEY_BACKSPACE:
+		if PROTOTYPE_UTILS.is_hub_back_event(event):
 			_go_to_prototype_hub()
 			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_ESCAPE:
+		elif PROTOTYPE_UTILS.is_cancel_event(event):
 			_toggle_pause_overlay()
 			get_viewport().set_input_as_handled()
 
@@ -59,7 +59,7 @@ func _toggle_settings_panel() -> void:
 
 func _go_to_prototype_hub() -> void:
 	print("Title prototype: Prototype Hub selected")
-	get_tree().change_scene_to_file(PROTOTYPE_HUB_SCENE)
+	PROTOTYPE_UTILS.go_to_hub(self)
 
 
 func _reload_title() -> void:

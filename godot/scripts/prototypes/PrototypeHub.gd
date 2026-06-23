@@ -2,6 +2,7 @@ extends Control
 
 const INPUT_PROMPTS_SCRIPT := preload("res://scripts/prototypes/PrototypeInputPrompts.gd")
 const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd")
+const PROTOTYPE_UTILS := preload("res://scripts/prototypes/PrototypeSceneUtils.gd")
 const SFX_SCENE_CHANGE_DELAY := 0.05
 
 const PROTOTYPES := [
@@ -103,7 +104,7 @@ func _configure_input_prompt_icons() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode in [KEY_E, KEY_ENTER, KEY_KP_ENTER]:
+		if PROTOTYPE_UTILS.is_confirm_event(event):
 			_open_prototype(PROTOTYPES[focused_prototype_index])
 			get_viewport().set_input_as_handled()
 			return
@@ -114,7 +115,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 
-		if event.keycode == KEY_ESCAPE:
+		if PROTOTYPE_UTILS.is_cancel_event(event):
 			sfx.play_error()
 			print("PrototypeHub: ESC 입력, 이 허브에서는 종료 동작을 연결하지 않았습니다.")
 			get_viewport().set_input_as_handled()

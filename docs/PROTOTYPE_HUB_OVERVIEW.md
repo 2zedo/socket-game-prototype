@@ -25,6 +25,7 @@
 - 버튼 포커스 상태에서 `E` 또는 `Enter`로 선택한 prototype을 실행한다.
 - 각 prototype 안에서는 `B` 또는 `Backspace`로 Hub에 복귀한다.
 - `ESC`는 Hub 내부에서 실제 종료와 연결하지 않고 로그만 출력한다.
+- Prototype 공통 입력 규칙과 helper 기준은 `docs/PROTOTYPE_COMMON_RULES.md`에서 관리한다.
 
 ## Main과의 관계
 
