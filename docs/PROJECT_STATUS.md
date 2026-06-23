@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `9e42f9e`
-- Phase: SurvivalState GUT test foundation
+- Current commit at task start: `384e19f`
+- Phase: Prototype input prompt icon pass
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -63,6 +63,7 @@
 - Godot AI MCP editor plugin is installed under `res://addons/godot_ai`, enabled in `project.godot`, and paired with the `_mcp_game_helper` autoload.
 - Installed third-party Asset Library packages are inventoried in `docs/THIRD_PARTY_ASSET_INVENTORY.md` before any SFX, particle, input prompt, or license UI wiring.
 - Prototype-only SFX now uses a small copied Kenney subset under `godot/assets/audio/third_party/kenney/`; Main/DAY1 still has no SFX connection.
+- Prototype-only input prompt icons now use a small copied Kenney subset under `godot/assets/ui/third_party/kenney/input_prompts/`; Main/DAY1 UI still has no input prompt icon connection.
 - Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
 - GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
 
@@ -150,6 +151,10 @@
 - `godot/scripts/prototypes/PrototypeSfx.gd`: adds a prototype-local SFX helper that loads selected wav files on demand.
 - `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`: wire selected SFX to prototype-only UI/action feedback.
 - `docs/THIRD_PARTY_ASSET_INVENTORY.md`: updates Kenney UI Audio and Interface Sounds current use and commit policy for selected prototype SFX.
+- `godot/assets/ui/third_party/kenney/input_prompts/*.png`, `godot/assets/ui/third_party/kenney/LICENSES/kenney_input_prompts_LICENSE.txt`: selected Kenney Input Prompts copies and license evidence only.
+- `godot/scripts/prototypes/PrototypeInputPrompts.gd`: centralizes prototype prompt icon paths and row creation.
+- `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`: add prototype-only input prompt icon rows while preserving text controls.
+- `docs/THIRD_PARTY_ASSET_INVENTORY.md`: updates Kenney Input Prompts current use and commit policy for selected prototype icons.
 - `docs/CODEX_GODOT_WORKFLOW.md`: records Codex, User, ChatGPT, Godot AI MCP, and Godot Editor responsibilities plus workflow validation and staging rules.
 - `godot/addons/gut/`: installs GUT `v9.5.0` for Godot `4.5.x` unit tests.
 - `godot/test/unit/test_survival_state.gd`: covers DAY 1 device Resource values, connected/active separation, active drain sums, modal pause, and Phone battery warning rearm behavior.
@@ -200,6 +205,7 @@
 - Third-party asset inventory 문서화 후 `git diff --check`가 완료됐다. Godot scene startup은 문서 작업이라 생략했다.
 - Installed third-party asset folders, their source-side `.import` / `.uid` metadata, and `godot/LICENSE.txt` remain unstaged in this docs-only pass.
 - Prototype SFX 1차 적용 후 `git diff --check`와 Godot 4.5.1 headless startup for PrototypeHub, QuarterviewRoomPrototype, and HackingActionPrototype이 완료됐다.
+- Kenney Input Prompts prototype 적용 후 `git diff --check`와 Godot 4.5.1 headless startup for PrototypeHub, QuarterviewRoomPrototype, and HackingActionPrototype이 완료됐다.
 - Codex / Godot workflow 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - SurvivalState GUT 테스트 추가 후 `git diff --check`, Godot `--headless --import`, and GUT CLI `5/5 passed`가 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
@@ -233,6 +239,7 @@
 - PrototypeHub의 키 입력과 버튼 클릭 scene 전환은 GUI 수동 확인이 필요하다.
 - Title prototype의 버튼, ESC overlay, Settings placeholder는 GUI 수동 확인이 필요하다.
 - Prototype SFX는 headless startup만 확인했으며, 실제 청감/볼륨/타이밍은 GUI에서 수동 확인이 필요하다.
+- Prototype input prompt icons are headless-startup checked only; actual icon scale, spacing, and readability need GUI visual confirmation.
 - 각 prototype의 `B` / `Backspace` 복귀 입력은 GUI 수동 확인이 필요하다.
 - Quarterview object interaction panel의 `E` open, Primary / Inspect / Close button, `ESC` close, 이동 잠금은 GUI 수동 확인이 필요하다.
 - Quarterview debug overlay의 `D` toggle, 기본 화면 prompt-only 상태, debug ON label/range/blocker 표시는 GUI 수동 확인이 필요하다.

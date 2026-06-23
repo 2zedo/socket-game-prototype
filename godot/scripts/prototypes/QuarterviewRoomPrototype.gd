@@ -1,5 +1,6 @@
 extends Node2D
 
+const INPUT_PROMPTS_SCRIPT := preload("res://scripts/prototypes/PrototypeInputPrompts.gd")
 const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd")
 const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
 
@@ -383,6 +384,7 @@ const OBJECT_REGISTRY := [
 @onready var interaction_debug_layer: Node2D = $World/InteractionDebugLayer
 @onready var label_layer: Node2D = $World/LabelLayer
 @onready var player: CharacterBody2D = $World/PlayerLayer/Player
+@onready var ui_layer: CanvasLayer = $UI
 @onready var prompt_label: Label = $UI/PromptLabel
 @onready var object_panel: Control = $UI/ObjectInteractionPanel
 @onready var object_panel_title: Label = $UI/ObjectInteractionPanel/Panel/Margin/VBox/TitleLabel
@@ -394,6 +396,8 @@ const OBJECT_REGISTRY := [
 var nearest_object: Dictionary = {}
 var panel_object: Dictionary = {}
 var debug_overlay_enabled := false
+var nearby_prompt_row: HBoxContainer
+var nearby_prompt_text: Label
 var sfx
 
 
@@ -403,6 +407,7 @@ func _ready() -> void:
 	_build_collision()
 	_build_placeholder_objects()
 	_configure_labels()
+	_configure_input_prompt_icons()
 	_configure_object_panel()
 
 
@@ -559,6 +564,29 @@ func _configure_labels() -> void:
 	label_layer.visible = debug_overlay_enabled
 
 
+func _configure_input_prompt_icons() -> void:
+	var guide_box := INPUT_PROMPTS_SCRIPT.create_prompt_box(
+		[
+			{"keys": ["arrows"], "text": "Move"},
+			{"keys": ["e"], "text": "Interact"},
+			{"keys": ["d"], "text": "Debug overlay"},
+			{"keys": ["b", "backspace"], "text": "Prototype Hub"},
+			{"keys": ["escape"], "text": "Close panel"},
+		],
+		Vector2(24, 24),
+		Color(0.93, 0.86, 0.72, 1.0)
+	)
+	guide_box.position = Vector2(24, 166)
+	ui_layer.add_child(guide_box)
+
+	nearby_prompt_row = INPUT_PROMPTS_SCRIPT.create_prompt_row(["e"], "", Vector2(34, 34), Color(1.0, 0.86, 0.45, 1.0))
+	nearby_prompt_row.name = "NearbyObjectPrompt"
+	nearby_prompt_row.position = Vector2(520, 642)
+	nearby_prompt_row.visible = false
+	ui_layer.add_child(nearby_prompt_row)
+	nearby_prompt_text = nearby_prompt_row.get_node("PromptText") as Label
+
+
 func _toggle_debug_overlay() -> void:
 	debug_overlay_enabled = not debug_overlay_enabled
 	sfx.play_select()
@@ -592,6 +620,7 @@ func _open_object_panel(object_data: Dictionary) -> void:
 	object_panel.visible = true
 	object_panel.move_to_front()
 	prompt_label.text = ""
+	_set_nearby_prompt("")
 	player.velocity = Vector2.ZERO
 	player.set_physics_process(false)
 	print(
@@ -738,6 +767,7 @@ func _get_object_display_name(object_data: Dictionary) -> String:
 func _update_nearest_interactable() -> void:
 	if _is_object_panel_open():
 		prompt_label.text = ""
+		_set_nearby_prompt("")
 		return
 
 	var next_nearest: Dictionary = {}
@@ -758,8 +788,17 @@ func _update_nearest_interactable() -> void:
 
 	if nearest_object.is_empty():
 		prompt_label.text = ""
+		_set_nearby_prompt("")
 	else:
-		prompt_label.text = "[E] %s" % _get_object_display_name(nearest_object)
+		prompt_label.text = ""
+		_set_nearby_prompt(_get_object_display_name(nearest_object))
+
+
+func _set_nearby_prompt(prompt_text: String) -> void:
+	if nearby_prompt_row == null or nearby_prompt_text == null:
+		return
+	nearby_prompt_text.text = prompt_text
+	nearby_prompt_row.visible = prompt_text != ""
 
 
 func _draw_room_shell() -> void:

@@ -1,5 +1,6 @@
 extends Node2D
 
+const INPUT_PROMPTS_SCRIPT := preload("res://scripts/prototypes/PrototypeInputPrompts.gd")
 const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd")
 const PLAYER_SCRIPT := preload("res://scripts/prototypes/HackingPrototypePlayer.gd")
 const ENEMY_SCRIPT := preload("res://scripts/prototypes/HackingPrototypeEnemy.gd")
@@ -58,6 +59,7 @@ const ENEMY_SPAWNS := [
 @onready var projectile_layer: Node2D = $Arena/ProjectileLayer
 @onready var player_layer: Node2D = $Arena/PlayerLayer
 @onready var exit_layer: Node2D = $Arena/ExitLayer
+@onready var ui_layer: CanvasLayer = $UI
 @onready var ui_label: Label = $UI/InfoLabel
 
 var player: CharacterBody2D
@@ -75,6 +77,7 @@ var sfx
 
 func _ready() -> void:
 	_configure_sfx()
+	_configure_input_prompt_icons()
 	reset_prototype()
 
 
@@ -82,6 +85,25 @@ func _configure_sfx() -> void:
 	sfx = PROTOTYPE_SFX_SCRIPT.new()
 	sfx.name = "PrototypeSfx"
 	add_child(sfx)
+
+
+func _configure_input_prompt_icons() -> void:
+	var prompt_box := INPUT_PROMPTS_SCRIPT.create_prompt_box(
+		[
+			{"keys": ["w", "a", "s", "d"], "text": "Move"},
+			{"keys": ["lmb", "j"], "text": "Shot"},
+			{"keys": ["shift"], "text": "Roll"},
+			{"keys": ["space"], "text": "Hop"},
+			{"keys": ["e"], "text": "Extract Node"},
+			{"keys": ["r"], "text": "Restart"},
+			{"keys": ["b", "backspace"], "text": "Prototype Hub"},
+			{"keys": ["d"], "text": "Debug Overlay"},
+		],
+		Vector2(24, 24),
+		Color(0.75, 1.0, 0.95, 1.0)
+	)
+	prompt_box.position = Vector2(938, 22)
+	ui_layer.add_child(prompt_box)
 
 
 func _process(delta: float) -> void:
