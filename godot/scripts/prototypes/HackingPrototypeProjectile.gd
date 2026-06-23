@@ -1,5 +1,7 @@
 extends Area2D
 
+signal hit_registered(target_name: String)
+
 const PROJECTILE_SPEED := 520.0
 const PROJECTILE_LIFETIME := 0.8
 const PROJECTILE_DAMAGE := 1
@@ -45,6 +47,7 @@ func _physics_process(delta: float) -> void:
 func _on_body_entered(body: Node) -> void:
 	if body.has_method("take_damage"):
 		body.take_damage(damage)
+		hit_registered.emit(body.name)
 	queue_free()
 
 

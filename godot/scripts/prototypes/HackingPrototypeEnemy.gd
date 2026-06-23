@@ -13,6 +13,7 @@ const ENEMY_CONTACT_COOLDOWN := 0.9
 const ENEMY_OUTER_DRAW_RADIUS := 18.0
 const ENEMY_INNER_DRAW_RADIUS := 13.0
 const ENEMY_ARC_RADIUS := 22.0
+const HIT_FLASH_DURATION := 0.16
 
 @export var move_speed := SECURITY_DRONE_MOVE_SPEED
 @export var max_hp := SECURITY_DRONE_MAX_HP
@@ -21,6 +22,7 @@ var hp := max_hp
 var target: Node2D
 var kind := "security_drone"
 var contact_cooldown := 0.0
+var hit_flash_timer := 0.0
 
 
 func setup(next_target: Node2D, next_kind: String = "security_drone") -> void:
@@ -45,6 +47,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	contact_cooldown = maxf(0.0, contact_cooldown - delta)
+	hit_flash_timer = maxf(0.0, hit_flash_timer - delta)
 
 	if is_instance_valid(target):
 		var direction := global_position.direction_to(target.global_position)
@@ -60,6 +63,7 @@ func _physics_process(delta: float) -> void:
 
 func take_damage(amount: int) -> void:
 	hp -= amount
+	hit_flash_timer = HIT_FLASH_DURATION
 	if hp <= 0:
 		queue_free()
 	else:
@@ -70,6 +74,8 @@ func _draw() -> void:
 	var color := Color(1.0, 0.16, 0.38, 1.0)
 	if kind == "firewall_sentry":
 		color = Color(1.0, 0.50, 0.16, 1.0)
+	if hit_flash_timer > 0.0:
+		color = Color(1.0, 1.0, 1.0, 1.0)
 
 	draw_circle(Vector2.ZERO, ENEMY_OUTER_DRAW_RADIUS, Color(0.04, 0.02, 0.06, 1.0))
 	draw_circle(Vector2.ZERO, ENEMY_INNER_DRAW_RADIUS, color)

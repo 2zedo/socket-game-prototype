@@ -24,6 +24,7 @@ const TRACE_MAX := 100
 const SCAN_TRACE_DAMAGE := 25
 const HAZARD_TRACE_DAMAGE := 15
 const HAZARD_COOLDOWN_SECONDS := 0.55
+const EVENT_MESSAGE_DURATION := 1.8
 
 const HAZARDS := [
 	{
@@ -62,8 +63,12 @@ var player: CharacterBody2D
 var trace := 0
 var mission_state := MissionState.READY
 var hazard_cooldown := 0.0
+var debug_overlay_enabled := false
+var event_message := "-"
+var event_message_timer := 0.0
 var objective_visual: Polygon2D
 var exit_visual: Polygon2D
+var hazard_visuals := {}
 
 
 func _ready() -> void:
@@ -71,6 +76,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_tick_event_message(delta)
 	if _is_mission_active():
 		hazard_cooldown = maxf(0.0, hazard_cooldown - delta)
 		_check_hazards()
@@ -89,6 +95,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_E:
 			_try_extract_objective()
 			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_D:
+			debug_overlay_enabled = not debug_overlay_enabled
+			_show_event_message("Debug overlay: %s" % ("ON" if debug_overlay_enabled else "OFF"))
+			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_ESCAPE:
 			print("Hacking action prototype: ESC pressed, no exit is wired in this prototype.")
 			get_viewport().set_input_as_handled()
@@ -103,6 +113,9 @@ func reset_prototype() -> void:
 	trace = 0
 	mission_state = MissionState.READY
 	hazard_cooldown = 0.0
+	event_message = "-"
+	event_message_timer = 0.0
+	hazard_visuals.clear()
 
 	_clear_layer(background_layer)
 	_clear_layer(wall_layer)
@@ -185,6 +198,7 @@ func _build_hazards() -> void:
 	for hazard in HAZARDS:
 		var visual := _add_rect_visual(hazard_layer, hazard["rect"], hazard["color"], Color(1.0, 0.20, 0.42, 0.75), 2.0)
 		visual.name = hazard["key"]
+		hazard_visuals[hazard["key"]] = visual
 		_add_world_label(hazard_layer, hazard["label"], hazard["rect"].position + Vector2(8, 8), Color(1.0, 0.45, 0.58, 1.0))
 
 
@@ -230,6 +244,7 @@ func _on_player_shot_requested(origin: Vector2, direction: Vector2) -> void:
 	projectile.global_position = origin
 	projectile_layer.add_child(projectile)
 	projectile.setup(direction)
+	projectile.connect("hit_registered", Callable(self, "_on_projectile_hit_registered"))
 
 
 func _on_player_health_changed(current_hp: int) -> void:
@@ -241,6 +256,10 @@ func _on_enemy_contact_damage_requested(amount: int, reason: String) -> void:
 	damage_player(amount, reason)
 
 
+func _on_projectile_hit_registered(target_name: String) -> void:
+	_show_event_message("Hit security program: %s" % target_name)
+
+
 func _try_extract_objective() -> void:
 	if mission_state != MissionState.RUNNING or not is_instance_valid(player):
 		return
@@ -250,6 +269,7 @@ func _try_extract_objective() -> void:
 		return
 
 	_set_mission_state(MissionState.OBJECTIVE_EXTRACTED, "data node extracted")
+	_show_event_message("Data node extracted. Exit opened.")
 	print("Hacking action prototype: data node extracted.")
 
 
@@ -279,6 +299,8 @@ func add_trace(amount: int, reason: String = "") -> void:
 		return
 
 	trace = mini(TRACE_MAX, trace + amount)
+	_flash_hazard(reason)
+	_show_event_message("Trace +%d: %s" % [amount, reason])
 	if reason != "":
 		print("Hacking action prototype: trace +%d / reason=%s / trace=%d" % [amount, reason, trace])
 	if trace >= TRACE_MAX:
@@ -293,6 +315,7 @@ func damage_player(amount: int, reason: String = "") -> void:
 	if player.has_method("take_damage"):
 		did_damage = player.take_damage(amount)
 	if did_damage and reason != "":
+		_show_event_message("Damage -%d: %s" % [amount, reason])
 		print("Hacking action prototype: player damage %d / reason=%s" % [amount, reason])
 
 
@@ -306,6 +329,13 @@ func _set_mission_state(next_state: int, reason: String = "") -> void:
 
 	if mission_state == MissionState.SUCCESS or mission_state == MissionState.FAILED:
 		_stop_active_actors()
+
+	if mission_state == MissionState.OBJECTIVE_EXTRACTED:
+		_show_event_message("Exit opened")
+	elif mission_state == MissionState.SUCCESS:
+		_show_event_message("Mission success: Data extracted")
+	elif mission_state == MissionState.FAILED:
+		_show_event_message("Mission failed")
 
 	if reason != "":
 		print("Hacking action prototype: state=%s / reason=%s" % [_get_state_name(), reason])
@@ -369,12 +399,49 @@ func _get_objective_text() -> String:
 	return "Stand by"
 
 
+func _tick_event_message(delta: float) -> void:
+	if event_message_timer <= 0.0:
+		return
+
+	event_message_timer = maxf(0.0, event_message_timer - delta)
+	if event_message_timer <= 0.0:
+		event_message = "-"
+
+
+func _show_event_message(text: String) -> void:
+	event_message = text
+	event_message_timer = EVENT_MESSAGE_DURATION
+	_update_ui()
+
+
+func _flash_hazard(hazard_key: String) -> void:
+	if not hazard_visuals.has(hazard_key):
+		return
+
+	var visual: Polygon2D = hazard_visuals[hazard_key]
+	if not is_instance_valid(visual):
+		return
+
+	var original_color := visual.color
+	visual.color = Color(1.0, 0.22, 0.18, 0.62)
+	var tween := create_tween()
+	tween.tween_property(visual, "color", original_color, 0.35)
+
+
+func _is_exit_active() -> bool:
+	return mission_state == MissionState.OBJECTIVE_EXTRACTED or mission_state == MissionState.SUCCESS
+
+
+func _is_objective_extracted() -> bool:
+	return mission_state == MissionState.OBJECTIVE_EXTRACTED or mission_state == MissionState.SUCCESS
+
+
 func _update_ui() -> void:
 	var hp_text := "-"
 	if is_instance_valid(player):
 		hp_text = str(player.hp)
 
-	ui_label.text = "\n".join([
+	var lines := [
 		"HACKING ACTION PROTOTYPE",
 		"WASD/Arrow: Move",
 		"J/LMB: Shot",
@@ -383,12 +450,40 @@ func _update_ui() -> void:
 		"E: Extract Node",
 		"R: Restart",
 		"B/Backspace: Prototype Hub",
+		"D: Debug Overlay",
 		"",
 		"HP: %s" % hp_text,
 		"Trace: %d%%" % trace,
 		"Objective: %s" % _get_objective_text(),
 		"State: %s" % _get_state_name(),
-	])
+		"Event: %s" % event_message,
+	]
+
+	if debug_overlay_enabled:
+		lines.append("")
+		lines.append("Debug:")
+		lines.append("player=%s" % _get_player_position_text())
+		lines.append("mission_state=%s" % _get_state_name())
+		lines.append("objective_extracted=%s" % str(_is_objective_extracted()))
+		lines.append("exit_active=%s" % str(_is_exit_active()))
+		lines.append("enemies=%d" % enemy_layer.get_child_count())
+		lines.append("projectiles=%d" % projectile_layer.get_child_count())
+		lines.append("roll=%s" % _get_player_flag_text("is_rolling"))
+		lines.append("hop=%s" % _get_player_flag_text("is_hopping"))
+
+	ui_label.text = "\n".join(lines)
+
+
+func _get_player_position_text() -> String:
+	if not is_instance_valid(player):
+		return "-"
+	return "(%.1f, %.1f)" % [player.global_position.x, player.global_position.y]
+
+
+func _get_player_flag_text(method_name: String) -> String:
+	if not is_instance_valid(player) or not player.has_method(method_name):
+		return "false"
+	return str(player.call(method_name))
 
 
 func _add_rect_visual(layer: Node2D, rect: Rect2, fill_color: Color, outline_color: Color = Color.TRANSPARENT, outline_width: float = 0.0) -> Polygon2D:

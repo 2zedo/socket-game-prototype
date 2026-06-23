@@ -12,6 +12,8 @@
 - `Space`: scan line과 hazard 접촉을 피하기 위한 짧은 hop.
 - `E`: data node 근처에서 데이터 추출.
 - `R`: prototype 재시작.
+- `D`: prototype 전용 debug overlay 표시 / 숨김.
+- `B` / `Backspace`: `PrototypeHub`로 복귀.
 - `ESC`: prototype 안에서는 종료 흐름에 연결하지 않고 로그만 출력한다.
 
 ## 구현한 흐름
@@ -66,7 +68,16 @@ prototype 조정값은 각 책임 script 상단에 상수로 모았다.
 - Objective: `DATA NODE` placeholder.
 - Exit: 추출 전에는 비활성 회색, 추출 후에는 파란색으로 바뀌는 gate.
 - Hazard: scan line과 unstable tile placeholder.
-- UI: 조작 안내, HP, Trace, objective, state 표시.
+- UI: 조작 안내, HP, Trace, objective, state, 최신 event message 표시.
+
+## Feedback / Debug 표시
+
+- 기본 UI는 HP, Trace, Objective, State, Event를 항상 표시한다.
+- `D`를 누르면 prototype 내부 debug overlay가 켜지고, player position, mission state, objective extracted 여부, exit active 여부, enemy count, projectile count, roll / hop 상태를 추가 표시한다.
+- enemy가 projectile에 맞으면 잠깐 흰색으로 flash되고 `Hit security program` event가 표시된다.
+- player가 enemy contact damage를 받으면 기존 invulnerability 색상과 함께 `Damage -1` event가 표시된다.
+- hazard가 Trace를 올리면 해당 hazard가 잠깐 강조되고 `Trace +...` event가 표시된다.
+- data node 추출과 exit 활성화, success / failed 상태도 event message로 표시한다.
 
 ## 책임 분리
 
