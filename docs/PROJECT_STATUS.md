@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `fd5759e`
-- Phase: Git LFS asset policy documentation
+- Current commit at task start: `fd09aef`
+- Phase: Prototype GUI playtest checklist documentation
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -67,6 +67,7 @@
 - Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
 - GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
 - Git LFS is not enabled yet; future large-art, atlas, spritesheet, source-art, and audio decisions are tracked in `docs/GIT_LFS_ASSET_POLICY.md`.
+- Prototype GUI playtest checks for Hub, Quarterview, Hacking, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
 
 ## Current DAY 1 Decisions
 
@@ -162,6 +163,7 @@
 - `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
 - `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
 - `docs/ASSET_PIPELINE.md`: links large-asset and LFS handling back to the dedicated Git LFS policy.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: provides manual GUI checks for PrototypeHub, Quarterview, Hacking Action, Title Menu, prototype SFX, input prompt icons, pass criteria, and bug reports.
 
 ## Validation Results
 
@@ -212,6 +214,7 @@
 - Codex / Godot workflow 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - SurvivalState GUT 테스트 추가 후 `git diff --check`, Godot `--headless --import`, and GUT CLI `5/5 passed`가 완료됐다.
 - Git LFS asset policy 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- Prototype GUI playtest checklist 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 prototype scene 경로 존재를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -251,6 +254,7 @@
 - Installed Kenney / Simple License assets are documented but not committed or wired; decide which packages should become tracked project dependencies before applying them.
 - GUT CLI requires a headless import once after addon installation so Godot registers GUT class names before running tests.
 - Git LFS is not enabled yet; future large quarterview art, atlas, spritesheet, source-art, or expanded audio imports need a separate LFS, quota, and migration decision before staging.
+- Prototype GUI checklist still requires user-side visual, input, and audio confirmation because headless and MCP checks do not verify SFX loudness, icon readability, or hands-on feel.
 
 ## Next Recommended Task
 
