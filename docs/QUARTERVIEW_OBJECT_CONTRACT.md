@@ -8,6 +8,8 @@
 
 `QuarterviewRoomPrototype`은 현재 최종 쿼터뷰 시점 검증용이 아니라 object / interaction contract prototype이다. 이 scene은 버리지 않고 나중에 쿼터뷰 Room 기능 이식 시 계약 기준으로 사용한다. 실제 쿼터뷰 시점 검증은 별도 perspective blockout scene에서 진행한다.
 
+`RoomObjectDefinition` Resource class가 object contract를 Resource화하기 위한 준비 구조로 추가되었다. 기존 registry 이전과 `.tres` 오브젝트 정의 생성은 다음 단계에서 진행한다.
+
 ## Object Key 표
 
 | key | zone | role | future_source | visual_state 후보 | 구현 상태 |

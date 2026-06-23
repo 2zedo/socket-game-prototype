@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `d9e321b`
-- Phase: Prototype common input rules helper
+- Current commit at task start: `a06c969`
+- Phase: Room object definition Resource preparation
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -190,6 +190,8 @@
 - `godot/scripts/prototypes/PrototypeSceneUtils.gd`: adds a prototype-only helper for common input event checks, Hub return, and current-scene restart support.
 - `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/QuarterviewPerspectiveBlockout.gd`, `godot/scripts/prototypes/HackingPerspectiveBlockout.gd`, `godot/scripts/prototypes/TitleMenuPrototype.gd`: reuse the common helper for shared confirm, cancel, debug, restart, and Hub-back input checks without changing Main / DAY1.
 - `docs/PROTOTYPE_COMMON_RULES.md`, `docs/PROTOTYPE_HUB_OVERVIEW.md`: document prototype-only shared key rules and helper responsibilities.
+- `godot/scripts/resources/RoomObjectDefinition.gd`: adds a Resource class for future quarterview room object definitions without migrating the current `QuarterviewRoomPrototype` registry.
+- `docs/ROOM_OBJECT_DEFINITION.md`, `docs/QUARTERVIEW_OBJECT_CONTRACT.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: document the room object Resource fields, constants, helper behavior, and future registry migration boundary.
 
 ## Validation Results
 
@@ -249,6 +251,7 @@
 - Prototype perspective checklist 문서 갱신 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - Prototype GUI checklist perspective 역할 구분 갱신 후 `git diff --check`가 완료됐다. Godot AI MCP로 `PrototypeHub`, `QuarterviewPerspectiveBlockout`, `HackingPerspectiveBlockout` 경로와 등록 문구를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
 - Prototype common helper 정리 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub`, `QuarterviewRoomPrototype`, `HackingActionPrototype`, `QuarterviewPerspectiveBlockout`, `HackingPerspectiveBlockout`, and `TitleMenuPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- RoomObjectDefinition Resource class 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 실제 room object `.tres` 파일은 생성하지 않았다.
 - Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
