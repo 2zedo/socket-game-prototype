@@ -98,7 +98,7 @@
 - 기존 `QuarterviewRoomPrototype`은 버리지 않고 object / interaction contract prototype으로 유지한다.
 - 실제 쿼터뷰 시점 검증은 `res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`에서 진행한다.
 - 현재 `HackingActionPrototype`은 조작 / 상태 prototype으로 유지한다.
-- 해킹모드 시점 검증은 별도 `HackingPerspectiveBlockout` scene에서 진행한다.
+- 해킹모드 시점 검증은 `res://scenes/prototypes/HackingPerspectiveBlockout.tscn`에서 진행한다.
 - 기존 prototype rename은 하지 않는다.
 - Main / DAY1 흐름과 prototype scene은 계속 분리한다.
 
@@ -111,6 +111,6 @@
 - `HackingActionPrototype` rename
 - Laptop에서 `HackingActionPrototype` 연결
 - `QuarterviewPerspectiveBlockout`을 Main으로 연결하거나 기존 contract prototype을 대체
-- Hacking perspective blockout scene 생성
+- `HackingPerspectiveBlockout`을 Laptop, Result, Reward, Story flag와 연결
 - 실제 아트 에셋 적용
 - DAY1 gameplay / SurvivalState / Phone / Outlet / Result 연결 변경

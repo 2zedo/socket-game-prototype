@@ -3,6 +3,13 @@
 ## Prototype Scene 경로
 
 - `res://scenes/prototypes/HackingActionPrototype.tscn`
+- `res://scenes/prototypes/HackingPerspectiveBlockout.tscn`: 별도 시점 blockout. 기존 조작 prototype을 대체하지 않는다.
+
+## Prototype 역할 구분
+
+- `HackingActionPrototype`: move / shot / roll / hop / objective / exit / mission state를 검증하는 조작 / 상태 prototype이다.
+- `HackingPerspectiveBlockout`: 완전 정수리뷰가 아닌 `3/4 top-down cyber action view`를 검증하는 시각 blockout이다.
+- 두 scene 모두 `Main`, Laptop, Result, Reward, Story flag와 연결하지 않는다.
 
 ## 구현한 조작
 
@@ -96,6 +103,7 @@ prototype 조정값은 각 책임 script 상단에 상수로 모았다.
 - apartment 전력을 소비하지 않는다.
 - 보상, Grid Credit, story flag, Result 기록을 지급하지 않는다.
 - Phone, Outlet, Result, Test Mode, Quarterview Room 흐름을 수정하지 않는다.
+- `HackingPerspectiveBlockout`은 시점 검증용이며, 기존 `HackingActionPrototype`의 조작 / 전투 시스템을 대체하지 않는다.
 
 ## 향후 연결 후보
 

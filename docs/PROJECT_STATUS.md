@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `68b1dea`
-- Phase: Quarterview perspective blockout prototype
+- Current commit at task start: `094b2de`
+- Phase: Hacking perspective blockout prototype
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -55,6 +55,7 @@
 - 해킹 액션은 기존 Main과 연결하지 않은 독립 prototype scene `res://scenes/prototypes/HackingActionPrototype.tscn`에서 조작, 전투, objective, exit 흐름을 먼저 검증한다.
 - Hacking Action prototype은 `READY`, `RUNNING`, `OBJECTIVE_EXTRACTED`, `SUCCESS`, `FAILED` mission state와 script-local tuning constants로 정리되어 있다.
 - Hacking Action prototype은 `D` debug overlay, 최신 event message, hit / damage / Trace / objective / exit 상태 피드백을 표시한다.
+- `HackingPerspectiveBlockout.tscn` is a separate visual-only blockout for the long-term `3/4 top-down cyber action view`; it does not replace `HackingActionPrototype`.
 - `res://scenes/prototypes/PrototypeHub.tscn`에서 Quarterview Room과 Hacking Action prototype을 키 또는 버튼으로 실행할 수 있다.
 - Title / Pause 메뉴 방향은 독립 prototype scene `res://scenes/prototypes/TitleMenuPrototype.tscn`에서 검증하며, 아직 실제 Main 시작/ESC 흐름에 연결하지 않는다.
 - Quarterview, Hacking Action, Title / Pause Menu prototype은 `B` 또는 `Backspace`로 `PrototypeHub`에 복귀할 수 있으며, 각 prototype의 기존 `ESC` 의미는 유지한다.
@@ -174,6 +175,8 @@
 - `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md`, `docs/QUARTERVIEW_OBJECT_CONTRACT.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/PROTOTYPE_HUB.md`: clarify that `QuarterviewRoomPrototype` is retained as a contract prototype and that real perspective validation belongs in a future blockout.
 - `godot/scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`, `godot/scripts/prototypes/QuarterviewPerspectiveBlockout.gd`, `godot/scripts/prototypes/PerspectiveBlockoutPlayer.gd`: add an independent visual blockout with angled floor, back/side walls, pseudo 3D furniture, player movement, furniture collision, debug overlay, and Hub return.
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: record the new perspective blockout path while keeping `QuarterviewRoomPrototype` as the object / interaction contract prototype.
+- `godot/scenes/prototypes/HackingPerspectiveBlockout.tscn`, `godot/scripts/prototypes/HackingPerspectiveBlockout.gd`, `godot/scripts/prototypes/HackingPerspectivePlayer.gd`: add an independent cyber perspective blockout with angled arena floor, raised barriers, scan / hazard / data node / exit placeholders, player movement, debug overlay, and Hub return.
+- `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: distinguish the existing Hacking Action control prototype from the new `3/4 top-down` perspective blockout.
 
 ## Validation Results
 
@@ -228,6 +231,7 @@
 - Viewpoint / prototype terms 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 `QuarterviewRoomPrototype` hierarchy와 prototype scene 경로 존재를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
 - Quarterview contract prototype 표시 정리 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다.
 - Quarterview perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
+- Hacking perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -271,6 +275,7 @@
 - Actual room perspective now has an initial visual blockout, but final viewpoint decisions still need GUI review; hacking perspective still needs a separate `HackingPerspectiveBlockout`.
 - Updated contract-prototype wording still requires GUI confirmation for text fit and readability in PrototypeHub and Quarterview help UI.
 - `QuarterviewPerspectiveBlockout` is not registered in PrototypeHub yet and still needs GUI checks for perspective readability, pseudo 3D scale, collision feel, debug overlay, and B / Backspace return.
+- `HackingPerspectiveBlockout` is not registered in PrototypeHub yet and still needs GUI checks for 3/4 cyber readability, object height cues, movement feel, debug overlay, and B / Backspace return.
 
 ## Next Recommended Task
 
