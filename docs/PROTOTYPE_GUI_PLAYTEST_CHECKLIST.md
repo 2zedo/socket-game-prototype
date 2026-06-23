@@ -115,6 +115,8 @@
 - [ ] 완전 정수리뷰보다 `3/4 top-down` 느낌이 난다.
 - [ ] 사이버 공간 바닥 / 장벽 / 오브젝트에 높이감이 있다.
 - [ ] 사선 floor / raised barrier / data node / exit gate가 구분된다.
+- [ ] Security Program / Sentry / Signal Relay가 보안 시스템 내부 오브젝트처럼 읽힌다.
+- [ ] Foreground barrier 앞뒤를 지나갈 때 깊이감이나 일부 가림 테스트가 가능하다.
 - [ ] Player placeholder 이동이 가능하다.
 - [ ] 기존 `HackingActionPrototype`과 달리 gameplay 조작감 확인이 아니라 시점 확인용이라는 점이 이해된다.
 - [ ] `D` 키로 debug overlay ON / OFF가 된다.

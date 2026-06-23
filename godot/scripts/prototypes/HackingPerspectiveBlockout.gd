@@ -21,6 +21,16 @@ const CYBER_BLOCKS := [
 		"blocker": Rect2(Vector2(738, 286), Vector2(92, 74)),
 	},
 	{
+		"key": "sentry",
+		"label": "SENTRY",
+		"layer": "EnemyLayer",
+		"position": Vector2(555, 330),
+		"size": Vector2(68, 52),
+		"height": 62.0,
+		"color": Color(0.55, 0.10, 0.90, 1.0),
+		"blocker": Rect2(Vector2(522, 304), Vector2(82, 76)),
+	},
+	{
 		"key": "scan_line",
 		"label": "SCAN",
 		"layer": "HazardLayer",
@@ -70,6 +80,26 @@ const CYBER_BLOCKS := [
 		"color": Color(0.42, 0.10, 0.82, 1.0),
 		"blocker": Rect2(Vector2(480, 210), Vector2(230, 92)),
 	},
+	{
+		"key": "signal_relay",
+		"label": "RELAY",
+		"layer": "ObjectiveLayer",
+		"position": Vector2(1012, 292),
+		"size": Vector2(72, 60),
+		"height": 88.0,
+		"color": Color(0.04, 0.86, 0.74, 1.0),
+		"blocker": Rect2(Vector2(976, 252), Vector2(88, 108)),
+	},
+	{
+		"key": "foreground_firewall",
+		"label": "FOREGROUND",
+		"layer": "ForegroundLayer",
+		"position": Vector2(666, 596),
+		"size": Vector2(260, 40),
+		"height": 70.0,
+		"color": Color(0.12, 0.38, 0.68, 1.0),
+		"blocker": Rect2(Vector2(536, 570), Vector2(280, 72)),
+	},
 ]
 
 var arena_floor := PackedVector2Array([
@@ -90,6 +120,7 @@ var debug_enabled := false
 @onready var player_layer: Node2D = $World/PlayerLayer
 @onready var enemy_layer: Node2D = $World/EnemyLayer
 @onready var objective_layer: Node2D = $World/ObjectiveLayer
+@onready var foreground_layer: Node2D = $World/ForegroundLayer
 @onready var debug_layer: Node2D = $World/DebugLayer
 
 
@@ -124,6 +155,7 @@ func _configure_layers() -> void:
 		player_layer,
 		enemy_layer,
 		objective_layer,
+		foreground_layer,
 		debug_layer,
 	]:
 		layer.z_as_relative = false
@@ -135,6 +167,7 @@ func _configure_layers() -> void:
 	player_layer.z_index = 40
 	enemy_layer.z_index = 46
 	objective_layer.z_index = 50
+	foreground_layer.z_index = 64
 	debug_layer.z_index = 90
 
 
@@ -289,6 +322,8 @@ func _get_block_layer(layer_name: String) -> Node2D:
 			return enemy_layer
 		"ObjectiveLayer":
 			return objective_layer
+		"ForegroundLayer":
+			return foreground_layer
 		_:
 			return platform_layer
 

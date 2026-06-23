@@ -54,6 +54,10 @@ y_sort_enabled = true
 z_as_relative = false
 y_sort_enabled = true
 
+[node name="ForegroundLayer" type="Node2D" parent="World"]
+z_as_relative = false
+y_sort_enabled = true
+
 [node name="DebugLayer" type="Node2D" parent="World"]
 z_as_relative = false
 
@@ -67,7 +71,7 @@ offset_right = 585.0
 offset_bottom = 152.0
 text = "Hacking Perspective Blockout
 3/4 top-down cyber action view test
-Not final gameplay
+Not final gameplay / Not final art
 WASD / Arrow: Move
 D: Debug
 B / Backspace: Hub"

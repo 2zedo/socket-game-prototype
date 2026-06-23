@@ -77,6 +77,15 @@ prototype 조정값은 각 책임 script 상단에 상수로 모았다.
 - Hazard: scan line과 unstable tile placeholder.
 - UI: 조작 안내, HP, Trace, objective, state, 최신 event message 표시.
 
+## Perspective Blockout 구성 요소
+
+`HackingPerspectiveBlockout`은 기존 조작 prototype과 분리된 시점 검증용 scene이다.
+
+- Floor / wall / platform: 완전 정수리뷰가 아닌 사선 cyber arena 축을 확인한다.
+- Enemy / objective blocks: Security Program, Sentry, Data Node, Signal Relay, Exit Gate를 pseudo 3D block으로 배치한다.
+- ForegroundLayer: 전면 firewall block으로 player 앞 / 뒤 깊이감과 일부 가림 가능성을 확인한다.
+- Debug: `D`로 object label, collision guide, depth guide를 토글한다.
+
 ## Feedback / Debug 표시
 
 - 기본 UI는 HP, Trace, Objective, State, Event를 항상 표시한다.
