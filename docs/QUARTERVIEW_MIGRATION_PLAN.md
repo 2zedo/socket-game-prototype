@@ -37,7 +37,7 @@
 
 쿼터뷰 전환은 먼저 별도 prototype 또는 perspective blockout scene에서 검증한다.
 
-현재 `QuarterviewRoomPrototype`은 오브젝트 registry, prompt, panel, zone / role / future source 계약을 확인하는 scene으로 유지한다. 실제 쿼터뷰 시점, cutaway room 감각, 벽 높이, 가구 축, 캐릭터 비율은 별도 `QuarterviewPerspectiveBlockout` 계열 scene에서 검증한다.
+현재 `QuarterviewRoomPrototype`은 오브젝트 registry, prompt, panel, zone / role / future source 계약을 확인하는 scene으로 유지한다. 실제 쿼터뷰 시점, cutaway room 감각, 벽 높이, 가구 축, 캐릭터 비율은 `res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`에서 먼저 검증한다.
 
 - 쿼터뷰 방에서 유이 이동이 자연스러운지
 - 캐릭터와 가구 크기 비율이 맞는지
@@ -67,7 +67,7 @@
 
 1. 현재 DAY 1 탑뷰 구현 안정화
 2. 기존 `QuarterviewRoomPrototype`을 object / interaction contract 기준으로 유지
-3. 별도 쿼터뷰 perspective blockout scene 생성
+3. `QuarterviewPerspectiveBlockout.tscn`에서 쿼터뷰 perspective blockout 검증
 4. 쿼터뷰용 임시 바닥 / 벽 / 가구 배치
 5. 유이 이동과 Y-sort / 가림 처리 테스트
 6. 주요 오브젝트 상호작용 포인트 배치
@@ -100,6 +100,6 @@
 
 - 현재 구현 = 탑뷰 방
 - 현재 `QuarterviewRoomPrototype` = 독립 scene에서 object registry, interaction prompt, object panel, zone / role / future source contract를 확인
-- 이후 perspective blockout = 실제 쿼터뷰 구도, 이동, 충돌, 가림, 상호작용 포인트를 확인
+- `QuarterviewPerspectiveBlockout` = 실제 쿼터뷰 구도, 이동, 충돌, 가림, pseudo 3D 가구 비율을 확인
 - 장기 방향 = 쿼터뷰 방 본 전환 여부 검토
 - 본 전환 전까지 구현하지 않음 = 기존 Main scene 교체, 전력 / Phone / Result / Test Mode 흐름 변경, 최종 쿼터뷰 에셋 적용

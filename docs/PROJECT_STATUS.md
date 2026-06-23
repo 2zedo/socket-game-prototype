@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `1d601b7`
-- Phase: Quarterview contract prototype display clarification
+- Current commit at task start: `68b1dea`
+- Phase: Quarterview perspective blockout prototype
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -61,6 +61,7 @@
 - Quarterview Room prototype은 가까운 오브젝트에서 `E`를 누르면 registry 기반 object interaction panel을 열고, Primary / Inspect / Close button은 실제 기능 연결 없이 no-op 로그만 출력한다.
 - Quarterview Room prototype은 기본 화면에서 전체 debug label / collision / interaction range를 숨기고, `D`로 prototype 전용 debug overlay를 토글한다.
 - `QuarterviewRoomPrototype.tscn` is now presented in UI as `Room Object Contract Prototype` to clarify that it tests object registry, prompt, panel, and contract flow rather than final quarterview art.
+- `QuarterviewPerspectiveBlockout.tscn` is a separate visual-only blockout for quarterview room perspective, pseudo 3D furniture, player scale, collision, and basic occlusion checks.
 - Godot AI MCP editor plugin is installed under `res://addons/godot_ai`, enabled in `project.godot`, and paired with the `_mcp_game_helper` autoload.
 - Installed third-party Asset Library packages are inventoried in `docs/THIRD_PARTY_ASSET_INVENTORY.md` before any SFX, particle, input prompt, or license UI wiring.
 - Prototype-only SFX now uses a small copied Kenney subset under `godot/assets/audio/third_party/kenney/`; Main/DAY1 still has no SFX connection.
@@ -171,6 +172,8 @@
 - `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`: changes the visible help/title copy to `Room Object Contract Prototype` and states that this is not final quarterview art.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: change the first prototype display title and description to object / interaction contract wording while keeping the same scene path and shortcuts.
 - `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md`, `docs/QUARTERVIEW_OBJECT_CONTRACT.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/PROTOTYPE_HUB.md`: clarify that `QuarterviewRoomPrototype` is retained as a contract prototype and that real perspective validation belongs in a future blockout.
+- `godot/scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`, `godot/scripts/prototypes/QuarterviewPerspectiveBlockout.gd`, `godot/scripts/prototypes/PerspectiveBlockoutPlayer.gd`: add an independent visual blockout with angled floor, back/side walls, pseudo 3D furniture, player movement, furniture collision, debug overlay, and Hub return.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: record the new perspective blockout path while keeping `QuarterviewRoomPrototype` as the object / interaction contract prototype.
 
 ## Validation Results
 
@@ -224,6 +227,7 @@
 - Prototype GUI playtest checklist 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 prototype scene 경로 존재를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
 - Viewpoint / prototype terms 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 `QuarterviewRoomPrototype` hierarchy와 prototype scene 경로 존재를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
 - Quarterview contract prototype 표시 정리 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다.
+- Quarterview perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -264,8 +268,9 @@
 - GUT CLI requires a headless import once after addon installation so Godot registers GUT class names before running tests.
 - Git LFS is not enabled yet; future large quarterview art, atlas, spritesheet, source-art, or expanded audio imports need a separate LFS, quota, and migration decision before staging.
 - Prototype GUI checklist still requires user-side visual, input, and audio confirmation because headless and MCP checks do not verify SFX loudness, icon readability, or hands-on feel.
-- Actual room perspective and hacking perspective are not validated by the existing prototype names; separate `QuarterviewPerspectiveBlockout` and `HackingPerspectiveBlockout` work is still needed before final viewpoint decisions.
+- Actual room perspective now has an initial visual blockout, but final viewpoint decisions still need GUI review; hacking perspective still needs a separate `HackingPerspectiveBlockout`.
 - Updated contract-prototype wording still requires GUI confirmation for text fit and readability in PrototypeHub and Quarterview help UI.
+- `QuarterviewPerspectiveBlockout` is not registered in PrototypeHub yet and still needs GUI checks for perspective readability, pseudo 3D scale, collision feel, debug overlay, and B / Backspace return.
 
 ## Next Recommended Task
 
