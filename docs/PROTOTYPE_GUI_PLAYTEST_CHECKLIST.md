@@ -18,15 +18,22 @@
 
 - `res://scenes/prototypes/PrototypeHub.tscn`
 - `res://scenes/prototypes/QuarterviewRoomPrototype.tscn`
+- `res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`
 - `res://scenes/prototypes/HackingActionPrototype.tscn`
+- `res://scenes/prototypes/HackingPerspectiveBlockout.tscn`
 - `res://scenes/prototypes/TitleMenuPrototype.tscn`
 
 ## PrototypeHub
 
 - [ ] `PrototypeHub` scene이 정상 실행된다.
-- [ ] `Quarterview Room`, `Hacking Action`, `Title Menu` 항목이 보인다.
+- [ ] `Room Object Contract`, `Quarterview Perspective`, `Hacking Action`, `Hacking Perspective`, `Title Menu` 항목이 보인다.
 - [ ] `W` / `S` 또는 `Up` / `Down`으로 선택 이동이 된다.
 - [ ] `E` 또는 `Enter`로 선택한 prototype에 진입된다.
+- [ ] `1` / `Q`로 Room Object Contract Prototype에 진입된다.
+- [ ] `2` / `V`로 Quarterview Perspective Blockout에 진입된다.
+- [ ] `3` / `H`로 Hacking Action Prototype에 진입된다.
+- [ ] `4` / `C`로 Hacking Perspective Blockout에 진입된다.
+- [ ] `5` / `T`로 Title / Pause Menu Prototype에 진입된다.
 - [ ] 선택 이동 시 SFX가 너무 크거나 거슬리지 않는다.
 - [ ] 실행 confirm SFX가 들린다.
 - [ ] Input Prompt icon이 텍스트와 겹치지 않는다.
@@ -56,6 +63,16 @@
 - `QuarterviewRoomPrototype`은 아직 `Main` / DAY1을 대체하지 않는다.
 - `Bed`, `Laptop`, `Power`, `Phone`, `Outlet`, `Result`, `Hacking`은 실제 기능과 연결하지 않은 상태다.
 
+## QuarterviewPerspectiveBlockout
+
+- [ ] Scene이 정상 실행된다.
+- [ ] 사선 바닥과 뒤/측면 벽이 쿼터뷰 실내 시점처럼 읽힌다.
+- [ ] Bed / Desk / Fridge 등 pseudo 3D block의 축이 서로 맞아 보인다.
+- [ ] Player placeholder 이동과 큰 가구 collision이 동작한다.
+- [ ] Desk / Bed 앞뒤를 지나가며 가림 테스트가 가능하다.
+- [ ] `D` 키로 debug overlay ON / OFF가 된다.
+- [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
+
 ## HackingActionPrototype
 
 - [ ] Scene이 정상 실행된다.
@@ -84,6 +101,15 @@
 - [ ] Hop이 함정 회피처럼 느껴지는가.
 - [ ] Shot이 맞는 느낌이 있는가.
 - [ ] Trace / HP 실패가 이해되는가.
+
+## HackingPerspectiveBlockout
+
+- [ ] Scene이 정상 실행된다.
+- [ ] 완전 정수리뷰보다 `3/4 top-down` cyber action 시점에 가깝게 보인다.
+- [ ] 사선 floor / raised barrier / data node / exit gate가 구분된다.
+- [ ] Player placeholder 이동이 가능하다.
+- [ ] `D` 키로 debug overlay ON / OFF가 된다.
+- [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
 
 ## TitleMenuPrototype
 
@@ -122,7 +148,9 @@ SFX는 현재 prototype 전용이다. Main / DAY1 사운드 시스템으로 확�
 - 각 prototype scene이 실행된다.
 - Hub에서 각 prototype에 진입 / 복귀할 수 있다.
 - Quarterview 기본 화면이 지나치게 지저분하지 않다.
+- Quarterview Perspective Blockout이 실제 쿼터뷰 시점 검증용으로 구분된다.
 - Hacking prototype의 기본 미션 흐름이 이해된다.
+- Hacking Perspective Blockout이 Hacking Action 조작 prototype과 구분된다.
 - SFX와 input prompt가 prototype 확인을 방해하지 않는다.
 
 ### Needs Fix 기준

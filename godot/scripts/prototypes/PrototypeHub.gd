@@ -15,27 +15,46 @@ const PROTOTYPES := [
 		"keycodes": [KEY_1, KEY_Q],
 	},
 	{
+		"key": "quarterview_perspective",
+		"title": "Quarterview Perspective Blockout",
+		"path": "res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn",
+		"shortcut": ["2", "V"],
+		"description": "Visual perspective / pseudo 3D room blockout.",
+		"button_path": "Margin/Panel/VBox/QuarterviewPerspectiveButton",
+		"keycodes": [KEY_2, KEY_V],
+	},
+	{
 		"key": "hacking_action",
 		"title": "Hacking Action Prototype",
 		"path": "res://scenes/prototypes/HackingActionPrototype.tscn",
-		"shortcut": ["2", "H"],
+		"shortcut": ["3", "H"],
 		"description": "탑뷰 해커모드 액션 / 이동 / 공격 / 회피 / 목표 / 탈출 검증",
 		"button_path": "Margin/Panel/VBox/HackingButton",
-		"keycodes": [KEY_2, KEY_H],
+		"keycodes": [KEY_3, KEY_H],
+	},
+	{
+		"key": "hacking_perspective",
+		"title": "Hacking Perspective Blockout",
+		"path": "res://scenes/prototypes/HackingPerspectiveBlockout.tscn",
+		"shortcut": ["4", "C"],
+		"description": "3/4 top-down cyber action camera/blockout test.",
+		"button_path": "Margin/Panel/VBox/HackingPerspectiveButton",
+		"keycodes": [KEY_4, KEY_C],
 	},
 	{
 		"key": "title_menu",
 		"title": "Title / Pause Menu Prototype",
 		"path": "res://scenes/prototypes/TitleMenuPrototype.tscn",
-		"shortcut": ["3", "T"],
+		"shortcut": ["5", "T"],
 		"description": "시작화면 / ESC 메뉴 / 설정 placeholder 검증",
 		"button_path": "Margin/Panel/VBox/TitleMenuButton",
-		"keycodes": [KEY_3, KEY_T],
+		"keycodes": [KEY_5, KEY_T],
 	},
 ]
 
 var sfx
 var is_changing_scene := false
+var focused_prototype_index := 0
 @onready var prompt_vbox: VBoxContainer = $Margin/Panel/VBox
 @onready var keys_label: Label = $Margin/Panel/VBox/Keys
 
@@ -43,13 +62,17 @@ var is_changing_scene := false
 func _ready() -> void:
 	_configure_sfx()
 	_configure_input_prompt_icons()
-	for prototype in PROTOTYPES:
+	for index in range(PROTOTYPES.size()):
+		var prototype: Dictionary = PROTOTYPES[index]
 		var button := get_node_or_null(NodePath(prototype["button_path"])) as Button
 		if button == null:
 			continue
 		button.pressed.connect(_open_prototype.bind(prototype))
 		button.mouse_entered.connect(sfx.play_select)
 		button.focus_entered.connect(sfx.play_select)
+		button.focus_entered.connect(_set_focused_prototype.bind(index))
+		if index == 0:
+			button.grab_focus()
 
 
 func _configure_sfx() -> void:
@@ -74,6 +97,11 @@ func _configure_input_prompt_icons() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode in [KEY_E, KEY_ENTER, KEY_KP_ENTER]:
+			_open_prototype(PROTOTYPES[focused_prototype_index])
+			get_viewport().set_input_as_handled()
+			return
+
 		for prototype in PROTOTYPES:
 			if prototype["keycodes"].has(event.keycode):
 				_open_prototype(prototype)
@@ -84,6 +112,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			sfx.play_error()
 			print("PrototypeHub: ESC 입력, 이 허브에서는 종료 동작을 연결하지 않았습니다.")
 			get_viewport().set_input_as_handled()
+
+
+func _set_focused_prototype(index: int) -> void:
+	focused_prototype_index = clampi(index, 0, PROTOTYPES.size() - 1)
 
 
 func _open_prototype(prototype: Dictionary) -> void:

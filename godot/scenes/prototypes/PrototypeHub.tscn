@@ -26,9 +26,9 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 96.0
-offset_top = 72.0
+offset_top = 36.0
 offset_right = -96.0
-offset_bottom = -72.0
+offset_bottom = -36.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -37,83 +37,119 @@ layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="Margin/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.93, 0.86, 0.72, 1)
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 30
 text = "CONCENT PROTOTYPE HUB"
 
 [node name="Intro" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.74, 0.70, 0.62, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "기존 Main/DAY1 흐름과 분리된 prototype 실행 허브입니다."
 
 [node name="QuarterviewTitle" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "[1] Room Object Contract Prototype"
 
 [node name="QuarterviewDescription" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 15
 text = "- Object registry / interaction prompt / panel contract test. Not final quarterview art."
 
 [node name="QuarterviewButton" type="Button" parent="Margin/Panel/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "Room Object Contract Prototype 실행"
+
+[node name="QuarterviewPerspectiveTitle" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 20
+text = "[2] Quarterview Perspective Blockout"
+
+[node name="QuarterviewPerspectiveDescription" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
+theme_override_font_sizes/font_size = 15
+text = "- Visual perspective / pseudo 3D room blockout"
+
+[node name="QuarterviewPerspectiveButton" type="Button" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Quarterview Perspective Blockout 실행"
 
 [node name="HackingTitle" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
-theme_override_font_sizes/font_size = 24
-text = "[2] Hacking Action Prototype"
+theme_override_font_sizes/font_size = 20
+text = "[3] Hacking Action Prototype"
 
 [node name="HackingDescription" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 15
 text = "- 탑뷰 해커모드 액션 / 이동 / 공격 / 회피 / 목표 / 탈출 검증"
 
 [node name="HackingButton" type="Button" parent="Margin/Panel/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "Hacking Action Prototype 실행"
+
+[node name="HackingPerspectiveTitle" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 20
+text = "[4] Hacking Perspective Blockout"
+
+[node name="HackingPerspectiveDescription" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
+theme_override_font_sizes/font_size = 15
+text = "- 3/4 top-down cyber action camera/blockout test"
+
+[node name="HackingPerspectiveButton" type="Button" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Hacking Perspective Blockout 실행"
 
 [node name="TitleMenuTitle" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
-theme_override_font_sizes/font_size = 24
-text = "[3] Title / Pause Menu Prototype"
+theme_override_font_sizes/font_size = 20
+text = "[5] Title / Pause Menu Prototype"
 
 [node name="TitleMenuDescription" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 15
 text = "- 시작화면 / ESC 메뉴 / 설정 placeholder 검증"
 
 [node name="TitleMenuButton" type="Button" parent="Margin/Panel/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "Title / Pause Menu Prototype 실행"
 
 [node name="KeysTitle" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.93, 0.86, 0.72, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "키 안내"
 
 [node name="Keys" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 15
 text = "1 또는 Q: Room Object Contract Prototype 실행
-2 또는 H: HackingActionPrototype 실행
-3 또는 T: TitleMenuPrototype 실행
+2 또는 V: QuarterviewPerspectiveBlockout 실행
+3 또는 H: HackingActionPrototype 실행
+4 또는 C: HackingPerspectiveBlockout 실행
+5 또는 T: TitleMenuPrototype 실행
 ESC: 동작 없음 로그 출력
 각 prototype 안에서 B / Backspace로 이 화면으로 돌아올 수 있습니다."

@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `094b2de`
-- Phase: Hacking perspective blockout prototype
+- Current commit at task start: `517c6bf`
+- Phase: PrototypeHub perspective blockout registration
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -56,7 +56,7 @@
 - Hacking Action prototype은 `READY`, `RUNNING`, `OBJECTIVE_EXTRACTED`, `SUCCESS`, `FAILED` mission state와 script-local tuning constants로 정리되어 있다.
 - Hacking Action prototype은 `D` debug overlay, 최신 event message, hit / damage / Trace / objective / exit 상태 피드백을 표시한다.
 - `HackingPerspectiveBlockout.tscn` is a separate visual-only blockout for the long-term `3/4 top-down cyber action view`; it does not replace `HackingActionPrototype`.
-- `res://scenes/prototypes/PrototypeHub.tscn`에서 Quarterview Room과 Hacking Action prototype을 키 또는 버튼으로 실행할 수 있다.
+- `res://scenes/prototypes/PrototypeHub.tscn`에서 Room Object Contract, Quarterview Perspective, Hacking Action, Hacking Perspective, Title / Pause prototype을 키, 포커스 실행, 또는 버튼으로 실행할 수 있다.
 - Title / Pause 메뉴 방향은 독립 prototype scene `res://scenes/prototypes/TitleMenuPrototype.tscn`에서 검증하며, 아직 실제 Main 시작/ESC 흐름에 연결하지 않는다.
 - Quarterview, Hacking Action, Title / Pause Menu prototype은 `B` 또는 `Backspace`로 `PrototypeHub`에 복귀할 수 있으며, 각 prototype의 기존 `ESC` 의미는 유지한다.
 - Quarterview Room prototype은 가까운 오브젝트에서 `E`를 누르면 registry 기반 object interaction panel을 열고, Primary / Inspect / Close button은 실제 기능 연결 없이 no-op 로그만 출력한다.
@@ -177,6 +177,8 @@
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: record the new perspective blockout path while keeping `QuarterviewRoomPrototype` as the object / interaction contract prototype.
 - `godot/scenes/prototypes/HackingPerspectiveBlockout.tscn`, `godot/scripts/prototypes/HackingPerspectiveBlockout.gd`, `godot/scripts/prototypes/HackingPerspectivePlayer.gd`: add an independent cyber perspective blockout with angled arena floor, raised barriers, scan / hazard / data node / exit placeholders, player movement, debug overlay, and Hub return.
 - `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: distinguish the existing Hacking Action control prototype from the new `3/4 top-down` perspective blockout.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Perspective Blockout and Hacking Perspective Blockout while preserving existing prototype entries.
+- `docs/PROTOTYPE_HUB_OVERVIEW.md`, `docs/PROTOTYPE_HUB.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the five Hub entries, shortcut keys, and contract-vs-perspective distinction.
 
 ## Validation Results
 
@@ -232,6 +234,7 @@
 - Quarterview contract prototype 표시 정리 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다.
 - Quarterview perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
+- PrototypeHub perspective blockout 등록 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub`, `QuarterviewPerspectiveBlockout`, and `HackingPerspectiveBlockout`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -272,16 +275,17 @@
 - GUT CLI requires a headless import once after addon installation so Godot registers GUT class names before running tests.
 - Git LFS is not enabled yet; future large quarterview art, atlas, spritesheet, source-art, or expanded audio imports need a separate LFS, quota, and migration decision before staging.
 - Prototype GUI checklist still requires user-side visual, input, and audio confirmation because headless and MCP checks do not verify SFX loudness, icon readability, or hands-on feel.
-- Actual room perspective now has an initial visual blockout, but final viewpoint decisions still need GUI review; hacking perspective still needs a separate `HackingPerspectiveBlockout`.
+- Actual room and hacking perspective now have initial visual blockouts, but final viewpoint decisions still need GUI review.
 - Updated contract-prototype wording still requires GUI confirmation for text fit and readability in PrototypeHub and Quarterview help UI.
-- `QuarterviewPerspectiveBlockout` is not registered in PrototypeHub yet and still needs GUI checks for perspective readability, pseudo 3D scale, collision feel, debug overlay, and B / Backspace return.
-- `HackingPerspectiveBlockout` is not registered in PrototypeHub yet and still needs GUI checks for 3/4 cyber readability, object height cues, movement feel, debug overlay, and B / Backspace return.
+- PrototypeHub now includes the two perspective blockouts, but shortcut, focused `E` / `Enter`, button execution, and text fit still need GUI confirmation.
+- `QuarterviewPerspectiveBlockout` still needs GUI checks for perspective readability, pseudo 3D scale, collision feel, debug overlay, and B / Backspace return.
+- `HackingPerspectiveBlockout` still needs GUI checks for 3/4 cyber readability, object height cues, movement feel, debug overlay, and B / Backspace return.
 
 ## Next Recommended Task
 
-1. `HackingActionPrototype.tscn`을 GUI로 실행해 `D` debug overlay, Event line, enemy hit flash, player damage feedback, Trace hazard flash가 수동 테스트 중 읽히는지 확인한다.
-2. Hacking Action 상태 흐름을 수동 확인해 objective 추출 후 exit 활성화, success / failed event, `R` restart, `B` / `Backspace` Hub 복귀가 유지되는지 확인한다.
-3. `PrototypeHub.tscn`을 GUI로 실행해 Hacking Action prototype 실행과 복귀가 기존 Quarterview / Title prototype 흐름을 깨지 않는지 확인한다.
+1. `PrototypeHub.tscn`을 GUI로 실행해 `1/Q`, `2/V`, `3/H`, `4/C`, `5/T`, 포커스된 `E` / `Enter`, 버튼 실행이 모두 올바른 scene으로 이동하는지 확인한다.
+2. `QuarterviewPerspectiveBlockout.tscn`을 GUI로 확인해 사선 바닥, pseudo 3D 가구 축, player collision, debug overlay, `B` / `Backspace` 복귀가 시점 검증에 충분한지 판단한다.
+3. `HackingPerspectiveBlockout.tscn`을 GUI로 확인해 `3/4 top-down` cyber arena의 높이감, player 이동, debug overlay, `B` / `Backspace` 복귀가 장기 해킹 시점 검증에 충분한지 판단한다.
 
 ## Archive
 

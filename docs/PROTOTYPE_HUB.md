@@ -14,16 +14,23 @@ prototype scene이 늘어날 때 Godot에서 각 prototype을 빠르게 실행�
 | 키 | Prototype | Scene | 목적 |
 | --- | --- | --- | --- |
 | `1` / `Q` | Room Object Contract Prototype | `res://scenes/prototypes/QuarterviewRoomPrototype.tscn` | Object registry, interaction prompt, panel contract 검증. 최종 쿼터뷰 아트 아님 |
-| `2` / `H` | Hacking Action Prototype | `res://scenes/prototypes/HackingActionPrototype.tscn` | 탑뷰 해커모드 액션, 이동, 공격, 회피, 목표, 탈출 검증 |
-| `3` / `T` | Title / Pause Menu Prototype | `res://scenes/prototypes/TitleMenuPrototype.tscn` | 시작화면, ESC 메뉴, 설정 placeholder 검증 |
+| `2` / `V` | Quarterview Perspective Blockout | `res://scenes/prototypes/QuarterviewPerspectiveBlockout.tscn` | 쿼터뷰 실내 시점, pseudo 3D 방 blockout, 가구 비율 검증 |
+| `3` / `H` | Hacking Action Prototype | `res://scenes/prototypes/HackingActionPrototype.tscn` | 탑뷰 해커모드 액션, 이동, 공격, 회피, 목표, 탈출 검증 |
+| `4` / `C` | Hacking Perspective Blockout | `res://scenes/prototypes/HackingPerspectiveBlockout.tscn` | `3/4 top-down` cyber action 시점과 arena blockout 검증 |
+| `5` / `T` | Title / Pause Menu Prototype | `res://scenes/prototypes/TitleMenuPrototype.tscn` | 시작화면, ESC 메뉴, 설정 placeholder 검증 |
 
 ## Controls
 
 - `1` 또는 `Q`: Room Object Contract Prototype 실행.
-- `2` 또는 `H`: Hacking Action Prototype 실행.
-- `3` 또는 `T`: Title / Pause Menu Prototype 실행.
+- `2` 또는 `V`: Quarterview Perspective Blockout 실행.
+- `3` 또는 `H`: Hacking Action Prototype 실행.
+- `4` 또는 `C`: Hacking Perspective Blockout 실행.
+- `5` 또는 `T`: Title / Pause Menu Prototype 실행.
+- 포커스된 버튼에서 `E` 또는 `Enter`: 선택한 prototype 실행.
 - Room Object Contract 버튼: `QuarterviewRoomPrototype.tscn` 실행.
+- Quarterview Perspective 버튼: Quarterview Perspective Blockout 실행.
 - Hacking Action 버튼: Hacking Action Prototype 실행.
+- Hacking Perspective 버튼: Hacking Perspective Blockout 실행.
 - Title / Pause Menu 버튼: Title / Pause Menu Prototype 실행.
 - `ESC`: 허브 안에서는 종료 동작을 연결하지 않고 로그만 출력한다.
 - 각 prototype 안에서 `B` 또는 `Backspace`: PrototypeHub로 돌아오기.
