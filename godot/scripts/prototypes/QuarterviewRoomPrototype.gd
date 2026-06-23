@@ -1,5 +1,6 @@
 extends Node2D
 
+const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd")
 const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
 
 var floor_points := PackedVector2Array([
@@ -393,14 +394,22 @@ const OBJECT_REGISTRY := [
 var nearest_object: Dictionary = {}
 var panel_object: Dictionary = {}
 var debug_overlay_enabled := false
+var sfx
 
 
 func _ready() -> void:
+	_configure_sfx()
 	_configure_layers()
 	_build_collision()
 	_build_placeholder_objects()
 	_configure_labels()
 	_configure_object_panel()
+
+
+func _configure_sfx() -> void:
+	sfx = PROTOTYPE_SFX_SCRIPT.new()
+	sfx.name = "PrototypeSfx"
+	add_child(sfx)
 
 
 func _process(_delta: float) -> void:
@@ -436,6 +445,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _go_to_prototype_hub() -> void:
+	sfx.play_cancel()
 	print("Quarterview prototype: PrototypeHub로 돌아갑니다.")
 	get_tree().change_scene_to_file(PROTOTYPE_HUB_SCENE)
 
@@ -551,6 +561,7 @@ func _configure_labels() -> void:
 
 func _toggle_debug_overlay() -> void:
 	debug_overlay_enabled = not debug_overlay_enabled
+	sfx.play_select()
 	label_layer.visible = debug_overlay_enabled
 	if _is_object_panel_open() and not panel_object.is_empty():
 		_refresh_object_panel_detail()
@@ -563,6 +574,9 @@ func _configure_object_panel() -> void:
 	primary_button.pressed.connect(_run_primary_action)
 	inspect_button.pressed.connect(_run_inspect_action)
 	close_button.pressed.connect(_close_object_panel)
+	for button in [primary_button, inspect_button, close_button]:
+		button.mouse_entered.connect(sfx.play_select)
+		button.focus_entered.connect(sfx.play_select)
 
 
 func _is_object_panel_open() -> bool:
@@ -571,6 +585,7 @@ func _is_object_panel_open() -> bool:
 
 func _open_object_panel(object_data: Dictionary) -> void:
 	panel_object = object_data
+	sfx.play_open()
 	object_panel_title.text = _get_object_display_name(object_data).to_upper()
 	_refresh_object_panel_detail()
 	primary_button.text = _get_primary_action_label(String(object_data["role"]))
@@ -592,6 +607,8 @@ func _open_object_panel(object_data: Dictionary) -> void:
 
 
 func _close_object_panel() -> void:
+	if _is_object_panel_open():
+		sfx.play_cancel()
 	object_panel.visible = false
 	panel_object = {}
 	player.set_physics_process(true)
@@ -600,6 +617,7 @@ func _close_object_panel() -> void:
 func _run_primary_action() -> void:
 	if panel_object.is_empty():
 		return
+	sfx.play_confirm()
 	print(
 		"Quarterview object action: %s / action=primary / role=%s / no-op"
 		% [
@@ -612,6 +630,7 @@ func _run_primary_action() -> void:
 func _run_inspect_action() -> void:
 	if panel_object.is_empty():
 		return
+	sfx.play_select()
 	print(
 		"Quarterview object inspect: %s / future=%s / state=%s / no-op"
 		% [

@@ -1,5 +1,6 @@
 extends Node2D
 
+const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd")
 const PLAYER_SCRIPT := preload("res://scripts/prototypes/HackingPrototypePlayer.gd")
 const ENEMY_SCRIPT := preload("res://scripts/prototypes/HackingPrototypeEnemy.gd")
 const PROJECTILE_SCRIPT := preload("res://scripts/prototypes/HackingPrototypeProjectile.gd")
@@ -69,10 +70,18 @@ var event_message_timer := 0.0
 var objective_visual: Polygon2D
 var exit_visual: Polygon2D
 var hazard_visuals := {}
+var sfx
 
 
 func _ready() -> void:
+	_configure_sfx()
 	reset_prototype()
+
+
+func _configure_sfx() -> void:
+	sfx = PROTOTYPE_SFX_SCRIPT.new()
+	sfx.name = "PrototypeSfx"
+	add_child(sfx)
 
 
 func _process(delta: float) -> void:
@@ -100,11 +109,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_show_event_message("Debug overlay: %s" % ("ON" if debug_overlay_enabled else "OFF"))
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_ESCAPE:
+			sfx.play_error()
 			print("Hacking action prototype: ESC pressed, no exit is wired in this prototype.")
 			get_viewport().set_input_as_handled()
 
 
 func _go_to_prototype_hub() -> void:
+	sfx.play_cancel()
 	print("Hacking action prototype: PrototypeHub로 돌아갑니다.")
 	get_tree().change_scene_to_file(PROTOTYPE_HUB_SCENE)
 
@@ -238,6 +249,7 @@ func _on_player_shot_requested(origin: Vector2, direction: Vector2) -> void:
 	if not _is_mission_active():
 		return
 
+	sfx.play_select()
 	var projectile := Area2D.new()
 	projectile.name = "HackingShot"
 	projectile.set_script(PROJECTILE_SCRIPT)
@@ -257,6 +269,7 @@ func _on_enemy_contact_damage_requested(amount: int, reason: String) -> void:
 
 
 func _on_projectile_hit_registered(target_name: String) -> void:
+	sfx.play_hit()
 	_show_event_message("Hit security program: %s" % target_name)
 
 
@@ -315,6 +328,7 @@ func damage_player(amount: int, reason: String = "") -> void:
 	if player.has_method("take_damage"):
 		did_damage = player.take_damage(amount)
 	if did_damage and reason != "":
+		sfx.play_damage()
 		_show_event_message("Damage -%d: %s" % [amount, reason])
 		print("Hacking action prototype: player damage %d / reason=%s" % [amount, reason])
 
@@ -331,10 +345,13 @@ func _set_mission_state(next_state: int, reason: String = "") -> void:
 		_stop_active_actors()
 
 	if mission_state == MissionState.OBJECTIVE_EXTRACTED:
+		sfx.play_confirm()
 		_show_event_message("Exit opened")
 	elif mission_state == MissionState.SUCCESS:
+		sfx.play_success()
 		_show_event_message("Mission success: Data extracted")
 	elif mission_state == MissionState.FAILED:
+		sfx.play_fail()
 		_show_event_message("Mission failed")
 
 	if reason != "":

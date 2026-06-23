@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `d79c18d`
-- Phase: Third-party Asset Library inventory
+- Current commit at task start: `f9c7658`
+- Phase: Prototype-only SFX wiring
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -62,6 +62,7 @@
 - Quarterview Room prototype은 기본 화면에서 전체 debug label / collision / interaction range를 숨기고, `D`로 prototype 전용 debug overlay를 토글한다.
 - Godot AI MCP editor plugin is installed under `res://addons/godot_ai`, enabled in `project.godot`, and paired with the `_mcp_game_helper` autoload.
 - Installed third-party Asset Library packages are inventoried in `docs/THIRD_PARTY_ASSET_INVENTORY.md` before any SFX, particle, input prompt, or license UI wiring.
+- Prototype-only SFX now uses a small copied Kenney subset under `godot/assets/audio/third_party/kenney/`; Main/DAY1 still has no SFX connection.
 
 ## Current DAY 1 Decisions
 
@@ -143,6 +144,10 @@
 - `.gitignore`: no change required; it already ignores `.godot/` caches while allowing source-side `.import` and `.uid` metadata.
 - `docs/THIRD_PARTY_ASSET_INVENTORY.md`: documents installed Kenney and Simple License packages, license evidence, intended use, current use, and commit status.
 - `docs/ASSET_PIPELINE.md`: points external Asset Library tracking to the third-party asset inventory.
+- `godot/assets/audio/third_party/kenney/ui/*.wav`, `godot/assets/audio/third_party/kenney/interface/*.wav`, `godot/assets/audio/third_party/kenney/LICENSES/*.txt`: selected prototype SFX copies and license evidence only.
+- `godot/scripts/prototypes/PrototypeSfx.gd`: adds a prototype-local SFX helper that loads selected wav files on demand.
+- `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`: wire selected SFX to prototype-only UI/action feedback.
+- `docs/THIRD_PARTY_ASSET_INVENTORY.md`: updates Kenney UI Audio and Interface Sounds current use and commit policy for selected prototype SFX.
 
 ## Validation Results
 
@@ -188,6 +193,7 @@
 - Godot AI MCP setup commit 준비 후 `git diff --check`와 Godot 4.5.1 headless project startup이 완료됐다.
 - Third-party asset inventory 문서화 후 `git diff --check`가 완료됐다. Godot scene startup은 문서 작업이라 생략했다.
 - Installed third-party asset folders, their source-side `.import` / `.uid` metadata, and `godot/LICENSE.txt` remain unstaged in this docs-only pass.
+- Prototype SFX 1차 적용 후 `git diff --check`와 Godot 4.5.1 headless startup for PrototypeHub, QuarterviewRoomPrototype, and HackingActionPrototype이 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -218,6 +224,7 @@
 - Hacking Action `D` debug overlay, event message 소거, hit / damage / Trace flash는 GUI 수동 확인이 필요하다.
 - PrototypeHub의 키 입력과 버튼 클릭 scene 전환은 GUI 수동 확인이 필요하다.
 - Title prototype의 버튼, ESC overlay, Settings placeholder는 GUI 수동 확인이 필요하다.
+- Prototype SFX는 headless startup만 확인했으며, 실제 청감/볼륨/타이밍은 GUI에서 수동 확인이 필요하다.
 - 각 prototype의 `B` / `Backspace` 복귀 입력은 GUI 수동 확인이 필요하다.
 - Quarterview object interaction panel의 `E` open, Primary / Inspect / Close button, `ESC` close, 이동 잠금은 GUI 수동 확인이 필요하다.
 - Quarterview debug overlay의 `D` toggle, 기본 화면 prompt-only 상태, debug ON label/range/blocker 표시는 GUI 수동 확인이 필요하다.

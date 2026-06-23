@@ -1,5 +1,8 @@
 extends Control
 
+const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd")
+const SFX_SCENE_CHANGE_DELAY := 0.05
+
 const PROTOTYPES := [
 	{
 		"key": "quarterview",
@@ -30,13 +33,25 @@ const PROTOTYPES := [
 	},
 ]
 
+var sfx
+var is_changing_scene := false
+
 
 func _ready() -> void:
+	_configure_sfx()
 	for prototype in PROTOTYPES:
 		var button := get_node_or_null(NodePath(prototype["button_path"])) as Button
 		if button == null:
 			continue
 		button.pressed.connect(_open_prototype.bind(prototype))
+		button.mouse_entered.connect(sfx.play_select)
+		button.focus_entered.connect(sfx.play_select)
+
+
+func _configure_sfx() -> void:
+	sfx = PROTOTYPE_SFX_SCRIPT.new()
+	sfx.name = "PrototypeSfx"
+	add_child(sfx)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -48,10 +63,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				return
 
 		if event.keycode == KEY_ESCAPE:
+			sfx.play_error()
 			print("PrototypeHub: ESC 입력, 이 허브에서는 종료 동작을 연결하지 않았습니다.")
 			get_viewport().set_input_as_handled()
 
 
 func _open_prototype(prototype: Dictionary) -> void:
+	if is_changing_scene:
+		return
+	is_changing_scene = true
+	sfx.play_confirm()
 	print("PrototypeHub: %s 실행" % prototype["title"])
+	await get_tree().create_timer(SFX_SCENE_CHANGE_DELAY).timeout
 	get_tree().change_scene_to_file(prototype["path"])
