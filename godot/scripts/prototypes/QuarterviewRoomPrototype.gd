@@ -576,7 +576,7 @@ func _configure_input_prompt_icons() -> void:
 		Vector2(24, 24),
 		Color(0.93, 0.86, 0.72, 1.0)
 	)
-	guide_box.position = Vector2(24, 166)
+	guide_box.position = Vector2(24, 196)
 	ui_layer.add_child(guide_box)
 
 	nearby_prompt_row = INPUT_PROMPTS_SCRIPT.create_prompt_row(["e"], "", Vector2(34, 34), Color(1.0, 0.86, 0.45, 1.0))

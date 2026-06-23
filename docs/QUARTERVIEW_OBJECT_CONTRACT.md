@@ -6,6 +6,8 @@
 
 현재 문서는 기능 이식 계획이 아니라, 실제 연결 전에 object key, zone, role, future source, visual state를 흔들리지 않게 고정하기 위한 계약이다.
 
+`QuarterviewRoomPrototype`은 현재 최종 쿼터뷰 시점 검증용이 아니라 object / interaction contract prototype이다. 이 scene은 버리지 않고 나중에 쿼터뷰 Room 기능 이식 시 계약 기준으로 사용한다. 실제 쿼터뷰 시점 검증은 별도 perspective blockout scene에서 진행한다.
+
 ## Object Key 표
 
 | key | zone | role | future_source | visual_state 후보 | 구현 상태 |
@@ -73,3 +75,4 @@
 - 실제 에셋은 atlas region 또는 overlay로 교체 가능하게 둔다.
 - 기존 Main에 연결하기 전까지 prototype registry는 prototype 전용으로 유지한다.
 - 이 문서를 근거로 Main scene 교체, Phone / Outlet / Result 연결, NODE-17 구현, 해킹 액션 연결을 바로 진행하지 않는다.
+- 이 문서를 근거로 최종 쿼터뷰 시점이 검증되었다고 간주하지 않는다.

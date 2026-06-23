@@ -7,10 +7,10 @@ const SFX_SCENE_CHANGE_DELAY := 0.05
 const PROTOTYPES := [
 	{
 		"key": "quarterview",
-		"title": "Quarterview Room Prototype",
+		"title": "Room Object Contract Prototype",
 		"path": "res://scenes/prototypes/QuarterviewRoomPrototype.tscn",
 		"shortcut": ["1", "Q"],
-		"description": "쿼터뷰 방 이동 / 레이어 / 오브젝트 / 상호작용 검증",
+		"description": "Object registry, interaction prompt, and panel contract test. Not final quarterview visual blockout.",
 		"button_path": "Margin/Panel/VBox/QuarterviewButton",
 		"keycodes": [KEY_1, KEY_Q],
 	},

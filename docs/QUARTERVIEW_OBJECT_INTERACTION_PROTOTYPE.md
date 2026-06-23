@@ -7,7 +7,9 @@
 ## 목적
 
 이 문서는 `QuarterviewRoomPrototype` 안에서 오브젝트를 조사하거나 사용할 때의 UI 흐름을 정리한다.
-현재 작업은 실제 Main/DAY1 기능 이식이 아니라, 쿼터뷰 방에서 가까운 오브젝트를 선택했을 때 어떤 정보와 버튼을 보여줄지 확인하는 prototype이다.
+현재 작업은 실제 Main/DAY1 기능 이식이 아니라, room object registry / interaction prompt / object interaction panel 계약을 확인하는 prototype이다.
+
+`QuarterviewRoomPrototype`은 이름과 달리 최종 쿼터뷰 아트나 실제 쿼터뷰 시점 검증용 scene이 아니다. 실제 쿼터뷰 시점과 cutaway room 감각은 별도 perspective blockout scene에서 검증한다.
 
 ## E Interaction Panel 흐름
 
@@ -93,5 +95,6 @@ Primary와 Inspect는 Godot output에 no-op 로그만 출력한다.
 ## 현재 한계
 
 - UI는 prototype 전용 placeholder이며 최종 스타일이 아니다.
+- 이 scene은 object / interaction contract 기준으로 유지하며, 최종 쿼터뷰 시점 검증은 별도 blockout에서 진행한다.
 - 버튼 클릭, `E`, `ESC`, `B` / `Backspace` 입력은 GUI 수동 확인이 필요하다.
 - 실제 Phone, Outlet, Result, SurvivalState, HackingActionPrototype과 연결하지 않는다.

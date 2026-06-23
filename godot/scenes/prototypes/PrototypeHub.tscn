@@ -55,18 +55,18 @@ text = "기존 Main/DAY1 흐름과 분리된 prototype 실행 허브입니다."
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
 theme_override_font_sizes/font_size = 24
-text = "[1] Quarterview Room Prototype"
+text = "[1] Room Object Contract Prototype"
 
 [node name="QuarterviewDescription" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
 theme_override_font_sizes/font_size = 17
-text = "- 쿼터뷰 방 이동 / 레이어 / 오브젝트 / 상호작용 검증"
+text = "- Object registry / interaction prompt / panel contract test. Not final quarterview art."
 
 [node name="QuarterviewButton" type="Button" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Quarterview Room Prototype 실행"
+text = "Room Object Contract Prototype 실행"
 
 [node name="HackingTitle" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
@@ -112,7 +112,7 @@ text = "키 안내"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
 theme_override_font_sizes/font_size = 17
-text = "1 또는 Q: QuarterviewRoomPrototype 실행
+text = "1 또는 Q: Room Object Contract Prototype 실행
 2 또는 H: HackingActionPrototype 실행
 3 또는 T: TitleMenuPrototype 실행
 ESC: 동작 없음 로그 출력

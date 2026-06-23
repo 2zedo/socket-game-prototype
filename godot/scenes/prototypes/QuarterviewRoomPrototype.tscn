@@ -71,14 +71,16 @@ layer = 10
 [node name="HelpLabel" type="Label" parent="UI"]
 offset_left = 24.0
 offset_top = 22.0
-offset_right = 386.0
-offset_bottom = 142.0
-text = "쿼터뷰 방 Prototype
+offset_right = 560.0
+offset_bottom = 170.0
+text = "Room Object Contract Prototype
+Object registry / panel contract test
+Not final quarterview art
 WASD / 방향키: 이동
 E: 가까운 오브젝트
 D: debug overlay
 B / Backspace: Prototype Hub
-기존 Main.tscn을 교체하지 않습니다"
+Main.tscn을 교체하지 않습니다"
 label_settings = SubResource("LabelSettings_help")
 
 [node name="PromptLabel" type="Label" parent="UI"]

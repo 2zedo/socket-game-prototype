@@ -14,7 +14,7 @@
 - 유이 이동, 근접 상호작용, 멀티탭 UI, 장치 Resource 구조가 이미 존재한다.
 - DAY 1 코어 루프는 현재 구현의 유지 대상이다.
 - 노트북은 현재 방 안 상호작용 오브젝트이며, 별도 해킹 액션 미션은 아직 구현되어 있지 않다.
-- 쿼터뷰 방 검증용 독립 prototype scene은 `res://scenes/prototypes/QuarterviewRoomPrototype.tscn`에 둔다.
+- 기존 `res://scenes/prototypes/QuarterviewRoomPrototype.tscn`은 현재 최종 쿼터뷰 시점 검증용이 아니라 object / interaction contract prototype이다.
 
 ## 장기 방향
 
@@ -35,7 +35,9 @@
 
 ## Prototype Scene에서 확인할 것
 
-쿼터뷰 전환은 먼저 별도 prototype scene에서 검증한다.
+쿼터뷰 전환은 먼저 별도 prototype 또는 perspective blockout scene에서 검증한다.
+
+현재 `QuarterviewRoomPrototype`은 오브젝트 registry, prompt, panel, zone / role / future source 계약을 확인하는 scene으로 유지한다. 실제 쿼터뷰 시점, cutaway room 감각, 벽 높이, 가구 축, 캐릭터 비율은 별도 `QuarterviewPerspectiveBlockout` 계열 scene에서 검증한다.
 
 - 쿼터뷰 방에서 유이 이동이 자연스러운지
 - 캐릭터와 가구 크기 비율이 맞는지
@@ -64,13 +66,14 @@
 ## 마이그레이션 순서 초안
 
 1. 현재 DAY 1 탑뷰 구현 안정화
-2. 쿼터뷰 방 prototype scene 생성
-3. 쿼터뷰용 임시 바닥 / 벽 / 가구 배치
-4. 유이 이동과 Y-sort / 가림 처리 테스트
-5. 주요 오브젝트 상호작용 포인트 배치
-6. 기존 전력 / Phone / Result 흐름과 연결 가능성 검토
-7. 본 전환 여부 결정
-8. 전환하기로 결정한 경우 기존 탑뷰 방을 단계적으로 대체
+2. 기존 `QuarterviewRoomPrototype`을 object / interaction contract 기준으로 유지
+3. 별도 쿼터뷰 perspective blockout scene 생성
+4. 쿼터뷰용 임시 바닥 / 벽 / 가구 배치
+5. 유이 이동과 Y-sort / 가림 처리 테스트
+6. 주요 오브젝트 상호작용 포인트 배치
+7. 기존 전력 / Phone / Result 흐름과 연결 가능성 검토
+8. 본 전환 여부 결정
+9. 전환하기로 결정한 경우 기존 탑뷰 방을 단계적으로 대체
 
 ## 유지해야 할 구조
 
@@ -96,6 +99,7 @@
 ## 이번 작업의 범위
 
 - 현재 구현 = 탑뷰 방
-- 현재 prototype = 독립 scene에서 쿼터뷰 구도, 이동, 충돌, 가림, 상호작용 포인트만 확인
+- 현재 `QuarterviewRoomPrototype` = 독립 scene에서 object registry, interaction prompt, object panel, zone / role / future source contract를 확인
+- 이후 perspective blockout = 실제 쿼터뷰 구도, 이동, 충돌, 가림, 상호작용 포인트를 확인
 - 장기 방향 = 쿼터뷰 방 본 전환 여부 검토
 - 본 전환 전까지 구현하지 않음 = 기존 Main scene 교체, 전력 / Phone / Result / Test Mode 흐름 변경, 최종 쿼터뷰 에셋 적용
