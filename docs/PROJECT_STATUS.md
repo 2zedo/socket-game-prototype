@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `f9c7658`
-- Phase: Prototype-only SFX wiring
+- Current commit at task start: `8922e32`
+- Phase: Codex / Godot workflow documentation
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -63,6 +63,7 @@
 - Godot AI MCP editor plugin is installed under `res://addons/godot_ai`, enabled in `project.godot`, and paired with the `_mcp_game_helper` autoload.
 - Installed third-party Asset Library packages are inventoried in `docs/THIRD_PARTY_ASSET_INVENTORY.md` before any SFX, particle, input prompt, or license UI wiring.
 - Prototype-only SFX now uses a small copied Kenney subset under `godot/assets/audio/third_party/kenney/`; Main/DAY1 still has no SFX connection.
+- Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
 
 ## Current DAY 1 Decisions
 
@@ -148,6 +149,7 @@
 - `godot/scripts/prototypes/PrototypeSfx.gd`: adds a prototype-local SFX helper that loads selected wav files on demand.
 - `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`: wire selected SFX to prototype-only UI/action feedback.
 - `docs/THIRD_PARTY_ASSET_INVENTORY.md`: updates Kenney UI Audio and Interface Sounds current use and commit policy for selected prototype SFX.
+- `docs/CODEX_GODOT_WORKFLOW.md`: records Codex, User, ChatGPT, Godot AI MCP, and Godot Editor responsibilities plus workflow validation and staging rules.
 
 ## Validation Results
 
@@ -194,6 +196,7 @@
 - Third-party asset inventory 문서화 후 `git diff --check`가 완료됐다. Godot scene startup은 문서 작업이라 생략했다.
 - Installed third-party asset folders, their source-side `.import` / `.uid` metadata, and `godot/LICENSE.txt` remain unstaged in this docs-only pass.
 - Prototype SFX 1차 적용 후 `git diff --check`와 Godot 4.5.1 headless startup for PrototypeHub, QuarterviewRoomPrototype, and HackingActionPrototype이 완료됐다.
+- Codex / Godot workflow 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
