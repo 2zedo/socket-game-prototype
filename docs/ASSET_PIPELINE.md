@@ -111,6 +111,7 @@ Current phone mapping:
 
 - Do not use external copyrighted assets without permission.
 - Track installed Asset Library packages and license evidence in `docs/THIRD_PARTY_ASSET_INVENTORY.md` before wiring them into scenes or UI.
+- Track Git LFS adoption criteria and large-asset handling in `docs/GIT_LFS_ASSET_POLICY.md`; do not run `git lfs track` or modify `.gitattributes` outside a dedicated LFS task.
 - Do not import the concept images directly as the game background.
 - Avoid solving the whole room as one flat image; keep objects replaceable so power and connection states can change visually.
 - Do not commit Godot import cache folders or local editor cache output.

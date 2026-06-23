@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `384e19f`
-- Phase: Prototype input prompt icon pass
+- Current commit at task start: `fd5759e`
+- Phase: Git LFS asset policy documentation
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -66,6 +66,7 @@
 - Prototype-only input prompt icons now use a small copied Kenney subset under `godot/assets/ui/third_party/kenney/input_prompts/`; Main/DAY1 UI still has no input prompt icon connection.
 - Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
 - GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
+- Git LFS is not enabled yet; future large-art, atlas, spritesheet, source-art, and audio decisions are tracked in `docs/GIT_LFS_ASSET_POLICY.md`.
 
 ## Current DAY 1 Decisions
 
@@ -159,6 +160,8 @@
 - `godot/addons/gut/`: installs GUT `v9.5.0` for Godot `4.5.x` unit tests.
 - `godot/test/unit/test_survival_state.gd`: covers DAY 1 device Resource values, connected/active separation, active drain sums, modal pause, and Phone battery warning rearm behavior.
 - `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
+- `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
+- `docs/ASSET_PIPELINE.md`: links large-asset and LFS handling back to the dedicated Git LFS policy.
 
 ## Validation Results
 
@@ -208,6 +211,7 @@
 - Kenney Input Prompts prototype 적용 후 `git diff --check`와 Godot 4.5.1 headless startup for PrototypeHub, QuarterviewRoomPrototype, and HackingActionPrototype이 완료됐다.
 - Codex / Godot workflow 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - SurvivalState GUT 테스트 추가 후 `git diff --check`, Godot `--headless --import`, and GUT CLI `5/5 passed`가 완료됐다.
+- Git LFS asset policy 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -246,6 +250,7 @@
 - Godot AI MCP plugin was checked through project/headless startup only; editor-side MCP operations still need manual confirmation in the Godot editor when used next.
 - Installed Kenney / Simple License assets are documented but not committed or wired; decide which packages should become tracked project dependencies before applying them.
 - GUT CLI requires a headless import once after addon installation so Godot registers GUT class names before running tests.
+- Git LFS is not enabled yet; future large quarterview art, atlas, spritesheet, source-art, or expanded audio imports need a separate LFS, quota, and migration decision before staging.
 
 ## Next Recommended Task
 
