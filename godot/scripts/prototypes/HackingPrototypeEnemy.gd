@@ -1,7 +1,21 @@
 extends CharacterBody2D
 
-@export var move_speed := 95.0
-@export var max_hp := 2
+signal contact_damage_requested(amount: int, reason: String)
+
+const SECURITY_DRONE_MOVE_SPEED := 95.0
+const SECURITY_DRONE_MAX_HP := 2
+const FIREWALL_SENTRY_MOVE_SPEED := 45.0
+const FIREWALL_SENTRY_MAX_HP := 3
+const ENEMY_COLLISION_RADIUS := 16.0
+const ENEMY_CONTACT_RANGE := 30.0
+const ENEMY_CONTACT_DAMAGE := 1
+const ENEMY_CONTACT_COOLDOWN := 0.9
+const ENEMY_OUTER_DRAW_RADIUS := 18.0
+const ENEMY_INNER_DRAW_RADIUS := 13.0
+const ENEMY_ARC_RADIUS := 22.0
+
+@export var move_speed := SECURITY_DRONE_MOVE_SPEED
+@export var max_hp := SECURITY_DRONE_MAX_HP
 
 var hp := max_hp
 var target: Node2D
@@ -13,8 +27,8 @@ func setup(next_target: Node2D, next_kind: String = "security_drone") -> void:
 	target = next_target
 	kind = next_kind
 	if kind == "firewall_sentry":
-		move_speed = 45.0
-		max_hp = 3
+		move_speed = FIREWALL_SENTRY_MOVE_SPEED
+		max_hp = FIREWALL_SENTRY_MAX_HP
 	hp = max_hp
 
 
@@ -24,7 +38,7 @@ func _ready() -> void:
 
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
-	circle.radius = 16.0
+	circle.radius = ENEMY_COLLISION_RADIUS
 	shape.shape = circle
 	add_child(shape)
 
@@ -37,10 +51,9 @@ func _physics_process(delta: float) -> void:
 		velocity = direction * move_speed
 		move_and_slide()
 
-		if global_position.distance_to(target.global_position) <= 30.0 and contact_cooldown <= 0.0:
-			if target.has_method("take_damage"):
-				target.take_damage(1)
-			contact_cooldown = 0.9
+		if global_position.distance_to(target.global_position) <= ENEMY_CONTACT_RANGE and contact_cooldown <= 0.0:
+			contact_damage_requested.emit(ENEMY_CONTACT_DAMAGE, kind)
+			contact_cooldown = ENEMY_CONTACT_COOLDOWN
 
 	queue_redraw()
 
@@ -58,7 +71,7 @@ func _draw() -> void:
 	if kind == "firewall_sentry":
 		color = Color(1.0, 0.50, 0.16, 1.0)
 
-	draw_circle(Vector2.ZERO, 18.0, Color(0.04, 0.02, 0.06, 1.0))
-	draw_circle(Vector2.ZERO, 13.0, color)
-	draw_arc(Vector2.ZERO, 22.0, 0.0, TAU, 32, Color(1.0, 0.16, 0.38, 0.55), 2.0)
+	draw_circle(Vector2.ZERO, ENEMY_OUTER_DRAW_RADIUS, Color(0.04, 0.02, 0.06, 1.0))
+	draw_circle(Vector2.ZERO, ENEMY_INNER_DRAW_RADIUS, color)
+	draw_arc(Vector2.ZERO, ENEMY_ARC_RADIUS, 0.0, TAU, 32, Color(1.0, 0.16, 0.38, 0.55), 2.0)
 	draw_line(Vector2(-8, 0), Vector2(8, 0), Color(0.02, 0.01, 0.02, 1.0), 2.0)

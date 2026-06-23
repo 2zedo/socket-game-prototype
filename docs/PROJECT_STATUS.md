@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `dff3b7b`
-- Phase: Quarterview prototype debug display cleanup
+- Current commit at task start: `205795d`
+- Phase: Hacking Action prototype state organization
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -53,6 +53,7 @@
 - 쿼터뷰 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`에서 room layer, atlas, Yui spritesheet, visual mapping Resource 후보 기준으로 계획한다.
 - 채택된 쿼터뷰 방 콘티는 최종 아트가 아니라 `docs/QUARTERVIEW_ROOM_DIRECTION.md`의 layout mood reference로 고정한다.
 - 해킹 액션은 기존 Main과 연결하지 않은 독립 prototype scene `res://scenes/prototypes/HackingActionPrototype.tscn`에서 조작, 전투, objective, exit 흐름을 먼저 검증한다.
+- Hacking Action prototype은 `READY`, `RUNNING`, `OBJECTIVE_EXTRACTED`, `SUCCESS`, `FAILED` mission state와 script-local tuning constants로 정리되어 있다.
 - `res://scenes/prototypes/PrototypeHub.tscn`에서 Quarterview Room과 Hacking Action prototype을 키 또는 버튼으로 실행할 수 있다.
 - Title / Pause 메뉴 방향은 독립 prototype scene `res://scenes/prototypes/TitleMenuPrototype.tscn`에서 검증하며, 아직 실제 Main 시작/ESC 흐름에 연결하지 않는다.
 - Quarterview, Hacking Action, Title / Pause Menu prototype은 `B` 또는 `Backspace`로 `PrototypeHub`에 복귀할 수 있으며, 각 prototype의 기존 `ESC` 의미는 유지한다.
@@ -118,6 +119,7 @@
 - `docs/QUARTERVIEW_OBJECT_CONTRACT.md`: 쿼터뷰 object key, role, future source, visual state 후보와 구현 상태 기준을 기록한다.
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`: object contract 문서 위치를 구조 검토 항목에 연결한다.
 - `godot/scenes/prototypes/HackingActionPrototype.tscn`, `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/HackingPrototypePlayer.gd`, `godot/scripts/prototypes/HackingPrototypeEnemy.gd`, `godot/scripts/prototypes/HackingPrototypeProjectile.gd`: 독립 해킹 액션 prototype scene과 placeholder combat loop를 추가한다.
+- `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/HackingPrototypePlayer.gd`, `godot/scripts/prototypes/HackingPrototypeEnemy.gd`, `godot/scripts/prototypes/HackingPrototypeProjectile.gd`: 해킹 액션 mission state, HP / Trace 판정, enemy contact damage signal, tuning constants를 정리한다.
 - `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`: prototype scene 경로, 조작, 흐름, 아직 연결하지 않은 시스템을 기록한다.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: 독립 prototype 선택 허브를 추가한다.
 - `docs/PROTOTYPE_HUB.md`: 등록된 prototype, 실행 키, 버튼, 새 prototype 등록 기준을 기록한다.
@@ -172,6 +174,7 @@
 - Prototype navigation 표준화 후 `git diff --check`와 네 prototype scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Quarterview object interaction panel 추가 후 `git diff --check`와 네 prototype scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Quarterview debug 표시 정리 후 `git diff --check`와 Quarterview / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
+- Hacking Action prototype 구조 정리 후 `git diff --check`와 HackingAction / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -199,6 +202,7 @@
 - 결과 화면의 한국어 줄바꿈, 빈 사용 기록, 수동 종료와 `02:00` 자동 종료 진입은 GUI 수동 확인이 필요하다.
 - 전용 정전 일지/생존 기록 이미지 스킨은 아직 적용하지 않았다.
 - 해킹 액션 prototype은 GUI 수동 확인이 필요하며, Laptop, Reward, Result, Story flag와 아직 연결하지 않았다.
+- Hacking Action state 전환, HP `0` 실패, Trace `100%` 실패, objective 추출 후 exit 활성화는 GUI 수동 확인이 필요하다.
 - PrototypeHub의 키 입력과 버튼 클릭 scene 전환은 GUI 수동 확인이 필요하다.
 - Title prototype의 버튼, ESC overlay, Settings placeholder는 GUI 수동 확인이 필요하다.
 - 각 prototype의 `B` / `Backspace` 복귀 입력은 GUI 수동 확인이 필요하다.
@@ -207,9 +211,9 @@
 
 ## Next Recommended Task
 
-1. `QuarterviewRoomPrototype.tscn`을 GUI로 실행해 기본 화면에 전체 label/range가 숨겨지는지, 가까운 오브젝트만 `[E] ObjectName`으로 보이는지, `D` toggle이 label/range/blocker를 켜고 끄는지 확인한다.
-2. Quarterview interaction panel을 열어 오른쪽 중앙 고정 위치, debug OFF 상세 정보 축약, debug ON registry 상세 표시, `ESC` / Close 닫기, panel 중 이동 잠금을 확인한다.
-3. `PrototypeHub.tscn`을 GUI로 실행해 prototype 실행과 각 prototype의 `B` / `Backspace` 복귀가 유지되는지 확인한다.
+1. `HackingActionPrototype.tscn`을 GUI로 실행해 `RUNNING -> OBJECTIVE_EXTRACTED -> SUCCESS`, HP `0` 실패, Trace `100%` 실패, `R` restart, `B` / `Backspace` Hub 복귀를 확인한다.
+2. Hacking Action 조작을 수동 확인해 `J` / LMB shot, `Shift` / `K` roll, `Space` hop, enemy 접촉 대미지, hazard hop 무시가 유지되는지 확인한다.
+3. `PrototypeHub.tscn`을 GUI로 실행해 Hacking Action prototype 실행과 복귀가 기존 Quarterview / Title prototype 흐름을 깨지 않는지 확인한다.
 
 ## Archive
 

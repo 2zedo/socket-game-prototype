@@ -27,6 +27,38 @@
 9. HP가 `0`이 되거나 Trace가 `100%`에 도달하면 failure 상태가 표시된다.
 10. `R`로 prototype을 초기화한다.
 
+## Mission State
+
+`HackingActionPrototype.gd`는 prototype 전용 상태를 `MissionState` enum으로 관리한다.
+
+```text
+READY
+-> RUNNING
+-> OBJECTIVE_EXTRACTED
+-> SUCCESS
+
+RUNNING / OBJECTIVE_EXTRACTED
+-> FAILED
+```
+
+- `RUNNING`: objective 추출 전 기본 진행 상태.
+- `OBJECTIVE_EXTRACTED`: data node 추출 후 exit gate가 활성화된 상태.
+- `SUCCESS`: objective 추출 후 exit에 도달한 상태.
+- `FAILED`: HP `0` 또는 Trace `100%` 도달 상태.
+
+상태 전환은 `_set_mission_state()`를 통해 처리하며, objective / exit 색상과 UI objective 문구도 이 상태를 기준으로 갱신한다.
+
+## Tuning Constants
+
+prototype 조정값은 각 책임 script 상단에 상수로 모았다.
+
+- `HackingActionPrototype.gd`: arena, objective, exit, wall, trace, hazard cooldown.
+- `HackingPrototypePlayer.gd`: 이동 속도, roll 속도 / 시간 / cooldown, hop 시간, HP, invulnerability, projectile origin.
+- `HackingPrototypeEnemy.gd`: enemy 속도, HP, contact range, contact damage, contact cooldown.
+- `HackingPrototypeProjectile.gd`: projectile 속도, lifetime, damage, collision radius.
+
+이번 정리는 밸런스 변경이 아니라, 다음 prototype 조정 때 숫자를 찾기 쉽게 만드는 구조 정리다.
+
 ## Prototype 구성 요소
 
 - Player: 청록색 해킹 아바타 placeholder.
@@ -35,6 +67,13 @@
 - Exit: 추출 전에는 비활성 회색, 추출 후에는 파란색으로 바뀌는 gate.
 - Hazard: scan line과 unstable tile placeholder.
 - UI: 조작 안내, HP, Trace, objective, state 표시.
+
+## 책임 분리
+
+- `HackingPrototypePlayer.gd`: 이동, 바라보는 방향, roll, hop, invulnerability, HP, shot 요청 신호를 담당한다.
+- `HackingPrototypeEnemy.gd`: 추적, projectile 피격, HP 제거, player 접촉 시 damage 요청 신호를 담당한다.
+- `HackingPrototypeProjectile.gd`: 직선 이동, lifetime, 충돌 시 damage 전달과 제거를 담당한다.
+- `HackingActionPrototype.gd`: mission state, Trace 증가, player damage 적용, objective 추출, exit 성공, UI 표시를 담당한다.
 
 ## 아직 연결하지 않은 것
 

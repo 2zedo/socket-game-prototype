@@ -6,26 +6,38 @@ const PROJECTILE_SCRIPT := preload("res://scripts/prototypes/HackingPrototypePro
 
 const PROTOTYPE_HUB_SCENE := "res://scenes/prototypes/PrototypeHub.tscn"
 
+enum MissionState {
+	READY,
+	RUNNING,
+	OBJECTIVE_EXTRACTED,
+	SUCCESS,
+	FAILED,
+}
+
 const ARENA_RECT := Rect2(Vector2(130, 90), Vector2(1020, 540))
 const START_POSITION := Vector2(250, 530)
 const OBJECTIVE_POSITION := Vector2(900, 260)
 const OBJECTIVE_RADIUS := 72.0
 const EXIT_RECT := Rect2(Vector2(160, 135), Vector2(120, 95))
-const MAX_TRACE := 100
+const WALL_THICKNESS := 36.0
+const TRACE_MAX := 100
+const SCAN_TRACE_DAMAGE := 25
+const HAZARD_TRACE_DAMAGE := 15
+const HAZARD_COOLDOWN_SECONDS := 0.55
 
 const HAZARDS := [
 	{
 		"key": "scan_line",
 		"label": "SCAN LINE",
 		"rect": Rect2(Vector2(520, 155), Vector2(28, 385)),
-		"trace": 25,
+		"trace": SCAN_TRACE_DAMAGE,
 		"color": Color(1.0, 0.12, 0.35, 0.30),
 	},
 	{
 		"key": "unstable_tile",
 		"label": "UNSTABLE TILE",
 		"rect": Rect2(Vector2(670, 390), Vector2(180, 62)),
-		"trace": 15,
+		"trace": HAZARD_TRACE_DAMAGE,
 		"color": Color(1.0, 0.54, 0.10, 0.24),
 	},
 ]
@@ -48,9 +60,7 @@ const ENEMY_SPAWNS := [
 
 var player: CharacterBody2D
 var trace := 0
-var objective_extracted := false
-var mission_state := "running"
-var state_text := "Running"
+var mission_state := MissionState.READY
 var hazard_cooldown := 0.0
 var objective_visual: Polygon2D
 var exit_visual: Polygon2D
@@ -61,7 +71,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if mission_state == "running":
+	if _is_mission_active():
 		hazard_cooldown = maxf(0.0, hazard_cooldown - delta)
 		_check_hazards()
 		_check_exit()
@@ -91,9 +101,7 @@ func _go_to_prototype_hub() -> void:
 
 func reset_prototype() -> void:
 	trace = 0
-	objective_extracted = false
-	mission_state = "running"
-	state_text = "Running"
+	mission_state = MissionState.READY
 	hazard_cooldown = 0.0
 
 	_clear_layer(background_layer)
@@ -112,7 +120,7 @@ func reset_prototype() -> void:
 	_build_exit()
 	_spawn_player()
 	_spawn_enemies()
-	_update_ui()
+	_set_mission_state(MissionState.RUNNING, "prototype reset")
 
 
 func _clear_layer(layer: Node) -> void:
@@ -146,11 +154,10 @@ func _build_background() -> void:
 
 
 func _build_walls() -> void:
-	var thickness := 36.0
-	_add_wall(Rect2(ARENA_RECT.position - Vector2(thickness, thickness), Vector2(ARENA_RECT.size.x + thickness * 2.0, thickness)))
-	_add_wall(Rect2(Vector2(ARENA_RECT.position.x - thickness, ARENA_RECT.end.y), Vector2(ARENA_RECT.size.x + thickness * 2.0, thickness)))
-	_add_wall(Rect2(ARENA_RECT.position - Vector2(thickness, 0.0), Vector2(thickness, ARENA_RECT.size.y)))
-	_add_wall(Rect2(Vector2(ARENA_RECT.end.x, ARENA_RECT.position.y), Vector2(thickness, ARENA_RECT.size.y)))
+	_add_wall(Rect2(ARENA_RECT.position - Vector2(WALL_THICKNESS, WALL_THICKNESS), Vector2(ARENA_RECT.size.x + WALL_THICKNESS * 2.0, WALL_THICKNESS)))
+	_add_wall(Rect2(Vector2(ARENA_RECT.position.x - WALL_THICKNESS, ARENA_RECT.end.y), Vector2(ARENA_RECT.size.x + WALL_THICKNESS * 2.0, WALL_THICKNESS)))
+	_add_wall(Rect2(ARENA_RECT.position - Vector2(WALL_THICKNESS, 0.0), Vector2(WALL_THICKNESS, ARENA_RECT.size.y)))
+	_add_wall(Rect2(Vector2(ARENA_RECT.end.x, ARENA_RECT.position.y), Vector2(WALL_THICKNESS, ARENA_RECT.size.y)))
 
 	_add_wall(Rect2(Vector2(410, 280), Vector2(150, 38)))
 	_add_wall(Rect2(Vector2(720, 195), Vector2(120, 34)))
@@ -210,10 +217,11 @@ func _spawn_enemies() -> void:
 		enemy.position = spawn["position"]
 		enemy_layer.add_child(enemy)
 		enemy.setup(player, spawn["kind"])
+		enemy.connect("contact_damage_requested", Callable(self, "_on_enemy_contact_damage_requested"))
 
 
 func _on_player_shot_requested(origin: Vector2, direction: Vector2) -> void:
-	if mission_state != "running":
+	if not _is_mission_active():
 		return
 
 	var projectile := Area2D.new()
@@ -226,21 +234,22 @@ func _on_player_shot_requested(origin: Vector2, direction: Vector2) -> void:
 
 func _on_player_health_changed(current_hp: int) -> void:
 	if current_hp <= 0:
-		_finish_mission("failed", "FAILED - Avatar damaged")
+		_set_mission_state(MissionState.FAILED, "avatar hp reached zero")
+
+
+func _on_enemy_contact_damage_requested(amount: int, reason: String) -> void:
+	damage_player(amount, reason)
 
 
 func _try_extract_objective() -> void:
-	if mission_state != "running" or objective_extracted or not is_instance_valid(player):
+	if mission_state != MissionState.RUNNING or not is_instance_valid(player):
 		return
 
 	if player.global_position.distance_to(OBJECTIVE_POSITION) > OBJECTIVE_RADIUS:
 		print("Hacking action prototype: objective is out of range.")
 		return
 
-	objective_extracted = true
-	state_text = "Running - Data extracted"
-	objective_visual.color = Color(0.42, 1.0, 0.72, 0.34)
-	exit_visual.color = Color(0.10, 0.50, 0.95, 0.44)
+	_set_mission_state(MissionState.OBJECTIVE_EXTRACTED, "data node extracted")
 	print("Hacking action prototype: data node extracted.")
 
 
@@ -253,47 +262,117 @@ func _check_hazards() -> void:
 	for hazard in HAZARDS:
 		var rect: Rect2 = hazard["rect"]
 		if rect.has_point(player.global_position):
-			trace = mini(MAX_TRACE, trace + int(hazard["trace"]))
-			hazard_cooldown = 0.55
-			if trace >= MAX_TRACE:
-				_finish_mission("failed", "FAILED - Trace lost")
+			add_trace(int(hazard["trace"]), str(hazard["key"]))
+			hazard_cooldown = HAZARD_COOLDOWN_SECONDS
 			return
 
 
 func _check_exit() -> void:
-	if not objective_extracted or not is_instance_valid(player):
+	if mission_state != MissionState.OBJECTIVE_EXTRACTED or not is_instance_valid(player):
 		return
 	if EXIT_RECT.has_point(player.global_position):
-		_finish_mission("success", "SUCCESS - Data extracted")
+		_set_mission_state(MissionState.SUCCESS, "exit reached")
 
 
-func _finish_mission(next_state: String, next_text: String) -> void:
-	if mission_state != "running":
+func add_trace(amount: int, reason: String = "") -> void:
+	if not _is_mission_active() or amount <= 0:
 		return
-	mission_state = next_state
-	state_text = next_text
 
+	trace = mini(TRACE_MAX, trace + amount)
+	if reason != "":
+		print("Hacking action prototype: trace +%d / reason=%s / trace=%d" % [amount, reason, trace])
+	if trace >= TRACE_MAX:
+		_set_mission_state(MissionState.FAILED, "trace reached 100")
+
+
+func damage_player(amount: int, reason: String = "") -> void:
+	if not _is_mission_active() or not is_instance_valid(player) or amount <= 0:
+		return
+
+	var did_damage := true
+	if player.has_method("take_damage"):
+		did_damage = player.take_damage(amount)
+	if did_damage and reason != "":
+		print("Hacking action prototype: player damage %d / reason=%s" % [amount, reason])
+
+
+func _set_mission_state(next_state: int, reason: String = "") -> void:
+	if mission_state == next_state:
+		_update_ui()
+		return
+
+	mission_state = next_state
+	_update_mission_visuals()
+
+	if mission_state == MissionState.SUCCESS or mission_state == MissionState.FAILED:
+		_stop_active_actors()
+
+	if reason != "":
+		print("Hacking action prototype: state=%s / reason=%s" % [_get_state_name(), reason])
+	_update_ui()
+
+
+func _stop_active_actors() -> void:
 	if is_instance_valid(player) and player.has_method("set_controls_enabled"):
 		player.set_controls_enabled(false)
 	for enemy in enemy_layer.get_children():
 		enemy.set_physics_process(false)
 	for projectile in projectile_layer.get_children():
 		projectile.queue_free()
-	print("Hacking action prototype: %s" % state_text)
+
+
+func _update_mission_visuals() -> void:
+	if is_instance_valid(objective_visual):
+		if mission_state == MissionState.OBJECTIVE_EXTRACTED or mission_state == MissionState.SUCCESS:
+			objective_visual.color = Color(0.42, 1.0, 0.72, 0.34)
+		else:
+			objective_visual.color = Color(0.14, 0.82, 0.92, 0.28)
+
+	if is_instance_valid(exit_visual):
+		if mission_state == MissionState.OBJECTIVE_EXTRACTED:
+			exit_visual.color = Color(0.10, 0.50, 0.95, 0.44)
+		elif mission_state == MissionState.SUCCESS:
+			exit_visual.color = Color(0.28, 0.90, 0.95, 0.58)
+		else:
+			exit_visual.color = Color(0.22, 0.24, 0.30, 0.48)
+
+
+func _is_mission_active() -> bool:
+	return mission_state == MissionState.RUNNING or mission_state == MissionState.OBJECTIVE_EXTRACTED
+
+
+func _get_state_name() -> String:
+	match mission_state:
+		MissionState.READY:
+			return "READY"
+		MissionState.RUNNING:
+			return "RUNNING"
+		MissionState.OBJECTIVE_EXTRACTED:
+			return "OBJECTIVE_EXTRACTED"
+		MissionState.SUCCESS:
+			return "SUCCESS"
+		MissionState.FAILED:
+			return "FAILED"
+	return "UNKNOWN"
+
+
+func _get_objective_text() -> String:
+	match mission_state:
+		MissionState.RUNNING:
+			return "Find data node"
+		MissionState.OBJECTIVE_EXTRACTED:
+			return "Reach exit"
+		MissionState.SUCCESS:
+			return "Data extracted"
+		MissionState.FAILED:
+			return "Mission failed"
+	return "Stand by"
 
 
 func _update_ui() -> void:
 	var hp_text := "-"
 	if is_instance_valid(player):
 		hp_text = str(player.hp)
-
-	var objective_text := "Find data node"
-	if objective_extracted:
-		objective_text = "Reach extraction gate"
-	if mission_state == "success":
-		objective_text = "Complete"
-	elif mission_state == "failed":
-		objective_text = "Restart with R"
 
 	ui_label.text = "\n".join([
 		"HACKING ACTION PROTOTYPE",
@@ -307,8 +386,8 @@ func _update_ui() -> void:
 		"",
 		"HP: %s" % hp_text,
 		"Trace: %d%%" % trace,
-		"Objective: %s" % objective_text,
-		"State: %s" % state_text,
+		"Objective: %s" % _get_objective_text(),
+		"State: %s" % _get_state_name(),
 	])
 
 

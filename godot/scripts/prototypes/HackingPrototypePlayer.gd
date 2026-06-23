@@ -3,12 +3,25 @@ extends CharacterBody2D
 signal shot_requested(origin: Vector2, direction: Vector2)
 signal health_changed(current_hp: int)
 
-@export var move_speed := 220.0
-@export var roll_speed := 420.0
-@export var roll_duration := 0.18
-@export var roll_cooldown := 0.45
-@export var hop_duration := 0.25
-@export var max_hp := 3
+const PLAYER_MOVE_SPEED := 220.0
+const PLAYER_ROLL_SPEED := 420.0
+const PLAYER_ROLL_DURATION := 0.18
+const PLAYER_ROLL_COOLDOWN := 0.45
+const PLAYER_HOP_DURATION := 0.25
+const PLAYER_MAX_HP := 3
+const PLAYER_INVULNERABLE_DURATION := 0.65
+const PLAYER_COLLISION_RADIUS := 13.0
+const PLAYER_OUTER_DRAW_RADIUS := 14.0
+const PLAYER_INNER_DRAW_RADIUS := 10.0
+const PLAYER_FACING_LINE_LENGTH := 22.0
+const SHOT_ORIGIN_OFFSET := 20.0
+
+@export var move_speed := PLAYER_MOVE_SPEED
+@export var roll_speed := PLAYER_ROLL_SPEED
+@export var roll_duration := PLAYER_ROLL_DURATION
+@export var roll_cooldown := PLAYER_ROLL_COOLDOWN
+@export var hop_duration := PLAYER_HOP_DURATION
+@export var max_hp := PLAYER_MAX_HP
 
 var hp := max_hp
 var facing_direction := Vector2.RIGHT
@@ -26,7 +39,7 @@ func _ready() -> void:
 
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
-	circle.radius = 13.0
+	circle.radius = PLAYER_COLLISION_RADIUS
 	shape.shape = circle
 	add_child(shape)
 
@@ -76,7 +89,7 @@ func take_damage(amount: int) -> bool:
 		return false
 
 	hp = max(0, hp - amount)
-	invulnerable_timer = 0.65
+	invulnerable_timer = PLAYER_INVULNERABLE_DURATION
 	health_changed.emit(hp)
 	queue_redraw()
 	return true
@@ -127,7 +140,7 @@ func _request_shot(direction: Vector2) -> void:
 	var shot_direction := direction.normalized()
 	if shot_direction.length() <= 0.0:
 		shot_direction = facing_direction
-	shot_requested.emit(global_position + shot_direction * 20.0, shot_direction)
+	shot_requested.emit(global_position + shot_direction * SHOT_ORIGIN_OFFSET, shot_direction)
 
 
 func _start_roll() -> void:
@@ -156,6 +169,6 @@ func _draw() -> void:
 	if is_rolling():
 		body_color = Color(0.95, 0.45, 1.0, 1.0)
 
-	draw_circle(Vector2.ZERO, 14.0, Color(0.02, 0.05, 0.08, 1.0))
-	draw_circle(Vector2.ZERO, 10.0, body_color)
-	draw_line(Vector2.ZERO, facing_direction.normalized() * 22.0, Color(1.0, 1.0, 1.0, 0.85), 2.0)
+	draw_circle(Vector2.ZERO, PLAYER_OUTER_DRAW_RADIUS, Color(0.02, 0.05, 0.08, 1.0))
+	draw_circle(Vector2.ZERO, PLAYER_INNER_DRAW_RADIUS, body_color)
+	draw_line(Vector2.ZERO, facing_direction.normalized() * PLAYER_FACING_LINE_LENGTH, Color(1.0, 1.0, 1.0, 0.85), 2.0)
