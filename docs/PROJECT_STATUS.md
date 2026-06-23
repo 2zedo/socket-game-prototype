@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `517c6bf`
-- Phase: PrototypeHub perspective blockout registration
+- Current commit at task start: `ed97680`
+- Phase: Prototype perspective playtest checklist update
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -70,7 +70,7 @@
 - Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
 - GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
 - Git LFS is not enabled yet; future large-art, atlas, spritesheet, source-art, and audio decisions are tracked in `docs/GIT_LFS_ASSET_POLICY.md`.
-- Prototype GUI playtest checks for Hub, Quarterview, Hacking, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
+- Prototype GUI playtest checks for Hub, Quarterview, Hacking, perspective blockouts, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
 - Viewpoint and prototype terminology is clarified in `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: `QuarterviewRoomPrototype` remains an object / interaction contract prototype, while `HackingActionPrototype` remains a control / state arena pending later perspective blockouts.
 
 ## Current DAY 1 Decisions
@@ -179,6 +179,8 @@
 - `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: distinguish the existing Hacking Action control prototype from the new `3/4 top-down` perspective blockout.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Perspective Blockout and Hacking Perspective Blockout while preserving existing prototype entries.
 - `docs/PROTOTYPE_HUB_OVERVIEW.md`, `docs/PROTOTYPE_HUB.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the five Hub entries, shortcut keys, and contract-vs-perspective distinction.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: expand Quarterview and Hacking perspective blockout GUI checks with viewpoint, axis, scale, occlusion, and role-separation criteria.
+- `docs/PROJECT_STATUS.md`: records the checklist update and keeps next manual validation focused on the perspective blockouts.
 
 ## Validation Results
 
@@ -235,6 +237,7 @@
 - Quarterview perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
 - PrototypeHub perspective blockout 등록 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub`, `QuarterviewPerspectiveBlockout`, and `HackingPerspectiveBlockout`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Prototype perspective checklist 문서 갱신 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues

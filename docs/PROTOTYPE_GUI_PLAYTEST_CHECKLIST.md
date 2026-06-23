@@ -66,10 +66,15 @@
 ## QuarterviewPerspectiveBlockout
 
 - [ ] Scene이 정상 실행된다.
-- [ ] 사선 바닥과 뒤/측면 벽이 쿼터뷰 실내 시점처럼 읽힌다.
-- [ ] Bed / Desk / Fridge 등 pseudo 3D block의 축이 서로 맞아 보인다.
+- [ ] 바닥이 완전 top-down 사각형이 아니라 사선 / 쿼터뷰 평면처럼 보인다.
+- [ ] 뒤쪽 벽과 측면 벽이 보인다.
+- [ ] 앞쪽 벽이 시야를 과하게 막지 않는다.
+- [ ] Bed / Desk / Fridge가 pseudo 3D block처럼 보인다.
+- [ ] 모든 오브젝트가 같은 방 축을 공유한다.
+- [ ] Player와 가구 크기 비율이 괜찮다.
 - [ ] Player placeholder 이동과 큰 가구 collision이 동작한다.
 - [ ] Desk / Bed 앞뒤를 지나가며 가림 테스트가 가능하다.
+- [ ] 기존 `QuarterviewRoomPrototype`과 달리 object / interaction contract가 아니라 시점 검증용이라는 점이 이해된다.
 - [ ] `D` 키로 debug overlay ON / OFF가 된다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
 
@@ -105,9 +110,11 @@
 ## HackingPerspectiveBlockout
 
 - [ ] Scene이 정상 실행된다.
-- [ ] 완전 정수리뷰보다 `3/4 top-down` cyber action 시점에 가깝게 보인다.
+- [ ] 완전 정수리뷰보다 `3/4 top-down` 느낌이 난다.
+- [ ] 사이버 공간 바닥 / 장벽 / 오브젝트에 높이감이 있다.
 - [ ] 사선 floor / raised barrier / data node / exit gate가 구분된다.
 - [ ] Player placeholder 이동이 가능하다.
+- [ ] 기존 `HackingActionPrototype`과 달리 gameplay 조작감 확인이 아니라 시점 확인용이라는 점이 이해된다.
 - [ ] `D` 키로 debug overlay ON / OFF가 된다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
 
@@ -149,8 +156,10 @@ SFX는 현재 prototype 전용이다. Main / DAY1 사운드 시스템으로 확�
 - Hub에서 각 prototype에 진입 / 복귀할 수 있다.
 - Quarterview 기본 화면이 지나치게 지저분하지 않다.
 - Quarterview Perspective Blockout이 실제 쿼터뷰 시점 검증용으로 구분된다.
+- Quarterview Perspective Blockout이 채택 콘티 방향에 더 가까운 쿼터뷰 실내 느낌을 준다.
 - Hacking prototype의 기본 미션 흐름이 이해된다.
 - Hacking Perspective Blockout이 Hacking Action 조작 prototype과 구분된다.
+- Hacking Perspective Blockout이 완전 정수리뷰보다 내려다보는 액션 시점에 가깝다.
 - SFX와 input prompt가 prototype 확인을 방해하지 않는다.
 
 ### Needs Fix 기준
@@ -160,6 +169,10 @@ SFX는 현재 prototype 전용이다. Main / DAY1 사운드 시스템으로 확�
 - Quarterview panel이 조작을 방해한다.
 - Hacking 조작 안내가 너무 복잡하다.
 - Hub에서 진입 / 복귀가 헷갈린다.
+- Perspective blockout이 다시 평면 / 정수리뷰처럼 보인다.
+- 오브젝트 축이 서로 다르다.
+- 앞벽이나 가구가 시야를 과하게 막는다.
+- 방이 너무 넓거나 하층 주거 공간보다 기관 연구실처럼 보인다.
 
 ## Bug Report Template
 
