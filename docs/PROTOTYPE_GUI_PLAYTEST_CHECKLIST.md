@@ -43,6 +43,7 @@
 ## QuarterviewRoomPrototype
 
 - [ ] Scene이 정상 실행된다.
+- [ ] 화면 안내가 `Room Object Contract Prototype`으로 표시되고, 최종 쿼터뷰 아트 / 시점 검증용이 아니라는 점이 이해된다.
 - [ ] 기본 화면에서 전체 label / range / collision이 숨겨져 있다.
 - [ ] 가까운 오브젝트에만 `[E]` prompt가 표시된다.
 - [ ] `[E]` prompt의 input icon과 텍스트가 겹치지 않는다.
@@ -70,6 +71,7 @@
 - [ ] 뒤쪽 벽과 측면 벽이 보인다.
 - [ ] 앞쪽 벽이 시야를 과하게 막지 않는다.
 - [ ] Bed / Desk / Fridge가 pseudo 3D block처럼 보인다.
+- [ ] Comm / NODE-17 / Speaker / UPS / Signal Booster가 작업 장비 구역에 속한 block으로 읽힌다.
 - [ ] 모든 오브젝트가 같은 방 축을 공유한다.
 - [ ] Player와 가구 크기 비율이 괜찮다.
 - [ ] Player placeholder 이동과 큰 가구 collision이 동작한다.

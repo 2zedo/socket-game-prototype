@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `ed97680`
-- Phase: Prototype perspective playtest checklist update
+- Current commit at task start: `ebc3d76`
+- Phase: Quarterview perspective blockout completion
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -181,6 +181,10 @@
 - `docs/PROTOTYPE_HUB_OVERVIEW.md`, `docs/PROTOTYPE_HUB.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the five Hub entries, shortcut keys, and contract-vs-perspective distinction.
 - `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: expand Quarterview and Hacking perspective blockout GUI checks with viewpoint, axis, scale, occlusion, and role-separation criteria.
 - `docs/PROJECT_STATUS.md`: records the checklist update and keeps next manual validation focused on the perspective blockouts.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: adds a QuarterviewRoomPrototype GUI check that the scene presents itself as an object / interaction contract prototype, not final quarterview art.
+- `docs/PROJECT_STATUS.md`: records that no scene/code change was needed because the visible QuarterviewRoomPrototype and PrototypeHub labels already use the contract-prototype wording.
+- `godot/scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`, `godot/scripts/prototypes/QuarterviewPerspectiveBlockout.gd`, `godot/scripts/prototypes/PerspectiveBlockoutPlayer.gd`: reinforce the existing perspective blockout with visible player placeholder drawing, final-art warning copy, and additional work / audio / signal equipment blocks.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: adds a GUI check that Comm, NODE-17, Speaker, UPS, and Signal Booster read as work-equipment blocks in the perspective scene.
 
 ## Validation Results
 
@@ -238,6 +242,8 @@
 - Hacking perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
 - PrototypeHub perspective blockout 등록 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub`, `QuarterviewPerspectiveBlockout`, and `HackingPerspectiveBlockout`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Prototype perspective checklist 문서 갱신 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues

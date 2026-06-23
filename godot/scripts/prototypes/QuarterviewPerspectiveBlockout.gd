@@ -82,6 +82,42 @@ const PSEUDO_BLOCKS := [
 		"color": Color(0.16, 0.11, 0.23, 1.0),
 		"blocker": Rect2(Vector2(876, 352), Vector2(80, 80)),
 	},
+	{
+		"key": "comm",
+		"label": "COMM",
+		"position": Vector2(830, 392),
+		"size": Vector2(86, 46),
+		"height": 42.0,
+		"color": Color(0.12, 0.18, 0.22, 1.0),
+		"blocker": Rect2(Vector2(786, 366), Vector2(98, 62)),
+	},
+	{
+		"key": "speaker",
+		"label": "SPEAKER",
+		"position": Vector2(972, 408),
+		"size": Vector2(46, 46),
+		"height": 52.0,
+		"color": Color(0.08, 0.09, 0.10, 1.0),
+		"blocker": Rect2(Vector2(946, 382), Vector2(58, 72)),
+	},
+	{
+		"key": "ups",
+		"label": "UPS",
+		"position": Vector2(910, 560),
+		"size": Vector2(82, 62),
+		"height": 54.0,
+		"color": Color(0.10, 0.13, 0.14, 1.0),
+		"blocker": Rect2(Vector2(864, 530), Vector2(96, 82)),
+	},
+	{
+		"key": "signal_booster",
+		"label": "BOOST",
+		"position": Vector2(678, 548),
+		"size": Vector2(72, 48),
+		"height": 50.0,
+		"color": Color(0.10, 0.17, 0.16, 1.0),
+		"blocker": Rect2(Vector2(638, 522), Vector2(88, 70)),
+	},
 ]
 
 var floor_points := PackedVector2Array([
