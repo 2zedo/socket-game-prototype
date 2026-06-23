@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8922e32`
-- Phase: Codex / Godot workflow documentation
+- Current commit at task start: `9e42f9e`
+- Phase: SurvivalState GUT test foundation
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -64,6 +64,7 @@
 - Installed third-party Asset Library packages are inventoried in `docs/THIRD_PARTY_ASSET_INVENTORY.md` before any SFX, particle, input prompt, or license UI wiring.
 - Prototype-only SFX now uses a small copied Kenney subset under `godot/assets/audio/third_party/kenney/`; Main/DAY1 still has no SFX connection.
 - Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
+- GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
 
 ## Current DAY 1 Decisions
 
@@ -150,6 +151,9 @@
 - `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`: wire selected SFX to prototype-only UI/action feedback.
 - `docs/THIRD_PARTY_ASSET_INVENTORY.md`: updates Kenney UI Audio and Interface Sounds current use and commit policy for selected prototype SFX.
 - `docs/CODEX_GODOT_WORKFLOW.md`: records Codex, User, ChatGPT, Godot AI MCP, and Godot Editor responsibilities plus workflow validation and staging rules.
+- `godot/addons/gut/`: installs GUT `v9.5.0` for Godot `4.5.x` unit tests.
+- `godot/test/unit/test_survival_state.gd`: covers DAY 1 device Resource values, connected/active separation, active drain sums, modal pause, and Phone battery warning rearm behavior.
+- `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
 
 ## Validation Results
 
@@ -197,6 +201,7 @@
 - Installed third-party asset folders, their source-side `.import` / `.uid` metadata, and `godot/LICENSE.txt` remain unstaged in this docs-only pass.
 - Prototype SFX 1차 적용 후 `git diff --check`와 Godot 4.5.1 headless startup for PrototypeHub, QuarterviewRoomPrototype, and HackingActionPrototype이 완료됐다.
 - Codex / Godot workflow 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- SurvivalState GUT 테스트 추가 후 `git diff --check`, Godot `--headless --import`, and GUT CLI `5/5 passed`가 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -233,6 +238,7 @@
 - Quarterview debug overlay의 `D` toggle, 기본 화면 prompt-only 상태, debug ON label/range/blocker 표시는 GUI 수동 확인이 필요하다.
 - Godot AI MCP plugin was checked through project/headless startup only; editor-side MCP operations still need manual confirmation in the Godot editor when used next.
 - Installed Kenney / Simple License assets are documented but not committed or wired; decide which packages should become tracked project dependencies before applying them.
+- GUT CLI requires a headless import once after addon installation so Godot registers GUT class names before running tests.
 
 ## Next Recommended Task
 
