@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `fa2c525`
-- Phase: Hacking Action prototype feedback cleanup
+- Current commit at task start: `bea45e4`
+- Phase: Godot AI MCP setup and metadata hygiene
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -60,6 +60,7 @@
 - Quarterview, Hacking Action, Title / Pause Menu prototype은 `B` 또는 `Backspace`로 `PrototypeHub`에 복귀할 수 있으며, 각 prototype의 기존 `ESC` 의미는 유지한다.
 - Quarterview Room prototype은 가까운 오브젝트에서 `E`를 누르면 registry 기반 object interaction panel을 열고, Primary / Inspect / Close button은 실제 기능 연결 없이 no-op 로그만 출력한다.
 - Quarterview Room prototype은 기본 화면에서 전체 debug label / collision / interaction range를 숨기고, `D`로 prototype 전용 debug overlay를 토글한다.
+- Godot AI MCP editor plugin is installed under `res://addons/godot_ai`, enabled in `project.godot`, and paired with the `_mcp_game_helper` autoload.
 
 ## Current DAY 1 Decisions
 
@@ -136,6 +137,9 @@
 - `docs/QUARTERVIEW_OBJECT_CONTRACT.md`: role 기반 Primary action label 기준을 추가한다.
 - `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: `D` debug overlay toggle, 기본 화면 prompt 축약, label/range/blocker 숨김, 오른쪽 중앙 고정 panel 위치를 적용한다.
 - `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md`: debug overlay 표시 정책과 panel 상세 정보 표시 조건을 기록한다.
+- `godot/project.godot`, `godot/addons/godot_ai/**`, `godot/godot-ai-LICENSE.txt`: Godot AI MCP editor plugin, runtime helper autoload, and plugin license are tracked for editor/MCP integration.
+- `godot/assets/**/*.png.import`, `godot/scripts/prototypes/*.gd.uid`: source-side Godot metadata generated for tracked assets and prototype scripts is explicitly tracked per repository policy.
+- `.gitignore`: no change required; it already ignores `.godot/` caches while allowing source-side `.import` and `.uid` metadata.
 
 ## Validation Results
 
@@ -178,6 +182,7 @@
 - Quarterview debug 표시 정리 후 `git diff --check`와 Quarterview / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Hacking Action prototype 구조 정리 후 `git diff --check`와 HackingAction / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
 - Hacking Action feedback 정리 후 `git diff --check`와 HackingAction / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
+- Godot AI MCP setup commit 준비 후 `git diff --check`와 Godot 4.5.1 headless project startup이 완료됐다.
 - Pre-existing untracked source-side `.png.import` files remain unrelated and unstaged.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
@@ -212,6 +217,7 @@
 - 각 prototype의 `B` / `Backspace` 복귀 입력은 GUI 수동 확인이 필요하다.
 - Quarterview object interaction panel의 `E` open, Primary / Inspect / Close button, `ESC` close, 이동 잠금은 GUI 수동 확인이 필요하다.
 - Quarterview debug overlay의 `D` toggle, 기본 화면 prompt-only 상태, debug ON label/range/blocker 표시는 GUI 수동 확인이 필요하다.
+- Godot AI MCP plugin was checked through project/headless startup only; editor-side MCP operations still need manual confirmation in the Godot editor when used next.
 
 ## Next Recommended Task
 
