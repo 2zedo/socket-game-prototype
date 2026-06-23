@@ -31,7 +31,7 @@ Codex가 이후 작업을 시작할 때, 이미 구현된 시스템과 아직 �
 
 - 집 화면은 장기적으로 쿼터뷰 / 아이소메트릭 느낌의 방으로 전환을 검토한다.
 - 쿼터뷰 전환은 바로 메인 씬을 바꾸지 않고, 별도 prototype scene에서 먼저 검증한다.
-- 노트북은 장기적으로 별도 탑뷰 액션 해킹 미션으로 들어가는 입구가 된다.
+- 노트북은 장기적으로 별도 `3/4 top-down` 해킹 액션 미션으로 들어가는 입구가 된다.
 - 해킹 미션 결과는 Grid Credit, 정보 플래그, Result 기록, 시간 / 전력 손실과 연결될 수 있다.
 - 유이는 하층민 출신의 비공식 정보 노동자, 신호 해석가, 불법 로그 복원자다.
 - 세계관은 `THE GRID`의 전력 배급, 정보 통제, 바깥 세계에 대한 의심을 중심으로 한다.
@@ -43,7 +43,7 @@ Codex가 이후 작업을 시작할 때, 이미 구현된 시스템과 아직 �
 | --- | --- | --- |
 | 집 화면 | 탑뷰 방 | 쿼터뷰 방 prototype 검토 |
 | 노트북 | 상호작용 오브젝트 | 해킹 액션 미션 진입점 |
-| 해킹 의뢰 | 미구현 | 별도 탑뷰 액션 모드 |
+| 해킹 의뢰 | 미구현 | 별도 `3/4 top-down` 해킹 액션 모드 |
 | 전력 | DAY 1 전력 소비 구현 | 해킹 결과 / 경제와 연결 |
 | 장치 데이터 | `.tres` Resource 기반 | 더 많은 생활 전자기기와 의뢰 조건으로 확장 |
 | Phone | 현재 상태 확인 UI | 의뢰 메시지와 결과 확인으로 확장 가능 |
@@ -73,6 +73,7 @@ Codex가 이후 작업을 시작할 때, 이미 구현된 시스템과 아직 �
 - 쿼터뷰와 해킹 액션은 바로 본 구현으로 들어가지 않는다.
 - 새 기능은 먼저 작고 독립된 prototype으로 검증한다.
 - 이미지 참고 자료는 분위기 참고용이며, 실제 UI나 에셋으로 복제하지 않는다.
+- 시점과 prototype 역할은 `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`를 기준으로 구분한다.
 
 ## 참고 문서
 
@@ -83,5 +84,6 @@ Codex가 이후 작업을 시작할 때, 이미 구현된 시스템과 아직 �
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`
 - `docs/HACKING_ACTION_DIRECTION.md`
 - `docs/HACKING_ACTION_MISSION_LOOP.md`
+- `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`
 - `docs/GODOT_DAY1_MVP_PLAN.md`
 - `docs/PROJECT_STATUS.md`

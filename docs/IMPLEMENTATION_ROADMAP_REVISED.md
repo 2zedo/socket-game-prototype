@@ -13,7 +13,7 @@
 - 기존 탑뷰 방은 당장 유지한다.
 - 새 기능은 작은 prototype으로 시작한다.
 - 쿼터뷰와 해킹 액션은 바로 본 구현으로 들어가지 않는다.
-- 먼저 별도 prototype scene으로 검증한 뒤, 조작감과 비용을 보고 본 전환 여부를 결정한다.
+- 먼저 별도 prototype 또는 perspective blockout scene으로 검증한 뒤, 조작감과 비용을 보고 본 전환 여부를 결정한다.
 - 문서와 코드에서 "현재 구현"과 "장기 방향"을 섞지 않는다.
 - 이미지 참고 자료는 분위기 참고용이며, 실제 에셋이나 UI로 복제하지 않는다.
 
@@ -24,8 +24,8 @@
 3. 해킹 액션 prototype scene 1개 제작
 4. 노트북에서 해킹 미션 진입 / 복귀 연결
 5. 해킹 결과를 Result / 정보 플래그에 연결
-6. 쿼터뷰 방 prototype scene 제작
-7. 쿼터뷰 이동 / 가림 / Y-sort / 상호작용 검증
+6. 쿼터뷰 방 object / interaction prototype 유지
+7. 별도 쿼터뷰 perspective blockout으로 실제 시점 / 이동 / 가림 / Y-sort 검증
 8. 본격 쿼터뷰 전환 여부 결정
 9. 장기 경제 / 전력 토큰 / Grid Credit 설계
 10. DAY 2+ 콘텐츠 확장
@@ -100,7 +100,9 @@
 
 쿼터뷰와 해킹 액션은 바로 본 구현으로 들어가지 않는다.
 
-먼저 별도 prototype scene으로 검증한 뒤, 조작감과 비용을 보고 본 전환 여부를 결정한다. prototype에서 검증할 것은 완성도 높은 아트가 아니라, 아래 요소다.
+먼저 별도 prototype scene 또는 perspective blockout scene으로 검증한 뒤, 조작감과 비용을 보고 본 전환 여부를 결정한다. 기존 `QuarterviewRoomPrototype`은 object / interaction contract 검증용이며, 실제 쿼터뷰 시점 검증은 별도 blockout에서 진행한다. `HackingActionPrototype`은 조작 / 상태 흐름 검증용이며, 장기 목표 시점은 완전 정수리뷰가 아닌 `3/4 top-down cyber action view`다. 자세한 용어는 `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`를 따른다.
+
+prototype에서 검증할 것은 완성도 높은 아트가 아니라, 아래 요소다.
 
 - 조작감
 - 카메라와 시인성
