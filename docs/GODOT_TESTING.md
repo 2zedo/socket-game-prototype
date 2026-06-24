@@ -22,6 +22,7 @@ GUT `v9.5.0` is used because the project currently runs on Godot `4.5.1`. Do not
 - `godot/test/unit/test_room_object_definition.gd`
 - `godot/test/unit/test_room_scene_contract.gd`
 - `godot/test/unit/test_prototype_scene_utils.gd`
+- `godot/test/unit/test_hacking_action_state_machine.gd`
 
 Covered behavior:
 
@@ -34,6 +35,7 @@ Covered behavior:
 - `RoomObjectDefinition` helper behavior, primary action label mapping, Resource validity, and key room object roles.
 - `RoomSceneContract` signal names, action constants, no-op skeleton method safety, and interaction payload shape.
 - `PrototypeSceneUtils` shared B / Backspace, R, D, E / Enter, and ESC input-event checks.
+- `HackingActionPrototype` scene instantiation, initial mission state, objective extraction, exit success, Trace failure, HP failure, reset, and failed-state exit guard.
 
 ## Command Line
 
@@ -49,6 +51,12 @@ Individual test files can still be run with `-gtest` when isolating a failure:
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_survival_state.gd -gexit
 ```
 
+Run the Hacking Action state-machine test directly with:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_hacking_action_state_machine.gd -gexit
+```
+
 For all future GUT tests, prefer adding test files under:
 
 ```text
@@ -61,3 +69,4 @@ godot/test/unit/
 - Do not modify `SurvivalState.gd` just to make a test pass unless the user explicitly asks for a behavior fix.
 - UI, scene layout, mouse drag, and visual feedback still require Godot Editor manual checks.
 - Prototype tests should stay separate from Main / DAY 1 tests unless a task explicitly connects those systems.
+- `test_hacking_action_state_machine.gd` protects state flow only; it does not verify gameplay feel, visual perspective, or GUI input timing.

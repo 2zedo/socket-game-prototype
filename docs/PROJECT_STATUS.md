@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `c78ad36`
-- Phase: GUT test expansion
+- Current commit at task start: `182e242`
+- Phase: Hacking state machine GUT coverage
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -70,6 +70,7 @@
 - Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
 - GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
 - The GUT unit suite now also covers `DeviceDefinition` resources, `RoomObjectDefinition` helpers/resources, the `RoomSceneContract` skeleton, and `PrototypeSceneUtils` input helper contracts.
+- `HackingActionPrototype` mission state flow is covered by GUT for initial state, objective extraction, exit success, Trace failure, HP failure, reset, and failed-state exit guard.
 - Git LFS is not enabled yet; future large-art, atlas, spritesheet, source-art, and audio decisions are tracked in `docs/GIT_LFS_ASSET_POLICY.md`.
 - Prototype GUI playtest checks for Hub, Quarterview, Hacking, perspective blockouts, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
 - Viewpoint and prototype terminology is clarified in `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: `QuarterviewRoomPrototype` remains an object / interaction contract prototype, while `HackingActionPrototype` remains a control / state arena pending later perspective blockouts.
@@ -176,6 +177,7 @@
 - `godot/test/unit/test_room_object_definition.gd`: checks `RoomObjectDefinition` helpers, role action labels, Resource validity, and key object roles.
 - `godot/test/unit/test_room_scene_contract.gd`: checks `RoomSceneContract` signal names, constants, no-op skeleton methods, and payload helper.
 - `godot/test/unit/test_prototype_scene_utils.gd`: checks prototype-only shared input rules for Hub back, restart, debug, confirm, and cancel events.
+- `godot/test/unit/test_hacking_action_state_machine.gd`: checks Hacking Action scene instantiate, mission state transitions, objective / exit activation, Trace / HP failure, reset, and failed-state exit guard.
 - `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
 - `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
 - `docs/ASSET_PIPELINE.md`: links large-asset and LFS handling back to the dedicated Git LFS policy.
@@ -294,6 +296,7 @@
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
 - GUT 테스트 확장 후 `git diff --check`와 full GUT unit suite `26/26 passed`가 완료됐다.
+- Hacking state machine 테스트 추가 후 `git diff --check`, Hacking state-machine GUT `8/8 passed`, SurvivalState GUT `5/5 passed`, and full GUT unit suite `34/34 passed`가 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -342,11 +345,11 @@
 - Quarterview Gameplay Sandbox Bed End Day confirmation needs GUI checks for Bed prompt, Primary transition, Confirm state, Cancel / Close / ESC unlock, `R` restart, and B / Backspace Hub return.
 - Quarterview Gameplay Sandbox Phone panel needs GUI checks for `Tab` open / close, phone object Primary open, `ESC` / Close behavior, movement lock, and B / Backspace Hub return.
 - Quarterview Gameplay Sandbox Outlet panel needs GUI checks for power object Primary open, `ESC` / Close behavior, mock buttons, movement lock, and B / Backspace Hub return.
-- Hacking Action mission state, Trace / HP transitions, and objective / exit flow are not covered by GUT yet; keep that for the next dedicated test pass.
+- Hacking Action mission state is now covered by GUT, but movement feel, input timing, combat feel, and visual perspective remain GUI/manual checks.
 
 ## Next Recommended Task
 
-1. `HackingActionPrototype` GUT 테스트를 별도 작업으로 추가한다. 시작 파일은 `HackingActionPrototype.gd`, `HackingPrototypePlayer.gd`, `HackingPrototypeEnemy.gd`, `HackingPrototypeProjectile.gd`이며, 완료 기준은 mission state, objective extraction, exit activation, HP failure, Trace failure를 production gameplay 변경 없이 보호하는 것이다.
+1. `HackingActionPrototype.tscn`을 GUI로 실행해 movement, shot, roll, hop, damage feedback, event label timing, `R` restart, and B / Backspace Hub return이 GUT로 보호된 state flow와 함께 실제 조작감에서도 자연스러운지 확인한다.
 2. `QuarterviewGameplaySandbox.tscn`을 GUI로 실행해 Bed / Phone / Power panels, mock buttons, movement lock, `ESC`, `R`, and B / Backspace flow가 Main / Result / SurvivalState 연결 없이 동작하는지 확인한다.
 3. 다음 sandbox 단계로 active / connected visual sync 후보를 검토한다. 시작 파일은 `QuarterviewGameplaySandbox.gd`, `QuarterviewSandboxRoomStub.gd`, `RoomSceneContract.gd`, `RoomObjectDefinition.gd`이며, 완료 기준은 sandbox visual state만 갱신하고 실제 `SurvivalState` power drain이나 Main wiring을 건드리지 않는 것이다.
 

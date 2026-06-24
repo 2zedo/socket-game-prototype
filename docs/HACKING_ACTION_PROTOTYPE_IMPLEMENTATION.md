@@ -57,6 +57,19 @@ RUNNING / OBJECTIVE_EXTRACTED
 
 상태 전환은 `_set_mission_state()`를 통해 처리하며, objective / exit 색상과 UI objective 문구도 이 상태를 기준으로 갱신한다.
 
+## GUT 테스트 범위
+
+`res://test/unit/test_hacking_action_state_machine.gd`는 `HackingActionPrototype` scene을 instantiate해서 state machine의 현재 동작을 보호한다.
+
+- scene instantiate와 초기 `RUNNING` 상태.
+- objective extraction 후 `OBJECTIVE_EXTRACTED` 상태와 exit 활성화.
+- objective 후 exit 도달 시 `SUCCESS`.
+- Trace `100%` 도달과 HP `0` 도달 시 `FAILED`.
+- `reset_prototype()` 후 trace, HP, objective / exit 상태 초기화.
+- `FAILED` 상태에서는 exit check가 success로 전환하지 않는 guard.
+
+이 테스트는 조작감, GUI 입력 타이밍, hit feel, 또는 `3/4 top-down` 시점 품질을 검증하지 않는다. 해당 항목은 Godot Editor GUI 수동 확인과 별도 perspective blockout 검증 대상으로 둔다.
+
 ## Tuning Constants
 
 prototype 조정값은 각 책임 script 상단에 상수로 모았다.
