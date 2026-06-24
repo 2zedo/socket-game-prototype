@@ -203,6 +203,15 @@ Future props / cable atlas check:
 - [ ] Cable visuals are not mistaken for actual power logic.
 - [ ] Props / cable categories are not mixed with furniture, appliance, work-device, or FX atlases.
 
+Future hacking arena tiles check:
+
+- [ ] Tile regions display without cropping.
+- [ ] Floor / wall / hazard / objective categories are clear.
+- [ ] Collision / navigation hints match visual intent.
+- [ ] Cyber / network arena style is preserved.
+- [ ] Tiles do not look like fantasy dungeon assets.
+- [ ] Player / enemy / projectile readability remains clear.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.

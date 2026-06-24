@@ -109,6 +109,7 @@
 - 현재 노트북 사용은 별도 액션 미션으로 이어지지 않는다.
 - 현재 `HackingActionPrototype`은 조작 / 상태 흐름 검증용이며, 장기 목표 시점 자체는 `res://scenes/prototypes/HackingPerspectiveBlockout.tscn`에서 따로 검증한다.
 - 해킹 미션 데이터는 장기적으로 `HackingMissionDefinition` Resource로 관리한다.
+- 해킹 arena 시각은 판타지 던전 tile이 아니라 cyber / network arena tile을 우선하며, tile 기준은 `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`에서 관리한다.
 
 ## 장기 방향
 

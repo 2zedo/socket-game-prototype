@@ -127,6 +127,7 @@ prototype 조정값은 각 책임 script 상단에 상수로 모았다.
 - Phone, Outlet, Result, Test Mode, Quarterview Room 흐름을 수정하지 않는다.
 - `HackingPerspectiveBlockout`은 시점 검증용이며, 기존 `HackingActionPrototype`의 조작 / 전투 시스템을 대체하지 않는다.
 - `HackingMissionDefinition` Resource class는 미래 미션 데이터 구조이며, 현재 `HackingActionPrototype`은 아직 이 Resource로 구동되지 않는다.
+- `HackingActionPrototype` is not yet driven by `hack_arena_tiles_atlas.png`, TileSet data, or arena tile mapping metadata.
 
 ## 향후 연결 후보
 

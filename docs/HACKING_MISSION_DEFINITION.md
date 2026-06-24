@@ -106,6 +106,8 @@ The visual mapping is not wired yet.
 
 Hacking mission visuals may later trigger `qv_fx_atlas.png` effects based on `mission_type`, Trace risk, required / recommended device keys, or mission state. This is not wired yet.
 
+`HackingMissionDefinition.map_scene_path` may later reference scenes built using `hack_arena_tiles_atlas.png` / TileSet data. This is not wired yet.
+
 ## Relationship To Existing Prototypes
 
 - `HackingActionPrototype` is the current controls, combat, mission state, objective, exit, and feedback prototype.

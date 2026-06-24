@@ -22,6 +22,8 @@
 
 복잡한 성장 요소, 복수 무기, 스킬, 경제, 여러 미션, 스토리 분기는 첫 prototype에 넣지 않는다. 목표는 해킹 액션의 기본 손맛과 현실 방 루프 연결 가능성을 작게 확인하는 것이다.
 
+Arena tile mapping remains separate visual / data work. The control prototype tests movement, shot, roll, hop, objective, and failure feel without requiring `hack_arena_tiles_atlas.png`.
+
 ## 조작 후보
 
 아래 입력은 prototype 후보이며, 실제 구현 시 기존 프로젝트 입력과 충돌하면 조정할 수 있다.

@@ -102,6 +102,8 @@ Laptop mission selection은 장기적으로 `HackingMissionDefinition` Resource 
 
 현재는 Resource class만 준비되어 있으며, 실제 mission `.tres`, Laptop UI, `HackingActionPrototype` 진입, Grid Credit, Result, Story flag 연결은 아직 구현하지 않는다.
 
+Future hacking missions may use `map_scene_path` plus `hack_arena_tiles_atlas.png` / TileSet mapping to construct mission spaces. This is not wired yet.
+
 ## 현재 구현
 
 - 노트북은 방 안 상호작용 오브젝트다.
