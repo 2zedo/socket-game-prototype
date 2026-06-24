@@ -176,6 +176,13 @@
 - [ ] `WASD` / 방향키로 room stub player가 이동한다.
 - [ ] 가까운 object에 접근하면 nearest prompt가 표시된다.
 - [ ] `E`를 누르면 `interaction_requested` event log가 표시된다.
+- [ ] 가까운 object에서 `E`를 누르면 object interaction panel이 열린다.
+- [ ] Panel에 key / role / future_source / visual_state가 표시된다.
+- [ ] Primary / Inspect는 실제 기능 연결 없이 no-op 로그만 남긴다.
+- [ ] Close 또는 `ESC`로 panel이 닫힌다.
+- [ ] Panel이 열려 있는 동안 player movement가 잠긴다.
+- [ ] Panel을 닫으면 player movement가 복구된다.
+- [ ] Panel이 열려 있어도 `B` / `Backspace` Hub 복귀 규칙이 유지된다.
 - [ ] Godot output에 no-op interaction 로그가 출력된다.
 - [ ] `D` 키로 debug overlay ON / OFF가 된다.
 - [ ] Debug ON에서 object label, interaction radius, player position, signal log가 보인다.

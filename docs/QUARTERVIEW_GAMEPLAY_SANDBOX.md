@@ -17,6 +17,7 @@
 - `RoomSceneContract`와 같은 signal / method를 제공하는 room stub
 - `interaction_requested` signal 수신
 - `nearest_interactable_changed` signal 수신
+- sandbox-only interaction panel
 - `D` debug overlay
 - `B` / `Backspace` PrototypeHub 복귀
 - `R` sandbox restart
@@ -55,7 +56,10 @@
 5. Player가 `E`를 누른다.
 6. Sandbox controller가 `room.request_nearest_interaction("primary")`를 호출한다.
 7. Room stub이 `interaction_requested(object_key, action_key, payload)`를 emit한다.
-8. Sandbox controller가 event log와 Godot output에 no-op 기록을 남긴다.
+8. Sandbox controller가 sandbox-only interaction panel을 연다.
+9. Panel이 열린 동안 `room.set_player_input_enabled(false)`로 room input을 잠근다.
+10. Primary / Inspect / Close는 event log와 Godot output에 no-op 기록만 남긴다.
+11. Close 또는 `ESC`로 panel을 닫으면 `room.set_player_input_enabled(true)`로 room input을 복구한다.
 
 payload에는 가능한 경우 아래 값이 포함된다.
 
@@ -97,6 +101,28 @@ Debug ON:
 - `02:00` auto end
 
 이번 sandbox는 실제 기능을 실행하지 않고 event log만 남긴다.
+
+## Interaction Panel
+
+기존 Main용 `InteractionPanel.tscn`은 대사 / 사용 / 취소 흐름에 맞춰져 있고 Inspect button이 없으므로, 이번 sandbox에서는 `res://scenes/prototypes/SandboxInteractionPanel.tscn` adapter를 사용한다.
+
+Panel 표시 정보:
+
+- `display_name`
+- `key`
+- `zone`
+- `role`
+- `future_source`
+- `visual_state`
+- sandbox note
+
+Button 동작:
+
+- Primary: role별 label을 표시하지만 실제 기능은 실행하지 않는다.
+- Inspect: payload / debug 정보를 no-op 로그로 남긴다.
+- Close: panel을 닫고 room input을 복구한다.
+- `ESC`: panel이 열려 있으면 Close와 같은 경로로 닫는다.
+- `B` / `Backspace`: panel open 여부와 무관하게 PrototypeHub 복귀 우선 규칙을 유지한다.
 
 ## PrototypeHub 등록
 

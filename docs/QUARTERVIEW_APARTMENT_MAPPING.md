@@ -12,6 +12,8 @@
 
 앞으로 이 문서의 기능 대응 항목은 기존 Main에 직접 wiring하기 전에 `res://scenes/prototypes/QuarterviewGameplaySandbox.tscn`에서 먼저 검증한다.
 
+현재 sandbox의 첫 UI routing 단계는 `interaction_requested`를 sandbox-only interaction panel로 표시하는 것이다. 실제 기능 매핑은 아직 future work로 유지한다.
+
 ## 현재 구현 요약
 
 - 현재 본게임 방 화면은 탑뷰 `Apartment` 기반이다.

@@ -73,6 +73,8 @@
 
 Room scene은 object를 감지하고 요청을 발생시키는 쪽에 집중한다. 실제 기능 연결 여부는 상위 controller가 결정한다.
 
+현재 `QuarterviewGameplaySandbox`는 `interaction_requested`를 받아 sandbox-only interaction panel을 연다. Primary / Inspect action은 no-op 로그만 남기며, 실제 Phone / Outlet / Result / End Day / Hacking routing은 이후 단계로 남긴다.
+
 ## Device State Sync Flow
 
 1. `SurvivalState`가 connected / active / power drain의 source of truth로 남는다.

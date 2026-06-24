@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `1a62050`
-- Phase: Quarterview gameplay sandbox
+- Current commit at task start: `2c586aa`
+- Phase: Sandbox interaction panel wiring
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -75,6 +75,7 @@
 - Apartment / Main / SurvivalState 기능을 쿼터뷰 Room 또는 future sandbox로 옮길 때의 object key, UI, state, wire / cable, migration status 대응은 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
 - `RoomSceneContract` skeleton and `docs/ROOM_SCENE_CONTRACT.md` define the future room interface for sandbox-first apartment-to-quarterview migration; no Main wiring is done.
 - `QuarterviewGameplaySandbox.tscn` is an independent sandbox for future quarterview Main migration; it receives `RoomSceneContract` signals from a stub room and logs them without Phone / Outlet / Result wiring.
+- Quarterview Gameplay Sandbox now routes room interaction requests to a sandbox-only interaction panel with Primary / Inspect / Close no-op actions and room input locking.
 
 ## Current DAY 1 Decisions
 
@@ -203,6 +204,8 @@
 - `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: link future quarterview feature wiring to `RoomSceneContract` and sandbox-first validation.
 - `godot/scenes/prototypes/QuarterviewGameplaySandbox.tscn`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: add an independent sandbox controller for room contract signal flow, nearest prompt/status, debug overlay, restart, and Hub return.
 - `godot/scenes/prototypes/QuarterviewSandboxRoomStub.tscn`, `godot/scripts/prototypes/QuarterviewSandboxRoomStub.gd`: add a signal-compatible room stub that reads `RoomObjectDefinition` resources, handles movement/nearest detection, and emits no-op interaction requests.
+- `godot/scenes/prototypes/SandboxInteractionPanel.tscn`, `godot/scripts/prototypes/SandboxInteractionPanel.gd`: add a sandbox-only object interaction panel with Primary, Inspect, and Close no-op actions.
+- `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: opens the sandbox panel from `interaction_requested`, locks room input while open, and restores input on Close / ESC.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Gameplay Sandbox as a separate Hub entry.
 - `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/PROTOTYPE_HUB_OVERVIEW.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the sandbox purpose, Hub entry, and manual GUI checks.
 
@@ -269,6 +272,7 @@
 - Apartment ↔ Quarterview 기능 대응표 확장 후 `git diff --check`가 완료됐다. Godot AI MCP로 `QuarterviewRoomPrototype` hierarchy를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
 - RoomSceneContract skeleton 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 기존 Main / DAY1 / prototype scene에는 연결하지 않았다.
 - Quarterview Gameplay Sandbox 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Sandbox InteractionPanel 연결 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
