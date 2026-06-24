@@ -25,6 +25,10 @@
 - `res://scenes/prototypes/QuarterviewGameplaySandbox.tscn`
 - `res://scenes/prototypes/QuarterviewRoomShellPrototype.tscn`
 
+Main replacement note:
+
+- Before replacing Main, complete `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md` and verify both existing Main / DAY1 and `QuarterviewGameplaySandbox` flows.
+
 ## PrototypeHub
 
 - [ ] `PrototypeHub` scene이 정상 실행된다.

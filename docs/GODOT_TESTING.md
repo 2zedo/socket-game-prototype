@@ -51,6 +51,8 @@ Run the full unit suite from the repository root:
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gdir=res://test/unit -gexit
 ```
 
+Before any future Main replacement task, also run `git diff --check`, Godot headless project parse, current Main scene startup, `QuarterviewGameplaySandbox` startup, and the available GUT suite. The full pre-replacement gate is tracked in `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`.
+
 Individual test files can still be run with `-gtest` when isolating a failure:
 
 ```bash
