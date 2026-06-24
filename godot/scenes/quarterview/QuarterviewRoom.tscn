@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/quarterview/QuarterviewRoom.gd" id="1_room"]
+[ext_resource type="Script" path="res://scripts/quarterview/QuarterviewPlayer.gd" id="2_player"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_player"]
+radius = 12.0
+height = 44.0
+
+[node name="QuarterviewRoom" type="Node2D"]
+script = ExtResource("1_room")
+
+[node name="FloorLayer" type="Node2D" parent="."]
+
+[node name="WallBackLayer" type="Node2D" parent="."]
+
+[node name="WallSideLayer" type="Node2D" parent="."]
+
+[node name="ObjectBackLayer" type="Node2D" parent="."]
+
+[node name="ObjectLayer" type="Node2D" parent="."]
+
+[node name="PlayerLayer" type="Node2D" parent="."]
+
+[node name="Player" type="CharacterBody2D" parent="PlayerLayer"]
+z_as_relative = false
+position = Vector2(596, 520)
+script = ExtResource("2_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerLayer/Player"]
+shape = SubResource("CapsuleShape2D_player")
+
+[node name="ForegroundLayer" type="Node2D" parent="."]
+
+[node name="DebugLayer" type="Node2D" parent="."]
+visible = false
+
+[node name="PromptLayer" type="Node2D" parent="."]

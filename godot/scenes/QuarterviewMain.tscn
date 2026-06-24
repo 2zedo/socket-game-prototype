@@ -1,0 +1,51 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/QuarterviewMain.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/QuarterviewRoom.tscn" id="2_room"]
+
+[node name="QuarterviewMain" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 360)
+enabled = true
+
+[node name="QuarterviewRoom" parent="." instance=ExtResource("2_room")]
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="StatusPanel" type="PanelContainer" parent="UILayer"]
+offset_left = 24.0
+offset_top = 22.0
+offset_right = 450.0
+offset_bottom = 184.0
+
+[node name="Margin" type="MarginContainer" parent="UILayer/StatusPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="UILayer/StatusPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="UILayer/StatusPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.86, 0.72, 1)
+theme_override_font_sizes/font_size = 20
+text = "QuarterviewMain Candidate"
+
+[node name="StatusLabel" type="Label" parent="UILayer/StatusPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.80, 0.78, 0.70, 1)
+theme_override_font_sizes/font_size = 13
+text = "No production wiring yet"
+
+[node name="LogLabel" type="Label" parent="UILayer/StatusPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.83, 0.82, 1)
+theme_override_font_sizes/font_size = 13
+text = "Last interaction: -"
