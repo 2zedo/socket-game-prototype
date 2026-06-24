@@ -212,6 +212,16 @@ Future hacking arena tiles check:
 - [ ] Tiles do not look like fantasy dungeon assets.
 - [ ] Player / enemy / projectile readability remains clear.
 
+Future hack avatar spritesheet check:
+
+- [ ] Idle / walk sheets load correctly.
+- [ ] Down / up / left / right row order is correct.
+- [ ] Anchor does not jitter.
+- [ ] Scale matches hack arena tiles.
+- [ ] Avatar is readable against arena floor / hazards.
+- [ ] Avatar is distinct from enemies / projectiles / FX.
+- [ ] Avatar does not look like a fantasy dungeon hero.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.

@@ -24,6 +24,8 @@
 
 Arena tile mapping remains separate visual / data work. The control prototype tests movement, shot, roll, hop, objective, and failure feel without requiring `hack_arena_tiles_atlas.png`.
 
+Future hack avatar sprites should support readable movement direction, dash / roll / hop feedback, and hurt feedback without changing the current control prototype yet.
+
 ## 조작 후보
 
 아래 입력은 prototype 후보이며, 실제 구현 시 기존 프로젝트 입력과 충돌하면 조정할 수 있다.

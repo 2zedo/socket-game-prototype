@@ -108,6 +108,8 @@ Hacking mission visuals may later trigger `qv_fx_atlas.png` effects based on `mi
 
 `HackingMissionDefinition.map_scene_path` may later reference scenes built using `hack_arena_tiles_atlas.png` / TileSet data. This is not wired yet.
 
+Mission type or objective type may later influence avatar FX / animation feedback, but `hack_avatar` import itself remains independent.
+
 ## Relationship To Existing Prototypes
 
 - `HackingActionPrototype` is the current controls, combat, mission state, objective, exit, and feedback prototype.

@@ -102,6 +102,7 @@ Criteria:
 - Final size depends on player / enemy scale, arena readability, target display size, and camera zoom.
 - Default candidate: `96x96`.
 - Final tile size is not locked until `HackingPerspectiveBlockout` and player scale are validated.
+- `hack_avatar` spritesheets must be validated against tile size, camera zoom, and player-layer readability before gameplay wiring.
 
 Atlas size formula:
 
