@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `e9d69c8`
-- Phase: Common UI atlas mapping criteria
+- Current commit at task start: `90ac2b1`
+- Phase: Gameplay HUD atlas mapping criteria
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -63,6 +63,7 @@
 - `hack_objects_atlas.png` region mapping criteria are documented for future objective, terminal, gate, cache, access-node, relay, trace-device, and security-device visuals; no actual atlas PNG, mapping Resource / JSON / CSV, object scene, objective logic, interaction logic, or gameplay wiring exists yet.
 - `hack_fx_atlas.png` region mapping criteria are documented for future dash trails, hit impacts, projectile trails, Trace warnings, extraction beams, gate pulses, alarm sweeps, firewall bursts, enemy dissolve, and arena feedback FX; no actual atlas PNG, mapping Resource / JSON / CSV, FX scene, trigger system, shader, particle, or gameplay wiring exists yet.
 - `ui_common_atlas.png` mapping criteria are documented for future common UI panels, modals, buttons, icons, meters, badges, dividers, tabs, close buttons, and prompt frames; no actual atlas PNG, Theme, StyleBoxTexture, mapping Resource / JSON / CSV, Control node, or scene wiring exists yet.
+- `ui_hud_atlas.png` mapping criteria are documented for future persistent gameplay HUD frames, power / battery / Trace / HP / timer meters, status chips, warning banners, DAY / time badges, objective markers, and small notifications; no actual atlas PNG, Theme, StyleBoxTexture, mapping Resource / JSON / CSV, Control node, HUD scene, or gameplay wiring exists yet.
 - Quarterview room shell layer application is planned in `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md` with same-canvas `1920x1080` PNG layers, z-index policy, future asset paths, and import-setting candidates; no PNG assets or scene wiring exist yet.
 - `QuarterviewRoomShellPrototype.tscn` prepares a visual-only shell-layer check for `qv_room_floor_base.png`, `qv_room_walls_back.png`, and `qv_room_walls_side.png`, loading expected paths if present and showing missing status if absent. No actual PNG asset or production scene wiring exists yet.
 - Window city view layer criteria are documented for `qv_room_window_city_view.png`; no actual PNG asset or scene wiring exists yet.
@@ -278,6 +279,7 @@
 - `docs/HACK_OBJECTS_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/HACK_ENEMIES_ATLAS_REGION_MAPPING.md`, `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `hack_objects_atlas.png` object key, region key, category, interaction state, mapping schema, interaction / objective hints, collision / interaction-area separation, `HackingMissionDefinition` links, z-index, playback policy, and checklist without adding PNG assets, mapping files, object scenes, objective logic, or gameplay wiring.
 - `docs/HACK_FX_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/HACK_ENEMIES_ATLAS_REGION_MAPPING.md`, `docs/HACK_OBJECTS_ATLAS_REGION_MAPPING.md`, `docs/QV_FX_ATLAS_REGION_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `hack_fx_atlas.png` FX key, category, mapping schema, frame / playback metadata, trigger / mission / gameplay state hints, target anchors, z-index, blend / alpha policy, body / FX atlas split, and checklist without adding PNG assets, mapping files, shaders, particles, FX scenes, or gameplay wiring.
 - `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`, `docs/THIRD_PARTY_ASSET_INVENTORY.md`: document future `ui_common_atlas.png` UI key naming, category split, region mapping schema, 9-slice margins, button / tab / icon / meter / badge / prompt criteria, Theme / StyleBoxTexture candidates, Kenney input prompt separation, UI tone, and checklist without adding PNG assets, Theme / StyleBox resources, mapping files, Control nodes, or scene wiring.
+- `docs/UI_HUD_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `ui_hud_atlas.png` HUD key naming, category split, region mapping schema, room / hacking HUD contexts, value binding candidates, meter / warning / status chip criteria, safe-area / anchor / update-policy criteria, `ui_common_atlas` separation, UI tone, and checklist without adding PNG assets, Theme / StyleBox resources, mapping files, Control nodes, HUD scenes, or gameplay wiring.
 
 ## Validation Results
 
@@ -372,6 +374,7 @@
 - Hack objects atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "hack_objects_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Hack FX atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "hack_fx_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Common UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "ui_common_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Gameplay HUD atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, `find godot/assets ... ui / hud`, and `grep -R "ui_hud_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -442,12 +445,13 @@
 - `hack_objects_atlas.png` is criteria-only; actual object atlas creation, region coordinate extraction, mapping format choice, object region viewer prototype, `SpriteFrames`, objective / exit visual replacement, interaction logic, collision / interaction areas, and mission wiring still need separate implementation passes.
 - `hack_fx_atlas.png` is criteria-only; actual FX atlas creation, region coordinate extraction, mapping format choice, FX region viewer prototype, `SpriteFrames`, shader / material policy, particle alternatives, trigger wiring, blend / alpha tuning, and Hacking prototype integration still need separate implementation passes.
 - `ui_common_atlas.png` is criteria-only; actual UI atlas creation, region coordinate extraction, 9-slice margin tuning, mapping format choice, Theme / StyleBoxTexture application, common UI region viewer prototype, and Phone / Outlet / Result / Prototype UI integration still need separate implementation passes.
+- `ui_hud_atlas.png` is criteria-only; actual HUD atlas creation, region coordinate extraction, safe-area testing, meter fill behavior, value binding, Theme / StyleBoxTexture application, HUD region viewer prototype, and room / hacking HUD integration still need separate implementation passes.
 
 ## Next Recommended Task
 
 1. floor / back wall / side wall 실제 shell PNG를 expected path에 추가하고 `QuarterviewRoomShellPrototype`에서 alignment를 확인한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 세 layer의 `1920x1080` image size / canvas match가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
 2. `yui_qv_idle_4dir.png` / `yui_qv_walk_4dir.png` asset 제작과 import prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`와 `docs/YUI_CHARACTER_BRIEF.md`이며, 완료 기준은 down / up / left / right row order, foot anchor, scale, foreground occluder / lighting readability가 확인되는 것이다.
-3. `ui_common_atlas.png` asset 제작과 UI atlas region viewer prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, and `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`이며, 완료 기준은 panel/button/icon region display, 9-slice margin stability, button state size consistency, dark UI readability, and Kenney input prompt separation이 확인되는 것이다.
+3. `ui_common_atlas.png` / `ui_hud_atlas.png` asset 제작과 UI atlas region viewer prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_HUD_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, and `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`이며, 완료 기준은 common panel/button/icon region display, HUD meter frame/fill alignment, 9-slice margin stability, safe-area assumptions, dark UI readability, and Kenney input prompt separation이 확인되는 것이다.
 
 ## Archive
 

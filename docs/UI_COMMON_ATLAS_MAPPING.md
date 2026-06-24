@@ -48,6 +48,8 @@ This task does not create the folders, PNG, `AtlasTexture`, `StyleBoxTexture`, T
 
 `ui_common_atlas.png` is a candidate for UI pieces that repeat across room UI, hacking UI, prototype UI, modal UI, and status UI.
 
+Gameplay-specific persistent HUD elements such as power, time, battery, Trace, HP, timer, warning chips, and status chips belong to the separate `ui_hud_atlas.png` workflow documented in `docs/UI_HUD_ATLAS_MAPPING.md`.
+
 Owns:
 
 - Panel frame.

@@ -293,6 +293,16 @@ Future hack avatar spritesheet check:
 - [ ] Localization text is not baked into UI images.
 - [ ] Kenney input prompt icons remain separate unless intentionally wrapped by a common prompt frame.
 
+## Future ui_hud_atlas check
+
+- [ ] HUD regions display without cropping.
+- [ ] Meter frames / fills align correctly.
+- [ ] Warning / status chips remain readable.
+- [ ] HUD respects safe area assumptions.
+- [ ] Room HUD does not hide interactable objects.
+- [ ] Hacking HUD does not hide action readability.
+- [ ] Localization text is not baked into HUD images.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.
