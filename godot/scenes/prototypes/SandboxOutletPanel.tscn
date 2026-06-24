@@ -1,0 +1,89 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/prototypes/SandboxOutletPanel.gd" id="1_outlet"]
+
+[node name="SandboxOutletPanel" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_outlet")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.016, 0.014, 0.010, 0.50)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 336.0
+offset_top = 66.0
+offset_right = 944.0
+offset_bottom = 650.0
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.78, 0.48, 1)
+theme_override_font_sizes/font_size = 24
+text = "POWER / SANDBOX OUTLET"
+
+[node name="DetailLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.82, 0.76, 1)
+theme_override_font_sizes/font_size = 15
+text = "Sandbox outlet status."
+autowrap_mode = 2
+
+[node name="SlotListLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.90, 0.82, 1)
+theme_override_font_sizes/font_size = 15
+text = "Slots:"
+
+[node name="DeviceListLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.76, 0.84, 0.88, 1)
+theme_override_font_sizes/font_size = 15
+text = "Device candidates:"
+
+[node name="ButtonRow" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MockLaptopButton" type="Button" parent="Panel/Margin/VBox/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(132, 42)
+theme_override_font_sizes/font_size = 14
+text = "Mock Laptop"
+
+[node name="MockDisconnectButton" type="Button" parent="Panel/Margin/VBox/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(116, 42)
+theme_override_font_sizes/font_size = 14
+text = "Mock Clear"
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(96, 42)
+theme_override_font_sizes/font_size = 14
+text = "Close"

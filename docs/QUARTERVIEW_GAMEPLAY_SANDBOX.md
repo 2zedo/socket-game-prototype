@@ -20,6 +20,7 @@
 - sandbox-only interaction panel
 - sandbox-only Bed -> End Day confirmation panel
 - sandbox-only Phone panel
+- sandbox-only Outlet panel
 - `D` debug overlay
 - `B` / `Backspace` PrototypeHub 복귀
 - `R` sandbox restart
@@ -67,6 +68,8 @@ Bed의 Primary action은 예외적으로 `SandboxEndDayPanel`을 연다. 이 흐
 
 Phone의 Primary action은 `SandboxPhonePanel`을 연다. 이 흐름은 sandbox-only mock status 표시이며 기존 Main `PhoneUI`, Main phone routing, 실제 `SurvivalState` battery / charge state는 호출하지 않는다.
 
+Power의 Primary action은 `SandboxOutletPanel`을 연다. 이 흐름은 sandbox-only mock outlet 표시이며 기존 Main `OutletMode`, Main outlet routing, 실제 `SurvivalState` connected / active state, Apartment wire overlay는 호출하지 않는다.
+
 payload에는 가능한 경우 아래 값이 포함된다.
 
 - `zone`
@@ -100,7 +103,9 @@ Debug ON:
 - 실제 Bed End Day / `SurvivalState.end_current_day()`
 - real Main Phone routing
 - real `SurvivalState` phone battery / charge integration
-- Outlet UI
+- real Main Outlet routing
+- real `SurvivalState` connected / active state
+- Apartment wire overlay
 - Result
 - `SurvivalState` gameplay flow
 - `HackingActionPrototype`
@@ -167,6 +172,29 @@ Panel 동작:
 
 기존 `res://scenes/ui/PhoneUI.tscn`은 `SurvivalState` 인스턴스를 요구하므로 이번 sandbox 단계에서는 직접 재사용하지 않는다.
 
+## Sandbox Outlet Panel
+
+`power` / `power_management` Primary action은 `res://scenes/prototypes/SandboxOutletPanel.tscn`을 연다.
+
+Panel 표시 정보:
+
+- sandbox-only power management note
+- 4-slot mock list
+- device candidate list
+- Main / DAY1 Outlet flow 미연결 안내
+- real `SurvivalState` connected / active state 미연결 안내
+- Apartment wire overlay 미연결 안내
+
+Panel 동작:
+
+- Power object Primary: sandbox Outlet panel을 연다.
+- `ESC` / Close: panel을 닫고 room input을 복구한다.
+- Panel이 열린 동안 room stub player movement는 잠긴다.
+- Mock buttons: log / text feedback만 남기며 실제 connected / active state는 바꾸지 않는다.
+- `B` / `Backspace`: panel 상태와 무관하게 PrototypeHub 복귀를 유지한다.
+
+기존 `res://scenes/ui/OutletMode.tscn`은 실제 `SurvivalState` 슬롯 / 연결 상태와 본게임 adapter UI 전제를 가지고 있으므로 이번 sandbox 단계에서는 직접 재사용하지 않는다.
+
 ## PrototypeHub 등록
 
 `PrototypeHub`에는 아래 항목으로 등록되어 있다.
@@ -180,7 +208,7 @@ Panel 동작:
 13. Sandbox `InteractionPanel` 연결
 14. Sandbox Bed -> End Day 연결: sandbox-only confirmation까지 완료. 실제 `SurvivalState` / Result 연결은 아직 하지 않는다.
 15. Sandbox Phone UI 연결: sandbox-only mock panel까지 완료. 실제 Main Phone routing / `SurvivalState` battery 연결은 아직 하지 않는다.
-16. Sandbox Power / Outlet UI 연결
+16. Sandbox Power / Outlet UI 연결: sandbox-only mock panel까지 완료. 실제 Main Outlet routing / `SurvivalState` connected state / Apartment wire overlay 연결은 아직 하지 않는다.
 
 각 작업은 기존 Main / DAY1을 직접 수정하지 않고 sandbox에서 먼저 검증한다.
 
@@ -191,5 +219,6 @@ Panel 동작:
 - 실제 gameplay loop 아님
 - 기존 `Apartment` 제거 아님
 - real Main Phone / Outlet / Result 연결 아님
+- Apartment wire overlay 연결 아님
 - Laptop -> Hacking 연결 아님
 - `SurvivalState` power drain 계산 연결 아님

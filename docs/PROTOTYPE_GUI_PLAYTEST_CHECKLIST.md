@@ -168,7 +168,7 @@
 
 ## QuarterviewGameplaySandbox
 
-이 scene은 미래 쿼터뷰 Main 이식 전에 `RoomSceneContract` signal flow를 확인하는 sandbox다. 실제 `Main`, Outlet, Result, Hacking 연결은 확인 대상이 아니다. Bed End Day와 Phone은 sandbox-only panel까지만 확인한다.
+이 scene은 미래 쿼터뷰 Main 이식 전에 `RoomSceneContract` signal flow를 확인하는 sandbox다. 실제 `Main`, Result, Hacking 연결은 확인 대상이 아니다. Bed End Day, Phone, Power / Outlet은 sandbox-only panel까지만 확인한다.
 
 - [ ] Scene이 정상 실행된다.
 - [ ] 화면에 `Quarterview Gameplay Sandbox`와 `Not Main` 안내가 보인다.
@@ -189,6 +189,13 @@
 - [ ] `Tab` / `ESC` / Close button으로 Phone panel이 닫힌다.
 - [ ] Phone panel을 닫으면 player movement가 복구된다.
 - [ ] phone object에서 Primary를 누르면 sandbox Phone panel이 열린다.
+- [ ] power object에서 Primary를 누르면 sandbox Outlet panel이 열린다.
+- [ ] Outlet panel은 sandbox-only이며 Main / DAY1 Outlet flow와 연결되지 않았다고 표시한다.
+- [ ] Outlet panel이 열려 있는 동안 player movement가 잠긴다.
+- [ ] `ESC` / Close button으로 Outlet panel이 닫힌다.
+- [ ] Outlet panel을 닫으면 player movement가 복구된다.
+- [ ] Outlet mock button은 로그 / 문구만 바꾸고 실제 connected / active state를 바꾸지 않는다.
+- [ ] Apartment wire overlay가 바뀌지 않는다.
 - [ ] Close 또는 `ESC`로 panel이 닫힌다.
 - [ ] Panel이 열려 있는 동안 player movement가 잠긴다.
 - [ ] Panel을 닫으면 player movement가 복구된다.
