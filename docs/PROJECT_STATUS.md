@@ -5,7 +5,7 @@
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
 - Current commit at task start: `ede246e`
-- Phase: Quarterview room shell layer planning
+- Phase: Quarterview room shell floor prototype
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -52,6 +52,7 @@
 - 쿼터뷰 prototype object contract는 `godot/resources/rooms/quarterview/objects/*.tres`의 `RoomObjectDefinition` Resource가 소유하며, `QuarterviewRoomPrototype`은 이 Resource들을 읽어 placeholder, prompt, panel을 구성한다.
 - 쿼터뷰 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`에서 room layer, atlas, Yui spritesheet, visual mapping Resource 후보 기준으로 계획한다.
 - Quarterview room shell layer application is planned in `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md` with same-canvas `1920x1080` PNG layers, z-index policy, future asset paths, and import-setting candidates; no PNG assets or scene wiring exist yet.
+- `QuarterviewRoomShellPrototype.tscn` prepares a visual-only floor-layer check for `qv_room_floor_base.png`, loading the expected path if present and showing a missing placeholder if absent. No actual PNG asset or production scene wiring exists yet.
 - 채택된 쿼터뷰 방 콘티는 최종 아트가 아니라 `docs/QUARTERVIEW_ROOM_DIRECTION.md`의 layout mood reference로 고정한다.
 - 해킹 액션은 기존 Main과 연결하지 않은 독립 prototype scene `res://scenes/prototypes/HackingActionPrototype.tscn`에서 조작, 전투, objective, exit 흐름을 먼저 검증한다.
 - Hacking Action prototype은 `READY`, `RUNNING`, `OBJECTIVE_EXTRACTED`, `SUCCESS`, `FAILED` mission state와 script-local tuning constants로 정리되어 있다.
@@ -239,7 +240,10 @@
 - `godot/scenes/prototypes/SandboxOutletPanel.tscn`, `godot/scripts/prototypes/SandboxOutletPanel.gd`: add a sandbox-only mock Outlet panel with Close and mock action buttons.
 - `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: opens/closes the sandbox Outlet panel from power Primary action, locks room input while open, and leaves existing `OutletMode.gd`, Main outlet routing, `SurvivalState`, and Apartment wire overlay unchanged.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Gameplay Sandbox as a separate Hub entry.
+- `godot/scenes/prototypes/QuarterviewRoomShellPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomShellPrototype.gd`: add a visual-only `qv_room_floor_base.png` placement prototype with missing-asset fallback, `1920x1080` canvas guides, reload, debug guide toggle, and Hub return.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Room Shell Prototype as a separate Hub entry.
 - `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/ROOM_SCENE_CONTRACT.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the sandbox-only Bed End Day, Phone, and Outlet panel boundaries and manual GUI checks.
+- `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`, `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the floor shell prototype path, controls, missing fallback, and GUI checklist.
 
 ## Validation Results
 
@@ -318,6 +322,7 @@
 - GridCreditState skeleton 추가 후 `git diff --check`, Grid Credit GUT `8/8 passed`, SurvivalState GUT `5/5 passed`, full GUT unit suite `48/48 passed`, and Godot 4.5.1 headless project parse가 완료됐다.
 - LivingDeviceDefinition Resource class 추가 후 `git diff --check`, Living Device GUT `6/6 passed`, SurvivalState GUT `5/5 passed`, full GUT unit suite `54/54 passed`, and Godot 4.5.1 headless project parse가 완료됐다. 실제 living device `.tres`와 gameplay wiring은 추가하지 않았다.
 - Quarterview room shell layer 계획 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 project name을 read-only 확인했고, `godot/assets` 경로를 filesystem에서 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Quarterview Room Shell Prototype 추가 후 `git diff --check`, Godot 4.5.1 headless project parse, and headless startup for `QuarterviewRoomShellPrototype` and `PrototypeHub`이 완료됐다. `qv_room_floor_base.png`는 repo에 없어 missing placeholder path로 확인했다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -372,11 +377,12 @@
 - Grid Credit has a standalone state skeleton and GUT tests, but no UI, save/load, Result, `SurvivalState`, or hacking mission reward wiring yet.
 - `LivingDeviceDefinition` has no sample `.tres` living devices yet and is not wired to Main, `SurvivalState`, Outlet, Phone, Result, or any condition system.
 - Quarterview room shell layer file names, z-indexes, and import settings are planned only; actual PNG generation, alpha cleanup, Godot import settings, and scene layer placement still need separate implementation and GUI review.
+- Quarterview Room Shell Prototype currently runs the missing-placeholder path because `qv_room_floor_base.png` is not installed. GUI confirmation is still needed for guide toggle, reload, Hub return, and future actual floor image alignment.
 
 ## Next Recommended Task
 
-1. Quarterview room shell layer PNG 준비 작업을 별도 단계로 진행한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`와 `docs/QUARTERVIEW_ROOM_DIRECTION.md`이며, 완료 기준은 same-canvas `1920x1080` layer 파일을 준비하되 scene 적용은 다음 단계로 분리하는 것이다.
-2. RoomShellPrototype 또는 `QuarterviewPerspectiveBlockout`에 shell layer를 적용하는 visual-only 작업을 진행한다. 시작 파일은 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`와 `godot/scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`이며, 완료 기준은 floor / walls / window / occluder / lighting layer가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
+1. `qv_room_floor_base.png` 실제 asset을 expected path에 추가하고 `QuarterviewRoomShellPrototype`에서 alignment를 확인한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 `1920x1080` image size / canvas match가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
+2. `qv_room_walls_back.png` layer prototype 확장을 진행한다. 시작 파일은 `godot/scripts/prototypes/QuarterviewRoomShellPrototype.gd`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 floor와 back wall이 같은 origin / scale 기준으로 겹치고 missing fallback 정책을 유지하는 것이다.
 3. 첫 `LivingDeviceDefinition` sample `.tres` 후보를 별도 작업으로 만든다. 시작 파일은 `godot/scripts/resources/LivingDeviceDefinition.gd`와 `docs/LIVING_DEVICE_DEFINITION.md`이며, 완료 기준은 fridge / microwave / aircon / fluorescent_light / ups 후보 Resource만 만들고 Main / `SurvivalState` / UI wiring은 하지 않는 것이다.
 
 ## Archive

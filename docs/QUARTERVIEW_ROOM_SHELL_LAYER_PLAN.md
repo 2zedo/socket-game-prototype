@@ -148,6 +148,15 @@ godot/assets/rooms/quarterview/shell/export/
 
 이번 작업에서는 위 폴더나 PNG 파일을 실제로 만들지 않는다. 현재 repo에는 기존 `godot/assets/art/environment/room/` 등 P0용 경로가 있지만, 쿼터뷰 room shell은 별도 future path로 분리할 후보로 둔다.
 
+## Floor Base 적용 Prototype
+
+`qv_room_floor_base.png` 적용은 먼저 `res://scenes/prototypes/QuarterviewRoomShellPrototype.tscn`에서 검증한다.
+
+- prototype은 `res://assets/rooms/quarterview/shell/qv_room_floor_base.png`를 runtime에서 로드한다.
+- asset이 있으면 `1920x1080` image size와 expected canvas match 여부를 표시한다.
+- asset이 없으면 missing placeholder와 expected path를 표시한다.
+- 이 prototype은 floor base만 확인하며, back wall, side wall, window, occluder, lighting layer는 실제로 로드하지 않는다.
+
 ## 이미지 생성 / 편집 파이프라인
 
 1. room concept 확정

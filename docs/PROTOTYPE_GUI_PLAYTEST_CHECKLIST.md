@@ -23,6 +23,7 @@
 - `res://scenes/prototypes/HackingPerspectiveBlockout.tscn`
 - `res://scenes/prototypes/TitleMenuPrototype.tscn`
 - `res://scenes/prototypes/QuarterviewGameplaySandbox.tscn`
+- `res://scenes/prototypes/QuarterviewRoomShellPrototype.tscn`
 
 ## PrototypeHub
 
@@ -40,6 +41,7 @@
 - [ ] `4` / `C`로 Hacking Perspective Blockout에 진입된다.
 - [ ] `5` / `T`로 Title / Pause Menu Prototype에 진입된다.
 - [ ] `6` / `G`로 Quarterview Gameplay Sandbox에 진입된다.
+- [ ] `7` / `S`로 Quarterview Room Shell Prototype에 진입된다.
 - [ ] 포커스된 `E` / `Enter` 실행으로 Quarterview Perspective와 Hacking Perspective 항목에도 진입된다.
 - [ ] 선택 이동 시 SFX가 너무 크거나 거슬리지 않는다.
 - [ ] 실행 confirm SFX가 들린다.
@@ -97,6 +99,28 @@
 
 - 이 scene은 기능 이식용이 아니라 시점 blockout이다.
 - `Bed`, `Laptop`, `Power`, `Phone`, `Outlet`, `Result` 기능 연결 여부는 확인 대상이 아니다.
+
+## QuarterviewRoomShellPrototype
+
+이 scene은 `qv_room_floor_base.png`를 실제 room scene에 적용하기 전에 `1920x1080` same-canvas 기준과 origin / scale 정책을 확인하는 visual prototype이다. 아직 production room shell 적용이 아니다.
+
+- [ ] Scene이 정상 실행된다.
+- [ ] `PrototypeHub`에서 `7` / `S` 또는 버튼으로 진입된다.
+- [ ] 화면에 `Quarterview Room Shell Prototype` 제목이 보인다.
+- [ ] Expected canvas `1920x1080` 정보가 보인다.
+- [ ] expected path `res://assets/rooms/quarterview/shell/qv_room_floor_base.png`가 보인다.
+- [ ] `qv_room_floor_base.png`가 있으면 floor texture가 표시된다.
+- [ ] `qv_room_floor_base.png`가 없으면 missing placeholder가 표시되고 scene이 깨지지 않는다.
+- [ ] asset이 있으면 image size와 canvas match 여부가 status에 표시된다.
+- [ ] `D` 키로 guide overlay ON / OFF가 된다.
+- [ ] `R`로 prototype이 reload된다.
+- [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
+
+주의:
+
+- PNG asset, `.import`, production scene 적용은 이번 확인 범위가 아니다.
+- guide overlay는 floor alignment 확인용이며 최종 art가 아니다.
+- player 이동, collision, object interaction은 이 scene의 확인 대상이 아니다.
 
 ## HackingActionPrototype
 

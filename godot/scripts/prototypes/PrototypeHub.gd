@@ -66,6 +66,16 @@ const PROTOTYPES := [
 		"button_path": "Margin/Panel/VBox/QuarterviewGameplaySandboxButton",
 		"keycodes": [KEY_6, KEY_G],
 	},
+	{
+		"key": "quarterview_room_shell_prototype",
+		"title": "Quarterview Room Shell Prototype",
+		"scene_path": "res://scenes/prototypes/QuarterviewRoomShellPrototype.tscn",
+		"status": "active",
+		"shortcut": ["7", "S"],
+		"description": "Tests qv_room_floor_base.png placement on a 1920x1080 same-canvas room shell. Missing asset fallback included.",
+		"button_path": "Margin/Panel/VBox/QuarterviewRoomShellButton",
+		"keycodes": [KEY_7, KEY_S],
+	},
 ]
 
 var sfx
