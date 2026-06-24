@@ -8,6 +8,8 @@
 
 Main replacement must not be done opportunistically during unrelated work. It must be a dedicated task after this checklist is reviewed and explicitly approved.
 
+See `docs/MAIN_REPLACEMENT_WORK_PLAN.md` for the proposed replacement strategy, phase plan, file impact plan, state ownership plan, UI routing plan, validation strategy, commit strategy, and rollback plan.
+
 ## Scope
 
 포함 범위:
@@ -242,6 +244,7 @@ Before starting Main replacement:
 
 - [ ] All Must Pass checklist items completed.
 - [ ] No-Go conditions are all false.
+- [ ] `docs/MAIN_REPLACEMENT_WORK_PLAN.md` reviewed.
 - [ ] Current Main / DAY1 branch and commit are known.
 - [ ] User has manually approved replacement.
 - [ ] Replacement is done in a small dedicated commit.

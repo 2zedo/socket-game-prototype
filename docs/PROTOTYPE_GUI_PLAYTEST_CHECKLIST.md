@@ -27,7 +27,7 @@
 
 Main replacement note:
 
-- Before replacing Main, complete `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md` and verify both existing Main / DAY1 and `QuarterviewGameplaySandbox` flows.
+- Before replacing Main, complete `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, review `docs/MAIN_REPLACEMENT_WORK_PLAN.md`, and verify both existing Main / DAY1 and `QuarterviewGameplaySandbox` flows.
 
 ## PrototypeHub
 

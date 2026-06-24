@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `1408168`
-- Phase: Main replacement risk checklist
+- Current commit at task start: `4699959`
+- Phase: Main replacement work plan
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -113,6 +113,7 @@
 - Quarterview Gameplay Sandbox now opens a sandbox-only Result panel after manual Bed end or `02:00` auto end; it does not open `DayResultPanel`, advance `SurvivalState`, grant rewards, save/load, or set story flags.
 - Quarterview Gameplay Sandbox now has a sandbox-only `F2` Test Mode panel for local time advance, `01:50` jump, auto end trigger, manual result trigger, reset, and clock pause / restore checks. It does not modify Main / DAY1, `SurvivalState`, `DeviceDefinition`, `PhoneUI`, `OutletMode`, or `DayResultPanel`.
 - Main replacement risk checklist is documented in `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`; replacing current Main / DAY1 now has explicit Go / No-Go, validation, protected-file, and rollback gates. No Main / DAY1 or production wiring was changed.
+- Main replacement work plan is documented in `docs/MAIN_REPLACEMENT_WORK_PLAN.md`; recommended replacement is a new `QuarterviewMain` production candidate with an isolated final `project.godot` start-scene switch. No Main / DAY1, scene, script, Resource, or asset change was made.
 
 ## Current DAY 1 Decisions
 
@@ -123,6 +124,11 @@
 
 ## Changed Files
 
+- `docs/MAIN_REPLACEMENT_WORK_PLAN.md`: defines the Main replacement strategy, phase plan, file impact plan, state ownership, UI routing, input / modal policy, asset readiness, tests, commit strategy, rollback, Go / No-Go gate, and open questions.
+- `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`: links the risk gate to the replacement work plan.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: links Main replacement gating to both the risk checklist and the work plan.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: points Main replacement GUI preconditions to the work plan.
+- `docs/PROJECT_STATUS.md`: records the documentation-only planning work and keeps Main replacement as a blocked / approval-gated next step.
 - `godot/project.godot`: added Test Mode, reserved phone, and shared cancel input actions.
 - `godot/scripts/Main.gd`: centralized Test Mode and modal input routing.
 - `godot/scripts/Apartment.gd`: added collision, interaction, nearest-object, and wire-anchor overlays.
@@ -374,6 +380,7 @@
 - Quarterview Gameplay Sandbox Result panel 연결 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview Gameplay Sandbox Test Mode panel 연결 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Main replacement risk checklist 작성 후 `git diff --check`와 read-only file existence checks for Main / UI / Sandbox / docs가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, 문서 작업이라 Godot headless 실행은 생략했다.
+- Main replacement work plan 작성 후 `git diff --check`와 `git status --short`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, 문서 작업이라 Godot headless 실행은 생략했다.
 - Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
@@ -459,7 +466,7 @@
 - Quarterview Gameplay Sandbox `02:00` auto end, `T` / `Shift+T` time advance, post-auto-end input lock, and manual / auto end reason display need hands-on GUI confirmation.
 - Quarterview Gameplay Sandbox Result panel needs hands-on GUI checks for manual / auto summary text, Restart / Hub / Hide Details buttons, terminal input lock, and no real `DayResultPanel` opening.
 - Quarterview Gameplay Sandbox Test Mode panel needs hands-on GUI checks for `F2` open / close, clock pause / restore, `+30 min`, `+2 hours`, `Jump 01:50`, auto end trigger, manual result trigger, reset, movement lock, and no real Main / `SurvivalState` / Phone / Outlet / Result wiring.
-- Main replacement remains blocked until `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md` is reviewed, all Must Pass items are completed, all No-Go conditions are false, and the user explicitly approves a dedicated replacement task.
+- Main replacement remains blocked until `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md` and `docs/MAIN_REPLACEMENT_WORK_PLAN.md` are reviewed, all Must Pass items are completed, all No-Go conditions are false, rollback is clear, and the user explicitly approves a dedicated replacement task.
 - Hacking Action mission state is now covered by GUT, but movement feel, input timing, combat feel, and visual perspective remain GUI/manual checks.
 - `HackingMissionDefinition` has no sample `.tres` mission and no dedicated GUT helper test yet; it is a Resource class preparation step only.
 - Grid Credit has a standalone state skeleton and GUT tests, but no UI, save/load, Result, `SurvivalState`, or hacking mission reward wiring yet.
@@ -490,7 +497,7 @@
 
 ## Next Recommended Task
 
-1. `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`를 리뷰하고 Main replacement 전 Must Pass / No-Go / rollback 기준을 확정한다. 시작 문서는 `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`, and `docs/GODOT_TESTING.md`이며, 완료 기준은 user approval 전에는 Main / DAY1 교체를 시작하지 않는다는 gate가 확인되는 것이다.
+1. `docs/MAIN_REPLACEMENT_WORK_PLAN.md`와 `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`를 함께 리뷰하고 Strategy A(new `QuarterviewMain` candidate) / Strategy B(existing `Main` internal replacement) 중 실제 교체 전략을 확정한다. 시작 문서는 `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`, and `docs/GODOT_TESTING.md`이며, 완료 기준은 user approval 전에는 Main / DAY1 교체를 시작하지 않고, rollback / commit split / Go-No-Go gate가 확인되는 것이다.
 2. `QuarterviewGameplaySandbox` Test Mode를 GUI에서 수동 확인한다. 시작 파일은 `godot/scenes/prototypes/QuarterviewGameplaySandbox.tscn`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`, `godot/scenes/prototypes/SandboxTestModePanel.tscn`, and `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`이며, 완료 기준은 `F2` open / close, clock pause / restore, `+30 min`, `+2 hours`, `Jump 01:50`, auto end trigger, manual result trigger, reset, movement lock, `R`, `B` / `Backspace`, and no real Main / `SurvivalState` / Phone / Outlet / Result wiring이 확인되는 것이다.
 3. floor / back wall / side wall 실제 shell PNG를 expected path에 추가하고 `QuarterviewRoomShellPrototype`에서 alignment를 확인한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 세 layer의 `1920x1080` image size / canvas match가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
 
