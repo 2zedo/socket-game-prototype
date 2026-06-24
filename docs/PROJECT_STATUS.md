@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `e796a15`
-- Phase: Apartment to Quarterview feature mapping documentation
+- Current commit at task start: `595d457`
+- Phase: Room scene contract design
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -73,6 +73,7 @@
 - Prototype GUI playtest checks for Hub, Quarterview, Hacking, perspective blockouts, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
 - Viewpoint and prototype terminology is clarified in `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: `QuarterviewRoomPrototype` remains an object / interaction contract prototype, while `HackingActionPrototype` remains a control / state arena pending later perspective blockouts.
 - Apartment / Main / SurvivalState 기능을 쿼터뷰 Room 또는 future sandbox로 옮길 때의 object key, UI, state, wire / cable, migration status 대응은 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
+- `RoomSceneContract` skeleton and `docs/ROOM_SCENE_CONTRACT.md` define the future room interface for sandbox-first apartment-to-quarterview migration; no Main wiring is done.
 
 ## Current DAY 1 Decisions
 
@@ -196,6 +197,9 @@
 - `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: loads `RoomObjectDefinition` resources through an explicit path list and converts them to the existing runtime dictionary shape.
 - `docs/ROOM_OBJECT_DEFINITION.md`, `docs/QUARTERVIEW_OBJECT_CONTRACT.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: document the room object Resource fields, constants, helper behavior, and future registry migration boundary.
 - `docs/QUARTERVIEW_APARTMENT_MAPPING.md`: expands Apartment / Main / UI / SurvivalState mapping for future Quarterview sandbox migration without changing code or scenes.
+- `godot/scripts/contracts/RoomSceneContract.gd`: adds a lightweight signal / method skeleton for future room scene interface work.
+- `docs/ROOM_SCENE_CONTRACT.md`: documents room interaction request, device visual sync, signal / method contract, and sandbox-first migration boundaries.
+- `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: link future quarterview feature wiring to `RoomSceneContract` and sandbox-first validation.
 
 ## Validation Results
 
@@ -258,6 +262,7 @@
 - RoomObjectDefinition Resource class 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 실제 room object `.tres` 파일은 생성하지 않았다.
 - Quarterview object registry Resource화 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewRoomPrototype` and `PrototypeHub`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Apartment ↔ Quarterview 기능 대응표 확장 후 `git diff --check`가 완료됐다. Godot AI MCP로 `QuarterviewRoomPrototype` hierarchy를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
+- RoomSceneContract skeleton 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 기존 Main / DAY1 / prototype scene에는 연결하지 않았다.
 - Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.

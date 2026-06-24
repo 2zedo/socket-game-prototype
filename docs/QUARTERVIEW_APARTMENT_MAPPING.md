@@ -8,6 +8,8 @@
 
 `QuarterviewRoomPrototype`은 최종 쿼터뷰 시점 검증용이 아니라 object / interaction contract prototype이다. 현재 object 정의의 source of truth는 `godot/resources/rooms/quarterview/objects/*.tres`의 `RoomObjectDefinition` Resource다.
 
+실제 기능 이식은 `docs/ROOM_SCENE_CONTRACT.md`의 signal / method 기준을 따라 `QuarterviewGameplaySandbox`에서 먼저 연결한다.
+
 ## 현재 구현 요약
 
 - 현재 본게임 방 화면은 탑뷰 `Apartment` 기반이다.
