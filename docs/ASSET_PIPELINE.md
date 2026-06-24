@@ -51,6 +51,7 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 - `ApartmentInteractable` now maps key DAY 1 objects to P0 PNG state textures through `AssetPaths.gd`.
 - 쿼터뷰 전환용 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`를 기준으로 별도 관리한다. 쿼터뷰 방은 한 장 배경보다 room layer, atlas, spritesheet, visual mapping Resource 후보를 우선 검토한다.
 - Quarterview room shell layers will use a same-canvas `1920x1080` PNG workflow. Detailed layer, path, z-index, and import planning is documented in `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`.
+- Quarterview furniture will use an atlas + region mapping workflow. Detailed mapping criteria are documented in `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md`.
 - Window city view PNGs require same-canvas export and should keep wall frames and interior lighting separate from the city-view layer; criteria are documented in `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`.
 - Foreground occluder PNGs require transparent same-canvas exports and alpha edge cleanup before Godot import; criteria are documented in `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`.
 - Static lighting overlays require same-canvas transparent exports. Shadow / glow may need separate overlay files if one blend mode is not enough; criteria are documented in `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`.

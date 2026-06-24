@@ -154,6 +154,8 @@ Static lighting overlay는 따뜻한 실내 작업등과 차가운 THE GRID 창�
 
 Room shell layer의 파일명, `1920x1080` same-canvas 기준, z-index 초안, Godot 적용 순서는 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`에서 관리한다.
 
+Furniture atlas regions should preserve the tidy lower-grid hacker room direction: compact, practical, work-prioritized, and not a filthy slum. Furniture body visuals are planned separately from devices, appliances, room shell layers, player sprites, and UI.
+
 ## 플레이 루프를 드러내는 방
 
 쿼터뷰 방의 목표는 보기 좋은 배경 한 장이 아니다. 방 자체가 아래 루프를 자연스럽게 드러내야 한다.

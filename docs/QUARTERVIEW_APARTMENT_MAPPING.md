@@ -16,6 +16,8 @@
 
 생활 가전 / 생활 유지 장치의 장기 행동 후보는 `LivingDeviceDefinition` Resource class로 분리할 준비를 시작했다. 이 class는 현재 기능 이식이 아니라 Fridge, Microwave, Air Conditioner, Fluorescent Light, UPS 같은 후보의 전력 모델과 생활 효과를 나중에 기록하기 위한 구조다.
 
+Furniture body visuals may later be mapped through `qv_furniture_atlas` region keys, while devices, work devices, appliances, cables, and room shell layers remain separate visual categories.
+
 ## 현재 구현 요약
 
 - 현재 본게임 방 화면은 탑뷰 `Apartment` 기반이다.

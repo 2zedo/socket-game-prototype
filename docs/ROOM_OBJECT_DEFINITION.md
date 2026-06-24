@@ -121,3 +121,10 @@
 `RoomObjectDefinition`은 이 contract의 source of truth를 script 내부 dictionary에서 Resource 파일로 옮기기 위한 구조다.
 
 이번 작업에서는 실제 Main / DAY 1 이식, Phone / Outlet / Result 연결, 해킹 액션 연결, 최종 쿼터뷰 아트 적용을 하지 않는다.
+
+## Visual Atlas Mapping
+
+`RoomObjectDefinition` may later reference furniture atlas region keys through a separate mapping layer.
+`RoomObjectDefinition` itself should not directly store raw atlas rect coordinates at this stage.
+
+Furniture atlas region naming, pivot / anchor, z-index, and mapping schema criteria are documented in `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md`.
