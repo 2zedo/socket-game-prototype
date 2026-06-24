@@ -4,7 +4,7 @@
 
 This document records the current automated test setup for the Godot project.
 
-The first test target is `SurvivalState.gd` because it owns DAY 1 power state, outlet connection state, active device state, clock pause behavior, and Phone battery warnings.
+The first test target was `SurvivalState.gd` because it owns DAY 1 power state, outlet connection state, active device state, clock pause behavior, and Phone battery warnings. The unit suite now also protects key Resource contracts and prototype helper contracts that future sandbox work depends on.
 
 ## Test Addon
 
@@ -18,6 +18,10 @@ GUT `v9.5.0` is used because the project currently runs on Godot `4.5.1`. Do not
 ## Current Test Files
 
 - `godot/test/unit/test_survival_state.gd`
+- `godot/test/unit/test_device_definition_resources.gd`
+- `godot/test/unit/test_room_object_definition.gd`
+- `godot/test/unit/test_room_scene_contract.gd`
+- `godot/test/unit/test_prototype_scene_utils.gd`
 
 Covered behavior:
 
@@ -26,16 +30,20 @@ Covered behavior:
 - Active device drain-rate summing.
 - Modal pause stopping active power drain.
 - Phone battery warning rearm after threshold recovery.
+- `DeviceDefinition` Resource validity, stable keys, slot counts, drain values, and duplicate-key guard.
+- `RoomObjectDefinition` helper behavior, primary action label mapping, Resource validity, and key room object roles.
+- `RoomSceneContract` signal names, action constants, no-op skeleton method safety, and interaction payload shape.
+- `PrototypeSceneUtils` shared B / Backspace, R, D, E / Enter, and ESC input-event checks.
 
 ## Command Line
 
-Run the current unit tests from the repository root:
+Run the full unit suite from the repository root:
 
 ```bash
-/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_survival_state.gd
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gdir=res://test/unit -gexit
 ```
 
-CI-style runs should include `-gexit` so the command exits after printing results:
+Individual test files can still be run with `-gtest` when isolating a failure:
 
 ```bash
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_survival_state.gd -gexit

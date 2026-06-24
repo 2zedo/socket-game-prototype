@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `300d935`
-- Phase: Sandbox Outlet panel wiring
+- Current commit at task start: `c78ad36`
+- Phase: GUT test expansion
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -69,6 +69,7 @@
 - Prototype-only input prompt icons now use a small copied Kenney subset under `godot/assets/ui/third_party/kenney/input_prompts/`; Main/DAY1 UI still has no input prompt icon connection.
 - Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
 - GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
+- The GUT unit suite now also covers `DeviceDefinition` resources, `RoomObjectDefinition` helpers/resources, the `RoomSceneContract` skeleton, and `PrototypeSceneUtils` input helper contracts.
 - Git LFS is not enabled yet; future large-art, atlas, spritesheet, source-art, and audio decisions are tracked in `docs/GIT_LFS_ASSET_POLICY.md`.
 - Prototype GUI playtest checks for Hub, Quarterview, Hacking, perspective blockouts, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
 - Viewpoint and prototype terminology is clarified in `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: `QuarterviewRoomPrototype` remains an object / interaction contract prototype, while `HackingActionPrototype` remains a control / state arena pending later perspective blockouts.
@@ -171,6 +172,10 @@
 - `docs/CODEX_GODOT_WORKFLOW.md`: records Codex, User, ChatGPT, Godot AI MCP, and Godot Editor responsibilities plus workflow validation and staging rules.
 - `godot/addons/gut/`: installs GUT `v9.5.0` for Godot `4.5.x` unit tests.
 - `godot/test/unit/test_survival_state.gd`: covers DAY 1 device Resource values, connected/active separation, active drain sums, modal pause, and Phone battery warning rearm behavior.
+- `godot/test/unit/test_device_definition_resources.gd`: checks `DeviceDefinition` resources for valid metadata, stable keys, duplicate-key safety, and current DAY 1 values.
+- `godot/test/unit/test_room_object_definition.gd`: checks `RoomObjectDefinition` helpers, role action labels, Resource validity, and key object roles.
+- `godot/test/unit/test_room_scene_contract.gd`: checks `RoomSceneContract` signal names, constants, no-op skeleton methods, and payload helper.
+- `godot/test/unit/test_prototype_scene_utils.gd`: checks prototype-only shared input rules for Hub back, restart, debug, confirm, and cancel events.
 - `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
 - `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
 - `docs/ASSET_PIPELINE.md`: links large-asset and LFS handling back to the dedicated Git LFS policy.
@@ -288,6 +293,7 @@
 - Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
+- GUT 테스트 확장 후 `git diff --check`와 full GUT unit suite `26/26 passed`가 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -336,12 +342,13 @@
 - Quarterview Gameplay Sandbox Bed End Day confirmation needs GUI checks for Bed prompt, Primary transition, Confirm state, Cancel / Close / ESC unlock, `R` restart, and B / Backspace Hub return.
 - Quarterview Gameplay Sandbox Phone panel needs GUI checks for `Tab` open / close, phone object Primary open, `ESC` / Close behavior, movement lock, and B / Backspace Hub return.
 - Quarterview Gameplay Sandbox Outlet panel needs GUI checks for power object Primary open, `ESC` / Close behavior, mock buttons, movement lock, and B / Backspace Hub return.
+- Hacking Action mission state, Trace / HP transitions, and objective / exit flow are not covered by GUT yet; keep that for the next dedicated test pass.
 
 ## Next Recommended Task
 
-1. `QuarterviewGameplaySandbox.tscn`을 GUI로 실행해 Bed / Phone / Power panels, mock buttons, movement lock, `ESC`, `R`, and B / Backspace flow가 Main / Result / SurvivalState 연결 없이 동작하는지 확인한다.
-2. 다음 sandbox 단계로 active / connected visual sync 후보를 검토한다. 시작 파일은 `QuarterviewGameplaySandbox.gd`, `QuarterviewSandboxRoomStub.gd`, `RoomSceneContract.gd`, `RoomObjectDefinition.gd`이며, 완료 기준은 sandbox visual state만 갱신하고 실제 `SurvivalState` power drain이나 Main wiring을 건드리지 않는 것이다.
-3. `PrototypeHub.tscn`을 GUI로 실행해 `1/Q`, `2/V`, `3/H`, `4/C`, `5/T`, `6/G`, 포커스된 `E` / `Enter`, 버튼 실행이 모두 올바른 scene으로 이동하는지 확인한다.
+1. `HackingActionPrototype` GUT 테스트를 별도 작업으로 추가한다. 시작 파일은 `HackingActionPrototype.gd`, `HackingPrototypePlayer.gd`, `HackingPrototypeEnemy.gd`, `HackingPrototypeProjectile.gd`이며, 완료 기준은 mission state, objective extraction, exit activation, HP failure, Trace failure를 production gameplay 변경 없이 보호하는 것이다.
+2. `QuarterviewGameplaySandbox.tscn`을 GUI로 실행해 Bed / Phone / Power panels, mock buttons, movement lock, `ESC`, `R`, and B / Backspace flow가 Main / Result / SurvivalState 연결 없이 동작하는지 확인한다.
+3. 다음 sandbox 단계로 active / connected visual sync 후보를 검토한다. 시작 파일은 `QuarterviewGameplaySandbox.gd`, `QuarterviewSandboxRoomStub.gd`, `RoomSceneContract.gd`, `RoomObjectDefinition.gd`이며, 완료 기준은 sandbox visual state만 갱신하고 실제 `SurvivalState` power drain이나 Main wiring을 건드리지 않는 것이다.
 
 ## Archive
 
