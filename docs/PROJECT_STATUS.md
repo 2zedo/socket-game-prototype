@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8b27518`
-- Phase: Quarterview static lighting overlay criteria
+- Current commit at task start: `430f151`
+- Phase: Yui quarterview spritesheet import criteria
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -13,6 +13,7 @@
 
 - DAY 1 separates outlet connection from device active state; connected devices can be switched on/off and only active time drains the daily budget.
 - Yui uses a processed four-direction walk sheet based on `docs/reference/yui-1.png`.
+- Yui quarterview 4-direction spritesheet import criteria are documented for future `yui_qv_idle_4dir.png` and `yui_qv_walk_4dir.png`; no actual PNG asset, `SpriteFrames`, or scene wiring exists yet.
 - The apartment uses `map_base_no_wires.png` as its visible base map.
 - The multitap screen uses draggable adapter PNGs rather than card-based device selection.
 - `SurvivalState.gd` is the source of truth for slot occupancy, connected devices, outlet load, and daily power state.
@@ -200,6 +201,7 @@
 - `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`: documents `qv_room_window_city_view.png` definition, include / exclude rules, z-index policy, wall-frame relationship, alpha / mask criteria, lighting separation, and THE GRID design criteria.
 - `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`: documents `qv_room_foreground_occluders.png` definition, include / exclude rules, z-index criteria, collision separation, art cleanup, and pre-application checklist.
 - `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`: documents `qv_room_static_lighting_overlay.png` definition, include / exclude rules, z-index policy, blend / alpha candidates, dynamic lighting separation, and THE GRID warm / cool lighting criteria.
+- `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`: documents future Yui quarterview spritesheet filenames, asset paths, 4-direction row order, idle / walk frame layout, foot-anchor policy, import settings, animation names, and room shell layer relationships.
 - `docs/ASSET_PIPELINE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: link quarterview room shell layer planning to the existing asset, room direction, and migration docs.
 - `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
 - `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
@@ -253,6 +255,7 @@
 - `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`, `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`, `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/ASSET_PIPELINE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document window city view criteria without adding PNG assets or scene wiring.
 - `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`, `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`, `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`, `docs/ASSET_PIPELINE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document foreground occluder criteria without adding PNG assets or scene wiring.
 - `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`, `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`, `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/ASSET_PIPELINE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document static lighting overlay criteria without adding PNG assets or scene wiring.
+- `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`, `docs/ASSET_PIPELINE.md`, `docs/YUI_CHARACTER_BRIEF.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document Yui quarterview spritesheet import criteria without adding PNG assets, `SpriteFrames`, or scene wiring.
 
 ## Validation Results
 
@@ -335,6 +338,7 @@
 - Quarterview foreground occluder 기준 문서화 후 `git diff --check`가 완료됐다. `ls docs`와 `grep -R "qv_room_foreground_occluders" -n docs`로 문서 경로와 foreground occluder 참조를 확인했고, 문서 작업이라 Godot headless 실행은 생략했다.
 - Quarterview window city view 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 editor readiness를 read-only 확인했고, EditorFileSystem search는 shell prototype / window asset을 반환하지 않아 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_room_window_city_view" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Quarterview static lighting overlay 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 editor readiness를 read-only 확인했고, EditorFileSystem search는 shell prototype / lighting asset을 반환하지 않아 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_room_static_lighting_overlay" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Yui quarterview spritesheet import 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 editor readiness를 read-only 확인했고, EditorFileSystem search는 Yui qv asset을 반환하지 않아 로컬 파일 기준으로 `ls docs`와 `grep -R "yui_qv" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -393,12 +397,13 @@
 - `qv_room_window_city_view.png` is criteria-only; actual asset creation, alpha / mask cleanup, `WindowCityViewLayer` scene placement, independent toggle, and wall-frame alignment checks still need a separate implementation pass.
 - `qv_room_foreground_occluders.png` is criteria-only; actual asset creation, alpha cleanup, `ForegroundOccluderLayer` scene placement, `4` key toggle, and player / prompt visibility checks still need a separate implementation pass.
 - `qv_room_static_lighting_overlay.png` is criteria-only; actual asset creation, blend / alpha tuning, `StaticLightingOverlayLayer` scene placement, independent toggle, and player / prompt readability checks still need a separate implementation pass.
+- `yui_qv_idle_4dir.png` and `yui_qv_walk_4dir.png` are criteria-only; actual asset creation, import settings, `SpriteFrames`, `YuiQuarterviewPlayer`, foot-anchor tuning, and room-shell scale checks still need separate implementation passes.
 
 ## Next Recommended Task
 
 1. floor / back wall / side wall 실제 shell PNG를 expected path에 추가하고 `QuarterviewRoomShellPrototype`에서 alignment를 확인한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 세 layer의 `1920x1080` image size / canvas match가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
-2. `qv_room_window_city_view.png` asset 제작과 prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 창밖 도시 뷰가 wall frame 뒤 / window opening 안쪽에 표시되고 wall / lighting / object 책임 분리를 유지하는 것이다.
-3. `qv_room_static_lighting_overlay.png` asset 제작과 prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 warm interior / cold window contrast가 살아 있고 UI / prompt / interactable readability를 해치지 않는 것이다.
+2. `yui_qv_idle_4dir.png` / `yui_qv_walk_4dir.png` asset 제작과 import prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`와 `docs/YUI_CHARACTER_BRIEF.md`이며, 완료 기준은 down / up / left / right row order, foot anchor, scale, foreground occluder / lighting readability가 확인되는 것이다.
+3. `qv_room_window_city_view.png` asset 제작과 prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 창밖 도시 뷰가 wall frame 뒤 / window opening 안쪽에 표시되고 wall / lighting / object 책임 분리를 유지하는 것이다.
 
 ## Archive
 

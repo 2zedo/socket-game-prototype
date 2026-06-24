@@ -151,6 +151,15 @@ Future static lighting overlay check:
 - [ ] warm interior and cold window contrast are visible.
 - [ ] glow / shadow are not baked in ways that block future dynamic lighting.
 
+Future Yui qv spritesheet check:
+
+- [ ] idle / walk sheets load correctly.
+- [ ] down / up / left / right row order is correct.
+- [ ] foot anchor does not jitter.
+- [ ] scale matches room shell.
+- [ ] foreground occluder does not hide Yui too much.
+- [ ] lighting overlay does not destroy readability.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.

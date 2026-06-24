@@ -54,6 +54,7 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 - Window city view PNGs require same-canvas export and should keep wall frames and interior lighting separate from the city-view layer; criteria are documented in `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`.
 - Foreground occluder PNGs require transparent same-canvas exports and alpha edge cleanup before Godot import; criteria are documented in `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`.
 - Static lighting overlays require same-canvas transparent exports. Shadow / glow may need separate overlay files if one blend mode is not enough; criteria are documented in `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`.
+- Yui quarterview character spritesheets will use a transparent PNG spritesheet workflow with fixed 4-direction row order and foot-anchor alignment. Detailed criteria are documented in `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`.
 - Bed, desk, window, door, shelf, fan, multitap, charger/phone, and communication device should remain separate replaceable objects rather than one flattened background image.
 - Cable visuals should become modular cable segment sprites or Line2D-based scenes so connected/off states can update dynamically.
 - The Yui portrait placeholder in `InteractionPanel.tscn` is filled at runtime with `godot/assets/art/portraits/yui/yui_portrait_neutral.png`.
