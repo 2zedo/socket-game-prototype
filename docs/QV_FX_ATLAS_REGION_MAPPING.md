@@ -8,6 +8,8 @@ The atlas is for localized quarterview room visual effects: screen glow, status 
 
 This task only defines the rules. It does not add the actual atlas PNG, does not create a JSON / CSV / `.tres` mapping file, and does not wire FX visuals into any scene.
 
+`qv_fx_atlas.png` is for quarterview room localized FX. Hacking arena gameplay FX should use `hack_fx_atlas.png` instead.
+
 ## Atlas File
 
 Future atlas file:

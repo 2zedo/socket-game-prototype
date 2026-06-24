@@ -390,6 +390,7 @@ Do not bake too much attack / hit / state FX into body animation. Movement sprit
 
 `hack_avatar` silhouettes should remain visually distinct from enemies defined through `hack_enemies_atlas.png`.
 `hack_avatar` readability should also be validated against `hack_objects_atlas.png` objective / terminal silhouettes.
+Dash trails, hit flashes, and other avatar feedback effects should be separated into `hack_fx_atlas.png` rather than baked into avatar body frames.
 
 ## Collision And Gameplay Separation
 

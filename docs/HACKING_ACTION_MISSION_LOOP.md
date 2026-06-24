@@ -108,6 +108,8 @@ Future hacking missions may select enemy visuals and behavior hints from `hack_e
 
 Future hacking missions may use `hack_objects_atlas.png` visuals for objectives, terminals, gates, caches, and security devices. This is not wired yet.
 
+Future hacking mission state changes may trigger `hack_fx_atlas.png` effects such as extraction, gate unlock, trace warning, and mission success / failure feedback. This is not wired yet.
+
 ## 현재 구현
 
 - 노트북은 방 안 상호작용 오브젝트다.

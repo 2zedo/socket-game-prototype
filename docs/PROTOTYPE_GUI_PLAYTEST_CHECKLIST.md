@@ -275,6 +275,15 @@ Future hack avatar spritesheet check:
 - [ ] Objects read as cyber terminals / nodes, not fantasy dungeon props.
 - [ ] Interaction prompt placement remains clear.
 
+## Future hack FX atlas check
+
+- [ ] FX regions display without cropping.
+- [ ] Animated frames keep stable anchors.
+- [ ] FX / body atlas categories are not mixed.
+- [ ] FX read as cyber / infiltration feedback, not fantasy magic.
+- [ ] FX do not overpower avatar / enemy / object readability.
+- [ ] Blend / alpha values remain readable against arena tiles.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.

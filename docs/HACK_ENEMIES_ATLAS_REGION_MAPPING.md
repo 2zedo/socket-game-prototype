@@ -538,6 +538,7 @@ hack_arena_tiles_atlas.png
 Avoid baking warning glow, laser, hit flash, or large state FX too strongly into the enemy body. Enemy body and FX should remain separable where possible.
 
 Security programs and enemy bodies stay in `hack_enemies_atlas.png`; objective terminals, gates, data cores, and interactable nodes stay in `hack_objects_atlas.png`.
+Enemy hit sparks, warning flashes, death dissolves, and spawn / despawn effects belong in `hack_fx_atlas.png`.
 
 ## Z-Index / Layer Candidates
 

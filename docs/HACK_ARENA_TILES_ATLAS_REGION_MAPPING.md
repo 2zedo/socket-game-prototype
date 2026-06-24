@@ -105,6 +105,7 @@ Criteria:
 - `hack_avatar` spritesheets must be validated against tile size, camera zoom, and player-layer readability before gameplay wiring.
 - `hack_enemies_atlas.png` must be validated against arena tile scale, obstacle readability, and z-index layering before gameplay wiring.
 - `hack_arena_tiles_atlas.png` should provide arena structure and base markers, while interactive objective / device bodies should live in `hack_objects_atlas.png`.
+- Arena tile body visuals stay in `hack_arena_tiles_atlas.png`; animated hazards, Trace warnings, scan lines, and impact effects belong in `hack_fx_atlas.png`.
 
 Atlas size formula:
 

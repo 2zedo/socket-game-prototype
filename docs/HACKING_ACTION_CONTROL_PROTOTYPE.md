@@ -30,6 +30,8 @@ Current control prototype enemy behavior remains unchanged. Future enemy sprites
 
 Current control prototype objective / exit behavior remains unchanged. Future object sprites should support readable interaction / extraction / disable feedback without changing the current mission logic yet.
 
+Future hack FX should support dash, hit, projectile, enemy, and objective feedback without changing the current control prototype yet.
+
 ## 조작 후보
 
 아래 입력은 prototype 후보이며, 실제 구현 시 기존 프로젝트 입력과 충돌하면 조정할 수 있다.

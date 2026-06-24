@@ -543,6 +543,8 @@ hack_fx_atlas.png
 
 Avoid baking glow, scan lines, warning flashes, and extraction beams too strongly into the object body. Object body and FX should remain separable where possible.
 
+Object body sprites stay in `hack_objects_atlas.png`; extraction beams, terminal flashes, gate pulses, and completion effects belong in `hack_fx_atlas.png`.
+
 ## Z-Index / Layer Candidates
 
 Hacking arena z-index candidates:

@@ -131,6 +131,7 @@ prototype 조정값은 각 책임 script 상단에 상수로 모았다.
 - `HackingActionPrototype` is not yet driven by `hack_avatar` spritesheets or `SpriteFrames` data.
 - `HackingActionPrototype` is not yet driven by `hack_enemies_atlas.png` or enemy visual mapping data.
 - `HackingActionPrototype` is not yet driven by `hack_objects_atlas.png` or object visual mapping data.
+- `HackingActionPrototype` is not yet driven by `hack_fx_atlas.png` or FX mapping data.
 
 ## 향후 연결 후보
 

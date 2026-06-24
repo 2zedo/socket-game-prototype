@@ -113,6 +113,7 @@
 - 해킹 미션의 player avatar는 판타지 던전 hero가 아니라 cyber / infiltration avatar로 읽혀야 하며, import 기준은 `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`에서 관리한다.
 - 해킹 미션의 적은 판타지 몬스터가 아니라 cyber security program, trace agent, guard node, defensive system으로 읽혀야 하며, enemy atlas 기준은 `docs/HACK_ENEMIES_ATLAS_REGION_MAPPING.md`에서 관리한다.
 - 해킹 미션의 objective / terminal / gate / cache / security device는 판타지 던전 소품이 아니라 cyber object로 읽혀야 하며, object atlas 기준은 `docs/HACK_OBJECTS_ATLAS_REGION_MAPPING.md`에서 관리한다.
+- 해킹 미션의 FX는 trace warning, extraction beam, scan line, firewall burst, impact feedback처럼 cyber / infiltration feedback으로 읽혀야 하며, FX atlas 기준은 `docs/HACK_FX_ATLAS_REGION_MAPPING.md`에서 관리한다.
 
 ## 장기 방향
 
