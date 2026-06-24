@@ -22,6 +22,7 @@
 - sandbox-only Bed -> End Day confirmation panel
 - sandbox-only Phone panel
 - sandbox-only Outlet panel
+- sandbox-only Result panel
 - sandbox-local clock from `20:00` to `02:00`
 - sandbox-only `02:00` auto end state
 - `D` debug overlay
@@ -69,7 +70,7 @@
 
 Room stub에서 `room_back_requested`가 emit되면 sandbox controller는 PrototypeHub 복귀로 처리한다. 이 흐름은 sandbox / prototype navigation 전용이며 본게임 Main back routing과 연결하지 않는다.
 
-Bed의 Primary action은 예외적으로 `SandboxEndDayPanel`을 연다. 이 흐름도 sandbox-only 확인이며 `SurvivalState.end_current_day()`, `DayResultPanel`, 기존 Main End Day routing은 호출하지 않는다.
+Bed의 Primary action은 예외적으로 `SandboxEndDayPanel`을 연다. Confirm 이후에는 sandbox-only Result panel을 연다. 이 흐름도 sandbox-only 확인이며 `SurvivalState.end_current_day()`, `DayResultPanel`, 기존 Main End Day routing은 호출하지 않는다.
 
 Phone의 Primary action은 `SandboxPhonePanel`을 연다. 이 흐름은 sandbox-only mock status 표시이며 기존 Main `PhoneUI`, Main phone routing, 실제 `SurvivalState` battery / charge state는 호출하지 않는다.
 
@@ -101,7 +102,7 @@ Sandbox 정책:
 - auto end 후 clock은 멈추고 room input은 잠긴다.
 - auto end 후 `E`, `Tab`, Bed / Phone / Power interaction은 무시된다.
 - auto end 후에는 `R` restart 또는 `B` / `Backspace` PrototypeHub 복귀만 유지한다.
-- Result, Main day flow, `SurvivalState` day advance는 호출하지 않는다.
+- real Result / `DayResultPanel`, Main day flow, `SurvivalState` day advance는 호출하지 않는다.
 
 ## Debug Overlay
 
@@ -131,11 +132,12 @@ Debug ON:
 - real Main Outlet routing
 - real `SurvivalState` connected / active state
 - Apartment wire overlay
-- Result
+- real Result / `DayResultPanel`
 - `SurvivalState` gameplay flow
 - `HackingActionPrototype`
 - Test Mode
 - real Main `02:00` auto end / Result flow
+- reward / Grid Credit / save / story flag
 
 이번 sandbox는 실제 기능을 실행하지 않고 event log만 남긴다.
 
@@ -169,7 +171,7 @@ Panel 동작:
 
 - Confirm: sandbox-only `day_end_confirmed = true` 상태를 표시한다.
 - Cancel / Close / `ESC`: confirmation을 닫고 room input을 복구한다.
-- Confirm 이후에는 Result나 다음 날로 진행하지 않고 완료 메시지만 보여준다.
+- Confirm 이후에는 sandbox-only Result panel을 표시한다.
 - `R`: sandbox를 재시작해 상태를 초기화한다.
 - `B` / `Backspace`: panel 상태와 무관하게 PrototypeHub 복귀를 유지한다.
 
@@ -182,7 +184,7 @@ Sandbox-local clock이 `02:00`에 도달하면 confirmation 없이 auto end 상�
 Auto end 동작:
 
 - 현재 열린 sandbox modal을 숨긴다.
-- `SandboxEndDayPanel`을 auto-end message mode로 표시한다.
+- `SandboxResultPanel`을 표시한다.
 - `sandbox_end_reason = "auto_02_00"`로 기록한다.
 - room input을 잠근다.
 - `R` restart와 `B` / `Backspace` PrototypeHub 복귀는 유지한다.
@@ -193,6 +195,31 @@ Manual Bed End와의 차이:
 - Auto End: `02:00` 도달 -> confirmation 없이 auto-end message -> `sandbox_end_reason = "auto_02_00"`
 
 둘 다 기존 Main / DAY1 Result, `SurvivalState`, save / load, reward 계산과 연결되어 있지 않다.
+
+## Sandbox Result Panel
+
+Manual Bed End confirm 또는 `02:00` auto end 이후 `res://scenes/prototypes/SandboxResultPanel.tscn`을 연다.
+
+Panel 표시 정보:
+
+- end reason
+- start time
+- end time
+- elapsed minutes
+- sandbox-only result note
+- Phone / power / outlet / reward / Grid Credit 미연결 안내
+- real `DayResultPanel`, Main / DAY1, `SurvivalState`, save / load, story flag 미연결 안내
+
+Panel 동작:
+
+- Restart: sandbox scene을 reload한다.
+- Hub: `PrototypeHub`로 복귀한다.
+- Hide Details: panel만 숨긴다. Gameplay는 종료 상태로 남고 room input은 계속 잠긴다.
+- `ESC`: Result UI에서 gameplay로 돌아가지 않고 안내 로그만 남긴다.
+- `R`: sandbox를 재시작한다.
+- `B` / `Backspace`: `PrototypeHub`로 복귀한다.
+
+이 panel은 기존 `res://scenes/ui/DayResultPanel.tscn`을 열지 않는다. 기존 `DayResultPanel`은 `SurvivalState`와 DAY result data 전제를 가지므로 sandbox mock result에는 직접 재사용하지 않는다.
 
 ## Sandbox Phone Panel
 
@@ -241,7 +268,7 @@ Panel 동작:
 
 ## Flow Check
 
-`docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`는 현재 sandbox-only 흐름 점검 결과를 기록한다. 확인 범위는 Hub 진입, scene startup, room contract signal 수신, InteractionPanel, Bed confirmation, Phone panel, Outlet panel, `02:00` auto end, modal priority, input lock, `R` restart, `D` debug, `B` / `Backspace` Hub 복귀다.
+`docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`는 현재 sandbox-only 흐름 점검 결과를 기록한다. 확인 범위는 Hub 진입, scene startup, room contract signal 수신, InteractionPanel, Bed confirmation, Phone panel, Outlet panel, `02:00` auto end, Sandbox Result UI, modal priority, input lock, `R` restart, `D` debug, `B` / `Backspace` Hub 복귀다.
 
 이번 점검에서 sandbox controller가 room stub의 `room_back_requested` signal도 수신하도록 연결했다. 이 변경은 sandbox 내부 복귀 signal 처리만 보강하며 Main / DAY1에는 연결하지 않는다.
 
@@ -259,6 +286,7 @@ Panel 동작:
 14. Sandbox Bed -> End Day 연결: sandbox-only confirmation까지 완료. 실제 `SurvivalState` / Result 연결은 아직 하지 않는다.
 15. Sandbox Phone UI 연결: sandbox-only mock panel까지 완료. 실제 Main Phone routing / `SurvivalState` battery 연결은 아직 하지 않는다.
 16. Sandbox Power / Outlet UI 연결: sandbox-only mock panel까지 완료. 실제 Main Outlet routing / `SurvivalState` connected state / Apartment wire overlay 연결은 아직 하지 않는다.
+17. Sandbox Result UI 연결: sandbox-only Result panel까지 완료. 실제 `DayResultPanel` / `SurvivalState` / reward / save 연결은 아직 하지 않는다.
 
 각 작업은 기존 Main / DAY1을 직접 수정하지 않고 sandbox에서 먼저 검증한다.
 

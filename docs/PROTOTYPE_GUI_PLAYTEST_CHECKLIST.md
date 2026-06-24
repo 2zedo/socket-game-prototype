@@ -403,9 +403,11 @@ Future hack avatar spritesheet check:
 - [ ] Panel에 key / role / future_source / visual_state가 표시된다.
 - [ ] Primary / Inspect는 실제 기능 연결 없이 no-op 로그만 남긴다.
 - [ ] Bed에서 Primary를 누르면 sandbox-only End Day confirmation panel이 열린다.
-- [ ] End Day confirmation에서 Confirm을 누르면 `day_end_confirmed = true` 상태와 완료 메시지가 표시된다.
+- [ ] End Day confirmation에서 Confirm을 누르면 `day_end_confirmed = true` 상태가 기록된다.
+- [ ] Bed manual end confirm 후 Sandbox Result UI가 열린다.
+- [ ] Sandbox Result UI에 end reason `manual_bed` / `Manual Rest`가 표시된다.
 - [ ] End Day confirmation에서 Cancel / Close / `ESC`를 누르면 panel이 닫히고 player movement가 복구된다.
-- [ ] End Day Confirm 후 Result 화면이나 다음 날 진행이 열리지 않는다.
+- [ ] End Day Confirm 후 real `DayResultPanel`이나 다음 날 진행이 열리지 않는다.
 - [ ] Bed manual end reason이 `manual_bed`로 표시된다.
 - [ ] `Tab`을 누르면 sandbox Phone panel이 열린다.
 - [ ] Phone panel은 sandbox-only이며 Main / DAY1 Phone flow와 연결되지 않았다고 표시한다.
@@ -421,10 +423,18 @@ Future hack avatar spritesheet check:
 - [ ] Outlet mock button은 로그 / 문구만 바꾸고 실제 connected / active state를 바꾸지 않는다.
 - [ ] Apartment wire overlay가 바뀌지 않는다.
 - [ ] sandbox time이 `02:00`에 도달하면 auto end message가 표시된다.
+- [ ] `02:00` auto end 후 Sandbox Result UI가 열린다.
 - [ ] auto end reason이 `auto_02_00`으로 표시된다.
+- [ ] Sandbox Result UI에 end reason `auto_02_00` / `02:00 Auto End`가 표시된다.
+- [ ] Sandbox Result UI에 sandbox-only warning이 표시된다.
+- [ ] Sandbox Result UI가 기존 `DayResultPanel`을 열지 않는다.
 - [ ] auto end가 열린 Interaction / End Day / Phone / Outlet modal을 override한다.
 - [ ] auto end 후 movement, `E` interaction, `Tab` Phone, Bed / Phone / Power Primary가 실행되지 않는다.
-- [ ] auto end 후 Result, Main DAY1 종료, `SurvivalState` day advance가 실행되지 않는다.
+- [ ] auto end 후 real `DayResultPanel`, Main DAY1 종료, `SurvivalState` day advance가 실행되지 않는다.
+- [ ] Result UI open 후 movement, `E`, `Tab`, Phone / Outlet / Bed interaction이 실행되지 않는다.
+- [ ] Result UI의 Restart button 또는 `R`이 time / result / end state를 초기화한다.
+- [ ] Result UI의 Hub button 또는 `B` / `Backspace`가 PrototypeHub로 복귀한다.
+- [ ] Result UI의 Hide Details는 gameplay를 재개하지 않는다.
 - [ ] Close 또는 `ESC`로 panel이 닫힌다.
 - [ ] Panel이 열려 있는 동안 player movement가 잠긴다.
 - [ ] Panel을 닫으면 player movement가 복구된다.
@@ -442,6 +452,7 @@ Future hack avatar spritesheet check:
 - [ ] Auto End 상태에서도 `R` restart가 가능하고 time / end reason이 초기화된다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
 - [ ] real Main Phone / Outlet / Result / 실제 Main End Day / Hacking이 실제로 열리지 않는다.
+- [ ] Reward / Grid Credit / Story flag / save-load가 실행되지 않는다.
 
 메모:
 

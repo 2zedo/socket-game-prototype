@@ -19,6 +19,7 @@
 - Power Primary -> sandbox-only Outlet panel
 - sandbox-local clock from `20:00` to `02:00`
 - `02:00` sandbox-only auto end
+- sandbox-only Result panel
 - modal open 중 player input lock
 - modal close 후 player input restore
 - `R` restart
@@ -48,21 +49,24 @@
 
 Sandbox-local clock은 `20:00`에 시작해 `02:00`에 도달하면 auto end 상태를 표시한다. 이 clock은 Main / DAY1 clock, `SurvivalState`, Phone UI와 연결하지 않는다.
 
+Manual Bed End confirm과 `02:00` auto end는 모두 `SandboxResultPanel`을 연다. 이 panel은 기존 `DayResultPanel`을 열지 않고 sandbox-local summary만 표시한다.
+
 ## Modal Priority
 
 현재 `_unhandled_input` 기준 우선순위는 아래와 같다.
 
 1. `B` / `Backspace`: PrototypeHub 복귀
 2. `R`: current sandbox restart
-3. `T` / `Shift+T`: sandbox time test advance, if clock is running
-4. auto end triggered state: block normal interactions
-5. 열린 Outlet panel 처리
-6. 열린 Phone panel 처리
-7. 열린 End Day panel 처리
-8. 열린 Interaction panel 처리
-9. `Tab`: Phone panel toggle
-10. `D`: debug overlay toggle
-11. `E`: nearest interaction request
+3. Result UI terminal state handling
+4. `T` / `Shift+T`: sandbox time test advance, if clock is running
+5. auto end triggered state: block normal interactions
+6. 열린 Outlet panel 처리
+7. 열린 Phone panel 처리
+8. 열린 End Day panel 처리
+9. 열린 Interaction panel 처리
+10. `Tab`: Phone panel toggle
+11. `D`: debug overlay toggle
+12. `E`: nearest interaction request
 
 이 구조는 열린 modal 위에 다른 modal이 겹쳐 열리는 것을 피하고, `B` / `Backspace`와 `R`은 modal 상태와 관계없이 우선 처리한다.
 
@@ -124,6 +128,7 @@ Room stub player input은 sandbox modal이 열릴 때 잠기고, 모든 modal이
 - Confirm은 `day_end_confirmed = true`를 sandbox status에 표시한다.
 - Confirm은 `sandbox_end_reason = "manual_bed"`로 표시된다.
 - Confirm 후 sandbox-local clock은 멈춘다.
+- Confirm 후 `SandboxResultPanel`이 열린다.
 - Confirm은 `DayResultPanel`, `Main`, `SurvivalState`를 호출하지 않는다.
 - Cancel / Close / `ESC`는 confirmation을 닫고 room input을 복구한다.
 - Confirmed 상태에서도 `R` restart와 `B` / `Backspace` Hub 복귀가 우선 유지된다.
@@ -132,11 +137,23 @@ Room stub player input은 sandbox modal이 열릴 때 잠기고, 모든 modal이
 
 - `02:00` auto end는 confirmation 없이 종료 메시지를 표시한다.
 - auto end 발생 시 현재 열린 sandbox modal은 숨겨진다.
-- auto end message는 `SandboxEndDayPanel`의 auto-end mode를 사용한다.
+- auto end 이후 `SandboxResultPanel`이 열린다.
 - auto end 후 room input은 잠긴다.
 - auto end 후 `E`, `Tab`, Bed / Phone / Power interaction은 무시된다.
 - `ESC`는 auto end message를 닫지 않고 `R` restart 또는 `B` / `Backspace` Hub 안내만 남긴다.
 - 실제 Result, Main day flow, `SurvivalState` day advance는 호출하지 않는다.
+
+### Sandbox Result UI Flow
+
+- `SandboxResultPanel`은 end reason, start time, end time, elapsed minutes, sandbox-only warning을 표시한다.
+- Manual Bed End는 `manual_bed` / `Manual Rest`로 표시된다.
+- Auto End는 `auto_02_00` / `02:00 Auto End`로 표시된다.
+- Result open 후 room input은 잠긴다.
+- Result open 후 `E`, `Tab`, Bed / Phone / Power interaction은 실행되지 않는다.
+- Result `Restart` button과 `R`은 current sandbox scene reload로 초기화한다.
+- Result `Hub` button과 `B` / `Backspace`는 PrototypeHub로 복귀한다.
+- Result `Hide Details`는 panel만 숨기며 gameplay는 종료 상태로 유지한다.
+- 기존 `DayResultPanel`, `Main`, `SurvivalState`, reward, save / load, story flag는 호출하지 않는다.
 
 ### Phone Panel Flow
 
@@ -160,6 +177,7 @@ Room stub player input은 sandbox modal이 열릴 때 잠기고, 모든 modal이
 - `R`은 current scene reload로 sandbox 상태를 초기화한다.
 - `T` / `Shift+T`는 sandbox-local clock 수동 확인용 shortcut이다.
 - `B` / `Backspace`는 modal 상태보다 우선해 PrototypeHub로 복귀한다.
+- Result open 후 `ESC`는 gameplay로 돌아가지 않고 안내 로그만 남긴다.
 - Help label에는 `E`, `Tab`, `ESC`, `T`, `D`, `R`, `B` / `Backspace` 안내가 포함되어 있다.
 
 ## 아직 연결하지 않은 실제 기능
@@ -176,6 +194,8 @@ Room stub player input은 sandbox modal이 열릴 때 잠기고, 모든 modal이
 - Test Mode
 - Laptop -> `HackingActionPrototype`
 - reward / Result / story flag
+- save / load
+- Grid Credit reward
 
 ## 검증
 
@@ -191,6 +211,7 @@ Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 �
 
 - GUI에서 실제 키 입력으로 `E`, `Tab`, `ESC`, `R`, `D`, `B` / `Backspace` 우선순위를 수동 확인해야 한다.
 - GUI에서 sandbox-local clock 표시와 `T` / `Shift+T` time advance, `02:00` auto end trigger를 수동 확인해야 한다.
+- GUI에서 Sandbox Result UI의 Restart / Hub / Hide Details buttons와 terminal input lock을 수동 확인해야 한다.
 - GUI에서 modal open 중 player movement lock과 close 후 restore를 수동 확인해야 한다.
 - Sandbox panel layout, text fit, focus, button hover / click 상태는 headless로 검증되지 않는다.
 - 다음 단계에서 실제 기능 연결을 시작하더라도 Main / DAY1 직접 수정이 아니라 sandbox에서 먼저 검증한다.
