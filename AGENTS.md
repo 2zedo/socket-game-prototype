@@ -1,281 +1,281 @@
 # Repository Guidelines
 
-## Project Direction
+## 1. 프로젝트 방향
 
-- The main development target is the Godot project under `godot/`.
-- The React/Vite/Phaser web prototype is legacy/reference material.
-- Do not modify React/Vite/Phaser web files unless the user explicitly asks for web-side work.
-- The current product direction is `CONCENT / 전력 부족의 시대`: a 2D narrative survival adventure focused on power management in a small apartment.
-- The first playable goal is a Godot-based `DAY 1 MVP`, not a full DAY 1~12 implementation.
+* 현재 주요 개발 대상은 `godot/` 아래의 Godot 프로젝트다.
+* `src/`의 React / Vite / Phaser 웹 프로토타입은 레거시 / 참고용으로 본다.
+* 사용자가 명시적으로 요청하지 않는 한 React / Vite / Phaser 관련 파일은 수정하지 않는다.
+* 현재 제품 방향은 `CONCENT / 전력 부족의 시대`다.
+* 장르는 작은 방에서 제한된 전력을 관리하며 살아남는 2D 내러티브 생존 어드벤처다.
+* 현재 안정된 플레이 경로는 기존 `Main.tscn` / DAY1 탑뷰 흐름이다.
+* 쿼터뷰, 해킹 액션, atlas, UI 교체 작업은 production에 바로 연결하지 말고 prototype / sandbox / 문서 / Resource 단계를 거쳐 검증한다.
 
-## Repository Map
+## 2. 기본 폴더 구조
 
-- `godot/`: Main Godot project. Prioritize work here.
-- `godot/scenes/`: Godot scenes.
-- `godot/scripts/`: Godot GDScript files.
-- `src/`: React/Vite/Phaser web prototype. Treat as reference unless instructed otherwise.
-- `docs/`: Planning, specifications, implementation notes, and handoff documents.
-- `README.md`: High-level project entry point and run instructions.
+* `godot/`: 현재 활성 Godot 프로젝트. 우선 작업 대상.
+* `godot/scenes/`: Godot scene 파일.
+* `godot/scripts/`: GDScript 파일.
+* `godot/resources/`: `.tres` Resource 파일.
+* `godot/test/unit/`: GUT unit test.
+* `docs/`: 설계, 사양, 구현 메모, 마이그레이션 계획, 체크리스트.
+* `src/`: 레거시 웹 프로토타입. 명시 요청 없으면 수정하지 않는다.
+* `README.md`: 프로젝트 개요와 실행 안내.
 
-## Source Control Rules
+## 3. 현재 안정 경로와 Main 교체 게이트
 
-- This repository is currently developed directly on `main` unless the user explicitly asks for a separate branch.
-- Before starting any development work, complete the startup check:
-  - run `git status --short --branch`
-  - confirm the current branch
-  - record the task-start commit with `git rev-parse --short HEAD`
-  - run `git fetch origin`
-  - run `git log --oneline HEAD..origin/main`
-  - read `AGENTS.md`
-  - read existing relevant tracking docs when present:
-    - `docs/PROJECT_STATUS.md`
-    - `docs/ROADMAP.md`
-    - `docs/GODOT_DAY1_MVP_PLAN.md`
-    - `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`
-    - `docs/ASSET_APPLICATION_NOTES.md`
-    - `docs/YUI_ANIMATION_NOTES.md`
-- Preserve each document's existing heading structure, tone, bullet style, and level of detail.
-- Do not invent missing tracking documents. Do not create `NEXT_TASKS.md`, `WORK_LOG.md`, or similar files unless the user explicitly asks for them.
-- Modify only the documents relevant to the current task.
-- If the current branch is not `main`, stop and report it before making changes.
-- If `git log --oneline HEAD..origin/main` shows any commits, stop before making changes.
-- Do not automatically pull, merge, rebase, or reset when new remote commits exist.
-- Report the new commit list and ask the user what to do next.
-- Only continue when local `main` is already up to date with `origin/main`.
-- After completing a task, stage only the files that are necessary for the requested change.
-- Do not use `git add .` unless the task clearly requires every changed file.
-- Before committing, inspect the changed files with `git status --short`.
-- Run relevant validation commands before committing when practical.
-- Commit only when the task is complete and validation has passed, or when validation is impossible and that limitation is clearly reported.
-- Use concise commit messages such as:
-  - `chore: update project instructions`
-  - `docs: add project progress tracking`
-  - `docs: add Godot DAY 1 MVP plan`
-  - `feat: add Godot power loop`
-- Push completed commits to `origin main`.
-- If push fails, do not force push. Report the error and stop.
-- Before pushing, check remote state. If remote changes exist, stop and report instead of overwriting or force pushing.
-- If conflicts occur, stop and report the conflicted files, likely cause, and required next action. Do not delete or overwrite someone else's work to resolve a conflict.
-- If there are unrelated local changes, do not stage them. Report them separately.
-- Keep commits focused. Separate documentation, refactors, and gameplay changes when practical.
-- For a meaningful work unit, commit the related code, scene, and documentation updates together. Do not split documentation into a separate commit unless the task is documentation-only.
-- Do not commit Godot-generated files or local cache output, including:
-  - `godot/.godot/`
-  - Godot shader cache files
-  - editor layout/cache files
-  - generated import/cache folders
-- Commit user-provided reference images only when they are intended to remain project documentation assets.
+* 현재 `Main.tscn` / DAY1은 golden path다.
+* 사용자가 명시적으로 요청하지 않는 한 `Main`을 교체하지 않는다.
+* `project.godot`의 main scene을 바꾸지 않는다.
+* Quarterview 시스템을 production에 연결하지 않는다.
+* Main 교체는 아래 조건 전까지 금지한다.
 
-- Before finishing a task, report:
-  - branch name
-  - changed files
-  - reason for each change
-  - validation commands and results
-  - remaining risks or TODOs
+  * `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md` 리뷰 및 통과
+  * `docs/MAIN_REPLACEMENT_WORK_PLAN.md` 리뷰
+  * 기존 Main / DAY1 수동 확인 통과
+  * `QuarterviewGameplaySandbox` 수동 확인 통과
+  * GUT / headless 검증 통과 또는 실패 원인 확인
+  * 사용자의 명시적 승인
+* 첫 Main 교체 시도는 기존 Main을 직접 갈아엎기보다 새 `QuarterviewMain` 후보 scene을 만드는 전략을 우선 검토한다.
+* `project.godot` start scene 변경은 마지막에 별도 commit으로 격리한다.
+* 첫 교체 시도에서 기존 `Main.tscn` / `Main.gd`를 삭제하지 않는다.
 
-## Implementation Guardrails
+## 4. 기본 보호 파일
 
-- Do not remove existing comments casually.
-- Preserve existing code comments unless they are clearly obsolete because of the current change.
-- Add comments to new code when they clarify gameplay intent, engine behavior, or non-obvious decisions.
-- When the user names reference images as implementation specifications, open and inspect those images before editing. If the files cannot be read, stop and report that before making code, scene, or asset changes.
-- When reference images contain written labels, layout notes, proportions, or numbered object guides, treat those notes as the primary implementation source for that task unless the user explicitly says otherwise.
-- When a task explicitly says to apply a reference image directly as an asset, copy the source image into the Godot project and use it directly. Do not redraw, reinterpret, or replace it with approximate placeholder geometry.
-- Keep visual reference assets separate from interaction/collision nodes. The map can be visible art while Area2D, collision, and gameplay nodes remain invisible functional overlays.
-- Avoid broad refactors unless the user explicitly asks for them.
-- Before making a large structural change, summarize:
-  - what will change
-  - why it is needed
-  - what files are likely to be affected
+아래 파일은 기본적으로 수정하지 않는다.
 
-- Prefer small, reviewable changes over one large all-in-one implementation.
+* `godot/scenes/Main.tscn`
+* `godot/scripts/Main.gd`
+* `godot/scripts/Apartment.gd`
+* `godot/scripts/Player.gd`
+* `godot/scripts/SurvivalState.gd`
+* `godot/scenes/ui/PhoneUI.tscn`
+* `godot/scripts/ui/PhoneUI.gd`
+* `godot/scenes/ui/OutletMode.tscn`
+* `godot/scripts/ui/OutletMode.gd`
+* `godot/scenes/ui/DayResultPanel.tscn`
+* `godot/scripts/ui/DayResultPanel.gd`
+* `godot/project.godot`
 
-## Godot Development Rules
+이 파일들은 production Main / DAY1 흐름 또는 승인된 Main 교체 작업에서만 수정한다.
 
-- Target Godot 4.x unless the project files indicate otherwise.
-- Treat `godot/` as the source of truth for active development.
-- Keep gameplay state and tuning data out of large monolithic scripts when practical.
-- Prefer Godot `Resource` files (`.tres`) or data files for:
-  - power costs
-  - object definitions
-  - day/event definitions
-  - dialogue data
-  - tuning values
+## 5. Git 작업 규칙
 
-- Keep scene scripts focused on scene behavior. Move shared state and reusable logic into managers/resources when useful.
-- Do not over-engineer the prototype. The first priority is a working DAY 1 loop.
+* 현재 레포는 사용자가 별도 브랜치를 요청하지 않는 한 `main`에서 작업한다.
+* 작업 시작 전 반드시 확인한다.
 
-## Current Godot MVP Target
+```bash
+git status --short --branch
+git rev-parse --short HEAD
+git fetch origin
+git log --oneline HEAD..origin/main
+```
 
-The DAY 1 MVP should prove the core loop:
+* 현재 브랜치가 `main`이 아니면 작업하지 말고 보고한다.
+* `origin/main`에 새 commit이 있으면 pull / merge / rebase / reset 하지 말고 보고한다.
+* unrelated local change가 있으면 stage하지 말고 따로 보고한다.
+* `git add .`는 사용하지 않는다.
+* 현재 작업에 필요한 파일만 선별 stage한다.
+* commit 전 확인한다.
 
-1. Start the game.
-2. Enter the apartment/room scene.
-3. Show current power.
-4. Interact with room objects.
-5. Choose whether to spend power.
-6. Reduce power when a choice is confirmed.
-7. Block actions when power is insufficient.
-8. Show dialogue or event feedback.
-9. End the day.
-10. Show a simple result summary.
+```bash
+git status --short
+git diff --cached --name-only
+```
 
-Initial interactable objects may include:
+* commit은 작고 되돌리기 쉽게 유지한다.
+* push 실패 시 force push하지 말고 보고한다.
+* 충돌이 발생하면 임의 해결하지 말고 충돌 파일과 원인을 보고한다.
 
-- Light
-- Laptop
-- Fan
-- Charger
-- Communication device
-- Door/window/power strip as optional later objects
+## 6. Godot 작업 규칙
 
-## Narrative and Design Direction
+* Godot 4.5.x 기준으로 작업한다.
+* `godot/`이 현재 개발의 source of truth다.
+* scene / UI 작업은 가능하면 Godot AI MCP로 scene hierarchy를 먼저 read-only 확인한다.
+* `.tscn`을 텍스트로 추측 수정하지 않는다.
+* Godot AI MCP를 사용할 수 없으면 그 사실을 보고하고, filesystem / headless 검증을 보수적으로 사용한다.
+* scene script는 scene 동작에 집중한다.
+* 반복되는 상태 / 수치 / 정의는 가능한 경우 `Resource` 또는 data 파일로 분리한다.
+* 새 코드에는 의도, 엔진 특성, 비자명한 판단을 설명하는 주석을 추가한다.
+* 기존 주석은 함부로 삭제하지 않는다.
+* 큰 구조 변경 전에는 영향 파일과 이유를 먼저 정리한다.
+* 넓은 리팩터링보다 작고 검토 가능한 변경을 우선한다.
 
-- The intended tone is dark, quiet, lonely, and grounded.
-- Avoid bright arcade-like UI unless explicitly requested.
-- Avoid visual or structural similarity to existing top-down survival/management games. References such as Among Us are only useful for the abstract idea of top-down movement plus proximity interaction, not for art style, UI layout, or room composition.
-- Treat prison/facility-management survival games and bright pixel life-sim/task HUDs as anti-references. `CONCENT` should read as a quiet one-room power-shortage narrative adventure, not a facility/task-management clone.
-- The core fantasy is not “defeating enemies”; it is surviving through limited power and difficult choices.
-- Power usage should feel like a tradeoff:
-  - survival
-  - information
-  - comfort
-  - relationship
-  - risk
+## 7. Production 상태 소유권
 
-- Key characters/concepts:
-  - Yui: player protagonist and survivor
-  - Delivery robot: support NPC and possible clue carrier
-  - Management office staff: grounded human pressure and information source
-  - Grid: mysterious power/network system tied to the larger truth
+* production의 day / time / power / device / phone / result 상태는 `SurvivalState.gd`가 source of truth다.
+* connected device와 active device는 반드시 구분한다.
+* active drain 계산은 production에서는 `SurvivalState` 기준으로 유지한다.
+* sandbox-local clock, sandbox result, sandbox Test Mode 값은 production 상태가 아니다.
+* room scene은 interaction request와 visual sync를 담당하고, power 계산이나 Result 진행을 직접 소유하지 않는다.
+* production 연결 전까지 sandbox mock state를 production에 복사하지 않는다.
 
-## Web Prototype Rules
+## 8. Prototype / Sandbox 경계
 
-- The Phaser prototype may be useful as a design reference for:
-  - power strip interactions
-  - power limits
-  - day/night cycle
-  - needs/status values
-  - daily events
-  - upgrades
+* `godot/scenes/prototypes/` 아래 scene은 production entry가 아니다.
+* `QuarterviewRoomPrototype`은 object / interaction contract prototype이다. 최종 쿼터뷰 아트 검증용이 아니다.
+* `QuarterviewPerspectiveBlockout`은 시점 / 깊이감 / 비율 확인용 blockout이다.
+* `QuarterviewRoomShellPrototype`은 room shell layer 경로, missing status, 크기 확인용 visual prototype이다.
+* `QuarterviewGameplaySandbox`는 sandbox-only다.
+* `QuarterviewGameplaySandbox`의 local clock, Result panel, Test Mode, Phone mock, Outlet mock, Interaction panel은 production wiring이 아니다.
+* `HackingActionPrototype`은 조작 / 상태 / 피드백 prototype이다.
+* `HackingPerspectiveBlockout`은 해킹 시점 검증용 blockout이다.
+* `PrototypeSceneUtils`, `PrototypeSfx`, `PrototypeInputPrompts`는 prototype 전용 helper다.
+* 명시 작업 전까지 sandbox panel은 아래를 호출하거나 수정하지 않는다.
 
-- Do not port everything blindly.
-- When moving ideas from Phaser to Godot, first identify the smallest system needed for the current Godot MVP.
-- Do not edit `src/`, `package.json`, or Vite-related files unless the task explicitly requires it.
-- If web files are modified, run the web validation commands before finishing.
+  * `Main.gd`
+  * `SurvivalState.gd`
+  * `PhoneUI.gd`
+  * `OutletMode.gd`
+  * `DayResultPanel.gd`
+  * save/load
+  * Grid Credit reward
+  * Story flag
 
-## Documentation Rules
+## 9. Asset / Atlas 정책
 
-- Keep `docs/PROJECT_STATUS.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, and `docs/ASSET_APPLICATION_NOTES.md` focused on current decisions and active work. Do not let them grow into indefinite work diaries.
-- Archive detailed work logs older than 7 days and completed visual-pass history under `docs/old/` when the active document becomes difficult to scan.
-- Name archived documents as `<ORIGINAL_NAME>_YYYYMMDD.md`, for example `PROJECT_STATUS_20260619.md`.
-- Preserve archived content instead of deleting it. After archiving, keep only the latest status summary, current decisions, remaining risks, and next work in the active document.
-- Do not archive `AGENTS.md`, `docs/ROADMAP.md`, or `docs/CONCENT_GAME_SPEC.md` unless the user explicitly requests it.
-- When a game-design decision changes, update `docs/DAY1_CONTENT_BRIEF.md` and every directly related current planning or test document in the same work unit.
-- Never commit Godot's `.godot/` import cache or generated cache output.
-- Before ignoring or staging source-side Godot `.png.import` files, check the repository's tracked metadata pattern. If equivalent source-side metadata is already tracked and the files belong to the current asset change, include them explicitly; do not use `git add .`.
-- Update documentation after a meaningful work unit is complete, not after every tiny edit.
-- Meaningful work units include examples such as player scale/walk animation improvement, apartment map tone revision, multitap placement/cable presentation, multitap UI revision, or dialogue portrait structure revision.
-- At the end of every completed development task, update `docs/PROJECT_STATUS.md`.
-- `docs/PROJECT_STATUS.md` is the living progress artifact for the project.
-- Keep `docs/PROJECT_STATUS.md` as the current status board, not a long diary.
-- Preserve the existing structure and update these sections to match the actual result:
-  - `Snapshot`: current phase, current branch, and latest commit at task start
-  - `Latest Completed Work`: only work actually completed, preferably 3-7 concise bullets for the current unit
-  - `Current Goal`: 2-4 active goals; move completed goals to completed work
-  - `Changed Files`: important changed files only, excluding caches and unrelated files
-  - `Validation Results`: commands run, Godot/manual checks, and explicit `Not verified` or `Manual check required` notes when validation was not possible
-  - `Current Risks or Known Issues`: remaining bugs, manual checks, structural risks, and temporary implementations
-  - `Next Recommended Task`: 1-3 immediately actionable tasks
-- Each `Next Recommended Task` entry should include what to change, why it is needed, which files or systems to inspect first, and completion criteria.
-- Keep the progress file concise and useful. Do not turn it into a long diary.
-- Update `docs/ROADMAP.md` only when broad direction or stage changes, such as demo scope, development phase, core system priority, long-term/release target, or a shift from DAY 1 MVP to a broader DAY 1-12 demo.
-- Do not update `docs/ROADMAP.md` for ordinary UI tweaks or small feature changes.
-- Update `docs/GODOT_DAY1_MVP_PLAN.md` only when the current Godot MVP feature plan changes.
-- Preserve the MVP plan order: `Purpose`, `Success Criteria`, `Required Systems`, `Implementation Order`, and `Out Of Scope`.
-- If work changes actual success criteria or implementation status, reflect that in `docs/GODOT_DAY1_MVP_PLAN.md`.
-- Update `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md` when the task changes the map, UI, dialogue window, multitap screen, layout, camera, lighting, or other visual presentation.
-- For visual work, add a new pass instead of deleting older pass history:
-  - `## <Work Name> Pass`
-  - one short paragraph describing what changed and what existing systems were not changed
-  - `## <Work Name> Adjustments`
-  - bullets for actual changes, preserved behavior, changed scenes/UI structure, and manual checks needed
-- Update `docs/ASSET_APPLICATION_NOTES.md` only when applying new image/pixel assets, replacing temporary assets, changing resources from references, or changing SpriteFrames, textures, atlases, or font application.
-- Asset notes should list applied assets, file paths, scene/node usage, scale handling, whether assets are temporary, and future replacement needs.
-- Update `docs/YUI_ANIMATION_NOTES.md` only when Yui's in-game sprite or animation changes.
-- Yui animation notes should include changed directions/animations, frame count, frame rate, sprite size/scale, movement-to-idle behavior, remaining awkwardness, and next animation tasks.
-- Keep `README.md` concise:
-  - project overview
-  - repository structure
-  - setup/run instructions
-  - current development target
+* 실제 PNG 생성, import, 적용은 명시적인 asset 작업에서만 한다.
+* `/mnt/data`나 임시 외부 경로의 이미지를 임의로 복사하지 않는다.
+* 사용자가 특정 이미지를 직접 적용하라고 명시한 경우에만 Godot 프로젝트로 복사한다.
+* raw Asset Library addon 폴더는 stage하지 않는다.
+* third-party asset은 필요한 파일만 `godot/assets/.../third_party/...`로 선별 복사하고 license 파일을 함께 둔다.
+* `.import`와 `.uid`는 필요한 경우만 stage한다.
+* unrelated `.png.import`, `.wav.import`, `.uid`, addon 생성 파일은 stage하지 않는다.
+* `godot/.godot/`와 캐시 / generated output은 절대 commit하지 않는다.
+* Git LFS는 아직 활성화하지 않았다.
+* 큰 art, atlas, spritesheet, source-art, audio 추가는 별도 LFS / 용량 정책 결정 후 진행한다.
 
-- Put detailed game design in `docs/`.
-- Put implementation plans or migration notes in `docs/`.
-- Update documentation when project structure, run commands, or core development direction changes.
-- Do not update README for every small gameplay tweak.
-- Do not add excessive dates/times to document bodies. Use Git commits and `git log` as the source of truth for dates and authors.
-- Record commit hashes in document bodies only when they are useful reference points, such as `Latest commit at task start`.
-- Do not guess past dates or authors.
-- Do not delete completed pass history just because it is old. If a document becomes too long, report a proposed split before reorganizing it.
+## 10. Room Shell 이미지 규칙
 
-## Work Unit Closeout
+쿼터뷰 room shell 이미지는 atlas가 아니다. 같은 canvas 기준의 투명 PNG 레이어다.
 
-At the end of each meaningful work unit:
+핵심 파일:
 
-1. Check the actual changed files.
-2. Run practical validation.
-3. Update the relevant detailed document for the task type.
-4. Update `docs/PROJECT_STATUS.md`.
-5. Re-evaluate `Next Recommended Task` from the current code, docs, validation results, roadmap, MVP plan, reference images, and remaining blockers.
-6. Inspect `git diff`.
-7. Stage only the files required for that work unit.
-8. Commit with a clear message.
-9. Push to `origin main`.
+* `qv_room_floor_base.png`
+* `qv_room_walls_back.png`
+* `qv_room_walls_side.png`
+* `qv_room_foreground_occluders.png`
+* `qv_room_window_city_view.png`
+* `qv_room_static_lighting_overlay.png`
 
-Before ending a work session, confirm:
+규칙:
 
-- related code and scenes are saved
-- validation was run where possible
-- `docs/PROJECT_STATUS.md` matches the current state
-- the relevant detailed docs were updated
-- `Next Recommended Task` is current
-- changed files are reflected in the docs
-- commit and push succeeded, or failure was reported clearly
-- incomplete work was not recorded as completed
+* 모든 room shell layer는 같은 canvas 크기와 같은 원점을 공유한다.
+* 같은 카메라 각도를 유지한다.
+* 투명 배경 PNG로 관리한다.
+* 요청한 layer에 해당하는 요소만 남긴다.
+* item sheet / asset sheet / atlas처럼 만들지 않는다.
+* 캐릭터, UI, 텍스트, 라벨을 넣지 않는다.
+* 요청하지 않은 가구, 소품, 장치, 케이블을 넣지 않는다.
+* `qv_room_foreground_occluders.png`는 전경 가림 레이어이며 소품 atlas가 아니다.
+* 창밖 도시는 `qv_room_window_city_view.png` 전용이다.
+* 조명, glow, shadow는 lighting / FX overlay로 분리한다.
 
-## Validation Commands
+## 11. Atlas Mapping 문서의 의미
 
-Run only the commands relevant to the files changed.
+대부분의 atlas 관련 작업은 현재 documented-only다.
 
-For web prototype changes:
+문서화된 atlas 후보:
+
+* qv furniture / appliances / work devices / FX / props / cable
+* hacking arena tiles / avatar / enemies / objects / FX
+* UI common / HUD / phone / outlet / result-log / dialogue / device-icons
+
+명시적인 구현 작업 전까지 아래를 만들지 않는다.
+
+* 실제 PNG atlas
+* mapping JSON / CSV / `.tres`
+* Theme Resource
+* StyleBoxTexture
+* AtlasTexture
+* SpriteFrames
+* Control node
+* scene wiring
+* gameplay wiring
+
+## 12. 문서 규칙
+
+* `docs/PROJECT_STATUS.md`는 현재 상태판이지 긴 작업 일지가 아니다.
+* `AGENTS.md`에는 1~52 작업 이력을 전부 넣지 않는다.
+* 없는 tracking 문서를 임의로 만들지 않는다.
+* `NEXT_TASKS.md`, `WORK_LOG.md` 같은 파일은 사용자가 요청하지 않으면 만들지 않는다.
+* 의미 있는 작업 단위가 끝나면 `docs/PROJECT_STATUS.md`를 갱신한다.
+* task 성격에 맞는 세부 문서만 갱신한다.
+* `docs/ROADMAP.md`는 큰 방향 / 단계 변경 때만 갱신한다.
+* `docs/GODOT_DAY1_MVP_PLAN.md`는 MVP 성공 기준이나 구현 계획이 바뀔 때만 갱신한다.
+* `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`는 map, UI, dialogue window, outlet screen, layout, camera, lighting, visual presentation이 바뀔 때 갱신한다.
+* `docs/ASSET_APPLICATION_NOTES.md`는 실제 이미지 / pixel asset / SpriteFrames / texture / atlas / font를 적용할 때만 갱신한다.
+* `docs/YUI_ANIMATION_NOTES.md`는 유이의 실제 in-game sprite / animation을 바꿀 때만 갱신한다.
+* `README.md`는 개요와 실행 안내 중심으로 유지하고, 작은 변경마다 갱신하지 않는다.
+* 문서에 과한 날짜 / 시간을 넣지 않는다. 날짜와 작성자는 Git commit을 기준으로 본다.
+
+## 13. 테스트 / 검증 명령
+
+변경 범위에 맞는 검증만 실행한다.
+
+Godot project parse:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot --quit-after 2
+```
+
+전체 GUT:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gdir=res://test/unit -gexit
+```
+
+주요 targeted GUT 예시:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_survival_state.gd -gexit
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_hacking_action_state_machine.gd -gexit
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_asset_smoke.gd -gexit
+```
+
+web prototype 변경 시에만:
 
 ```bash
 npm run lint
 npm run build
 ```
 
-For Godot changes:
+검증을 실행하지 못했으면 반드시 이유를 보고한다.
 
-- Open the Godot project under `godot/` and run the main scene when GUI validation is needed.
-- If a Godot CLI is available locally, use an appropriate headless or syntax-check command for the installed version.
-- Always mention when Godot validation could not be run in the current environment.
+## 14. 작업 종료 절차
 
-For repository hygiene:
+의미 있는 작업 단위가 끝나면:
 
-```bash
-git status --short --branch
-```
+1. 실제 변경 파일을 확인한다.
+2. 가능한 검증을 실행한다.
+3. task 성격에 맞는 세부 문서를 갱신한다.
+4. `docs/PROJECT_STATUS.md`를 갱신한다.
+5. 현재 repo 상태 기준으로 다음 추천 작업을 재평가한다.
+6. `git diff`를 확인한다.
+7. 필요한 파일만 stage한다.
+8. 명확한 commit message로 commit한다.
+9. `origin main`에 push한다.
 
-## Communication Style for Task Reports
+작업 종료 전 확인:
 
-When finishing a task, keep the report short and concrete:
+* 코드와 scene이 저장되어 있는가
+* 검증을 실행했는가
+* docs가 실제 결과와 일치하는가
+* 변경 파일이 docs에 반영되었는가
+* commit / push가 성공했는가
+* 미완료 작업을 완료로 기록하지 않았는가
 
-- `Completed`: completed work
-- `Changed Files`: important changed files
-- `Documentation Updated`: updated docs and why
-- `Validation`: commands/tests and manual checks still needed
-- `Next Recommended Tasks`: 1-3 next tasks
-- `Git`: branch, commit, and push result
+## 15. 보고 형식
 
-Avoid vague claims such as “improved architecture” unless the actual changes are listed.
+작업 완료 보고는 짧고 구체적으로 한다.
+
+권장 형식:
+
+* Completed
+* Changed Files
+* Documentation Updated
+* Validation
+* Manual Checks Still Needed
+* Risks / TODO
+* Git
+
+“구조 개선”, “아키텍처 개선” 같은 모호한 표현은 실제 변경 내용을 함께 적을 때만 사용한다.
