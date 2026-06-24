@@ -96,6 +96,12 @@
 
 처음부터 복잡한 경제, 스킬트리, 여러 미션 분기, 다양한 보상 테이블을 만들지 않는다. 핵심은 "노트북으로 들어간 별도 탑뷰 액션 의뢰가 현실 방 루프와 연결되는지"를 검증하는 것이다.
 
+## 미션 데이터 관리 후보
+
+Laptop mission selection은 장기적으로 `HackingMissionDefinition` Resource 목록을 읽는 방향으로 검토한다. 이 Resource는 mission key, 표시명, 유형, 목표, 요구 / 추천 장치, story flag 후보, 보상 후보, Result 문구 후보를 관리한다.
+
+현재는 Resource class만 준비되어 있으며, 실제 mission `.tres`, Laptop UI, `HackingActionPrototype` 진입, Grid Credit, Result, Story flag 연결은 아직 구현하지 않는다.
+
 ## 현재 구현
 
 - 노트북은 방 안 상호작용 오브젝트다.

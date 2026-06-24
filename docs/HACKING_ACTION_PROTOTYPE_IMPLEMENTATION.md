@@ -126,6 +126,7 @@ prototype 조정값은 각 책임 script 상단에 상수로 모았다.
 - 보상, Grid Credit, story flag, Result 기록을 지급하지 않는다.
 - Phone, Outlet, Result, Test Mode, Quarterview Room 흐름을 수정하지 않는다.
 - `HackingPerspectiveBlockout`은 시점 검증용이며, 기존 `HackingActionPrototype`의 조작 / 전투 시스템을 대체하지 않는다.
+- `HackingMissionDefinition` Resource class는 미래 미션 데이터 구조이며, 현재 `HackingActionPrototype`은 아직 이 Resource로 구동되지 않는다.
 
 ## 향후 연결 후보
 
@@ -134,6 +135,7 @@ prototype 조정값은 각 책임 script 상단에 상수로 모았다.
 ```text
 Laptop 상호작용
 -> 미션 선택
+-> HackingMissionDefinition Resource 조회
 -> HackingActionPrototype 또는 향후 미션 scene
 -> 성공 / 실패
 -> 보상 / 정보 flag / Result 기록

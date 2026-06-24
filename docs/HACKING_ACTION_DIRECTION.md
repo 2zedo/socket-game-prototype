@@ -108,10 +108,12 @@
 - 전력, Phone, Result, `02:00` 종료, Test Mode는 기존 DAY 1 MVP에 구현되어 있다.
 - 현재 노트북 사용은 별도 액션 미션으로 이어지지 않는다.
 - 현재 `HackingActionPrototype`은 조작 / 상태 흐름 검증용이며, 장기 목표 시점 자체는 `res://scenes/prototypes/HackingPerspectiveBlockout.tscn`에서 따로 검증한다.
+- 해킹 미션 데이터는 장기적으로 `HackingMissionDefinition` Resource로 관리한다.
 
 ## 장기 방향
 
 - 노트북에서 별도 `3/4 top-down` 액션 해킹 미션으로 진입한다.
+- 노트북의 미션 선택은 향후 `HackingMissionDefinition` Resource 목록을 읽는 방향으로 검토한다.
 - 해킹 성공과 실패는 Grid Credit, 정보 플래그, Result 기록, 전력 또는 시간 손실에 연결한다.
 - 현실 방 파트와 해킹 파트는 시각적으로 구분하되, 전력과 의뢰 결과를 통해 하나의 하루 루프로 이어지게 한다.
 - 첫 구현은 작은 해킹 미션 1개로 시작한다.
@@ -120,5 +122,5 @@
 
 - 현재 구현 = 방 안 노트북 상호작용 오브젝트
 - 장기 방향 = 별도 `3/4 top-down` 액션 해킹 모드 검토
-- 이번 작업 = 문서화
-- 이번 작업에서 구현하지 않음 = 코드 변경, scene 변경, Resource 변경, 에셋 추가, 해킹 액션 prototype scene 생성
+- 이번 작업 = 문서화 / Resource 설계
+- 이번 작업에서 구현하지 않음 = scene 변경, mission `.tres` 생성, Laptop 연결, Result / Story / Grid Credit 연결, 에셋 추가, 해킹 액션 prototype scene 생성
