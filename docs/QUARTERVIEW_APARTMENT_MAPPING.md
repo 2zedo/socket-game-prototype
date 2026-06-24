@@ -10,6 +10,8 @@
 
 실제 기능 이식은 `docs/ROOM_SCENE_CONTRACT.md`의 signal / method 기준을 따라 `QuarterviewGameplaySandbox`에서 먼저 연결한다.
 
+앞으로 이 문서의 기능 대응 항목은 기존 Main에 직접 wiring하기 전에 `res://scenes/prototypes/QuarterviewGameplaySandbox.tscn`에서 먼저 검증한다.
+
 ## 현재 구현 요약
 
 - 현재 본게임 방 화면은 탑뷰 `Apartment` 기반이다.

@@ -136,6 +136,23 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Title / Pause Menu Prototype 실행"
 
+[node name="QuarterviewGameplaySandboxTitle" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.88, 0.78, 1)
+theme_override_font_sizes/font_size = 20
+text = "[6] Quarterview Gameplay Sandbox"
+
+[node name="QuarterviewGameplaySandboxDescription" type="Label" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.77, 0.70, 1)
+theme_override_font_sizes/font_size = 15
+text = "- RoomSceneContract signal flow sandbox. No Phone / Outlet / Result wiring yet."
+
+[node name="QuarterviewGameplaySandboxButton" type="Button" parent="Margin/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Quarterview Gameplay Sandbox 실행"
+
 [node name="KeysTitle" type="Label" parent="Margin/Panel/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.93, 0.86, 0.72, 1)
@@ -151,5 +168,6 @@ text = "1 또는 Q: Room Object Contract Prototype 실행
 3 또는 H: HackingActionPrototype 실행
 4 또는 C: HackingPerspectiveBlockout 실행
 5 또는 T: TitleMenuPrototype 실행
+6 또는 G: QuarterviewGameplaySandbox 실행
 ESC: 동작 없음 로그 출력
 각 prototype 안에서 B / Backspace로 이 화면으로 돌아올 수 있습니다."

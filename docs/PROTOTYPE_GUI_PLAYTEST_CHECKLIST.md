@@ -22,6 +22,7 @@
 - `res://scenes/prototypes/HackingActionPrototype.tscn`
 - `res://scenes/prototypes/HackingPerspectiveBlockout.tscn`
 - `res://scenes/prototypes/TitleMenuPrototype.tscn`
+- `res://scenes/prototypes/QuarterviewGameplaySandbox.tscn`
 
 ## PrototypeHub
 
@@ -38,6 +39,7 @@
 - [ ] `3` / `H`로 Hacking Action Prototype에 진입된다.
 - [ ] `4` / `C`로 Hacking Perspective Blockout에 진입된다.
 - [ ] `5` / `T`로 Title / Pause Menu Prototype에 진입된다.
+- [ ] `6` / `G`로 Quarterview Gameplay Sandbox에 진입된다.
 - [ ] 포커스된 `E` / `Enter` 실행으로 Quarterview Perspective와 Hacking Perspective 항목에도 진입된다.
 - [ ] 선택 이동 시 SFX가 너무 크거나 거슬리지 않는다.
 - [ ] 실행 confirm SFX가 들린다.
@@ -163,6 +165,23 @@
 - [ ] 아직 실제 `Main` 게임 시작과 연결되지 않은 상태가 명확하다.
 
 `TitleMenuPrototype`은 아직 낮은 우선순위의 UI 방향 prototype이다. 실제 title scene 승격, save / load, Main 시작 연결, Main ESC menu 통합은 별도 작업이다.
+
+## QuarterviewGameplaySandbox
+
+이 scene은 미래 쿼터뷰 Main 이식 전에 `RoomSceneContract` signal flow를 확인하는 sandbox다. 실제 `Main`, Phone, Outlet, Result, End Day, Hacking 연결은 확인 대상이 아니다.
+
+- [ ] Scene이 정상 실행된다.
+- [ ] 화면에 `Quarterview Gameplay Sandbox`와 `Not Main` 안내가 보인다.
+- [ ] `Room contract connected: yes` 상태가 표시된다.
+- [ ] `WASD` / 방향키로 room stub player가 이동한다.
+- [ ] 가까운 object에 접근하면 nearest prompt가 표시된다.
+- [ ] `E`를 누르면 `interaction_requested` event log가 표시된다.
+- [ ] Godot output에 no-op interaction 로그가 출력된다.
+- [ ] `D` 키로 debug overlay ON / OFF가 된다.
+- [ ] Debug ON에서 object label, interaction radius, player position, signal log가 보인다.
+- [ ] `R`로 sandbox가 restart된다.
+- [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
+- [ ] Phone / Outlet / Result / End Day / Hacking이 실제로 열리지 않는다.
 
 ## SFX 확인 항목
 

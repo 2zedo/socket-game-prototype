@@ -59,6 +59,7 @@
 - 노트북, Phone, 멀티탭, 통신 장치 같은 상호작용 오브젝트는 위치, 상호작용 범위, 충돌 범위를 scene 또는 data 구조로 관리한다.
 - 쿼터뷰 Room 오브젝트 정의는 `RoomObjectDefinition` Resource 기반으로 관리하며, 현재 contract prototype의 object 정의는 `godot/resources/rooms/quarterview/objects/*.tres`가 소유한다.
 - 쿼터뷰 Main 교체 전, `RoomSceneContract`와 sandbox를 통해 입력, 상호작용 요청, 장치 시각 동기화, UI 연결을 분리 검증한다.
+- `QuarterviewGameplaySandbox`는 Main 교체 전 `RoomSceneContract` signal flow를 검증하는 독립 sandbox layer로 사용한다.
 - 기존 탑뷰 Apartment 기능과 쿼터뷰 placeholder의 대응 관계는 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
 - 쿼터뷰 prototype의 object key, role, future source, visual state 계약은 `docs/QUARTERVIEW_OBJECT_CONTRACT.md`에서 추적한다.
 - 쿼터뷰 prototype은 `FloorLayer`, `WallBackLayer`, `FurnitureBackLayer`, `ObjectLayer`, `PlayerLayer`, `FurnitureFrontLayer`, `InteractionDebugLayer`, `LabelLayer`를 분리해 본 전환 전 레이어 책임과 가림 방식을 확인한다.

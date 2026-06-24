@@ -56,6 +56,16 @@ const PROTOTYPES := [
 		"button_path": "Margin/Panel/VBox/TitleMenuButton",
 		"keycodes": [KEY_5, KEY_T],
 	},
+	{
+		"key": "quarterview_gameplay_sandbox",
+		"title": "Quarterview Gameplay Sandbox",
+		"scene_path": "res://scenes/prototypes/QuarterviewGameplaySandbox.tscn",
+		"status": "active",
+		"shortcut": ["6", "G"],
+		"description": "Sandbox for future Main/DAY1 quarterview migration. Tests RoomSceneContract signal flow only. No Phone/Outlet/Result wiring yet.",
+		"button_path": "Margin/Panel/VBox/QuarterviewGameplaySandboxButton",
+		"keycodes": [KEY_6, KEY_G],
+	},
 ]
 
 var sfx
