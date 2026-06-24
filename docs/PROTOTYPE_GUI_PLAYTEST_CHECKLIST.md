@@ -168,7 +168,7 @@
 
 ## QuarterviewGameplaySandbox
 
-이 scene은 미래 쿼터뷰 Main 이식 전에 `RoomSceneContract` signal flow를 확인하는 sandbox다. 실제 `Main`, Phone, Outlet, Result, Hacking 연결은 확인 대상이 아니다. Bed End Day는 sandbox-only confirmation까지만 확인한다.
+이 scene은 미래 쿼터뷰 Main 이식 전에 `RoomSceneContract` signal flow를 확인하는 sandbox다. 실제 `Main`, Outlet, Result, Hacking 연결은 확인 대상이 아니다. Bed End Day와 Phone은 sandbox-only panel까지만 확인한다.
 
 - [ ] Scene이 정상 실행된다.
 - [ ] 화면에 `Quarterview Gameplay Sandbox`와 `Not Main` 안내가 보인다.
@@ -183,6 +183,12 @@
 - [ ] End Day confirmation에서 Confirm을 누르면 `day_end_confirmed = true` 상태와 완료 메시지가 표시된다.
 - [ ] End Day confirmation에서 Cancel / Close / `ESC`를 누르면 panel이 닫히고 player movement가 복구된다.
 - [ ] End Day Confirm 후 Result 화면이나 다음 날 진행이 열리지 않는다.
+- [ ] `Tab`을 누르면 sandbox Phone panel이 열린다.
+- [ ] Phone panel은 sandbox-only이며 Main / DAY1 Phone flow와 연결되지 않았다고 표시한다.
+- [ ] Phone panel이 열려 있는 동안 player movement가 잠긴다.
+- [ ] `Tab` / `ESC` / Close button으로 Phone panel이 닫힌다.
+- [ ] Phone panel을 닫으면 player movement가 복구된다.
+- [ ] phone object에서 Primary를 누르면 sandbox Phone panel이 열린다.
 - [ ] Close 또는 `ESC`로 panel이 닫힌다.
 - [ ] Panel이 열려 있는 동안 player movement가 잠긴다.
 - [ ] Panel을 닫으면 player movement가 복구된다.
@@ -192,7 +198,7 @@
 - [ ] Debug ON에서 object label, interaction radius, player position, signal log가 보인다.
 - [ ] `R`로 sandbox가 restart된다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
-- [ ] Phone / Outlet / Result / 실제 Main End Day / Hacking이 실제로 열리지 않는다.
+- [ ] real Main Phone / Outlet / Result / 실제 Main End Day / Hacking이 실제로 열리지 않는다.
 
 ## SFX 확인 항목
 

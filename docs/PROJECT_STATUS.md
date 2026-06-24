@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8c09584`
-- Phase: Sandbox Bed End Day confirmation wiring
+- Current commit at task start: `bd784bb`
+- Phase: Sandbox Phone panel wiring
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -77,6 +77,7 @@
 - `QuarterviewGameplaySandbox.tscn` is an independent sandbox for future quarterview Main migration; it receives `RoomSceneContract` signals from a stub room and logs them without Phone / Outlet / Result wiring.
 - Quarterview Gameplay Sandbox now routes room interaction requests to a sandbox-only interaction panel with Primary / Inspect / Close no-op actions and room input locking.
 - Quarterview Gameplay Sandbox routes `bed` / `manual_end_day` Primary action to a sandbox-only End Day confirmation panel that sets `day_end_confirmed` without calling Main, `SurvivalState`, or Result flow.
+- Quarterview Gameplay Sandbox opens a sandbox-only Phone panel from `Tab` or `phone` / `phone_charge` Primary action, using mock text without Main Phone routing or `SurvivalState` battery wiring.
 
 ## Current DAY 1 Decisions
 
@@ -209,8 +210,10 @@
 - `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: opens the sandbox panel from `interaction_requested`, locks room input while open, and restores input on Close / ESC.
 - `godot/scenes/prototypes/SandboxEndDayPanel.tscn`, `godot/scripts/prototypes/SandboxEndDayPanel.gd`: add a sandbox-only Bed End Day confirmation panel with Confirm / Cancel / Close paths.
 - `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: routes `bed` / `manual_end_day` Primary action to the sandbox End Day panel, tracks `day_end_confirmed`, and leaves Main / `SurvivalState` / Result unwired.
+- `godot/scenes/prototypes/SandboxPhonePanel.tscn`, `godot/scripts/prototypes/SandboxPhonePanel.gd`: add a sandbox-only mock Phone panel with Close support and explicit Main / DAY1 unwired copy.
+- `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: opens/closes the sandbox Phone panel from `Tab` or phone Primary action, locks room input while open, and leaves existing `PhoneUI.gd` / Main phone routing unchanged.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Gameplay Sandbox as a separate Hub entry.
-- `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/ROOM_SCENE_CONTRACT.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the sandbox-only Bed End Day confirmation boundary and manual GUI checks.
+- `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/ROOM_SCENE_CONTRACT.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the sandbox-only Bed End Day and Phone panel boundaries and manual GUI checks.
 
 ## Validation Results
 
@@ -277,6 +280,7 @@
 - Quarterview Gameplay Sandbox 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Sandbox InteractionPanel 연결 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Sandbox Bed End Day confirmation 연결 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Sandbox Phone panel 연결 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
@@ -326,11 +330,12 @@
 - `QuarterviewPerspectiveBlockout` still needs GUI checks for perspective readability, pseudo 3D scale, collision feel, debug overlay, and B / Backspace return.
 - `HackingPerspectiveBlockout` still needs GUI checks for 3/4 cyber readability, object height cues, movement feel, debug overlay, and B / Backspace return.
 - Quarterview Gameplay Sandbox Bed End Day confirmation needs GUI checks for Bed prompt, Primary transition, Confirm state, Cancel / Close / ESC unlock, `R` restart, and B / Backspace Hub return.
+- Quarterview Gameplay Sandbox Phone panel needs GUI checks for `Tab` open / close, phone object Primary open, `ESC` / Close behavior, movement lock, and B / Backspace Hub return.
 
 ## Next Recommended Task
 
-1. `QuarterviewGameplaySandbox.tscn`을 GUI로 실행해 Bed Primary가 sandbox-only End Day confirmation을 열고, Confirm / Cancel / Close / ESC / R / B 흐름이 Main / Result 연결 없이 동작하는지 확인한다.
-2. 15번 작업으로 `QuarterviewGameplaySandbox`에서 Phone UI 연결 후보를 검토한다. 시작 파일은 `QuarterviewGameplaySandbox.gd`, `QuarterviewSandboxRoomStub.gd`, `PhoneUI.gd`, `ROOM_SCENE_CONTRACT.md`이며, 완료 기준은 sandbox에서만 Phone UI routing을 검증하고 Main / DAY1은 건드리지 않는 것이다.
+1. `QuarterviewGameplaySandbox.tscn`을 GUI로 실행해 `Tab` Phone panel, phone object Primary, `ESC` / Close, movement lock, Bed End Day confirmation, `R`, and B / Backspace flow가 Main / Result 연결 없이 동작하는지 확인한다.
+2. 16번 작업으로 `QuarterviewGameplaySandbox`에서 Power / Outlet UI 연결 후보를 검토한다. 시작 파일은 `QuarterviewGameplaySandbox.gd`, `QuarterviewSandboxRoomStub.gd`, `OutletMode.gd`, `ROOM_SCENE_CONTRACT.md`이며, 완료 기준은 sandbox에서만 Power routing을 검증하고 Main / DAY1은 건드리지 않는 것이다.
 3. `PrototypeHub.tscn`을 GUI로 실행해 `1/Q`, `2/V`, `3/H`, `4/C`, `5/T`, `6/G`, 포커스된 `E` / `Enter`, 버튼 실행이 모두 올바른 scene으로 이동하는지 확인한다.
 
 ## Archive

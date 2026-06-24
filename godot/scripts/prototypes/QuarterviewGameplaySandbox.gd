@@ -5,15 +5,18 @@ const PROTOTYPE_SFX_SCRIPT := preload("res://scripts/prototypes/PrototypeSfx.gd"
 const ROOM_STUB_SCENE := preload("res://scenes/prototypes/QuarterviewSandboxRoomStub.tscn")
 const INTERACTION_PANEL_SCENE := preload("res://scenes/prototypes/SandboxInteractionPanel.tscn")
 const END_DAY_PANEL_SCENE := preload("res://scenes/prototypes/SandboxEndDayPanel.tscn")
+const PHONE_PANEL_SCENE := preload("res://scenes/prototypes/SandboxPhonePanel.tscn")
 
 var room
 var interaction_panel
 var end_day_panel
+var phone_panel
 var sfx
 var room_contract_connected := false
 var debug_overlay_enabled := false
 var day_end_confirmed := false
 var sandbox_state := "running"
+var phone_source := "-"
 var last_interaction := "-"
 var last_nearest := "-"
 var last_object := "-"
@@ -39,6 +42,7 @@ func _ready() -> void:
 	_configure_help()
 	_spawn_interaction_panel()
 	_spawn_end_day_panel()
+	_spawn_phone_panel()
 	_spawn_room_stub()
 	_set_debug_overlay_enabled(false)
 	_append_log("Sandbox ready. No Main/DAY1 wiring.")
@@ -60,6 +64,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	if _is_phone_panel_open():
+		if PROTOTYPE_UTILS.is_cancel_event(event) or _is_phone_toggle_event(event):
+			_close_phone_panel()
+			get_viewport().set_input_as_handled()
+			return
+		return
+
 	if _is_end_day_panel_open():
 		if not day_end_confirmed and PROTOTYPE_UTILS.is_cancel_event(event):
 			end_day_close_reason = "Sandbox End Day cancelled by ESC."
@@ -77,6 +88,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_panel_primary_pressed()
 			get_viewport().set_input_as_handled()
 			return
+		return
+
+	if _is_phone_toggle_event(event):
+		_open_phone_panel("Tab")
+		get_viewport().set_input_as_handled()
 		return
 
 	if PROTOTYPE_UTILS.is_debug_toggle_event(event):
@@ -97,7 +113,7 @@ func _configure_sfx() -> void:
 
 
 func _configure_help() -> void:
-	help_label.text = "RoomSceneContract signal test\nNot Main / Not final quarterview art\nE: Request interaction\nBed primary: sandbox End Day confirm only\nD: Debug\nR: Restart\nB / Backspace: Prototype Hub"
+	help_label.text = "RoomSceneContract signal test\nNot Main / Not final quarterview art\nE: Request interaction\nTab: Sandbox Phone\nBed primary: sandbox End Day confirm only\nD: Debug\nR: Restart\nB / Backspace: Prototype Hub"
 
 
 func _spawn_room_stub() -> void:
@@ -129,6 +145,12 @@ func _spawn_end_day_panel() -> void:
 	end_day_panel.connect("confirmed", Callable(self, "_on_end_day_confirmed"))
 	end_day_panel.connect("cancelled", Callable(self, "_on_end_day_cancelled"))
 	end_day_panel.connect("closed", Callable(self, "_on_end_day_closed"))
+
+
+func _spawn_phone_panel() -> void:
+	phone_panel = PHONE_PANEL_SCENE.instantiate()
+	ui_layer.add_child(phone_panel)
+	phone_panel.connect("closed", Callable(self, "_on_phone_panel_closed"))
 
 
 func _go_to_prototype_hub() -> void:
@@ -219,6 +241,9 @@ func _on_panel_primary_pressed(object_key: String = "", role: String = "", paylo
 	if _is_bed_end_day_target(target_key, target_role):
 		_open_sandbox_end_day_confirmation(target_key, payload)
 		return
+	if _is_phone_target(target_key, target_role):
+		_open_phone_panel("phone primary")
+		return
 
 	_append_log("Sandbox primary action requested: %s / %s / no-op" % [target_key, target_role])
 	print("TODO future: route %s / %s to real feature. Current sandbox action is no-op." % [target_key, target_role])
@@ -258,10 +283,12 @@ func _append_log(text: String) -> void:
 
 
 func _update_status() -> void:
-	status_label.text = "Quarterview Gameplay Sandbox\nNot Main\nNo Phone/Outlet/Result wiring yet\nRoom contract connected: %s\nSandbox state: %s\nDay end confirmed: %s\nLast interaction: %s\nLast nearest: %s\nPanel: %s\nLast object: %s\nLast role: %s\nLast action: %s\nReal wiring: none\nDebug: %s" % [
+	status_label.text = "Quarterview Gameplay Sandbox\nNot Main\nNo Phone/Outlet/Result wiring yet\nRoom contract connected: %s\nSandbox state: %s\nDay end confirmed: %s\nPhone UI: %s\nPhone source: %s\nMain Phone wiring: not connected\nLast interaction: %s\nLast nearest: %s\nPanel: %s\nLast object: %s\nLast role: %s\nLast action: %s\nReal wiring: none\nDebug: %s" % [
 		"yes" if room_contract_connected else "no",
 		sandbox_state,
 		str(day_end_confirmed),
+		"open" if _is_phone_panel_open() else "closed",
+		phone_source,
 		last_interaction,
 		last_nearest,
 		panel_state,
@@ -280,16 +307,60 @@ func _update_debug_label() -> void:
 	if room != null and room.has_method("get_debug_text"):
 		room_debug = room.call("get_debug_text")
 
-	debug_label.text = "Sandbox Debug\nplayer=(%.0f, %.0f)\ncontract_connected=%s\nsandbox_state=%s\nday_end_confirmed=%s\nlast_interaction=%s\nlast_nearest=%s\n%s" % [
+	debug_label.text = "Sandbox Debug\nplayer=(%.0f, %.0f)\ncontract_connected=%s\nsandbox_state=%s\nday_end_confirmed=%s\nphone_open=%s\nphone_source=%s\nlast_interaction=%s\nlast_nearest=%s\n%s" % [
 		player_position.x,
 		player_position.y,
 		str(room_contract_connected),
 		sandbox_state,
 		str(day_end_confirmed),
+		str(_is_phone_panel_open()),
+		phone_source,
 		last_interaction,
 		last_nearest,
 		room_debug,
 	]
+
+
+func _open_phone_panel(source: String) -> void:
+	if _is_phone_panel_open():
+		return
+
+	if interaction_panel != null:
+		interaction_panel.visible = false
+
+	phone_source = source
+	sandbox_state = "phone_open"
+	panel_state = "phone_open"
+	last_action = "open_phone"
+	last_interaction = "phone / open"
+	_set_room_input_enabled(false)
+	phone_panel.open_with_text(_get_sandbox_phone_text(), source)
+	_append_log("Sandbox Phone opened from %s. Main/DAY1 Phone flow is not wired." % source)
+	print("Sandbox Phone opened from %s / no Main._toggle_phone_ui or SurvivalState battery wiring" % source)
+	sfx.play_open()
+	_update_status()
+
+
+func _close_phone_panel() -> void:
+	if phone_panel == null:
+		return
+	phone_panel.close()
+
+
+func _on_phone_panel_closed() -> void:
+	if not day_end_confirmed:
+		sandbox_state = "running"
+	panel_state = "closed"
+	last_action = "close_phone"
+	_restore_room_input_if_no_modal()
+	_append_log("Sandbox Phone closed. Main/DAY1 Phone flow remains unwired.")
+	print("Sandbox Phone closed. No Main/DAY1 state changed.")
+	sfx.play_cancel()
+	_update_status()
+
+
+func _get_sandbox_phone_text() -> String:
+	return "Time: sandbox display\nBattery: 64% mock\nPower: sandbox only\nActive devices: none / mock\nSignal: local mock\n\nPhone UI is not connected to Main/DAY1 Phone flow."
 
 
 func _open_sandbox_end_day_confirmation(object_key: String, payload: Dictionary) -> void:
@@ -339,7 +410,7 @@ func _on_end_day_closed() -> void:
 	sandbox_state = "running"
 	panel_state = "closed"
 	last_action = "cancel_end_day"
-	_set_room_input_enabled(true)
+	_restore_room_input_if_no_modal()
 	_append_log(end_day_close_reason)
 	print("%s No Main/DAY1 state changed." % end_day_close_reason)
 	sfx.play_cancel()
@@ -348,6 +419,10 @@ func _on_end_day_closed() -> void:
 
 func _is_bed_end_day_target(object_key: String, role: String) -> bool:
 	return object_key == "bed" or role == "manual_end_day"
+
+
+func _is_phone_target(object_key: String, role: String) -> bool:
+	return object_key == "phone" or role in ["phone_status", "phone_charge"]
 
 
 func _close_interaction_panel() -> void:
@@ -363,6 +438,24 @@ func _is_end_day_panel_open() -> bool:
 	return end_day_panel != null and end_day_panel.has_method("is_open") and end_day_panel.is_open()
 
 
+func _is_phone_panel_open() -> bool:
+	return phone_panel != null and phone_panel.has_method("is_open") and phone_panel.is_open()
+
+
+func _is_phone_toggle_event(event: InputEvent) -> bool:
+	if event.is_action_pressed("open_phone"):
+		return true
+	return event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_TAB
+
+
 func _set_room_input_enabled(enabled: bool) -> void:
 	if room != null and room.has_method("set_player_input_enabled"):
 		room.set_player_input_enabled(enabled)
+
+
+func _restore_room_input_if_no_modal() -> void:
+	_set_room_input_enabled(not _has_open_modal())
+
+
+func _has_open_modal() -> bool:
+	return _is_phone_panel_open() or _is_end_day_panel_open() or _is_interaction_panel_open()
