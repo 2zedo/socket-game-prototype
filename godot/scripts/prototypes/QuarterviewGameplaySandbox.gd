@@ -8,6 +8,13 @@ const END_DAY_PANEL_SCENE := preload("res://scenes/prototypes/SandboxEndDayPanel
 const PHONE_PANEL_SCENE := preload("res://scenes/prototypes/SandboxPhonePanel.tscn")
 const OUTLET_PANEL_SCENE := preload("res://scenes/prototypes/SandboxOutletPanel.tscn")
 
+const SANDBOX_START_HOUR := 20
+const SANDBOX_START_MINUTE := 0
+const SANDBOX_AUTO_END_HOUR := 2
+const SANDBOX_AUTO_END_MINUTE := 0
+const SANDBOX_MINUTES_PER_REAL_SECOND := 10.0
+const SANDBOX_AUTO_END_AFTER_MINUTES := 6 * 60
+
 var room
 var interaction_panel
 var end_day_panel
@@ -17,6 +24,12 @@ var sfx
 var room_contract_connected := false
 var debug_overlay_enabled := false
 var day_end_confirmed := false
+var sandbox_hour := SANDBOX_START_HOUR
+var sandbox_minute := SANDBOX_START_MINUTE
+var sandbox_elapsed_minutes := 0.0
+var sandbox_clock_running := true
+var sandbox_auto_end_triggered := false
+var sandbox_end_reason := ""
 var sandbox_state := "running"
 var phone_source := "-"
 var outlet_source := "-"
@@ -50,11 +63,12 @@ func _ready() -> void:
 	_spawn_outlet_panel()
 	_spawn_room_stub()
 	_set_debug_overlay_enabled(false)
-	_append_log("Sandbox ready. No Main/DAY1 wiring.")
+	_append_log("Sandbox time started at %s. No Main/DAY1 wiring." % _get_sandbox_time_text())
 	_update_status()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_sandbox_clock(delta)
 	_update_debug_label()
 
 
@@ -67,6 +81,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if PROTOTYPE_UTILS.is_restart_event(event):
 		_restart_sandbox()
 		get_viewport().set_input_as_handled()
+		return
+
+	if _is_time_advance_event(event):
+		_advance_sandbox_time(120.0 if _is_shift_key_event(event) else 30.0, "debug shortcut")
+		get_viewport().set_input_as_handled()
+		return
+
+	if sandbox_auto_end_triggered:
+		if PROTOTYPE_UTILS.is_cancel_event(event):
+			_append_log("Auto end already triggered. Press R or B / Backspace.")
+			get_viewport().set_input_as_handled()
 		return
 
 	if _is_outlet_panel_open():
@@ -125,7 +150,7 @@ func _configure_sfx() -> void:
 
 
 func _configure_help() -> void:
-	help_label.text = "RoomSceneContract signal test\nNot Main / Not final quarterview art\nE: Request interaction\nTab: Sandbox Phone\nPower primary: sandbox Outlet\nBed primary: sandbox End Day confirm only\nD: Debug\nR: Restart\nB / Backspace: Prototype Hub"
+	help_label.text = "RoomSceneContract signal test\nNot Main / Not final quarterview art\nE: Request interaction\nTab: Sandbox Phone\nPower primary: sandbox Outlet\nBed primary: sandbox End Day confirm only\nT: +30m / Shift+T: +2h sandbox time\nD: Debug\nR: Restart\nB / Backspace: Prototype Hub"
 
 
 func _spawn_room_stub() -> void:
@@ -259,6 +284,10 @@ func _on_player_position_changed(position: Vector2) -> void:
 
 
 func _on_panel_primary_pressed(object_key: String = "", role: String = "", payload: Dictionary = {}) -> void:
+	if sandbox_auto_end_triggered:
+		_append_log("Auto end state ignores primary actions. Press R or B / Backspace.")
+		return
+
 	var target_key := object_key if not object_key.is_empty() else last_object
 	var target_role := role if not role.is_empty() else last_role
 	last_action = "primary"
@@ -280,6 +309,10 @@ func _on_panel_primary_pressed(object_key: String = "", role: String = "", paylo
 
 
 func _on_panel_inspect_pressed(object_key: String, role: String, payload: Dictionary) -> void:
+	if sandbox_auto_end_triggered:
+		_append_log("Auto end state ignores inspect actions. Press R or B / Backspace.")
+		return
+
 	last_action = "inspect"
 	last_interaction = "%s / inspect" % object_key
 	_append_log("Sandbox inspect requested: %s / %s / payload=%s" % [object_key, role, str(payload)])
@@ -311,8 +344,13 @@ func _append_log(text: String) -> void:
 
 
 func _update_status() -> void:
-	status_label.text = "Quarterview Gameplay Sandbox\nNot Main\nNo Phone/Outlet/Result wiring yet\nRoom contract connected: %s\nSandbox state: %s\nDay end confirmed: %s\nPhone UI: %s\nPhone source: %s\nOutlet UI: %s\nOutlet source: %s\nOutlet implementation: %s\nMain Phone/Outlet wiring: not connected\nSurvivalState: none / mock only\nLast interaction: %s\nLast nearest: %s\nPanel: %s\nLast object: %s\nLast role: %s\nLast action: %s\nReal wiring: none\nDebug: %s" % [
+	status_label.text = "Quarterview Gameplay Sandbox\nNot Main\nNo Phone/Outlet/Result wiring yet\nRoom contract connected: %s\nSandbox time: %s\nAuto end: %02d:%02d\nClock: %s\nEnd reason: %s\nSandbox state: %s\nDay end confirmed: %s\nPhone UI: %s\nPhone source: %s\nOutlet UI: %s\nOutlet source: %s\nOutlet implementation: %s\nMain Phone/Outlet wiring: not connected\nSurvivalState: none / mock only\nLast interaction: %s\nLast nearest: %s\nPanel: %s\nLast object: %s\nLast role: %s\nLast action: %s\nReal wiring: none\nDebug: %s" % [
 		"yes" if room_contract_connected else "no",
+		_get_sandbox_time_text(),
+		SANDBOX_AUTO_END_HOUR,
+		SANDBOX_AUTO_END_MINUTE,
+		"running" if sandbox_clock_running else "stopped",
+		sandbox_end_reason if not sandbox_end_reason.is_empty() else "none",
 		sandbox_state,
 		str(day_end_confirmed),
 		"open" if _is_phone_panel_open() else "closed",
@@ -338,9 +376,13 @@ func _update_debug_label() -> void:
 	if room != null and room.has_method("get_debug_text"):
 		room_debug = room.call("get_debug_text")
 
-	debug_label.text = "Sandbox Debug\nplayer=(%.0f, %.0f)\ncontract_connected=%s\nsandbox_state=%s\nday_end_confirmed=%s\nphone_open=%s\nphone_source=%s\noutlet_open=%s\noutlet_source=%s\nlast_interaction=%s\nlast_nearest=%s\n%s" % [
+	debug_label.text = "Sandbox Debug\nplayer=(%.0f, %.0f)\ntime=%s\nelapsed_minutes=%.1f\nauto_end_triggered=%s\nend_reason=%s\ncontract_connected=%s\nsandbox_state=%s\nday_end_confirmed=%s\nphone_open=%s\nphone_source=%s\noutlet_open=%s\noutlet_source=%s\nlast_interaction=%s\nlast_nearest=%s\n%s" % [
 		player_position.x,
 		player_position.y,
+		_get_sandbox_time_text(),
+		sandbox_elapsed_minutes,
+		str(sandbox_auto_end_triggered),
+		sandbox_end_reason if not sandbox_end_reason.is_empty() else "none",
 		str(room_contract_connected),
 		sandbox_state,
 		str(day_end_confirmed),
@@ -355,6 +397,10 @@ func _update_debug_label() -> void:
 
 
 func _open_outlet_panel(source: String) -> void:
+	if sandbox_auto_end_triggered:
+		_append_log("Auto end state blocks sandbox Outlet.")
+		return
+
 	if _is_outlet_panel_open():
 		return
 
@@ -408,6 +454,10 @@ func _get_sandbox_outlet_text() -> String:
 
 
 func _open_phone_panel(source: String) -> void:
+	if sandbox_auto_end_triggered:
+		_append_log("Auto end state blocks sandbox Phone.")
+		return
+
 	if _is_phone_panel_open():
 		return
 
@@ -446,10 +496,14 @@ func _on_phone_panel_closed() -> void:
 
 
 func _get_sandbox_phone_text() -> String:
-	return "Time: sandbox display\nBattery: 64% mock\nPower: sandbox only\nActive devices: none / mock\nSignal: local mock\n\nPhone UI is not connected to Main/DAY1 Phone flow."
+	return "Time: %s sandbox-local\nBattery: 64%% mock\nPower: sandbox only\nActive devices: none / mock\nSignal: local mock\n\nPhone UI is not connected to Main/DAY1 Phone flow." % _get_sandbox_time_text()
 
 
 func _open_sandbox_end_day_confirmation(object_key: String, payload: Dictionary) -> void:
+	if sandbox_auto_end_triggered:
+		_append_log("Auto end state blocks manual End Day confirmation.")
+		return
+
 	var panel_payload := payload.duplicate(true)
 	if panel_payload.is_empty() and interaction_panel != null:
 		panel_payload = interaction_panel.current_payload.duplicate(true)
@@ -473,6 +527,8 @@ func _open_sandbox_end_day_confirmation(object_key: String, payload: Dictionary)
 
 func _on_end_day_confirmed() -> void:
 	day_end_confirmed = true
+	sandbox_clock_running = false
+	sandbox_end_reason = "manual_bed"
 	sandbox_state = "end_day_confirmed"
 	panel_state = "end_day_confirmed"
 	last_action = "confirm_end_day"
@@ -542,6 +598,14 @@ func _is_phone_toggle_event(event: InputEvent) -> bool:
 	return event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_TAB
 
 
+func _is_time_advance_event(event: InputEvent) -> bool:
+	return event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_T
+
+
+func _is_shift_key_event(event: InputEvent) -> bool:
+	return event is InputEventKey and event.shift_pressed
+
+
 func _set_room_input_enabled(enabled: bool) -> void:
 	if room != null and room.has_method("set_player_input_enabled"):
 		room.set_player_input_enabled(enabled)
@@ -553,3 +617,80 @@ func _restore_room_input_if_no_modal() -> void:
 
 func _has_open_modal() -> bool:
 	return _is_outlet_panel_open() or _is_phone_panel_open() or _is_end_day_panel_open() or _is_interaction_panel_open()
+
+
+func _update_sandbox_clock(delta: float) -> void:
+	if not sandbox_clock_running or sandbox_auto_end_triggered:
+		return
+
+	var previous_minute := int(floor(sandbox_elapsed_minutes))
+	sandbox_elapsed_minutes += delta * SANDBOX_MINUTES_PER_REAL_SECOND
+	var current_minute := int(floor(sandbox_elapsed_minutes))
+	if current_minute != previous_minute:
+		_update_sandbox_clock_display_from_elapsed()
+		_update_status()
+
+	if sandbox_elapsed_minutes >= float(SANDBOX_AUTO_END_AFTER_MINUTES):
+		_trigger_sandbox_auto_end()
+
+
+func _advance_sandbox_time(minutes: float, reason: String) -> void:
+	if sandbox_auto_end_triggered or not sandbox_clock_running:
+		return
+
+	sandbox_elapsed_minutes += minutes
+	_update_sandbox_clock_display_from_elapsed()
+	_append_log("Sandbox time advanced by %.0f minutes (%s)." % [minutes, reason])
+	if sandbox_elapsed_minutes >= float(SANDBOX_AUTO_END_AFTER_MINUTES):
+		_trigger_sandbox_auto_end()
+	else:
+		_update_status()
+
+
+func _update_sandbox_clock_display_from_elapsed() -> void:
+	var total_minutes := SANDBOX_START_HOUR * 60 + SANDBOX_START_MINUTE + int(floor(sandbox_elapsed_minutes))
+	total_minutes = total_minutes % (24 * 60)
+	sandbox_hour = int(total_minutes / 60)
+	sandbox_minute = total_minutes % 60
+
+
+func _get_sandbox_time_text() -> String:
+	return "%02d:%02d" % [sandbox_hour, sandbox_minute]
+
+
+func _trigger_sandbox_auto_end() -> void:
+	if sandbox_auto_end_triggered:
+		return
+
+	sandbox_auto_end_triggered = true
+	sandbox_clock_running = false
+	sandbox_elapsed_minutes = float(SANDBOX_AUTO_END_AFTER_MINUTES)
+	sandbox_hour = SANDBOX_AUTO_END_HOUR
+	sandbox_minute = SANDBOX_AUTO_END_MINUTE
+	sandbox_end_reason = "auto_02_00"
+	day_end_confirmed = false
+	sandbox_state = "auto_end"
+	panel_state = "auto_end"
+	last_action = "auto_end"
+	last_interaction = "system / auto_02_00"
+	_close_all_sandbox_modals_silently()
+	_set_room_input_enabled(false)
+	prompt_label.text = ""
+	end_day_panel.show_auto_end_message()
+	_append_log("Time reached 02:00. Sandbox auto end triggered.")
+	_append_log("Sandbox auto end only. Main/DAY1 Result and SurvivalState are not wired.")
+	print("QuarterviewGameplaySandbox auto end: 02:00 / no Main, Result, or SurvivalState wiring")
+	sfx.play_success()
+	_update_status()
+	_update_debug_label()
+
+
+func _close_all_sandbox_modals_silently() -> void:
+	if interaction_panel != null:
+		interaction_panel.visible = false
+	if phone_panel != null:
+		phone_panel.visible = false
+	if outlet_panel != null:
+		outlet_panel.visible = false
+	if end_day_panel != null:
+		end_day_panel.visible = false

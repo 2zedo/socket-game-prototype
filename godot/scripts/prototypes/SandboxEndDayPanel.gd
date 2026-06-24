@@ -54,6 +54,15 @@ func show_confirmed() -> void:
 	visible = true
 
 
+func show_auto_end_message() -> void:
+	title_label.text = "02:00 Auto End"
+	detail_label.text = "Yui is too tired to continue.\nSandbox only.\nResult / Main / SurvivalState day flow is not wired yet.\n\nPress R to restart sandbox or B / Backspace to return to PrototypeHub."
+	confirm_button.visible = false
+	cancel_button.visible = false
+	close_button.visible = false
+	visible = true
+
+
 func close() -> void:
 	if not visible:
 		return

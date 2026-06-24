@@ -22,6 +22,8 @@
 - sandbox-only Bed -> End Day confirmation panel
 - sandbox-only Phone panel
 - sandbox-only Outlet panel
+- sandbox-local clock from `20:00` to `02:00`
+- sandbox-only `02:00` auto end state
 - `D` debug overlay
 - `B` / `Backspace` PrototypeHub 복귀
 - `R` sandbox restart
@@ -81,6 +83,26 @@ payload에는 가능한 경우 아래 값이 포함된다.
 - `visual_state`
 - `display_name`
 
+## Sandbox Local Clock
+
+`QuarterviewGameplaySandbox`는 sandbox 내부에서만 쓰는 local clock을 가진다.
+
+- Start: `20:00`
+- Auto end target: `02:00`
+- Speed: `10` sandbox minutes per real second
+- Test shortcut: `T` adds `30` sandbox minutes, `Shift+T` adds `2` sandbox hours
+
+이 시간은 기존 Main / DAY1 clock, `SurvivalState`, Phone UI 시간과 연결하지 않는다.
+
+Sandbox 정책:
+
+- InteractionPanel / EndDayPanel / PhonePanel / OutletPanel이 열려 있어도 sandbox-local clock은 계속 흐른다.
+- `02:00`에 도달하면 sandbox-only auto end가 한 번만 발생한다.
+- auto end 후 clock은 멈추고 room input은 잠긴다.
+- auto end 후 `E`, `Tab`, Bed / Phone / Power interaction은 무시된다.
+- auto end 후에는 `R` restart 또는 `B` / `Backspace` PrototypeHub 복귀만 유지한다.
+- Result, Main day flow, `SurvivalState` day advance는 호출하지 않는다.
+
 ## Debug Overlay
 
 `D` 키로 debug overlay를 켜고 끈다.
@@ -113,7 +135,7 @@ Debug ON:
 - `SurvivalState` gameplay flow
 - `HackingActionPrototype`
 - Test Mode
-- `02:00` auto end
+- real Main `02:00` auto end / Result flow
 
 이번 sandbox는 실제 기능을 실행하지 않고 event log만 남긴다.
 
@@ -153,13 +175,32 @@ Panel 동작:
 
 이 panel은 기존 Main의 `InteractionPanel`, `DayResultPanel`, `SurvivalState` day-end flow와 연결되어 있지 않다.
 
+## Sandbox 02:00 Auto End
+
+Sandbox-local clock이 `02:00`에 도달하면 confirmation 없이 auto end 상태를 표시한다.
+
+Auto end 동작:
+
+- 현재 열린 sandbox modal을 숨긴다.
+- `SandboxEndDayPanel`을 auto-end message mode로 표시한다.
+- `sandbox_end_reason = "auto_02_00"`로 기록한다.
+- room input을 잠근다.
+- `R` restart와 `B` / `Backspace` PrototypeHub 복귀는 유지한다.
+
+Manual Bed End와의 차이:
+
+- Manual Bed End: Bed Primary -> confirmation -> Confirm -> `sandbox_end_reason = "manual_bed"`
+- Auto End: `02:00` 도달 -> confirmation 없이 auto-end message -> `sandbox_end_reason = "auto_02_00"`
+
+둘 다 기존 Main / DAY1 Result, `SurvivalState`, save / load, reward 계산과 연결되어 있지 않다.
+
 ## Sandbox Phone Panel
 
 `Tab` 또는 `phone` / `phone_status` / `phone_charge` Primary action은 `res://scenes/prototypes/SandboxPhonePanel.tscn`을 연다.
 
 Panel 표시 정보:
 
-- sandbox mock time
+- sandbox-local time
 - sandbox mock battery
 - sandbox-only power / active device text
 - local mock signal
@@ -200,7 +241,7 @@ Panel 동작:
 
 ## Flow Check
 
-`docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`는 현재 sandbox-only 흐름 점검 결과를 기록한다. 확인 범위는 Hub 진입, scene startup, room contract signal 수신, InteractionPanel, Bed confirmation, Phone panel, Outlet panel, modal priority, input lock, `R` restart, `D` debug, `B` / `Backspace` Hub 복귀다.
+`docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`는 현재 sandbox-only 흐름 점검 결과를 기록한다. 확인 범위는 Hub 진입, scene startup, room contract signal 수신, InteractionPanel, Bed confirmation, Phone panel, Outlet panel, `02:00` auto end, modal priority, input lock, `R` restart, `D` debug, `B` / `Backspace` Hub 복귀다.
 
 이번 점검에서 sandbox controller가 room stub의 `room_back_requested` signal도 수신하도록 연결했다. 이 변경은 sandbox 내부 복귀 signal 처리만 보강하며 Main / DAY1에는 연결하지 않는다.
 

@@ -394,6 +394,10 @@ Future hack avatar spritesheet check:
 - [ ] `Room contract connected: yes` 상태가 표시된다.
 - [ ] `WASD` / 방향키로 room stub player가 이동한다.
 - [ ] 가까운 object에 접근하면 nearest prompt가 표시된다.
+- [ ] sandbox time이 `20:00`부터 표시된다.
+- [ ] auto end target `02:00`이 표시된다.
+- [ ] `T`로 sandbox time이 `30`분 전진한다.
+- [ ] `Shift+T`로 sandbox time이 `2`시간 전진한다.
 - [ ] `E`를 누르면 `interaction_requested` event log가 표시된다.
 - [ ] 가까운 object에서 `E`를 누르면 object interaction panel이 열린다.
 - [ ] Panel에 key / role / future_source / visual_state가 표시된다.
@@ -402,6 +406,7 @@ Future hack avatar spritesheet check:
 - [ ] End Day confirmation에서 Confirm을 누르면 `day_end_confirmed = true` 상태와 완료 메시지가 표시된다.
 - [ ] End Day confirmation에서 Cancel / Close / `ESC`를 누르면 panel이 닫히고 player movement가 복구된다.
 - [ ] End Day Confirm 후 Result 화면이나 다음 날 진행이 열리지 않는다.
+- [ ] Bed manual end reason이 `manual_bed`로 표시된다.
 - [ ] `Tab`을 누르면 sandbox Phone panel이 열린다.
 - [ ] Phone panel은 sandbox-only이며 Main / DAY1 Phone flow와 연결되지 않았다고 표시한다.
 - [ ] Phone panel이 열려 있는 동안 player movement가 잠긴다.
@@ -415,6 +420,11 @@ Future hack avatar spritesheet check:
 - [ ] Outlet panel을 닫으면 player movement가 복구된다.
 - [ ] Outlet mock button은 로그 / 문구만 바꾸고 실제 connected / active state를 바꾸지 않는다.
 - [ ] Apartment wire overlay가 바뀌지 않는다.
+- [ ] sandbox time이 `02:00`에 도달하면 auto end message가 표시된다.
+- [ ] auto end reason이 `auto_02_00`으로 표시된다.
+- [ ] auto end가 열린 Interaction / End Day / Phone / Outlet modal을 override한다.
+- [ ] auto end 후 movement, `E` interaction, `Tab` Phone, Bed / Phone / Power Primary가 실행되지 않는다.
+- [ ] auto end 후 Result, Main DAY1 종료, `SurvivalState` day advance가 실행되지 않는다.
 - [ ] Close 또는 `ESC`로 panel이 닫힌다.
 - [ ] Panel이 열려 있는 동안 player movement가 잠긴다.
 - [ ] Panel을 닫으면 player movement가 복구된다.
@@ -429,13 +439,14 @@ Future hack avatar spritesheet check:
 - [ ] Debug ON에서 object label, interaction radius, player position, signal log가 보인다.
 - [ ] `R`로 sandbox가 restart된다.
 - [ ] Confirmed End Day 상태에서도 `R` restart가 가능하다.
+- [ ] Auto End 상태에서도 `R` restart가 가능하고 time / end reason이 초기화된다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
 - [ ] real Main Phone / Outlet / Result / 실제 Main End Day / Hacking이 실제로 열리지 않는다.
 
 메모:
 
 - `docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`는 현재 code path와 headless startup 기준의 흐름 점검 결과다.
-- GUI 수동 확인에서는 특히 modal priority, movement lock / restore, `Tab` / `ESC` / `R` / `D` / `B` 우선순위를 본다.
+- GUI 수동 확인에서는 특히 modal priority, movement lock / restore, `T` / `Tab` / `ESC` / `R` / `D` / `B` 우선순위를 본다.
 
 ## SFX 확인 항목
 
