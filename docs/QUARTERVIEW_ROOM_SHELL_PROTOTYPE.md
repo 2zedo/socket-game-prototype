@@ -6,6 +6,8 @@
 
 현재는 floor base, back wall, side wall layer를 확인한다. Main / DAY 1, `QuarterviewGameplaySandbox`, `QuarterviewPerspectiveBlockout`에는 연결하지 않는다.
 
+Foreground occluder layer is not yet applied. A future prototype step will add `qv_room_foreground_occluders.png` after floor / back / side validation.
+
 ## Scene Path
 
 - `res://scenes/prototypes/QuarterviewRoomShellPrototype.tscn`

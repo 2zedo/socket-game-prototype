@@ -51,6 +51,7 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 - `ApartmentInteractable` now maps key DAY 1 objects to P0 PNG state textures through `AssetPaths.gd`.
 - 쿼터뷰 전환용 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`를 기준으로 별도 관리한다. 쿼터뷰 방은 한 장 배경보다 room layer, atlas, spritesheet, visual mapping Resource 후보를 우선 검토한다.
 - Quarterview room shell layers will use a same-canvas `1920x1080` PNG workflow. Detailed layer, path, z-index, and import planning is documented in `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`.
+- Foreground occluder PNGs require transparent same-canvas exports and alpha edge cleanup before Godot import; criteria are documented in `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`.
 - Bed, desk, window, door, shelf, fan, multitap, charger/phone, and communication device should remain separate replaceable objects rather than one flattened background image.
 - Cable visuals should become modular cable segment sprites or Line2D-based scenes so connected/off states can update dynamically.
 - The Yui portrait placeholder in `InteractionPanel.tscn` is filled at runtime with `godot/assets/art/portraits/yui/yui_portrait_neutral.png`.

@@ -126,6 +126,13 @@
 - guide overlay는 floor alignment 확인용이며 최종 art가 아니다.
 - player 이동, collision, object interaction은 이 scene의 확인 대상이 아니다.
 
+Future foreground occluder check:
+
+- [ ] foreground layer appears above player / object placeholders.
+- [ ] interact prompts remain visible.
+- [ ] missing foreground layer does not crash prototype.
+- [ ] layer can be toggled independently if implemented.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.
