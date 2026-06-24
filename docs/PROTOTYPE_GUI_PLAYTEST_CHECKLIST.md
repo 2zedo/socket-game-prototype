@@ -177,6 +177,16 @@ Future appliances atlas check:
 - [ ] Glow / FX are not over-baked into appliance body sprites.
 - [ ] Player scale and occlusion remain readable.
 
+Future work devices atlas check:
+
+- [ ] Atlas regions display without cropping.
+- [ ] Work device region keys match `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`.
+- [ ] Work device, furniture, appliance, and cable categories are not mixed.
+- [ ] State variations keep stable anchors.
+- [ ] Screen glow / signal FX are not over-baked into device body sprites.
+- [ ] Player scale and occlusion remain readable.
+- [ ] Speaker is treated as audio hacking device, not decoration.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.

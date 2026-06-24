@@ -128,3 +128,8 @@
 `RoomObjectDefinition` itself should not directly store raw atlas rect coordinates at this stage.
 
 Furniture atlas region naming, pivot / anchor, z-index, and mapping schema criteria are documented in `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md`.
+
+`RoomObjectDefinition` may also later reference work-device atlas region keys through a separate mapping layer.
+Room object resources should still avoid storing raw atlas rect coordinates directly.
+
+Work-device atlas region naming, state variation, mission-device links, pivot / anchor, and z-index criteria are documented in `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`.

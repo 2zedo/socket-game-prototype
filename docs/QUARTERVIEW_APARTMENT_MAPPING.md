@@ -20,6 +20,8 @@ Furniture body visuals may later be mapped through `qv_furniture_atlas` region k
 
 Appliance body visuals may later be mapped through `qv_appliances_atlas` region keys, while furniture and hacking / work devices remain separate atlas categories.
 
+Laptop, phone, NODE-17, speaker / audio analyzer, communication device, and signal booster visuals may later be mapped through `qv_work_devices_atlas` region keys.
+
 ## 현재 구현 요약
 
 - 현재 본게임 방 화면은 탑뷰 `Apartment` 기반이다.

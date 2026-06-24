@@ -99,6 +99,11 @@ Next work candidates:
 
 `reward_grid_credit` is a future value intended to be applied to `GridCreditState` after mission success. It is not wired yet.
 
+## Room Device Visual Mapping
+
+`HackingMissionDefinition.required_device_keys` and `recommended_device_keys` may later correspond to `RoomObjectDefinition` keys and `qv_work_devices_atlas` region keys.
+The visual mapping is not wired yet.
+
 ## Relationship To Existing Prototypes
 
 - `HackingActionPrototype` is the current controls, combat, mission state, objective, exit, and feedback prototype.

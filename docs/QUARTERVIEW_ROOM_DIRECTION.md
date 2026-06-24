@@ -158,6 +158,8 @@ Furniture atlas regions should preserve the tidy lower-grid hacker room directio
 
 Appliance visuals should preserve the same tidy lower-grid hacker room direction: compact, practical, life-support oriented, and not decorative clutter.
 
+Work device visuals should preserve the tidy lower-grid hacker room direction: compact, practical, work-prioritized, and not decorative clutter.
+
 ## 플레이 루프를 드러내는 방
 
 쿼터뷰 방의 목표는 보기 좋은 배경 한 장이 아니다. 방 자체가 아래 루프를 자연스럽게 드러내야 한다.
