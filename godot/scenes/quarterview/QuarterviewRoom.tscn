@@ -24,7 +24,7 @@ script = ExtResource("1_room")
 
 [node name="Player" type="CharacterBody2D" parent="PlayerLayer"]
 z_as_relative = false
-position = Vector2(596, 520)
+position = Vector2(650, 462)
 script = ExtResource("2_player")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerLayer/Player"]

@@ -6,36 +6,261 @@ signal nearest_interactable_changed(object_key: String, display_name: String)
 const ACTION_PRIMARY := "primary"
 
 const OBJECT_RESOURCE_PATHS := [
+	"res://resources/rooms/quarterview/objects/door.tres",
+	"res://resources/rooms/quarterview/objects/bathroom_door.tres",
 	"res://resources/rooms/quarterview/objects/bed.tres",
 	"res://resources/rooms/quarterview/objects/desk.tres",
 	"res://resources/rooms/quarterview/objects/laptop.tres",
 	"res://resources/rooms/quarterview/objects/phone.tres",
+	"res://resources/rooms/quarterview/objects/comm.tres",
+	"res://resources/rooms/quarterview/objects/node17.tres",
+	"res://resources/rooms/quarterview/objects/speaker.tres",
+	"res://resources/rooms/quarterview/objects/signal_booster.tres",
 	"res://resources/rooms/quarterview/objects/power.tres",
+	"res://resources/rooms/quarterview/objects/ups.tres",
 	"res://resources/rooms/quarterview/objects/fridge.tres",
 	"res://resources/rooms/quarterview/objects/microwave.tres",
-	"res://resources/rooms/quarterview/objects/door.tres",
+	"res://resources/rooms/quarterview/objects/aircon.tres",
+	"res://resources/rooms/quarterview/objects/shelf.tres",
+	"res://resources/rooms/quarterview/objects/small_table.tres",
 ]
 
 const WALL_BLOCKERS := [
-	{"name": "BackWallBlocker", "rect": Rect2(Vector2(222, 96), Vector2(820, 56))},
-	{"name": "LeftWallBlocker", "rect": Rect2(Vector2(128, 162), Vector2(82, 430))},
-	{"name": "RightWallBlocker", "rect": Rect2(Vector2(1066, 170), Vector2(76, 392))},
-	{"name": "FrontLipBlocker", "rect": Rect2(Vector2(360, 650), Vector2(660, 48))},
+	{"name": "BackWallBlocker", "rect": Rect2(Vector2(244, 76), Vector2(774, 74))},
+	{"name": "LeftWallBlocker", "rect": Rect2(Vector2(132, 170), Vector2(92, 400))},
+	{"name": "RightWallBlocker", "rect": Rect2(Vector2(1082, 184), Vector2(66, 318))},
+	{"name": "FrontLipBlocker", "rect": Rect2(Vector2(392, 636), Vector2(592, 40))},
 ]
 
-var floor_points := PackedVector2Array([
-	Vector2(250, 154),
-	Vector2(1014, 154),
-	Vector2(1118, 566),
-	Vector2(356, 656),
-	Vector2(154, 386),
-])
+const OBJECT_LAYOUT := {
+	"door": {
+		"position": Vector2(216, 412),
+		"size": Vector2(76, 126),
+		"thickness": 12.0,
+		"layer": "WallSideLayer",
+		"blocker_rect": Rect2(Vector2(166, 344), Vector2(70, 126)),
+		"interaction_position": Vector2(272, 482),
+		"interaction_radius": 60.0,
+		"color": Color(0.21, 0.19, 0.15, 1.0),
+	},
+	"bathroom_door": {
+		"position": Vector2(328, 320),
+		"size": Vector2(66, 118),
+		"thickness": 10.0,
+		"layer": "WallSideLayer",
+		"blocker_rect": Rect2(Vector2(290, 256), Vector2(70, 122)),
+		"interaction_position": Vector2(382, 386),
+		"interaction_radius": 56.0,
+		"color": Color(0.30, 0.29, 0.25, 1.0),
+	},
+	"bed": {
+		"position": Vector2(460, 348),
+		"size": Vector2(254, 120),
+		"thickness": 38.0,
+		"layer": "ObjectBackLayer",
+		"blocker_rect": Rect2(Vector2(324, 290), Vector2(282, 132)),
+		"interaction_position": Vector2(548, 452),
+		"interaction_radius": 94.0,
+		"color": Color(0.23, 0.34, 0.25, 1.0),
+	},
+	"desk": {
+		"position": Vector2(805, 338),
+		"size": Vector2(276, 92),
+		"thickness": 42.0,
+		"layer": "ObjectBackLayer",
+		"blocker_rect": Rect2(Vector2(652, 292), Vector2(316, 112)),
+		"interaction_position": Vector2(790, 428),
+		"interaction_radius": 96.0,
+		"color": Color(0.35, 0.21, 0.11, 1.0),
+	},
+	"laptop": {
+		"position": Vector2(792, 288),
+		"size": Vector2(72, 40),
+		"thickness": 10.0,
+		"layer": "ObjectLayer",
+		"blocker_rect": Rect2(),
+		"interaction_position": Vector2(790, 420),
+		"interaction_radius": 94.0,
+		"color": Color(0.05, 0.11, 0.15, 1.0),
+	},
+	"phone": {
+		"position": Vector2(862, 332),
+		"size": Vector2(44, 24),
+		"thickness": 6.0,
+		"layer": "ObjectLayer",
+		"blocker_rect": Rect2(),
+		"interaction_position": Vector2(820, 425),
+		"interaction_radius": 82.0,
+		"color": Color(0.06, 0.18, 0.22, 1.0),
+	},
+	"comm": {
+		"position": Vector2(900, 306),
+		"size": Vector2(58, 42),
+		"thickness": 18.0,
+		"layer": "ObjectLayer",
+		"blocker_rect": Rect2(),
+		"interaction_position": Vector2(858, 424),
+		"interaction_radius": 88.0,
+		"color": Color(0.12, 0.17, 0.17, 1.0),
+	},
+	"node17": {
+		"position": Vector2(952, 344),
+		"size": Vector2(54, 48),
+		"thickness": 22.0,
+		"layer": "ObjectLayer",
+		"blocker_rect": Rect2(),
+		"interaction_position": Vector2(888, 430),
+		"interaction_radius": 86.0,
+		"color": Color(0.08, 0.09, 0.13, 1.0),
+	},
+	"speaker": {
+		"position": Vector2(972, 296),
+		"size": Vector2(34, 54),
+		"thickness": 20.0,
+		"layer": "ObjectLayer",
+		"blocker_rect": Rect2(),
+		"interaction_position": Vector2(892, 424),
+		"interaction_radius": 84.0,
+		"color": Color(0.07, 0.08, 0.08, 1.0),
+	},
+	"signal_booster": {
+		"position": Vector2(924, 382),
+		"size": Vector2(44, 34),
+		"thickness": 18.0,
+		"layer": "ObjectLayer",
+		"blocker_rect": Rect2(),
+		"interaction_position": Vector2(882, 432),
+		"interaction_radius": 84.0,
+		"color": Color(0.10, 0.15, 0.17, 1.0),
+	},
+	"power": {
+		"position": Vector2(876, 552),
+		"size": Vector2(144, 76),
+		"thickness": 54.0,
+		"layer": "ForegroundLayer",
+		"blocker_rect": Rect2(Vector2(794, 502), Vector2(178, 112)),
+		"interaction_position": Vector2(758, 540),
+		"interaction_radius": 106.0,
+		"color": Color(0.13, 0.15, 0.14, 1.0),
+	},
+	"ups": {
+		"position": Vector2(1012, 542),
+		"size": Vector2(86, 62),
+		"thickness": 44.0,
+		"layer": "ForegroundLayer",
+		"blocker_rect": Rect2(Vector2(962, 500), Vector2(108, 92)),
+		"interaction_position": Vector2(934, 544),
+		"interaction_radius": 82.0,
+		"color": Color(0.11, 0.13, 0.15, 1.0),
+	},
+	"fridge": {
+		"position": Vector2(1040, 340),
+		"size": Vector2(86, 158),
+		"thickness": 26.0,
+		"layer": "ObjectBackLayer",
+		"blocker_rect": Rect2(Vector2(988, 254), Vector2(110, 178)),
+		"interaction_position": Vector2(958, 374),
+		"interaction_radius": 94.0,
+		"color": Color(0.42, 0.46, 0.45, 1.0),
+	},
+	"microwave": {
+		"position": Vector2(1010, 244),
+		"size": Vector2(92, 44),
+		"thickness": 20.0,
+		"layer": "ObjectBackLayer",
+		"blocker_rect": Rect2(Vector2(956, 222), Vector2(118, 58)),
+		"interaction_position": Vector2(940, 310),
+		"interaction_radius": 78.0,
+		"color": Color(0.34, 0.36, 0.35, 1.0),
+	},
+	"aircon": {
+		"position": Vector2(462, 132),
+		"size": Vector2(144, 28),
+		"thickness": 10.0,
+		"layer": "WallBackLayer",
+		"blocker_rect": Rect2(),
+		"interaction_position": Vector2(460, 220),
+		"interaction_radius": 48.0,
+		"color": Color(0.48, 0.48, 0.43, 1.0),
+	},
+	"shelf": {
+		"position": Vector2(1002, 190),
+		"size": Vector2(120, 28),
+		"thickness": 14.0,
+		"layer": "WallBackLayer",
+		"blocker_rect": Rect2(),
+		"interaction_position": Vector2(980, 260),
+		"interaction_radius": 50.0,
+		"color": Color(0.31, 0.20, 0.11, 1.0),
+	},
+	"small_table": {
+		"position": Vector2(620, 550),
+		"size": Vector2(142, 74),
+		"thickness": 28.0,
+		"layer": "ObjectLayer",
+		"blocker_rect": Rect2(Vector2(540, 506), Vector2(170, 92)),
+		"interaction_position": Vector2(620, 650),
+		"interaction_radius": 78.0,
+		"color": Color(0.33, 0.20, 0.11, 1.0),
+	},
+}
+
+const VISUAL_BLOCKS := [
+	{
+		"name": "EntryMat",
+		"position": Vector2(246, 524),
+		"size": Vector2(98, 44),
+		"thickness": 4.0,
+		"layer": "FloorLayer",
+		"color": Color(0.14, 0.13, 0.11, 0.92),
+	},
+	{
+		"name": "Rug",
+		"position": Vector2(548, 508),
+		"size": Vector2(250, 150),
+		"thickness": 3.0,
+		"layer": "FloorLayer",
+		"color": Color(0.17, 0.19, 0.17, 0.92),
+	},
+	{
+		"name": "SinkCounter",
+		"position": Vector2(960, 404),
+		"size": Vector2(104, 62),
+		"thickness": 36.0,
+		"layer": "ObjectBackLayer",
+		"blocker_rect": Rect2(Vector2(902, 366), Vector2(128, 84)),
+		"color": Color(0.25, 0.22, 0.18, 1.0),
+	},
+	{
+		"name": "BathroomTileHint",
+		"position": Vector2(330, 394),
+		"size": Vector2(82, 48),
+		"thickness": 3.0,
+		"layer": "FloorLayer",
+		"color": Color(0.24, 0.25, 0.23, 0.86),
+	},
+	{
+		"name": "CableBundle",
+		"position": Vector2(920, 468),
+		"size": Vector2(170, 16),
+		"thickness": 6.0,
+		"layer": "ObjectLayer",
+		"color": Color(0.035, 0.04, 0.04, 1.0),
+	},
+]
 
 var object_definitions: Array = []
-var object_nodes: Dictionary = {}
-var debug_nodes: Array[CanvasItem] = []
 var nearest_key := ""
 var debug_enabled := false
+var prompt_label: Label
+var floor_points := PackedVector2Array([
+	Vector2(244, 150),
+	Vector2(1018, 150),
+	Vector2(1136, 510),
+	Vector2(990, 630),
+	Vector2(372, 650),
+	Vector2(154, 430),
+])
 
 @onready var floor_layer: Node2D = $FloorLayer
 @onready var wall_back_layer: Node2D = $WallBackLayer
@@ -48,12 +273,11 @@ var debug_enabled := false
 @onready var prompt_layer: Node2D = $PromptLayer
 @onready var player: CharacterBody2D = $PlayerLayer/Player
 
-var prompt_label: Label
-
 
 func _ready() -> void:
 	_configure_layers()
 	_build_room_shell()
+	_build_visual_details()
 	_build_prompt()
 	_load_object_definitions()
 	_build_object_placeholders()
@@ -95,89 +319,177 @@ func _configure_layers() -> void:
 
 
 func _build_room_shell() -> void:
-	_add_polygon(floor_layer, floor_points, Color(0.17, 0.14, 0.10, 1.0))
-	_add_polyline(floor_layer, floor_points, Color(0.78, 0.61, 0.38, 0.55), 3.0)
-	_add_floor_guides()
+	_add_polygon(floor_layer, floor_points, Color(0.14, 0.11, 0.08, 1.0))
+	_add_polyline(floor_layer, floor_points, Color(0.75, 0.58, 0.36, 0.52), 3.0)
+	_add_floor_boards()
 
 	var back_wall := PackedVector2Array([
-		Vector2(250, 76),
-		Vector2(1014, 76),
-		Vector2(1014, 154),
-		Vector2(250, 154),
+		Vector2(244, 66),
+		Vector2(1018, 66),
+		Vector2(1018, 150),
+		Vector2(244, 150),
 	])
-	_add_polygon(wall_back_layer, back_wall, Color(0.22, 0.21, 0.19, 1.0))
-	_add_polyline(wall_back_layer, back_wall, Color(0.76, 0.67, 0.50, 0.40), 2.0)
+	_add_polygon(wall_back_layer, back_wall, Color(0.21, 0.20, 0.18, 1.0))
+	_add_polyline(wall_back_layer, back_wall, Color(0.66, 0.57, 0.42, 0.44), 2.0)
 
 	var left_wall := PackedVector2Array([
-		Vector2(166, 160),
-		Vector2(250, 76),
-		Vector2(250, 154),
-		Vector2(154, 386),
-		Vector2(146, 604),
-		Vector2(108, 550),
+		Vector2(152, 180),
+		Vector2(244, 66),
+		Vector2(244, 150),
+		Vector2(154, 430),
+		Vector2(142, 580),
+		Vector2(104, 536),
 	])
-	_add_polygon(wall_side_layer, left_wall, Color(0.13, 0.13, 0.12, 1.0))
-	_add_polyline(wall_side_layer, left_wall, Color(0.68, 0.62, 0.48, 0.36), 2.0)
+	_add_polygon(wall_side_layer, left_wall, Color(0.12, 0.12, 0.11, 1.0))
+	_add_polyline(wall_side_layer, left_wall, Color(0.61, 0.54, 0.40, 0.36), 2.0)
 
 	var right_wall := PackedVector2Array([
-		Vector2(1014, 76),
-		Vector2(1092, 158),
-		Vector2(1144, 512),
-		Vector2(1118, 566),
-		Vector2(1014, 154),
+		Vector2(1018, 66),
+		Vector2(1110, 176),
+		Vector2(1154, 486),
+		Vector2(1136, 510),
+		Vector2(1018, 150),
 	])
-	_add_polygon(wall_side_layer, right_wall, Color(0.15, 0.16, 0.15, 1.0))
-	_add_polyline(wall_side_layer, right_wall, Color(0.68, 0.62, 0.48, 0.36), 2.0)
+	_add_polygon(wall_side_layer, right_wall, Color(0.13, 0.14, 0.13, 1.0))
+	_add_polyline(wall_side_layer, right_wall, Color(0.61, 0.54, 0.40, 0.36), 2.0)
 
-	var window := PackedVector2Array([
-		Vector2(624, 94),
-		Vector2(814, 94),
-		Vector2(814, 142),
-		Vector2(624, 142),
-	])
-	_add_polygon(wall_back_layer, window, Color(0.04, 0.15, 0.24, 1.0))
-	_add_polyline(wall_back_layer, window, Color(0.32, 0.70, 0.95, 0.66), 2.0)
-
-	var foreground_lip := Line2D.new()
-	foreground_lip.points = PackedVector2Array([Vector2(356, 656), Vector2(1118, 566)])
-	foreground_lip.width = 8.0
-	foreground_lip.default_color = Color(0.08, 0.08, 0.07, 0.80)
-	foreground_layer.add_child(foreground_lip)
+	_add_window()
+	_add_wall_fixture(Vector2(374, 108), Vector2(170, 20), Color(0.98, 0.77, 0.42, 0.80))
+	_add_wall_fixture(Vector2(870, 118), Vector2(150, 18), Color(0.98, 0.78, 0.42, 0.72))
+	_add_front_lip()
 
 
-func _add_floor_guides() -> void:
+func _add_floor_boards() -> void:
+	var board_color := Color(0.60, 0.45, 0.28, 0.16)
+	for offset in range(0, 10):
+		var line := Line2D.new()
+		line.width = 1.0
+		line.default_color = board_color
+		var y := 196.0 + float(offset) * 42.0
+		line.points = PackedVector2Array([
+			Vector2(238 + offset * 8, y),
+			Vector2(1018 + offset * 10, y + 270),
+		])
+		floor_layer.add_child(line)
+
 	for guide in [
-		PackedVector2Array([Vector2(330, 232), Vector2(1050, 552)]),
-		PackedVector2Array([Vector2(224, 386), Vector2(910, 184)]),
-		PackedVector2Array([Vector2(442, 622), Vector2(1042, 230)]),
-		PackedVector2Array([Vector2(560, 156), Vector2(238, 520)]),
+		PackedVector2Array([Vector2(298, 222), Vector2(1078, 502)]),
+		PackedVector2Array([Vector2(412, 636), Vector2(1016, 230)]),
+		PackedVector2Array([Vector2(604, 154), Vector2(256, 590)]),
 	]:
 		var line := Line2D.new()
 		line.width = 1.0
-		line.default_color = Color(0.70, 0.58, 0.40, 0.18)
+		line.default_color = Color(0.72, 0.58, 0.38, 0.12)
 		line.points = guide
 		floor_layer.add_child(line)
+
+
+func _add_window() -> void:
+	var window := PackedVector2Array([
+		Vector2(662, 86),
+		Vector2(846, 86),
+		Vector2(846, 150),
+		Vector2(662, 150),
+	])
+	_add_polygon(wall_back_layer, window, Color(0.025, 0.12, 0.21, 1.0))
+	_add_polyline(wall_back_layer, window, Color(0.26, 0.68, 0.96, 0.68), 2.0)
+
+	for x in [694.0, 728.0, 784.0, 820.0]:
+		var city_line := Line2D.new()
+		city_line.width = 2.0
+		city_line.default_color = Color(0.15, 0.42, 0.65, 0.55)
+		city_line.points = PackedVector2Array([Vector2(x, 95), Vector2(x, 144)])
+		wall_back_layer.add_child(city_line)
+
+
+func _add_wall_fixture(center: Vector2, size: Vector2, color: Color) -> void:
+	var points := PackedVector2Array([
+		center + Vector2(-size.x * 0.5, -size.y * 0.5),
+		center + Vector2(size.x * 0.5, -size.y * 0.5),
+		center + Vector2(size.x * 0.5, size.y * 0.5),
+		center + Vector2(-size.x * 0.5, size.y * 0.5),
+	])
+	_add_polygon(wall_back_layer, points, color)
+	_add_polyline(wall_back_layer, points, Color(1.0, 0.86, 0.55, 0.72), 2.0)
+
+
+func _add_front_lip() -> void:
+	var lip := Line2D.new()
+	lip.points = PackedVector2Array([
+		Vector2(372, 650),
+		Vector2(990, 630),
+		Vector2(1136, 510),
+	])
+	lip.width = 9.0
+	lip.default_color = Color(0.06, 0.06, 0.05, 0.78)
+	foreground_layer.add_child(lip)
+
+
+func _build_visual_details() -> void:
+	for visual in VISUAL_BLOCKS:
+		_add_visual_block(visual)
+
+	_add_cable_line(PackedVector2Array([
+		Vector2(750, 405),
+		Vector2(820, 478),
+		Vector2(878, 520),
+		Vector2(1012, 540),
+	]))
+	_add_cable_line(PackedVector2Array([
+		Vector2(930, 378),
+		Vector2(986, 426),
+		Vector2(1010, 510),
+	]))
+
+
+func _add_visual_block(visual: Dictionary) -> void:
+	var parent := _get_layer_by_name(String(visual.get("layer", "ObjectLayer")))
+	var node := Node2D.new()
+	node.name = String(visual["name"])
+	node.position = visual["position"]
+	parent.add_child(node)
+
+	var size: Vector2 = visual["size"]
+	var color: Color = visual["color"]
+	_add_pseudo_block(
+		node,
+		size,
+		float(visual["thickness"]),
+		color,
+		false
+	)
+
+	if visual.has("blocker_rect"):
+		_add_blocker("%sBlocker" % node.name, visual["blocker_rect"])
+
+
+func _add_cable_line(points: PackedVector2Array) -> void:
+	var cable := Line2D.new()
+	cable.width = 5.0
+	cable.default_color = Color(0.035, 0.035, 0.032, 0.78)
+	cable.points = points
+	object_layer.add_child(cable)
 
 
 func _build_prompt() -> void:
 	prompt_label = Label.new()
 	prompt_label.name = "PromptLabel"
 	prompt_label.visible = false
-	prompt_label.add_theme_color_override("font_color", Color(0.98, 0.86, 0.48, 1.0))
+	prompt_label.add_theme_color_override("font_color", Color(0.98, 0.84, 0.48, 1.0))
 	prompt_label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.012, 1.0))
 	prompt_label.add_theme_constant_override("outline_size", 4)
-	prompt_label.add_theme_font_size_override("font_size", 20)
+	prompt_label.add_theme_font_size_override("font_size", 18)
 	prompt_layer.add_child(prompt_label)
 
 
 func _load_object_definitions() -> void:
 	object_definitions.clear()
 	for path in OBJECT_RESOURCE_PATHS:
-		var definition := load(path)
+		var definition: Resource = load(path)
 		if definition == null:
 			push_warning("QuarterviewRoom could not load object definition: %s" % path)
 			continue
-		if not definition.is_valid_definition():
+		if not definition.has_method("is_valid_definition") or not definition.is_valid_definition():
 			push_warning("QuarterviewRoom skipped invalid object definition: %s" % path)
 			continue
 		object_definitions.append(definition)
@@ -186,26 +498,40 @@ func _load_object_definitions() -> void:
 func _build_object_placeholders() -> void:
 	for definition in object_definitions:
 		_add_object_placeholder(definition)
-		if definition.blocks:
+		if definition.blocks and _get_object_blocker_rect(definition).size != Vector2.ZERO:
 			_add_object_blocker(definition)
 		_add_debug_for_definition(definition)
 
 
-func _add_object_placeholder(definition) -> void:
+func _add_object_placeholder(definition: Resource) -> void:
 	var parent := _get_layer_for_definition(definition)
 	var node := Node2D.new()
-	node.name = "%sPlaceholder" % definition.key.capitalize().replace("_", "")
-	node.position = definition.position
+	node.name = "%sPlaceholder" % String(definition.key).capitalize().replace("_", "")
+	node.position = _get_object_position(definition)
 	node.z_as_relative = false
-	node.z_index = int(definition.sort_y if definition.sort_y != 0 else definition.position.y)
+	node.z_index = int(_get_object_sort_y(definition))
 	parent.add_child(node)
-	object_nodes[definition.key] = node
 
-	var size: Vector2 = definition.size
+	_add_pseudo_block(
+		node,
+		_get_object_size(definition),
+		_get_object_thickness(definition),
+		_get_object_color(definition),
+		true
+	)
+	_add_device_hint(definition, node)
+
+
+func _add_pseudo_block(parent: Node, size: Vector2, depth: float, base_color: Color, outlined: bool) -> void:
 	var half := size * 0.5
-	var depth: float = max(float(definition.thickness), 8.0)
-	var skew := Vector2(18, 12)
-	var base_color: Color = definition.color
+	var skew := Vector2(18.0, 12.0)
+	var shadow_points := PackedVector2Array([
+		Vector2(-half.x + 8.0, -half.y + 18.0),
+		Vector2(half.x + 20.0, -half.y + 18.0),
+		Vector2(half.x + skew.x + 24.0, half.y + skew.y + depth + 18.0),
+		Vector2(-half.x + skew.x + 12.0, half.y + skew.y + depth + 18.0),
+	])
+	_add_local_polygon(parent, shadow_points, Color(0.0, 0.0, 0.0, 0.22))
 
 	var top_points := PackedVector2Array([
 		Vector2(-half.x, -half.y),
@@ -226,15 +552,34 @@ func _add_object_placeholder(definition) -> void:
 		top_points[1] + Vector2(0, depth),
 	])
 
-	_add_local_polygon(node, front_points, base_color.darkened(0.28))
-	_add_local_polygon(node, side_points, base_color.darkened(0.16))
-	_add_local_polygon(node, top_points, base_color)
-	_add_local_polyline(node, top_points, Color(0.90, 0.72, 0.45, 0.42), 2.0)
+	_add_local_polygon(parent, front_points, base_color.darkened(0.36))
+	_add_local_polygon(parent, side_points, base_color.darkened(0.20))
+	_add_local_polygon(parent, top_points, base_color)
+	if outlined:
+		_add_local_polyline(parent, top_points, Color(0.92, 0.72, 0.44, 0.38), 2.0)
 
 
-func _add_object_blocker(definition) -> void:
-	var rect: Rect2 = definition.blocker_rect if definition.has_blocker_rect() else Rect2(definition.position - definition.get_collision_size() * 0.5, definition.get_collision_size())
-	_add_blocker("%sBlocker" % definition.key.capitalize().replace("_", ""), rect)
+func _add_device_hint(definition: Resource, node: Node2D) -> void:
+	var key := String(definition.key)
+	if not (key in ["laptop", "phone", "comm", "node17", "speaker", "signal_booster", "power", "ups"]):
+		return
+
+	var glow := Polygon2D.new()
+	glow.color = Color(0.10, 0.62, 0.95, 0.28)
+	glow.polygon = PackedVector2Array([
+		Vector2(-12, -8),
+		Vector2(14, -8),
+		Vector2(18, 8),
+		Vector2(-8, 8),
+	])
+	node.add_child(glow)
+
+
+func _add_object_blocker(definition: Resource) -> void:
+	_add_blocker(
+		"%sBlocker" % String(definition.key).capitalize().replace("_", ""),
+		_get_object_blocker_rect(definition)
+	)
 
 
 func _build_wall_blockers() -> void:
@@ -266,36 +611,37 @@ func _add_blocker(blocker_name: String, rect: Rect2) -> void:
 		rect.position + Vector2(0, rect.size.y),
 	])
 	debug_layer.add_child(guide)
-	debug_nodes.append(guide)
 
 
-func _add_debug_for_definition(definition) -> void:
+func _add_debug_for_definition(definition: Resource) -> void:
 	var label := Label.new()
-	label.name = "%sDebugLabel" % definition.key.capitalize().replace("_", "")
+	label.name = "%sDebugLabel" % String(definition.key).capitalize().replace("_", "")
 	label.text = "%s\n%s" % [definition.display_name, definition.role]
-	label.position = definition.position + Vector2(-42, -definition.size.y * 0.5 - 34)
+	label.position = _get_object_position(definition) + Vector2(-44, -_get_object_size(definition).y * 0.5 - 34)
 	label.add_theme_color_override("font_color", Color(0.55, 0.93, 0.96, 1.0))
 	label.add_theme_color_override("font_outline_color", Color(0.01, 0.01, 0.02, 1.0))
 	label.add_theme_constant_override("outline_size", 2)
 	debug_layer.add_child(label)
-	debug_nodes.append(label)
 
 	var radius := Line2D.new()
-	radius.name = "%sInteractionRadius" % definition.key.capitalize().replace("_", "")
+	radius.name = "%sInteractionRadius" % String(definition.key).capitalize().replace("_", "")
 	radius.closed = true
 	radius.width = 2.0
 	radius.default_color = Color(0.28, 0.88, 0.76, 0.34)
 	var points := PackedVector2Array()
 	for index in 48:
 		var angle := TAU * float(index) / 48.0
-		points.append(definition.get_interaction_position() + Vector2(cos(angle), sin(angle)) * definition.interaction_radius)
+		points.append(_get_object_interaction_position(definition) + Vector2(cos(angle), sin(angle)) * _get_object_interaction_radius(definition))
 	radius.points = points
 	debug_layer.add_child(radius)
-	debug_nodes.append(radius)
 
 
-func _get_layer_for_definition(definition) -> Node2D:
-	match definition.layer:
+func _get_layer_for_definition(definition: Resource) -> Node2D:
+	return _get_layer_by_name(_get_object_layer(definition))
+
+
+func _get_layer_by_name(layer_name: String) -> Node2D:
+	match layer_name:
 		"FloorLayer":
 			return floor_layer
 		"WallBackLayer":
@@ -318,8 +664,8 @@ func _update_nearest_interactable() -> void:
 	for definition in object_definitions:
 		if not definition.interactable:
 			continue
-		var distance := player.global_position.distance_to(definition.get_interaction_position())
-		if distance <= definition.interaction_radius and distance < best_distance:
+		var distance := player.global_position.distance_to(_get_object_interaction_position(definition))
+		if distance <= _get_object_interaction_radius(definition) and distance < best_distance:
 			best_key = definition.key
 			best_display_name = definition.display_name
 			best_distance = distance
@@ -338,20 +684,20 @@ func _update_prompt() -> void:
 		prompt_label.visible = false
 		return
 
-	var definition = _get_definition(nearest_key)
+	var definition := _get_definition(nearest_key)
 	if definition == null:
 		prompt_label.visible = false
 		return
 
 	prompt_label.text = "[E] %s" % definition.display_name
-	prompt_label.position = player.global_position + Vector2(-46, -74)
+	prompt_label.position = player.global_position + Vector2(-48, -78)
 	prompt_label.visible = true
 
 
 func _request_nearest_interaction() -> void:
 	if nearest_key.is_empty():
 		return
-	var definition = _get_definition(nearest_key)
+	var definition := _get_definition(nearest_key)
 	if definition == null:
 		return
 
@@ -367,7 +713,7 @@ func _request_nearest_interaction() -> void:
 	interaction_requested.emit(definition.key, ACTION_PRIMARY, payload)
 
 
-func _get_definition(object_key: String):
+func _get_definition(object_key: String) -> Resource:
 	for definition in object_definitions:
 		if definition.key == object_key:
 			return definition
@@ -377,6 +723,74 @@ func _get_definition(object_key: String):
 func _set_debug_enabled(enabled: bool) -> void:
 	debug_enabled = enabled
 	debug_layer.visible = debug_enabled
+
+
+func _get_object_layout(definition: Resource) -> Dictionary:
+	return OBJECT_LAYOUT.get(String(definition.key), {})
+
+
+func _get_object_position(definition: Resource) -> Vector2:
+	var layout := _get_object_layout(definition)
+	var value: Vector2 = layout.get("position", definition.position)
+	return value
+
+
+func _get_object_size(definition: Resource) -> Vector2:
+	var layout := _get_object_layout(definition)
+	var value: Vector2 = layout.get("size", definition.size)
+	return value
+
+
+func _get_object_thickness(definition: Resource) -> float:
+	var layout := _get_object_layout(definition)
+	if layout.has("thickness"):
+		return max(float(layout["thickness"]), 2.0)
+	if definition.get("thickness") != null:
+		return max(float(definition.thickness), 2.0)
+	return 14.0
+
+
+func _get_object_color(definition: Resource) -> Color:
+	var layout := _get_object_layout(definition)
+	if layout.has("color"):
+		var layout_color: Color = layout["color"]
+		return layout_color
+	if definition.get("color") != null:
+		return definition.color
+	return Color(0.25, 0.20, 0.15, 1.0)
+
+
+func _get_object_layer(definition: Resource) -> String:
+	var layout := _get_object_layout(definition)
+	return String(layout.get("layer", definition.layer))
+
+
+func _get_object_sort_y(definition: Resource) -> float:
+	var layout := _get_object_layout(definition)
+	if layout.has("sort_y"):
+		return float(layout["sort_y"])
+	return _get_object_position(definition).y
+
+
+func _get_object_blocker_rect(definition: Resource) -> Rect2:
+	var layout := _get_object_layout(definition)
+	if layout.has("blocker_rect"):
+		var rect: Rect2 = layout["blocker_rect"]
+		return rect
+	if definition.has_method("has_blocker_rect") and definition.has_blocker_rect():
+		return definition.blocker_rect
+	return Rect2(_get_object_position(definition) - definition.get_collision_size() * 0.5, definition.get_collision_size())
+
+
+func _get_object_interaction_position(definition: Resource) -> Vector2:
+	var layout := _get_object_layout(definition)
+	var value: Vector2 = layout.get("interaction_position", definition.get_interaction_position())
+	return value
+
+
+func _get_object_interaction_radius(definition: Resource) -> float:
+	var layout := _get_object_layout(definition)
+	return float(layout.get("interaction_radius", definition.interaction_radius))
 
 
 func _add_polygon(parent: Node, points: PackedVector2Array, color: Color) -> void:

@@ -41,5 +41,5 @@ func _on_nearest_interactable_changed(object_key: String, display_name: String) 
 
 
 func _update_status(message: String) -> void:
-	status_label.text = "QuarterviewMain Candidate\nNot project main scene\nNo Phone / Outlet / Result / SurvivalState wiring\n%s" % message
-	log_label.text = "Last interaction: %s\nR: restart candidate scene\nESC: no modal at this stage" % last_interaction
+	status_label.text = "Candidate only / not project main\nNo Phone / Outlet / Result wiring\n%s" % message
+	log_label.text = "Last: %s\nR: restart" % last_interaction

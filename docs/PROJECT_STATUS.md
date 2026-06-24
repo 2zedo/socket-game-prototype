@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `32fb9c0`
-- Phase: QuarterviewMain production candidate skeleton
+- Current commit at task start: `cca6de2`
+- Phase: QuarterviewMain visual blockout pass
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -114,7 +114,7 @@
 - Quarterview Gameplay Sandbox now has a sandbox-only `F2` Test Mode panel for local time advance, `01:50` jump, auto end trigger, manual result trigger, reset, and clock pause / restore checks. It does not modify Main / DAY1, `SurvivalState`, `DeviceDefinition`, `PhoneUI`, `OutletMode`, or `DayResultPanel`.
 - Main replacement risk checklist is documented in `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`; replacing current Main / DAY1 now has explicit Go / No-Go, validation, protected-file, and rollback gates. No Main / DAY1 or production wiring was changed.
 - Main replacement work plan is documented in `docs/MAIN_REPLACEMENT_WORK_PLAN.md`; recommended replacement is a new `QuarterviewMain` production candidate with an isolated final `project.godot` start-scene switch. No Main / DAY1, scene, script, Resource, or asset change was made.
-- `QuarterviewMain.tscn` now exists as the first production candidate skeleton with a separate `QuarterviewRoom.tscn` room shell, placeholder movement / collision / prompt / interaction signal flow, and status logging. It is not wired to `project.godot`, `Main.gd`, `SurvivalState`, Phone, Outlet, Result, Hacking, Grid Credit, story flags, or save/load.
+- `QuarterviewMain.tscn` now exists as the first production candidate skeleton with a separate `QuarterviewRoom.tscn` room shell, placeholder movement / collision / prompt / interaction signal flow, and status logging. Its visual blockout has been tightened toward the adopted compact lower-city one-room hacker apartment direction, but it is not wired to `project.godot`, `Main.gd`, `SurvivalState`, Phone, Outlet, Result, Hacking, Grid Credit, story flags, or save/load.
 
 ## Current DAY 1 Decisions
 
@@ -126,8 +126,8 @@
 ## Changed Files
 
 - `docs/MAIN_REPLACEMENT_WORK_PLAN.md`: defines the Main replacement strategy, phase plan, file impact plan, state ownership, UI routing, input / modal policy, asset readiness, tests, commit strategy, rollback, Go / No-Go gate, and open questions.
-- `godot/scenes/QuarterviewMain.tscn`, `godot/scripts/QuarterviewMain.gd`: add a new production candidate scene shell that hosts `QuarterviewRoom`, receives interaction requests, and logs object key / role / action without production UI or state wiring.
-- `godot/scenes/quarterview/QuarterviewRoom.tscn`, `godot/scripts/quarterview/QuarterviewRoom.gd`, `godot/scripts/quarterview/QuarterviewPlayer.gd`: add a standalone quarterview room skeleton using `RoomObjectDefinition` resources for placeholder objects, movement, collision, prompt, debug overlay, and interaction signal emission.
+- `godot/scenes/QuarterviewMain.tscn`, `godot/scripts/QuarterviewMain.gd`: keep the production candidate isolated while reducing the status panel footprint and preserving object key / role / action logging without production UI or state wiring.
+- `godot/scenes/quarterview/QuarterviewRoom.tscn`, `godot/scripts/quarterview/QuarterviewRoom.gd`: adjust the visual blockout toward a compact lower-city one-room hacker apartment, with denser bed / desk / device / kitchen / power zones, pseudo 3D furniture, runtime layout overrides, debug-only labels, and preserved prompt / interaction signal flow.
 - `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`: links the risk gate to the replacement work plan.
 - `docs/QUARTERVIEW_MIGRATION_PLAN.md`: links Main replacement gating to both the risk checklist and the work plan.
 - `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: points Main replacement GUI preconditions to the work plan.
@@ -385,6 +385,7 @@
 - Main replacement risk checklist 작성 후 `git diff --check`와 read-only file existence checks for Main / UI / Sandbox / docs가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, 문서 작업이라 Godot headless 실행은 생략했다.
 - Main replacement work plan 작성 후 `git diff --check`와 `git status --short`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, 문서 작업이라 Godot headless 실행은 생략했다.
 - QuarterviewMain 1차 본방 후보 생성 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `res://scenes/QuarterviewMain.tscn`, and full GUT unit suite `54/54 passed`가 완료됐다. Godot AI MCP로 현재 열린 `QuarterviewRoomPrototype` hierarchy를 read-only 확인했다.
+- QuarterviewMain visual blockout 콘티 방향 재구성 후 `git diff --check`, Godot 4.5.1 headless project parse, and headless startup for `res://scenes/QuarterviewMain.tscn`이 완료됐다. Godot AI MCP로 `QuarterviewRoom.tscn` and `QuarterviewMain.tscn` hierarchy를 read-only 확인했다.
 - Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
