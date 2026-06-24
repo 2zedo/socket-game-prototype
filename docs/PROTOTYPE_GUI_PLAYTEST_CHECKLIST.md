@@ -126,6 +126,15 @@
 - guide overlay는 floor alignment 확인용이며 최종 art가 아니다.
 - player 이동, collision, object interaction은 이 scene의 확인 대상이 아니다.
 
+Future window city view check:
+
+- [ ] window layer appears through the room window area.
+- [ ] wall / window frame remains separate.
+- [ ] missing window layer does not crash prototype.
+- [ ] layer can be toggled independently if implemented.
+- [ ] city view does not overpower interactable objects.
+- [ ] glow / reflection is not baked too strongly into the window layer.
+
 Future foreground occluder check:
 
 - [ ] foreground layer appears above player / object placeholders.

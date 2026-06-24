@@ -27,6 +27,8 @@
 | `qv_room_foreground_occluders.png` | 앞쪽 벽, 기둥, 가림 요소 | transparent | `80` | player / object 일부를 가릴 수 있다. occlusion 테스트의 핵심 레이어다. |
 | `qv_room_static_lighting_overlay.png` | 고정 조명 / 분위기 오버레이 | transparent | `90` | blend / add / modulate 정책은 실제 적용 시 결정한다. |
 
+`qv_room_window_city_view.png` is the visual-only city view seen through the room window. It should usually sit behind the wall / window frame layer and below player / object layers. It must not contain interior wall frames, interactable objects, collision data, or room lighting overlays. Detailed criteria are documented in `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`.
+
 `qv_room_foreground_occluders.png` is a visual-only static occlusion layer. It should sit above player / object layers but below lighting / UI. It must not contain interactable objects or collision data. Detailed criteria are documented in `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`.
 
 ### 선택 후보
