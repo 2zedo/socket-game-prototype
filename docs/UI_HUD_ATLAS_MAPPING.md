@@ -100,6 +100,8 @@ This document defines criteria only. It does not apply the atlas to any UI.
 - DAY / time / power / battery / Trace / mission status visuals.
 - Compact visuals tuned for HUD layout.
 
+Phone screen-specific UI components belong to `ui_phone_atlas.png`, even if they display similar values such as battery, signal, warning, mission, or Grid Credit state.
+
 Separation rules:
 
 - If a region is used as a generic button, panel, modal, tab, or dialog piece, it belongs to `ui_common_atlas.png`.

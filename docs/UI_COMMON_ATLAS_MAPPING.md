@@ -50,6 +50,8 @@ This task does not create the folders, PNG, `AtlasTexture`, `StyleBoxTexture`, T
 
 Gameplay-specific persistent HUD elements such as power, time, battery, Trace, HP, timer, warning chips, and status chips belong to the separate `ui_hud_atlas.png` workflow documented in `docs/UI_HUD_ATLAS_MAPPING.md`.
 
+Phone-specific frames, app tiles, message bubbles, notifications, and phone screen parts belong to the separate `ui_phone_atlas.png` workflow documented in `docs/UI_PHONE_ATLAS_MAPPING.md`.
+
 Owns:
 
 - Panel frame.

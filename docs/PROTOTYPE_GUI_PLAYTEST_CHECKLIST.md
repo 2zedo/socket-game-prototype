@@ -303,6 +303,15 @@ Future hack avatar spritesheet check:
 - [ ] Hacking HUD does not hide action readability.
 - [ ] Localization text is not baked into HUD images.
 
+## Future ui_phone_atlas check
+
+- [ ] Phone frame / card / message regions display without cropping.
+- [ ] 9-slice margins preserve corners and borders.
+- [ ] App tile / card state regions keep consistent size.
+- [ ] Battery / signal / warning icons remain readable.
+- [ ] Localization text is not baked into Phone UI images.
+- [ ] Sandbox phone panel can test visuals before replacing existing PhoneUI.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.

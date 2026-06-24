@@ -9,6 +9,7 @@
 - Existing UI tone remains dark brown-gray with muted brass lines and warm off-white text.
 - Common UI panels, buttons, icons, meters, badges, and prompt frames should eventually be consolidated through `ui_common_atlas.png` or Theme / StyleBoxTexture resources. This is not wired yet.
 - HUD visuals should eventually be separated into `ui_hud_atlas.png` for persistent gameplay status, while modal / dialog / common controls remain in `ui_common_atlas.png`. This is not wired yet.
+- Phone UI visuals should eventually be separated into `ui_phone_atlas.png` for phone-specific frames, app tiles, message bubbles, notification cards, and status elements. This is not wired yet.
 
 ## Current Multitap UI
 
