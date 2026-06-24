@@ -23,6 +23,7 @@ GUT `v9.5.0` is used because the project currently runs on Godot `4.5.1`. Do not
 - `godot/test/unit/test_room_scene_contract.gd`
 - `godot/test/unit/test_prototype_scene_utils.gd`
 - `godot/test/unit/test_hacking_action_state_machine.gd`
+- `godot/test/unit/test_asset_smoke.gd`
 
 Covered behavior:
 
@@ -36,6 +37,7 @@ Covered behavior:
 - `RoomSceneContract` signal names, action constants, no-op skeleton method safety, and interaction payload shape.
 - `PrototypeSceneUtils` shared B / Backspace, R, D, E / Enter, and ESC input-event checks.
 - `HackingActionPrototype` scene instantiation, initial mission state, objective extraction, exit success, Trace failure, HP failure, reset, and failed-state exit guard.
+- Selected prototype Kenney SFX / input prompt files exist, load through Godot, keep copied license files, and remain documented in the third-party asset inventory.
 
 ## Command Line
 
@@ -57,6 +59,12 @@ Run the Hacking Action state-machine test directly with:
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_hacking_action_state_machine.gd -gexit
 ```
 
+Run the selected prototype asset smoke test directly with:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_asset_smoke.gd -gexit
+```
+
 For all future GUT tests, prefer adding test files under:
 
 ```text
@@ -70,3 +78,4 @@ godot/test/unit/
 - UI, scene layout, mouse drag, and visual feedback still require Godot Editor manual checks.
 - Prototype tests should stay separate from Main / DAY 1 tests unless a task explicitly connects those systems.
 - `test_hacking_action_state_machine.gd` protects state flow only; it does not verify gameplay feel, visual perspective, or GUI input timing.
+- `test_asset_smoke.gd` verifies file existence, loadability, license files, and inventory mentions only; it does not verify SFX volume, visual quality, icon scale, or GUI readability.

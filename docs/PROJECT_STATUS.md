@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `182e242`
-- Phase: Hacking state machine GUT coverage
+- Current commit at task start: `ada993c`
+- Phase: Asset smoke test coverage
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -71,6 +71,7 @@
 - GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
 - The GUT unit suite now also covers `DeviceDefinition` resources, `RoomObjectDefinition` helpers/resources, the `RoomSceneContract` skeleton, and `PrototypeSceneUtils` input helper contracts.
 - `HackingActionPrototype` mission state flow is covered by GUT for initial state, objective extraction, exit success, Trace failure, HP failure, reset, and failed-state exit guard.
+- Selected prototype Kenney SFX and input prompt assets are covered by a GUT smoke test for file existence, Godot loadability, copied license files, and third-party inventory mentions.
 - Git LFS is not enabled yet; future large-art, atlas, spritesheet, source-art, and audio decisions are tracked in `docs/GIT_LFS_ASSET_POLICY.md`.
 - Prototype GUI playtest checks for Hub, Quarterview, Hacking, perspective blockouts, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
 - Viewpoint and prototype terminology is clarified in `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: `QuarterviewRoomPrototype` remains an object / interaction contract prototype, while `HackingActionPrototype` remains a control / state arena pending later perspective blockouts.
@@ -178,6 +179,7 @@
 - `godot/test/unit/test_room_scene_contract.gd`: checks `RoomSceneContract` signal names, constants, no-op skeleton methods, and payload helper.
 - `godot/test/unit/test_prototype_scene_utils.gd`: checks prototype-only shared input rules for Hub back, restart, debug, confirm, and cancel events.
 - `godot/test/unit/test_hacking_action_state_machine.gd`: checks Hacking Action scene instantiate, mission state transitions, objective / exit activation, Trace / HP failure, reset, and failed-state exit guard.
+- `godot/test/unit/test_asset_smoke.gd`: checks selected prototype SFX / input prompt file existence, loadability, copied license files, and third-party inventory mentions.
 - `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
 - `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
 - `docs/ASSET_PIPELINE.md`: links large-asset and LFS handling back to the dedicated Git LFS policy.
@@ -297,6 +299,7 @@
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
 - GUT 테스트 확장 후 `git diff --check`와 full GUT unit suite `26/26 passed`가 완료됐다.
 - Hacking state machine 테스트 추가 후 `git diff --check`, Hacking state-machine GUT `8/8 passed`, SurvivalState GUT `5/5 passed`, and full GUT unit suite `34/34 passed`가 완료됐다.
+- Asset smoke test 추가 후 `git diff --check`, Asset Smoke GUT `6/6 passed`, SurvivalState GUT `5/5 passed`, and full GUT unit suite `40/40 passed`가 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -329,6 +332,7 @@
 - Title prototype의 버튼, ESC overlay, Settings placeholder는 GUI 수동 확인이 필요하다.
 - Prototype SFX는 headless startup만 확인했으며, 실제 청감/볼륨/타이밍은 GUI에서 수동 확인이 필요하다.
 - Prototype input prompt icons are headless-startup checked only; actual icon scale, spacing, and readability need GUI visual confirmation.
+- Asset Smoke Test verifies selected SFX / prompt files load, but does not verify SFX loudness, icon scale, visual quality, or GUI readability.
 - 각 prototype의 `B` / `Backspace` 복귀 입력은 GUI 수동 확인이 필요하다.
 - Quarterview object interaction panel의 `E` open, Primary / Inspect / Close button, `ESC` close, 이동 잠금은 GUI 수동 확인이 필요하다.
 - Quarterview debug overlay의 `D` toggle, 기본 화면 prompt-only 상태, debug ON label/range/blocker 표시는 GUI 수동 확인이 필요하다.
