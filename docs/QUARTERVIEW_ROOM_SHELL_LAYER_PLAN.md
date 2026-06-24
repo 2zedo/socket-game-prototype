@@ -31,6 +31,8 @@
 
 `qv_room_foreground_occluders.png` is a visual-only static occlusion layer. It should sit above player / object layers but below lighting / UI. It must not contain interactable objects or collision data. Detailed criteria are documented in `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`.
 
+`qv_room_static_lighting_overlay.png` is a visual-only static atmosphere layer. It should usually sit above room / player / object visuals but below UI / debug / prompt layers. It must not contain interactable objects, collision data, room structure, or dynamic state-based lighting. Detailed criteria are documented in `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`.
+
 ### 선택 후보
 
 | File | Purpose | Transparent | Expected z-index | Notes |

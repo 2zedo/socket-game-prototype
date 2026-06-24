@@ -10,6 +10,8 @@ Window city view layer is not yet applied. A future prototype step will add `qv_
 
 Foreground occluder layer is not yet applied. A future prototype step will add `qv_room_foreground_occluders.png` after floor / back / side validation.
 
+Static lighting overlay layer is not yet applied. A future prototype step will add `qv_room_static_lighting_overlay.png` after floor / back / side / window / foreground validation.
+
 ## Scene Path
 
 - `res://scenes/prototypes/QuarterviewRoomShellPrototype.tscn`

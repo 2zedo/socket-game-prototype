@@ -142,6 +142,15 @@ Future foreground occluder check:
 - [ ] missing foreground layer does not crash prototype.
 - [ ] layer can be toggled independently if implemented.
 
+Future static lighting overlay check:
+
+- [ ] lighting overlay appears above room visual layers but below UI.
+- [ ] missing lighting layer does not crash prototype.
+- [ ] layer can be toggled independently if implemented.
+- [ ] overlay does not hide player / object readability.
+- [ ] warm interior and cold window contrast are visible.
+- [ ] glow / shadow are not baked in ways that block future dynamic lighting.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.
