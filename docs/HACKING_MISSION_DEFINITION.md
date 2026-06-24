@@ -104,6 +104,8 @@ Next work candidates:
 `HackingMissionDefinition.required_device_keys` and `recommended_device_keys` may later correspond to `RoomObjectDefinition` keys and `qv_work_devices_atlas` region keys.
 The visual mapping is not wired yet.
 
+Hacking mission visuals may later trigger `qv_fx_atlas.png` effects based on `mission_type`, Trace risk, required / recommended device keys, or mission state. This is not wired yet.
+
 ## Relationship To Existing Prototypes
 
 - `HackingActionPrototype` is the current controls, combat, mission state, objective, exit, and feedback prototype.

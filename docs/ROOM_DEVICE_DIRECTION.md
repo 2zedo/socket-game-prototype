@@ -171,6 +171,8 @@ Fridge, microwave, aircon, fluorescent light, and UPS visual bodies should be ma
 
 Laptop, phone, NODE-17, communication device, speaker / audio analyzer, and signal booster visual bodies should be managed separately from furniture and appliance atlases. Future work-device body region mapping criteria are documented in `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`.
 
+Device visual states may later use `qv_fx_atlas.png` for localized screen glow, signal waves, warning flashes, charging sparks, and power feedback effects. These FX are visual candidates only and do not change current device logic.
+
 ## 추천 임시 수치
 
 아래 값은 플레이테스트 전 문서상 후보값이다. 이번 작업에서 `godot/resources/devices/*.tres`나 기존 밸런스 값을 수정하지 않는다.

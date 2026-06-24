@@ -247,6 +247,8 @@ Dynamic lighting 후보로 남길 것:
 
 `qv_room_static_lighting_overlay.png`는 기본 상태만 담당한다. 상태에 따라 달라지는 효과는 나중에 separate overlay 또는 shader / `AnimationPlayer`로 처리한다.
 
+Localized state-based glow, screen light, spark, signal wave, warning blink, and small flicker effects should be handled by `qv_fx_atlas.png` rather than baked into the static room lighting overlay.
+
 ## 적용 전 Checklist
 
 - [ ] `1920x1080`인지 확인

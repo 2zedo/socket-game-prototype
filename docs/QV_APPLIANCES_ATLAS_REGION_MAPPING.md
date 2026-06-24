@@ -331,6 +331,8 @@ Fluorescent light is closer to a background fixture than a plug-in appliance, bu
 
 UPS can be treated as power storage / support. Whether it belongs in `qv_appliances_atlas.png` or `qv_work_devices_atlas.png` should be decided later. This document keeps it as an appliances-atlas candidate only.
 
+Appliance body regions should keep strong glow, flicker, warning, and spark effects separate. Those localized effects may be mapped through `qv_fx_atlas.png` instead of being baked into appliance bodies.
+
 ## Pivot And Anchor Criteria
 
 Default placement rules:

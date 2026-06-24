@@ -22,6 +22,8 @@ Appliance body visuals may later be mapped through `qv_appliances_atlas` region 
 
 Laptop, phone, NODE-17, speaker / audio analyzer, communication device, and signal booster visuals may later be mapped through `qv_work_devices_atlas` region keys.
 
+Laptop, Phone, NODE-17, Speaker, Signal Booster, UPS, and power-related visuals may later use `qv_fx_atlas.png` for localized state effects such as screen glow, warning blink, signal wave, spark, or trace feedback. Functional state remains separate from FX.
+
 ## 현재 구현 요약
 
 - 현재 본게임 방 화면은 탑뷰 `Apartment` 기반이다.

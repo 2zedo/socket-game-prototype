@@ -160,6 +160,8 @@ Appliance visuals should preserve the same tidy lower-grid hacker room direction
 
 Work device visuals should preserve the tidy lower-grid hacker room direction: compact, practical, work-prioritized, and not decorative clutter.
 
+Localized FX such as screen glow, signal waves, warning blinks, and sparks should support a compact, practical hacker-room atmosphere without turning the room into noisy decorative cyberpunk clutter.
+
 ## 플레이 루프를 드러내는 방
 
 쿼터뷰 방의 목표는 보기 좋은 배경 한 장이 아니다. 방 자체가 아래 루프를 자연스럽게 드러내야 한다.

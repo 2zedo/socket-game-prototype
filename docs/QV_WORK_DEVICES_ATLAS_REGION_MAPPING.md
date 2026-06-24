@@ -6,6 +6,8 @@ This document defines the future region mapping rules for `qv_work_devices_atlas
 
 The atlas is for quarterview room work devices, hacking devices, and information-labor equipment body sprites. It is separate from furniture, appliances, cable visuals, room shell layers, UI icons, player sprites, and FX overlays.
 
+Screen glow, waveform, NODE-17 pulse, signal wave, warning flash, scan effects, and other localized state FX should be separated into `qv_fx_atlas.png` rather than baked into work-device body regions.
+
 This document does not add the actual atlas PNG, does not create a JSON / CSV / `.tres` mapping file, and does not wire work-device visuals into `QuarterviewGameplaySandbox`, `QuarterviewRoomShellPrototype`, Main, or DAY 1.
 
 ## Atlas File

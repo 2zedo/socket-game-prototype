@@ -187,6 +187,15 @@ Future work devices atlas check:
 - [ ] Player scale and occlusion remain readable.
 - [ ] Speaker is treated as audio hacking device, not decoration.
 
+Future FX atlas check:
+
+- [ ] FX regions display without cropping.
+- [ ] Animated frames keep stable anchors.
+- [ ] FX, body atlas, cable, and static lighting categories are not mixed.
+- [ ] Glow / signal / spark effects do not overpower interactable objects.
+- [ ] Prompt / UI readability remains clear.
+- [ ] Full-room lighting is not accidentally baked into localized FX.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.

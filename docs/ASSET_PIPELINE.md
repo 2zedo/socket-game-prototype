@@ -54,6 +54,7 @@ Prepare the Godot project to replace primitive placeholders with controlled art 
 - Quarterview furniture will use an atlas + region mapping workflow. Detailed mapping criteria are documented in `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md`.
 - Quarterview appliances will use a separate atlas + region mapping workflow from furniture and work devices. Detailed mapping criteria are documented in `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`.
 - Quarterview work / hacking devices will use a separate atlas + region mapping workflow from furniture, appliances, and cables. Detailed mapping criteria are documented in `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`.
+- Quarterview localized FX will use a separate `qv_fx_atlas.png` mapping workflow from device bodies, appliances, furniture, cable sprites, and full-room lighting overlays. Detailed mapping criteria are documented in `docs/QV_FX_ATLAS_REGION_MAPPING.md`.
 - Window city view PNGs require same-canvas export and should keep wall frames and interior lighting separate from the city-view layer; criteria are documented in `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`.
 - Foreground occluder PNGs require transparent same-canvas exports and alpha edge cleanup before Godot import; criteria are documented in `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`.
 - Static lighting overlays require same-canvas transparent exports. Shadow / glow may need separate overlay files if one blend mode is not enough; criteria are documented in `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`.
