@@ -8,7 +8,7 @@
 
 `QuarterviewRoomPrototype`은 현재 최종 쿼터뷰 시점 검증용이 아니라 object / interaction contract prototype이다. 이 scene은 버리지 않고 나중에 쿼터뷰 Room 기능 이식 시 계약 기준으로 사용한다. 실제 쿼터뷰 시점 검증은 별도 perspective blockout scene에서 진행한다.
 
-`RoomObjectDefinition` Resource class가 object contract를 Resource화하기 위한 준비 구조로 추가되었다. 기존 registry 이전과 `.tres` 오브젝트 정의 생성은 다음 단계에서 진행한다.
+object contract의 source of truth는 `QuarterviewRoomPrototype` inline registry에서 `RoomObjectDefinition` Resource로 이동했다. 현재 정의 파일은 `godot/resources/rooms/quarterview/objects/*.tres`에 있으며, `key`, `zone`, `role`, `future_source`, `visual_state`와 prototype blockout 값을 Resource에서 관리한다.
 
 ## Object Key 표
 
@@ -39,7 +39,7 @@
 - `future_candidate`: 장기 방향 문서에는 있으나 아직 기존 DAY 1 기능으로 구현되지 않은 후보이다.
 - `background_hint`: 생활 구조를 암시하지만 직접 기능 이식 대상은 아닌 배경 오브젝트이다.
 
-## Registry 사용 기준
+## Resource 사용 기준
 
 - `key`는 내부 식별자다. 화면 표시명이나 최종 에셋 이름이 바뀌어도 쉽게 바꾸지 않는다.
 - `display_name`은 prototype 화면 라벨과 prompt에 쓰는 표시명이다.
@@ -47,6 +47,7 @@
 - `role`은 나중에 기존 Apartment 기능이나 신규 기능을 연결할 때의 의미를 나타낸다.
 - `future_source`는 기존 탑뷰 기능 또는 장기 후보와의 연결 힌트다.
 - `visual_state`는 현재 표시 상태의 placeholder key다.
+- position, size, interaction range, collision 후보도 현재는 Resource에 들어 있지만, 실제 Main 이식 전까지는 prototype contract 값이다.
 
 ## Prototype Interaction Action 기준
 
@@ -75,6 +76,6 @@
 - object key를 화면 표시명 기준으로 바꾸지 않는다.
 - `visual_state`를 실제 이미지 파일명과 1:1로 고정하지 않는다.
 - 실제 에셋은 atlas region 또는 overlay로 교체 가능하게 둔다.
-- 기존 Main에 연결하기 전까지 prototype registry는 prototype 전용으로 유지한다.
+- 기존 Main에 연결하기 전까지 `RoomObjectDefinition` Resource는 prototype 전용 object contract로 유지한다.
 - 이 문서를 근거로 Main scene 교체, Phone / Outlet / Result 연결, NODE-17 구현, 해킹 액션 연결을 바로 진행하지 않는다.
 - 이 문서를 근거로 최종 쿼터뷰 시점이 검증되었다고 간주하지 않는다.

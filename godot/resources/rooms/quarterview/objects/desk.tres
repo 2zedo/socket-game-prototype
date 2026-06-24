@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "desk"
+display_name = "Desk"
+zone = "work"
+role = "support_device"
+future_source = "future_desk"
+visual_state = "idle"
+layer = "FurnitureBackLayer"
+position = Vector2(762, 272)
+size = Vector2(275, 92)
+sort_y = 346
+color = Color(0.36, 0.23, 0.13, 1)
+thickness = 18.0
+blocks = true
+interactable = false
+collision_size = Vector2(300, 122)
+blocker_rect = Rect2(620, 222, 300, 122)
+primary_action_label = "Use Device"
+inspect_action_label = "Inspect"

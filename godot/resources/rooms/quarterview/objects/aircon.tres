@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "aircon"
+display_name = "AC"
+zone = "utility"
+role = "living_appliance"
+future_source = "future_aircon"
+visual_state = "off"
+layer = "WallBackLayer"
+position = Vector2(880, 122)
+size = Vector2(128, 30)
+sort_y = 168
+color = Color(0.48, 0.5, 0.48, 1)
+thickness = 6.0
+blocks = false
+interactable = true
+interaction_position = Vector2(870, 186)
+interaction_radius = 62.0
+primary_action_label = "Use Appliance"
+inspect_action_label = "Inspect"

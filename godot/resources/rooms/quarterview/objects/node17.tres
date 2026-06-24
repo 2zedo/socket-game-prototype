@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "node17"
+display_name = "NODE-17"
+zone = "work"
+role = "mystery_device"
+future_source = "future_node17"
+visual_state = "off"
+layer = "ObjectLayer"
+position = Vector2(890, 242)
+size = Vector2(64, 64)
+sort_y = 314
+color = Color(0.16, 0.11, 0.2, 1)
+thickness = 14.0
+blocks = false
+interactable = true
+interaction_position = Vector2(842, 306)
+interaction_radius = 74.0
+primary_action_label = "Inspect NODE"
+inspect_action_label = "Inspect"

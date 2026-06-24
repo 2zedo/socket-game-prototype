@@ -56,322 +56,25 @@ const LAYER_Z_INDEX := {
 	"LabelLayer": 90,
 }
 
-const PRIMARY_ACTION_LABEL_BY_ROLE := {
-	"manual_end_day": "Rest / End Day",
-	"laptop_job": "Open Work",
-	"phone_status": "Check Phone",
-	"phone_charge": "Charge",
-	"power_management": "Open Power",
-	"communication": "Check Signal",
-	"mystery_device": "Inspect NODE",
-	"audio_hacking_device": "Enable Audio",
-	"living_appliance": "Use Appliance",
-	"support_device": "Use Device",
-	"background_life_hint": "Inspect",
-	"background_structure": "Inspect",
-}
-
-const OBJECT_REGISTRY := [
-	{
-		"key": "bed",
-		"display_name": "Bed",
-		"zone": "living",
-		"role": "manual_end_day",
-		"future_source": "apartment_bed",
-		"visual_state": "idle",
-		"layer": "FurnitureBackLayer",
-		"position": Vector2(344, 386),
-		"size": Vector2(205, 132),
-		"blocks": true,
-		"interactable": true,
-		"color": Color(0.22, 0.34, 0.25, 1.0),
-		"blocker_rect": Rect2(Vector2(246, 326), Vector2(230, 152)),
-		"interaction_position": Vector2(460, 488),
-		"interaction_radius": 82.0,
-		"sort_y": 466,
-		"thickness": 24.0,
-	},
-	{
-		"key": "desk",
-		"display_name": "Desk",
-		"zone": "work",
-		"role": "support_device",
-		"future_source": "future_desk",
-		"visual_state": "idle",
-		"layer": "FurnitureBackLayer",
-		"position": Vector2(762, 272),
-		"size": Vector2(275, 92),
-		"blocks": true,
-		"interactable": false,
-		"color": Color(0.36, 0.23, 0.13, 1.0),
-		"blocker_rect": Rect2(Vector2(620, 222), Vector2(300, 122)),
-		"sort_y": 346,
-		"thickness": 18.0,
-	},
-	{
-		"key": "laptop",
-		"display_name": "Laptop",
-		"zone": "work",
-		"role": "laptop_job",
-		"future_source": "apartment_laptop",
-		"visual_state": "on",
-		"layer": "ObjectLayer",
-		"position": Vector2(748, 238),
-		"size": Vector2(74, 36),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.08, 0.12, 0.15, 1.0),
-		"interaction_position": Vector2(748, 360),
-		"interaction_radius": 74.0,
-		"sort_y": 356,
-		"thickness": 7.0,
-	},
-	{
-		"key": "fridge",
-		"display_name": "Fridge",
-		"zone": "kitchen",
-		"role": "living_appliance",
-		"future_source": "future_fridge",
-		"visual_state": "idle",
-		"layer": "FurnitureBackLayer",
-		"position": Vector2(994, 288),
-		"size": Vector2(78, 152),
-		"blocks": true,
-		"interactable": true,
-		"color": Color(0.35, 0.38, 0.39, 1.0),
-		"blocker_rect": Rect2(Vector2(954, 210), Vector2(94, 172)),
-		"interaction_position": Vector2(920, 318),
-		"interaction_radius": 78.0,
-		"sort_y": 382,
-		"thickness": 12.0,
-	},
-	{
-		"key": "microwave",
-		"display_name": "Microwave",
-		"zone": "kitchen",
-		"role": "living_appliance",
-		"future_source": "future_microwave",
-		"visual_state": "idle",
-		"layer": "ObjectLayer",
-		"position": Vector2(940, 448),
-		"size": Vector2(104, 44),
-		"blocks": true,
-		"interactable": true,
-		"color": Color(0.23, 0.25, 0.27, 1.0),
-		"blocker_rect": Rect2(Vector2(880, 416), Vector2(144, 76)),
-		"interaction_position": Vector2(860, 468),
-		"interaction_radius": 68.0,
-		"sort_y": 492,
-		"thickness": 10.0,
-	},
-	{
-		"key": "aircon",
-		"display_name": "AC",
-		"zone": "utility",
-		"role": "living_appliance",
-		"future_source": "future_aircon",
-		"visual_state": "off",
-		"layer": "WallBackLayer",
-		"position": Vector2(880, 122),
-		"size": Vector2(128, 30),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.48, 0.50, 0.48, 1.0),
-		"interaction_position": Vector2(870, 186),
-		"interaction_radius": 62.0,
-		"sort_y": 168,
-		"thickness": 6.0,
-	},
-	{
-		"key": "power",
-		"display_name": "Power",
-		"zone": "power",
-		"role": "power_management",
-		"future_source": "apartment_outlet",
-		"visual_state": "idle",
-		"layer": "ObjectLayer",
-		"position": Vector2(742, 462),
-		"size": Vector2(126, 38),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.18, 0.18, 0.14, 1.0),
-		"interaction_position": Vector2(742, 516),
-		"interaction_radius": 78.0,
-		"sort_y": 506,
-		"thickness": 8.0,
-	},
-	{
-		"key": "comm",
-		"display_name": "Comm",
-		"zone": "work",
-		"role": "communication",
-		"future_source": "apartment_communication",
-		"visual_state": "off",
-		"layer": "ObjectLayer",
-		"position": Vector2(902, 326),
-		"size": Vector2(88, 48),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.15, 0.19, 0.22, 1.0),
-		"interaction_position": Vector2(862, 372),
-		"interaction_radius": 70.0,
-		"sort_y": 374,
-		"thickness": 10.0,
-	},
-	{
-		"key": "node17",
-		"display_name": "NODE-17",
-		"zone": "work",
-		"role": "mystery_device",
-		"future_source": "future_node17",
-		"visual_state": "off",
-		"layer": "ObjectLayer",
-		"position": Vector2(890, 242),
-		"size": Vector2(64, 64),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.16, 0.11, 0.20, 1.0),
-		"interaction_position": Vector2(842, 306),
-		"interaction_radius": 74.0,
-		"sort_y": 314,
-		"thickness": 14.0,
-	},
-	{
-		"key": "phone",
-		"display_name": "Phone",
-		"zone": "living",
-		"role": "phone_charge",
-		"future_source": "apartment_phone_or_charger",
-		"visual_state": "idle",
-		"layer": "ObjectLayer",
-		"position": Vector2(498, 438),
-		"size": Vector2(52, 30),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.04, 0.06, 0.08, 1.0),
-		"interaction_position": Vector2(532, 474),
-		"interaction_radius": 62.0,
-		"sort_y": 476,
-		"thickness": 5.0,
-	},
-	{
-		"key": "door",
-		"display_name": "Door",
-		"zone": "entrance",
-		"role": "background_structure",
-		"future_source": "none",
-		"visual_state": "idle",
-		"layer": "WallBackLayer",
-		"position": Vector2(204, 520),
-		"size": Vector2(64, 118),
-		"blocks": false,
-		"interactable": false,
-		"color": Color(0.18, 0.12, 0.09, 1.0),
-		"sort_y": 216,
-		"thickness": 8.0,
-	},
-	{
-		"key": "bathroom_door",
-		"display_name": "Bath Door",
-		"zone": "utility",
-		"role": "background_structure",
-		"future_source": "none",
-		"visual_state": "idle",
-		"layer": "WallBackLayer",
-		"position": Vector2(276, 575),
-		"size": Vector2(68, 104),
-		"blocks": false,
-		"interactable": false,
-		"color": Color(0.16, 0.14, 0.12, 1.0),
-		"sort_y": 232,
-		"thickness": 8.0,
-	},
-	{
-		"key": "speaker",
-		"display_name": "Speaker",
-		"zone": "work",
-		"role": "audio_hacking_device",
-		"future_source": "future_audio_hacking",
-		"visual_state": "off",
-		"layer": "ObjectLayer",
-		"position": Vector2(832, 258),
-		"size": Vector2(34, 52),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.08, 0.09, 0.10, 1.0),
-		"interaction_position": Vector2(825, 342),
-		"interaction_radius": 56.0,
-		"sort_y": 338,
-		"thickness": 8.0,
-	},
-	{
-		"key": "ups",
-		"display_name": "UPS",
-		"zone": "power",
-		"role": "support_device",
-		"future_source": "future_ups",
-		"visual_state": "idle",
-		"layer": "ObjectLayer",
-		"position": Vector2(836, 484),
-		"size": Vector2(64, 52),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.12, 0.13, 0.14, 1.0),
-		"interaction_position": Vector2(820, 536),
-		"interaction_radius": 60.0,
-		"sort_y": 536,
-		"thickness": 10.0,
-	},
-	{
-		"key": "signal_booster",
-		"display_name": "Signal",
-		"zone": "work",
-		"role": "support_device",
-		"future_source": "future_signal_booster",
-		"visual_state": "off",
-		"layer": "ObjectLayer",
-		"position": Vector2(942, 280),
-		"size": Vector2(48, 42),
-		"blocks": false,
-		"interactable": true,
-		"color": Color(0.10, 0.16, 0.18, 1.0),
-		"interaction_position": Vector2(900, 334),
-		"interaction_radius": 58.0,
-		"sort_y": 334,
-		"thickness": 8.0,
-	},
-	{
-		"key": "shelf",
-		"display_name": "Shelf",
-		"zone": "background",
-		"role": "background_life_hint",
-		"future_source": "future_room_prop",
-		"visual_state": "idle",
-		"layer": "WallBackLayer",
-		"position": Vector2(410, 190),
-		"size": Vector2(150, 38),
-		"blocks": false,
-		"interactable": false,
-		"color": Color(0.26, 0.18, 0.11, 1.0),
-		"sort_y": 228,
-		"thickness": 7.0,
-	},
-	{
-		"key": "small_table",
-		"display_name": "Small Table",
-		"zone": "living",
-		"role": "background_life_hint",
-		"future_source": "future_room_prop",
-		"visual_state": "idle",
-		"layer": "FurnitureFrontLayer",
-		"position": Vector2(590, 555),
-		"size": Vector2(108, 64),
-		"blocks": false,
-		"interactable": false,
-		"color": Color(0.28, 0.18, 0.10, 1.0),
-		"sort_y": 626,
-		"thickness": 12.0,
-	},
+const ROOM_OBJECT_DEFINITION_SCRIPT := preload("res://scripts/resources/RoomObjectDefinition.gd")
+const OBJECT_RESOURCE_PATHS := [
+	"res://resources/rooms/quarterview/objects/bed.tres",
+	"res://resources/rooms/quarterview/objects/desk.tres",
+	"res://resources/rooms/quarterview/objects/laptop.tres",
+	"res://resources/rooms/quarterview/objects/fridge.tres",
+	"res://resources/rooms/quarterview/objects/microwave.tres",
+	"res://resources/rooms/quarterview/objects/aircon.tres",
+	"res://resources/rooms/quarterview/objects/power.tres",
+	"res://resources/rooms/quarterview/objects/comm.tres",
+	"res://resources/rooms/quarterview/objects/node17.tres",
+	"res://resources/rooms/quarterview/objects/phone.tres",
+	"res://resources/rooms/quarterview/objects/door.tres",
+	"res://resources/rooms/quarterview/objects/bathroom_door.tres",
+	"res://resources/rooms/quarterview/objects/speaker.tres",
+	"res://resources/rooms/quarterview/objects/ups.tres",
+	"res://resources/rooms/quarterview/objects/signal_booster.tres",
+	"res://resources/rooms/quarterview/objects/shelf.tres",
+	"res://resources/rooms/quarterview/objects/small_table.tres",
 ]
 
 @onready var world: Node2D = $World
@@ -396,12 +99,14 @@ const OBJECT_REGISTRY := [
 var nearest_object: Dictionary = {}
 var panel_object: Dictionary = {}
 var debug_overlay_enabled := false
+var object_registry: Array[Dictionary] = []
 var nearby_prompt_row: HBoxContainer
 var nearby_prompt_text: Label
 var sfx
 
 
 func _ready() -> void:
+	object_registry = _load_object_definitions()
 	_configure_sfx()
 	_configure_layers()
 	_build_collision()
@@ -466,13 +171,13 @@ func _build_collision() -> void:
 	for wall_data in WALL_BLOCKERS:
 		_add_blocker(wall_data["name"], wall_data["rect"])
 
-	for placeholder_data in OBJECT_REGISTRY:
-		if placeholder_data["blocks"] and placeholder_data.has("blocker_rect"):
+	for placeholder_data in object_registry:
+		if placeholder_data["blocks"] and placeholder_data["blocker_rect"].size != Vector2.ZERO:
 			_add_blocker("%s_blocker" % placeholder_data["key"], placeholder_data["blocker_rect"])
 
 
 func _build_placeholder_objects() -> void:
-	for object_data in OBJECT_REGISTRY:
+	for object_data in object_registry:
 		var object_node := Node2D.new()
 		object_node.name = "%sPlaceholder" % object_data["key"].capitalize().replace("_", "")
 		object_node.position = object_data["position"]
@@ -616,7 +321,8 @@ func _open_object_panel(object_data: Dictionary) -> void:
 	sfx.play_open()
 	object_panel_title.text = _get_object_display_name(object_data).to_upper()
 	_refresh_object_panel_detail()
-	primary_button.text = _get_primary_action_label(String(object_data["role"]))
+	primary_button.text = String(object_data.get("primary_action_label", "Interact"))
+	inspect_button.text = String(object_data.get("inspect_action_label", "Inspect"))
 	object_panel.visible = true
 	object_panel.move_to_front()
 	prompt_label.text = ""
@@ -668,10 +374,6 @@ func _run_inspect_action() -> void:
 			panel_object["visual_state"],
 		]
 	)
-
-
-func _get_primary_action_label(role: String) -> String:
-	return String(PRIMARY_ACTION_LABEL_BY_ROLE.get(role, "Use Device"))
 
 
 func _refresh_object_panel_detail() -> void:
@@ -729,8 +431,59 @@ func _apply_depth_order() -> void:
 	player.z_index = int(player.global_position.y)
 
 
+func _load_object_definitions() -> Array[Dictionary]:
+	var loaded_objects: Array[Dictionary] = []
+	var seen_keys := {}
+
+	for resource_path in OBJECT_RESOURCE_PATHS:
+		var resource := load(resource_path)
+		if resource == null:
+			push_warning("Quarterview object resource missing: %s" % resource_path)
+			continue
+		if resource.get_script() != ROOM_OBJECT_DEFINITION_SCRIPT:
+			push_warning("Quarterview object resource has wrong type: %s" % resource_path)
+			continue
+
+		var definition = resource
+		if not definition.is_valid_definition():
+			push_warning("Quarterview object resource is invalid: %s" % resource_path)
+			continue
+		if seen_keys.has(definition.key):
+			push_warning("Quarterview object resource duplicate key skipped: %s" % definition.key)
+			continue
+
+		seen_keys[definition.key] = true
+		loaded_objects.append(_object_definition_to_dictionary(definition))
+
+	return loaded_objects
+
+
+func _object_definition_to_dictionary(definition) -> Dictionary:
+	return {
+		"key": definition.key,
+		"display_name": definition.display_name,
+		"zone": definition.zone,
+		"role": definition.role,
+		"future_source": definition.future_source,
+		"visual_state": definition.visual_state,
+		"layer": definition.layer,
+		"position": definition.position,
+		"size": definition.size,
+		"blocks": definition.blocks,
+		"interactable": definition.interactable,
+		"color": definition.color,
+		"blocker_rect": definition.blocker_rect,
+		"interaction_position": definition.get_interaction_position(),
+		"interaction_radius": definition.interaction_radius,
+		"sort_y": definition.sort_y,
+		"thickness": definition.thickness,
+		"primary_action_label": definition.get_primary_label(),
+		"inspect_action_label": definition.inspect_action_label,
+	}
+
+
 func get_object_definition(key: String) -> Dictionary:
-	for object_data in OBJECT_REGISTRY:
+	for object_data in object_registry:
 		if object_data["key"] == key:
 			return object_data
 	return {}
@@ -738,7 +491,7 @@ func get_object_definition(key: String) -> Dictionary:
 
 func get_interactable_keys() -> Array[String]:
 	var keys: Array[String] = []
-	for object_data in OBJECT_REGISTRY:
+	for object_data in object_registry:
 		if object_data["interactable"]:
 			keys.append(String(object_data["key"]))
 	return keys
@@ -746,7 +499,7 @@ func get_interactable_keys() -> Array[String]:
 
 func get_objects_by_zone(zone: String) -> Array:
 	var results := []
-	for object_data in OBJECT_REGISTRY:
+	for object_data in object_registry:
 		if object_data["zone"] == zone:
 			results.append(object_data)
 	return results
@@ -754,7 +507,7 @@ func get_objects_by_zone(zone: String) -> Array:
 
 func get_objects_by_role(role: String) -> Array:
 	var results := []
-	for object_data in OBJECT_REGISTRY:
+	for object_data in object_registry:
 		if object_data["role"] == role:
 			results.append(object_data)
 	return results
@@ -773,7 +526,7 @@ func _update_nearest_interactable() -> void:
 	var next_nearest: Dictionary = {}
 	var closest_distance := INF
 
-	for object_data in OBJECT_REGISTRY:
+	for object_data in object_registry:
 		if not object_data["interactable"]:
 			continue
 
@@ -848,14 +601,14 @@ func _draw_collision_guides() -> void:
 		draw_rect(wall_data["rect"], Color(0.95, 0.18, 0.12, 0.14), true)
 		draw_rect(wall_data["rect"], Color(1.0, 0.26, 0.18, 0.55), false, 2.0)
 
-	for object_data in OBJECT_REGISTRY:
-		if object_data["blocks"] and object_data.has("blocker_rect"):
+	for object_data in object_registry:
+		if object_data["blocks"] and object_data["blocker_rect"].size != Vector2.ZERO:
 			draw_rect(object_data["blocker_rect"], Color(1.0, 0.42, 0.10, 0.10), true)
 			draw_rect(object_data["blocker_rect"], Color(1.0, 0.42, 0.10, 0.58), false, 2.0)
 
 
 func _draw_interaction_ranges() -> void:
-	for object_data in OBJECT_REGISTRY:
+	for object_data in object_registry:
 		if not object_data["interactable"]:
 			continue
 

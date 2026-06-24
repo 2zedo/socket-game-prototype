@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "bed"
+display_name = "Bed"
+zone = "living"
+role = "manual_end_day"
+future_source = "apartment_bed"
+visual_state = "idle"
+layer = "FurnitureBackLayer"
+position = Vector2(344, 386)
+size = Vector2(205, 132)
+sort_y = 466
+color = Color(0.22, 0.34, 0.25, 1)
+thickness = 24.0
+blocks = true
+interactable = true
+interaction_position = Vector2(460, 488)
+interaction_radius = 82.0
+collision_size = Vector2(230, 152)
+blocker_rect = Rect2(246, 326, 230, 152)
+primary_action_label = "Rest / End Day"
+inspect_action_label = "Inspect"

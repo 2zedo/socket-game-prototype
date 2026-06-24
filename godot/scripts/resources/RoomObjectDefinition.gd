@@ -42,12 +42,19 @@ const STATE_DISABLED := "disabled"
 @export var layer: String = "ObjectLayer"
 @export var position: Vector2 = Vector2.ZERO
 @export var size: Vector2 = Vector2(64, 64)
+@export var sort_y: int = 0
+
+@export_category("Blockout 표시")
+@export var color: Color = Color(0.35, 0.35, 0.35, 1.0)
+@export var thickness: float = 10.0
 
 @export_category("상호작용")
 @export var blocks: bool = true
 @export var interactable: bool = true
+@export var interaction_position: Vector2 = Vector2.ZERO
 @export var interaction_radius: float = 96.0
 @export var collision_size: Vector2 = Vector2.ZERO
+@export var blocker_rect: Rect2 = Rect2()
 
 @export_category("UI")
 @export var primary_action_label: String = ""
@@ -58,6 +65,16 @@ func get_collision_size() -> Vector2:
 	if collision_size == Vector2.ZERO:
 		return size
 	return collision_size
+
+
+func get_interaction_position() -> Vector2:
+	if interaction_position == Vector2.ZERO:
+		return position
+	return interaction_position
+
+
+func has_blocker_rect() -> bool:
+	return blocker_rect.size != Vector2.ZERO
 
 
 func is_valid_definition() -> bool:

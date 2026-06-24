@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "shelf"
+display_name = "Shelf"
+zone = "background"
+role = "background_life_hint"
+future_source = "future_room_prop"
+visual_state = "idle"
+layer = "WallBackLayer"
+position = Vector2(410, 190)
+size = Vector2(150, 38)
+sort_y = 228
+color = Color(0.26, 0.18, 0.11, 1)
+thickness = 7.0
+blocks = false
+interactable = false
+primary_action_label = "Inspect"
+inspect_action_label = "Inspect"

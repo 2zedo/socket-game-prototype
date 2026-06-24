@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "comm"
+display_name = "Comm"
+zone = "work"
+role = "communication"
+future_source = "apartment_communication"
+visual_state = "off"
+layer = "ObjectLayer"
+position = Vector2(902, 326)
+size = Vector2(88, 48)
+sort_y = 374
+color = Color(0.15, 0.19, 0.22, 1)
+thickness = 10.0
+blocks = false
+interactable = true
+interaction_position = Vector2(862, 372)
+interaction_radius = 70.0
+primary_action_label = "Check Signal"
+inspect_action_label = "Inspect"

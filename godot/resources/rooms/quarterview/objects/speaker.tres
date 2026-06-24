@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "speaker"
+display_name = "Speaker"
+zone = "work"
+role = "audio_hacking_device"
+future_source = "future_audio_hacking"
+visual_state = "off"
+layer = "ObjectLayer"
+position = Vector2(832, 258)
+size = Vector2(34, 52)
+sort_y = 338
+color = Color(0.08, 0.09, 0.1, 1)
+thickness = 8.0
+blocks = false
+interactable = true
+interaction_position = Vector2(825, 342)
+interaction_radius = 56.0
+primary_action_label = "Enable Audio"
+inspect_action_label = "Inspect"

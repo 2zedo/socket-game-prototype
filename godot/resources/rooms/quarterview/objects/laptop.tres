@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "laptop"
+display_name = "Laptop"
+zone = "work"
+role = "laptop_job"
+future_source = "apartment_laptop"
+visual_state = "on"
+layer = "ObjectLayer"
+position = Vector2(748, 238)
+size = Vector2(74, 36)
+sort_y = 356
+color = Color(0.08, 0.12, 0.15, 1)
+thickness = 7.0
+blocks = false
+interactable = true
+interaction_position = Vector2(748, 360)
+interaction_radius = 74.0
+primary_action_label = "Open Work"
+inspect_action_label = "Inspect"

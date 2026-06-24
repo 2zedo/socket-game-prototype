@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="RoomObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/RoomObjectDefinition.gd" id="1_room_object"]
+
+[resource]
+script = ExtResource("1_room_object")
+key = "microwave"
+display_name = "Microwave"
+zone = "kitchen"
+role = "living_appliance"
+future_source = "future_microwave"
+visual_state = "idle"
+layer = "ObjectLayer"
+position = Vector2(940, 448)
+size = Vector2(104, 44)
+sort_y = 492
+color = Color(0.23, 0.25, 0.27, 1)
+thickness = 10.0
+blocks = true
+interactable = true
+interaction_position = Vector2(860, 468)
+interaction_radius = 68.0
+collision_size = Vector2(144, 76)
+blocker_rect = Rect2(880, 416, 144, 76)
+primary_action_label = "Use Appliance"
+inspect_action_label = "Inspect"
