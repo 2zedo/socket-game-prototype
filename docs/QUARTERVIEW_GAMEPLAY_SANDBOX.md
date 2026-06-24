@@ -18,6 +18,7 @@
 - `interaction_requested` signal 수신
 - `nearest_interactable_changed` signal 수신
 - sandbox-only interaction panel
+- sandbox-only Bed -> End Day confirmation panel
 - `D` debug overlay
 - `B` / `Backspace` PrototypeHub 복귀
 - `R` sandbox restart
@@ -61,6 +62,8 @@
 10. Primary / Inspect / Close는 event log와 Godot output에 no-op 기록만 남긴다.
 11. Close 또는 `ESC`로 panel을 닫으면 `room.set_player_input_enabled(true)`로 room input을 복구한다.
 
+Bed의 Primary action은 예외적으로 `SandboxEndDayPanel`을 연다. 이 흐름도 sandbox-only 확인이며 `SurvivalState.end_current_day()`, `DayResultPanel`, 기존 Main End Day routing은 호출하지 않는다.
+
 payload에는 가능한 경우 아래 값이 포함된다.
 
 - `zone`
@@ -90,8 +93,8 @@ Debug ON:
 
 ## 아직 연결하지 않은 것
 
-- `InteractionPanel`
-- Bed End Day
+- Main용 `InteractionPanel`
+- 실제 Bed End Day / `SurvivalState.end_current_day()`
 - Phone UI
 - Outlet UI
 - Result
@@ -124,6 +127,20 @@ Button 동작:
 - `ESC`: panel이 열려 있으면 Close와 같은 경로로 닫는다.
 - `B` / `Backspace`: panel open 여부와 무관하게 PrototypeHub 복귀 우선 규칙을 유지한다.
 
+## Sandbox End Day Panel
+
+`bed` / `manual_end_day` Primary action은 `res://scenes/prototypes/SandboxEndDayPanel.tscn`을 연다.
+
+Panel 동작:
+
+- Confirm: sandbox-only `day_end_confirmed = true` 상태를 표시한다.
+- Cancel / Close / `ESC`: confirmation을 닫고 room input을 복구한다.
+- Confirm 이후에는 Result나 다음 날로 진행하지 않고 완료 메시지만 보여준다.
+- `R`: sandbox를 재시작해 상태를 초기화한다.
+- `B` / `Backspace`: panel 상태와 무관하게 PrototypeHub 복귀를 유지한다.
+
+이 panel은 기존 Main의 `InteractionPanel`, `DayResultPanel`, `SurvivalState` day-end flow와 연결되어 있지 않다.
+
 ## PrototypeHub 등록
 
 `PrototypeHub`에는 아래 항목으로 등록되어 있다.
@@ -135,7 +152,7 @@ Button 동작:
 ## 다음 작업 후보
 
 13. Sandbox `InteractionPanel` 연결
-14. Sandbox Bed -> End Day 연결
+14. Sandbox Bed -> End Day 연결: sandbox-only confirmation까지 완료. 실제 `SurvivalState` / Result 연결은 아직 하지 않는다.
 15. Sandbox Phone UI 연결
 16. Sandbox Power / Outlet UI 연결
 

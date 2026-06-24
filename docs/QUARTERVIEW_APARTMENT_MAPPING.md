@@ -28,7 +28,7 @@
 
 | Existing Feature | Current Source | Current Object / Key | Quarterview Object Key | Quarterview Role | Required UI / State Call | Migration Target | Migration Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Bed / End Day | `Apartment.gd`, `Main.gd`, `SurvivalState.gd` | `bed`, `interaction_type=end_day` | `bed` | `manual_end_day` | `InteractionPanel.open(...)`, `SurvivalState.end_current_day()`, `DayResultPanel.open(result)` | sandbox first | `sandbox_candidate` | Bed primary action으로 수동 하루 종료 확인을 연결할 후보. `02:00` 자동 종료는 object interaction과 별개로 유지한다. |
+| Bed / End Day | `Apartment.gd`, `Main.gd`, `SurvivalState.gd` | `bed`, `interaction_type=end_day` | `bed` | `manual_end_day` | `InteractionPanel.open(...)`, `SurvivalState.end_current_day()`, `DayResultPanel.open(result)` | sandbox first | `sandbox_candidate` | Sandbox에서는 Bed primary action이 sandbox-only End Day confirmation panel을 연다. 아직 `SurvivalState` / Result / Main DAY1 flow는 연결하지 않았다. `02:00` 자동 종료는 object interaction과 별개로 유지한다. |
 | 02:00 Auto End | `SurvivalState._update_time()`, `Main._on_day_time_limit_reached()` | object 없음 | object 없음 | n/a | dialogue-only `InteractionPanel`, `SurvivalState.end_current_day()` | sandbox first | `current_main_only` | 시간 한계는 방 오브젝트가 아니라 clock / modal routing 흐름이다. |
 | Laptop | `Apartment.gd`, `Main.gd`, `SurvivalState.gd`, `DeviceDefinition` | `laptop`, `day1_action_key=laptop` | `laptop` | `laptop_job` | 현재는 active toggle. 장기적으로 work UI 또는 hacking entry 후보 | later sandbox | `sandbox_candidate` | `Laptop -> HackingActionPrototype` 연결은 아직 금지. 별도 작업에서 검증한다. |
 | Power Strip / Outlet | `Apartment.gd`, `Main.gd`, `OutletMode.gd`, `SurvivalState.gd` | `power_strip` | `power` | `power_management` | `OutletMode.open(survival_state)`, `set_powerstrip_slot_occupancy(...)`, `set_powered_devices(...)` | sandbox first | `sandbox_candidate` | 기존 Outlet UI 유지 후보. wire overlay는 쿼터뷰에서 별도 cable visual 검토 필요. |
@@ -91,7 +91,7 @@
 1. `QuarterviewGameplaySandbox` 생성: 기존 Main을 건드리지 않고 쿼터뷰 기능 연결 실험용 scene을 만든다.
 2. Room scene contract / signal 연결: `RoomObjectDefinition` key와 `role`을 신호로 내보내는 구조를 검증한다.
 3. `InteractionPanel` 연결: prototype `ObjectInteractionPanel`이 아니라 기존 본게임 panel을 sandbox에서 호출한다.
-4. Bed -> End Day confirmation 연결: `bed` / `manual_end_day` primary action을 수동 하루 종료 확인으로 연결한다.
+4. Bed -> End Day confirmation 연결: `bed` / `manual_end_day` primary action을 sandbox-only confirmation으로 먼저 연결한다. 실제 `SurvivalState.end_current_day()`와 Result 연결은 별도 단계에서 검증한다.
 5. Phone UI 연결: `Tab` 유지와 `phone` object primary action 후보를 함께 검토한다.
 6. Power -> `OutletMode` 연결: `power` / `power_management` primary action에서 기존 Outlet UI를 연다.
 7. active / connected visual sync 연결: `SurvivalState.powered_devices`와 active state를 쿼터뷰 표시로 반영한다.
