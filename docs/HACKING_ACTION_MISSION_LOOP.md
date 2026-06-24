@@ -106,6 +106,8 @@ Future hacking missions may use `map_scene_path` plus `hack_arena_tiles_atlas.pn
 
 Future hacking missions may select enemy visuals and behavior hints from `hack_enemies_atlas.png` mapping data. This is not wired yet.
 
+Future hacking missions may use `hack_objects_atlas.png` visuals for objectives, terminals, gates, caches, and security devices. This is not wired yet.
+
 ## 현재 구현
 
 - 노트북은 방 안 상호작용 오브젝트다.

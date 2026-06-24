@@ -112,6 +112,8 @@ Mission type or objective type may later influence avatar FX / animation feedbac
 
 Mission type, objective type, and `trace_risk` may later influence enemy composition and `hack_enemies_atlas.png` visual choices. This is not wired yet.
 
+Mission type and objective type may later influence which `hack_objects_atlas.png` regions are used for objectives and interactables. This is not wired yet.
+
 ## Relationship To Existing Prototypes
 
 - `HackingActionPrototype` is the current controls, combat, mission state, objective, exit, and feedback prototype.

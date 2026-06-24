@@ -28,6 +28,8 @@ Future hack avatar sprites should support readable movement direction, dash / ro
 
 Current control prototype enemy behavior remains unchanged. Future enemy sprites should support readable chase / attack / alert / hit feedback without changing the current enemy controller yet.
 
+Current control prototype objective / exit behavior remains unchanged. Future object sprites should support readable interaction / extraction / disable feedback without changing the current mission logic yet.
+
 ## 조작 후보
 
 아래 입력은 prototype 후보이며, 실제 구현 시 기존 프로젝트 입력과 충돌하면 조정할 수 있다.

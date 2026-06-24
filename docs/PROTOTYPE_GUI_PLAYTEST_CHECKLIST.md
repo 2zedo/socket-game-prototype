@@ -266,6 +266,15 @@ Future hack avatar spritesheet check:
 - [ ] Enemy silhouettes are distinct from player avatar.
 - [ ] Enemy visual danger role is readable.
 
+## Future hack objects atlas check
+
+- [ ] Object regions display without cropping.
+- [ ] Animated frames keep stable anchors.
+- [ ] Object / tile / enemy / avatar / FX categories are not mixed.
+- [ ] Objectives and exits are visually readable.
+- [ ] Objects read as cyber terminals / nodes, not fantasy dungeon props.
+- [ ] Interaction prompt placement remains clear.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.

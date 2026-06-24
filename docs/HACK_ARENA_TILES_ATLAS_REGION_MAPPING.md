@@ -104,6 +104,7 @@ Criteria:
 - Final tile size is not locked until `HackingPerspectiveBlockout` and player scale are validated.
 - `hack_avatar` spritesheets must be validated against tile size, camera zoom, and player-layer readability before gameplay wiring.
 - `hack_enemies_atlas.png` must be validated against arena tile scale, obstacle readability, and z-index layering before gameplay wiring.
+- `hack_arena_tiles_atlas.png` should provide arena structure and base markers, while interactive objective / device bodies should live in `hack_objects_atlas.png`.
 
 Atlas size formula:
 
@@ -495,6 +496,7 @@ Other future atlas candidates:
 ```text
 hack_player_atlas.png
 hack_enemies_atlas.png
+hack_objects_atlas.png
 hack_projectile_atlas.png
 hack_fx_atlas.png
 ```
