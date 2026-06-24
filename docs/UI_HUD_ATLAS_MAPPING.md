@@ -104,11 +104,13 @@ Phone screen-specific UI components belong to `ui_phone_atlas.png`, even if they
 
 Outlet screen-specific slot, device-card, drag / drop, and power-management UI components belong to `ui_outlet_atlas.png`, even if they display similar power values.
 
+End-of-day result summaries, mission-result cards, reward rows, and historical log entries belong to `ui_result_log_atlas.png`, not persistent HUD atlas regions.
+
 Separation rules:
 
 - If a region is used as a generic button, panel, modal, tab, or dialog piece, it belongs to `ui_common_atlas.png`.
 - If a region persistently communicates gameplay state during room or hacking play, it belongs to `ui_hud_atlas.png`.
-- If Phone / Outlet / Result internal UI grows too specific, it may need a later screen-specific atlas.
+- If Phone / Outlet internal UI grows too specific, it may need a later screen-specific atlas; Result / Log UI already has the separate `ui_result_log_atlas.png` candidate.
 - HUD warning banners belong to `ui_hud_atlas.png`; modal / dialog warning frames belong to `ui_common_atlas.png`.
 
 ## HUD Category Candidates

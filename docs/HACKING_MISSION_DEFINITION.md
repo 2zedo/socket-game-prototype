@@ -116,6 +116,8 @@ Mission type and objective type may later influence which `hack_objects_atlas.pn
 
 Mission type, objective type, and `trace_risk` may later influence `hack_fx_atlas.png` effect selection. This is not wired yet.
 
+Mission success / failure text, `reward_grid_credit`, `reward_info_keys`, and story flag candidates may later be presented through `ui_result_log_atlas.png` result cards and log rows. This is not wired yet.
+
 ## Relationship To Existing Prototypes
 
 - `HackingActionPrototype` is the current controls, combat, mission state, objective, exit, and feedback prototype.

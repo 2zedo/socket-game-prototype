@@ -47,6 +47,8 @@ HackingMissionDefinition.reward_grid_credit
 
 This flow is a future candidate only. This pass does not wire it.
 
+Grid Credit gains, spending rows, and reward summaries may later be displayed with `ui_result_log_atlas.png` result / log visuals. This is not wired yet.
+
 ## API
 
 | Method | Purpose | Notes |

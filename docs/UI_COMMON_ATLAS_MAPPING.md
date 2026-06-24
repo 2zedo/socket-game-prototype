@@ -54,6 +54,8 @@ Phone-specific frames, app tiles, message bubbles, notifications, and phone scre
 
 Outlet-specific socket slots, device cards, drag / drop highlights, and outlet power-state visuals belong to the separate `ui_outlet_atlas.png` workflow documented in `docs/UI_OUTLET_ATLAS_MAPPING.md`.
 
+Result-specific summary cards, log entries, reward rows, report badges, and day / mission result panels belong to the separate `ui_result_log_atlas.png` workflow documented in `docs/UI_RESULT_LOG_ATLAS_MAPPING.md`.
+
 Owns:
 
 - Panel frame.

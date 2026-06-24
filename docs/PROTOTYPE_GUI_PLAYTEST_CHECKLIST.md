@@ -323,6 +323,15 @@ Future hack avatar spritesheet check:
 - [ ] Localization text is not baked into Outlet UI images.
 - [ ] Sandbox outlet panel can test visuals before replacing existing OutletMode.
 
+## Future ui_result_log_atlas check
+
+- [ ] Result / log card regions display without cropping.
+- [ ] 9-slice margins preserve corners and borders.
+- [ ] Success / fail / warning / neutral states are visually distinct.
+- [ ] Reward / Grid Credit / story log rows remain readable.
+- [ ] Localization text is not baked into Result / Log UI images.
+- [ ] Sandbox result mock can test visuals before replacing existing DayResultPanel.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.
