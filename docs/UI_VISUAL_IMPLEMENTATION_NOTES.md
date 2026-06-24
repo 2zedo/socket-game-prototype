@@ -12,6 +12,7 @@
 - Phone UI visuals should eventually be separated into `ui_phone_atlas.png` for phone-specific frames, app tiles, message bubbles, notification cards, and status elements. This is not wired yet.
 - Outlet UI visuals should eventually be separated into `ui_outlet_atlas.png` for socket slots, device cards, connection badges, drag / drop highlights, and power summary visuals. This is not wired yet.
 - Result and log UI visuals should eventually be separated into `ui_result_log_atlas.png` for day summaries, mission results, power / device reports, reward rows, Grid Credit candidates, and story logs. This is not wired yet.
+- Dialogue UI visuals should eventually be separated into `ui_dialogue_atlas.png` for dialogue panels, narration / system / thought panels, speaker nameplates, portrait frames, choice buttons, continue indicators, and dialogue history entries. This is not wired yet.
 
 ## Current Multitap UI
 

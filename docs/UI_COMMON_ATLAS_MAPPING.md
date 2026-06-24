@@ -56,6 +56,8 @@ Outlet-specific socket slots, device cards, drag / drop highlights, and outlet p
 
 Result-specific summary cards, log entries, reward rows, report badges, and day / mission result panels belong to the separate `ui_result_log_atlas.png` workflow documented in `docs/UI_RESULT_LOG_ATLAS_MAPPING.md`.
 
+Dialogue-specific panels, nameplates, choice buttons, portrait frames, dialogue tails, and continue indicators belong to the separate `ui_dialogue_atlas.png` workflow documented in `docs/UI_DIALOGUE_ATLAS_MAPPING.md`.
+
 Owns:
 
 - Panel frame.

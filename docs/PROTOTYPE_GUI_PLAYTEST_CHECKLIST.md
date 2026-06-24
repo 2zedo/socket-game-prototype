@@ -332,6 +332,16 @@ Future hack avatar spritesheet check:
 - [ ] Localization text is not baked into Result / Log UI images.
 - [ ] Sandbox result mock can test visuals before replacing existing DayResultPanel.
 
+## Future ui_dialogue_atlas check
+
+- [ ] Dialogue panel / choice regions display without cropping.
+- [ ] 9-slice margins preserve corners and borders.
+- [ ] Choice button states keep consistent size.
+- [ ] System / narration / thought panels are visually distinct.
+- [ ] Localization text is not baked into Dialogue UI images.
+- [ ] Dialogue UI does not hide room / hacking readability too much.
+- [ ] Sandbox dialogue mock can test visuals before implementing a dialogue system.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.
