@@ -106,6 +106,8 @@ Outlet screen-specific slot, device-card, drag / drop, and power-management UI c
 
 End-of-day result summaries, mission-result cards, reward rows, and historical log entries belong to `ui_result_log_atlas.png`, not persistent HUD atlas regions.
 
+HUD may reference `ui_device_icons_atlas.png` for active / connected device indicators, while HUD frames, meters, and status-chip containers remain in `ui_hud_atlas.png`.
+
 Separation rules:
 
 - If a region is used as a generic button, panel, modal, tab, or dialog piece, it belongs to `ui_common_atlas.png`.

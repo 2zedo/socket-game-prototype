@@ -128,6 +128,7 @@ Separation rules:
 - If a visual is a physical cable / plug sprite in the room, it belongs to future `qv_cable_atlas.png`.
 - If a region is a generic button, panel, modal, tab, or dialog piece, it belongs to `ui_common_atlas.png`.
 - If a region persistently communicates gameplay state outside the outlet screen, it belongs to `ui_hud_atlas.png`.
+- Outlet device cards may reference `ui_device_icons_atlas.png` for device identity icons, while outlet slot, card, drag / drop, and power-management visuals remain in `ui_outlet_atlas.png`.
 
 ## Outlet UI Category Candidates
 

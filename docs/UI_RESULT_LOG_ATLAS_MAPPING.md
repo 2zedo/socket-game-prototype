@@ -136,6 +136,7 @@ Separation rules:
 - If a region is used inside the Phone UI screen, it belongs to `ui_phone_atlas.png`.
 - If a region represents day / mission / log result cards, rows, or badges, it belongs to `ui_result_log_atlas.png`.
 - Result screens can still reuse generic continue-button visuals from `ui_common_atlas.png`.
+- Result and log cards may reference `ui_device_icons_atlas.png` for device usage entries, while result / log card frames, report rows, reward rows, and state badges remain in `ui_result_log_atlas.png`.
 
 ## Result / Log UI Category Candidates
 

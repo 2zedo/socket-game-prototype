@@ -118,6 +118,8 @@ Mission type, objective type, and `trace_risk` may later influence `hack_fx_atla
 
 Mission success / failure text, `reward_grid_credit`, `reward_info_keys`, and story flag candidates may later be presented through `ui_result_log_atlas.png` result cards and log rows. This is not wired yet.
 
+Mission `required_device_keys` and `recommended_device_keys` may later use `ui_device_icons_atlas.png` icons in mission selection, requirement, and result UI. This is not wired yet.
+
 ## Relationship To Existing Prototypes
 
 - `HackingActionPrototype` is the current controls, combat, mission state, objective, exit, and feedback prototype.

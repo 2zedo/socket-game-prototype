@@ -58,6 +58,8 @@ Result-specific summary cards, log entries, reward rows, report badges, and day 
 
 Dialogue-specific panels, nameplates, choice buttons, portrait frames, dialogue tails, and continue indicators belong to the separate `ui_dialogue_atlas.png` workflow documented in `docs/UI_DIALOGUE_ATLAS_MAPPING.md`.
 
+Device-specific icons may be separated into the `ui_device_icons_atlas.png` workflow documented in `docs/UI_DEVICE_ICONS_ATLAS_MAPPING.md`; `ui_common_atlas.png` keeps generic warning / info / close / prompt icons.
+
 Owns:
 
 - Panel frame.

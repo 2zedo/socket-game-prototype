@@ -342,6 +342,15 @@ Future hack avatar spritesheet check:
 - [ ] Dialogue UI does not hide room / hacking readability too much.
 - [ ] Sandbox dialogue mock can test visuals before implementing a dialogue system.
 
+## Future ui_device_icons_atlas check
+
+- [ ] Device icons display without cropping.
+- [ ] Small sizes remain readable.
+- [ ] Device-specific icons are not mixed with generic UI icons.
+- [ ] Room object sprites are not used directly as UI icons.
+- [ ] Required / recommended mission devices can be shown with icons.
+- [ ] State icons or overlays remain distinguishable.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.

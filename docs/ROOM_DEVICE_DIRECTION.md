@@ -175,6 +175,8 @@ Device visual states may later use `qv_fx_atlas.png` for localized screen glow, 
 
 Physical cable / plug visuals and Outlet UI visuals are separate. Room cable sprites may later belong to `qv_cable_atlas.png`, while management UI belongs to `ui_outlet_atlas.png`.
 
+Device UI icons are separate from room object body sprites and should be mapped through `ui_device_icons_atlas.png` when they are used in HUD, Phone, Outlet, Result / Log, mission, or sandbox UI.
+
 ## 추천 임시 수치
 
 아래 값은 플레이테스트 전 문서상 후보값이다. 이번 작업에서 `godot/resources/devices/*.tres`나 기존 밸런스 값을 수정하지 않는다.

@@ -124,6 +124,7 @@ Separation rules:
 - If a region persistently communicates gameplay state during room or hacking play, it belongs to `ui_hud_atlas.png`.
 - If a region is only used inside the Phone UI screen, it belongs to `ui_phone_atlas.png`.
 - Phone UI can still reuse generic button regions from `ui_common_atlas.png` when a button is not phone-specific.
+- Phone UI may reference `ui_device_icons_atlas.png` for device / status entries, while phone-specific frames, cards, message bubbles, and notification visuals remain in `ui_phone_atlas.png`.
 - Phone HUD battery icons and Phone screen battery icons may be unified later, but duplicated or shared ownership should be reviewed before actual application.
 
 ## Phone UI Category Candidates
