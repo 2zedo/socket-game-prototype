@@ -284,6 +284,15 @@ Future hack avatar spritesheet check:
 - [ ] FX do not overpower avatar / enemy / object readability.
 - [ ] Blend / alpha values remain readable against arena tiles.
 
+## Future ui_common_atlas check
+
+- [ ] Panel / button / icon regions display without cropping.
+- [ ] 9-slice margins preserve corners and borders.
+- [ ] Button state regions keep consistent size.
+- [ ] Icons remain readable on dark UI.
+- [ ] Localization text is not baked into UI images.
+- [ ] Kenney input prompt icons remain separate unless intentionally wrapped by a common prompt frame.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.

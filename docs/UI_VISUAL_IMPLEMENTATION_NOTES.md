@@ -7,6 +7,7 @@
 - Exploration remains keyboard-based top-down movement with proximity `E` interaction.
 - Interaction, dialogue, multitap, and result UI remain separate states rather than appearing simultaneously.
 - Existing UI tone remains dark brown-gray with muted brass lines and warm off-white text.
+- Common UI panels, buttons, icons, meters, badges, and prompt frames should eventually be consolidated through `ui_common_atlas.png` or Theme / StyleBoxTexture resources. This is not wired yet.
 
 ## Current Multitap UI
 

@@ -37,5 +37,6 @@ This document is an inventory only. It does not connect SFX, particles, input pr
 
 - Prototype SFX work commits only selected copied `.wav` files under `godot/assets/audio/third_party/kenney/`, their generated selected `.wav.import` files if Godot creates them, copied license evidence, prototype-only SFX helper/script changes, and minimal docs.
 - Prototype input prompt work commits only selected copied `.png` files under `godot/assets/ui/third_party/kenney/input_prompts/`, their generated selected `.png.import` files if Godot creates them, copied license evidence, prototype-only prompt helper/script changes, and minimal docs.
+- `ui_common_atlas.png` is planned as a project-owned common UI atlas. It should not directly copy third-party input prompt raw icons into the atlas without explicit tracking.
 - Installed external asset folders, their broad source-side `.import` files, `.uid` files, and `godot/LICENSE.txt` remain uncommitted until a later asset-application or vendor-assets decision.
 - Existing unrelated local changes, including `godot/scripts/Apartment.gd`, are not part of this work.
