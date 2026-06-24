@@ -36,7 +36,7 @@ godot/resources/hacking/missions/
 | `unlock_story_flags` | `Array[String]` | story flags required to unlock the mission | `["node17_seen"]` |
 | `success_story_flags` | `Array[String]` | story flags granted on success | `["deleted_log_recovered"]` |
 | `failure_story_flags` | `Array[String]` | story flags granted on failure | `["trace_warning_001"]` |
-| `reward_grid_credit` | `int` | future Grid Credit reward candidate | `25` |
+| `reward_grid_credit` | `int` | future Grid Credit reward candidate; later intended for `GridCreditState` after mission success | `25` |
 | `reward_power_bonus` | `float` | future power or backup reward candidate | `1.0` |
 | `reward_info_keys` | `Array[String]` | info fragment / log reward keys | `["log_yui_001"]` |
 | `trace_risk` | `int` | mission trace risk candidate | `20` |
@@ -96,6 +96,8 @@ Next work candidates:
 - Connect Laptop to `HackingActionPrototype`.
 - Connect mission result to Result, Story, and Grid Credit systems.
 - Add GUT tests for `HackingMissionDefinition`.
+
+`reward_grid_credit` is a future value intended to be applied to `GridCreditState` after mission success. It is not wired yet.
 
 ## Relationship To Existing Prototypes
 

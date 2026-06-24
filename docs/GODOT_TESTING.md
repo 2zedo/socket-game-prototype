@@ -24,6 +24,7 @@ GUT `v9.5.0` is used because the project currently runs on Godot `4.5.1`. Do not
 - `godot/test/unit/test_prototype_scene_utils.gd`
 - `godot/test/unit/test_hacking_action_state_machine.gd`
 - `godot/test/unit/test_asset_smoke.gd`
+- `godot/test/unit/test_grid_credit_state.gd`
 
 Covered behavior:
 
@@ -38,6 +39,7 @@ Covered behavior:
 - `PrototypeSceneUtils` shared B / Backspace, R, D, E / Enter, and ESC input-event checks.
 - `HackingActionPrototype` scene instantiation, initial mission state, objective extraction, exit success, Trace failure, HP failure, reset, and failed-state exit guard.
 - Selected prototype Kenney SFX / input prompt files exist, load through Godot, keep copied license files, and remain documented in the third-party asset inventory.
+- `GridCreditState` reset, earn, spend, adjust, summary, and transaction log copy behavior.
 
 ## Command Line
 
@@ -63,6 +65,12 @@ Run the selected prototype asset smoke test directly with:
 
 ```bash
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_asset_smoke.gd -gexit
+```
+
+Run the Grid Credit skeleton test directly with:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_grid_credit_state.gd -gexit
 ```
 
 For all future GUT tests, prefer adding test files under:

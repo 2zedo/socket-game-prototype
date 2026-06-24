@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `bf0f5c2`
-- Phase: Hacking mission Resource design
+- Current commit at task start: `2890170`
+- Phase: Grid Credit skeleton design
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -72,6 +72,7 @@
 - The GUT unit suite now also covers `DeviceDefinition` resources, `RoomObjectDefinition` helpers/resources, the `RoomSceneContract` skeleton, and `PrototypeSceneUtils` input helper contracts.
 - `HackingActionPrototype` mission state flow is covered by GUT for initial state, objective extraction, exit success, Trace failure, HP failure, reset, and failed-state exit guard.
 - `HackingMissionDefinition.gd` defines the future laptop-driven hacking mission data structure; no mission `.tres`, Laptop wiring, Grid Credit, Result, or Story flag connection exists yet.
+- `GridCreditState.gd` defines a future economy / reward skeleton for Grid Credit balance, earn / spend / adjust operations, and transaction logs; it is not wired to Main, `SurvivalState`, hacking rewards, Result, save data, or UI.
 - Selected prototype Kenney SFX and input prompt assets are covered by a GUT smoke test for file existence, Godot loadability, copied license files, and third-party inventory mentions.
 - Git LFS is not enabled yet; future large-art, atlas, spritesheet, source-art, and audio decisions are tracked in `docs/GIT_LFS_ASSET_POLICY.md`.
 - Prototype GUI playtest checks for Hub, Quarterview, Hacking, perspective blockouts, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
@@ -181,8 +182,11 @@
 - `godot/test/unit/test_prototype_scene_utils.gd`: checks prototype-only shared input rules for Hub back, restart, debug, confirm, and cancel events.
 - `godot/test/unit/test_hacking_action_state_machine.gd`: checks Hacking Action scene instantiate, mission state transitions, objective / exit activation, Trace / HP failure, reset, and failed-state exit guard.
 - `godot/test/unit/test_asset_smoke.gd`: checks selected prototype SFX / input prompt file existence, loadability, copied license files, and third-party inventory mentions.
+- `godot/test/unit/test_grid_credit_state.gd`: checks Grid Credit reset, earn, spend, adjust, summary, and transaction log copy behavior.
 - `godot/scripts/resources/HackingMissionDefinition.gd`: defines the future hacking mission Resource fields, mission / objective constants, difficulty bounds, and helper methods.
+- `godot/scripts/systems/GridCreditState.gd`: defines a standalone Grid Credit skeleton with current / lifetime totals and transaction helpers.
 - `docs/HACKING_MISSION_DEFINITION.md`: documents the hacking mission Resource contract, field meanings, device requirement rules, and next-step boundaries.
+- `docs/GRID_CREDIT_SYSTEM.md`: documents Grid Credit meaning, current skeleton scope, API, transaction log structure, and future wiring boundaries.
 - `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
 - `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
 - `docs/ASSET_PIPELINE.md`: links large-asset and LFS handling back to the dedicated Git LFS policy.
@@ -304,6 +308,7 @@
 - Hacking state machine 테스트 추가 후 `git diff --check`, Hacking state-machine GUT `8/8 passed`, SurvivalState GUT `5/5 passed`, and full GUT unit suite `34/34 passed`가 완료됐다.
 - Asset smoke test 추가 후 `git diff --check`, Asset Smoke GUT `6/6 passed`, SurvivalState GUT `5/5 passed`, and full GUT unit suite `40/40 passed`가 완료됐다.
 - HackingMissionDefinition Resource class 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 실제 mission `.tres`와 gameplay wiring은 추가하지 않았다.
+- GridCreditState skeleton 추가 후 `git diff --check`, Grid Credit GUT `8/8 passed`, SurvivalState GUT `5/5 passed`, full GUT unit suite `48/48 passed`, and Godot 4.5.1 headless project parse가 완료됐다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -355,12 +360,13 @@
 - Quarterview Gameplay Sandbox Outlet panel needs GUI checks for power object Primary open, `ESC` / Close behavior, mock buttons, movement lock, and B / Backspace Hub return.
 - Hacking Action mission state is now covered by GUT, but movement feel, input timing, combat feel, and visual perspective remain GUI/manual checks.
 - `HackingMissionDefinition` has no sample `.tres` mission and no dedicated GUT helper test yet; it is a Resource class preparation step only.
+- Grid Credit has a standalone state skeleton and GUT tests, but no UI, save/load, Result, `SurvivalState`, or hacking mission reward wiring yet.
 
 ## Next Recommended Task
 
 1. `HackingMissionDefinition` GUT 테스트를 추가한다. 시작 파일은 `godot/scripts/resources/HackingMissionDefinition.gd`이며, 완료 기준은 valid / invalid definition, difficulty label, required / recommended device lookup, result text fallback을 production wiring 없이 보호하는 것이다.
-2. 첫 sample hacking mission `.tres` 생성 작업을 별도 단계로 진행한다. 시작 문서는 `docs/HACKING_MISSION_DEFINITION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`이며, 완료 기준은 `godot/resources/hacking/missions/` 아래 작은 sample Resource만 만들고 Laptop / Result / Grid Credit 연결은 하지 않는 것이다.
-3. `HackingActionPrototype.tscn`을 GUI로 실행해 movement, shot, roll, hop, damage feedback, event label timing, `R` restart, and B / Backspace Hub return이 GUT로 보호된 state flow와 함께 실제 조작감에서도 자연스러운지 확인한다.
+2. 첫 sample hacking mission `.tres` 생성 작업을 별도 단계로 진행한다. 시작 문서는 `docs/HACKING_MISSION_DEFINITION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/GRID_CREDIT_SYSTEM.md`이며, 완료 기준은 `godot/resources/hacking/missions/` 아래 작은 sample Resource만 만들고 Laptop / Result / Grid Credit 지급 연결은 하지 않는 것이다.
+3. Grid Credit을 어디에 표시할지 UI 방향을 문서로 먼저 정한다. 시작 문서는 `docs/GRID_CREDIT_SYSTEM.md`, `docs/DAILY_LOOP_REVISED.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`이며, 완료 기준은 Phone / Laptop / Result 중 어떤 표면에서 먼저 보여줄지 정하고 실제 UI 연결은 하지 않는 것이다.
 
 ## Archive
 
