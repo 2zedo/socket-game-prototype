@@ -129,6 +129,7 @@ prototype 조정값은 각 책임 script 상단에 상수로 모았다.
 - `HackingMissionDefinition` Resource class는 미래 미션 데이터 구조이며, 현재 `HackingActionPrototype`은 아직 이 Resource로 구동되지 않는다.
 - `HackingActionPrototype` is not yet driven by `hack_arena_tiles_atlas.png`, TileSet data, or arena tile mapping metadata.
 - `HackingActionPrototype` is not yet driven by `hack_avatar` spritesheets or `SpriteFrames` data.
+- `HackingActionPrototype` is not yet driven by `hack_enemies_atlas.png` or enemy visual mapping data.
 
 ## 향후 연결 후보
 

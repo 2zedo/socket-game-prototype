@@ -257,6 +257,15 @@ Future hack avatar spritesheet check:
 
 - 이 scene의 pass 기준은 `3/4` 시점처럼 보이는지가 아니라 move / shot / roll / hop / objective / exit / HP / Trace 흐름이 이해되는지다.
 
+## Future hack enemies atlas check
+
+- [ ] Enemy regions display without cropping.
+- [ ] Animated frames keep stable anchors.
+- [ ] Enemy / player / projectile / FX categories are not mixed.
+- [ ] Enemies read as cyber security programs, not fantasy monsters.
+- [ ] Enemy silhouettes are distinct from player avatar.
+- [ ] Enemy visual danger role is readable.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.

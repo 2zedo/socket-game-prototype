@@ -110,6 +110,8 @@ Hacking mission visuals may later trigger `qv_fx_atlas.png` effects based on `mi
 
 Mission type or objective type may later influence avatar FX / animation feedback, but `hack_avatar` import itself remains independent.
 
+Mission type, objective type, and `trace_risk` may later influence enemy composition and `hack_enemies_atlas.png` visual choices. This is not wired yet.
+
 ## Relationship To Existing Prototypes
 
 - `HackingActionPrototype` is the current controls, combat, mission state, objective, exit, and feedback prototype.

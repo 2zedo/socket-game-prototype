@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `2ab8c1a`
-- Phase: Hacking avatar spritesheet import criteria
+- Current commit at task start: `1f029b9`
+- Phase: Hacking enemies atlas region mapping criteria
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -59,6 +59,7 @@
 - `qv_props_atlas.png` and `qv_cable_atlas.png` are documented as deferred detail / polish atlas backlog items; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
 - `hack_arena_tiles_atlas.png` region mapping criteria are documented for future hacking arena floor, wall, obstacle, hazard, objective, exit, and spawn tile bodies; no actual atlas PNG, TileSet, mapping Resource / JSON / CSV, or scene wiring exists yet.
 - `hack_avatar_idle_4dir.png` and `hack_avatar_walk_4dir.png` import criteria are documented for future hacking avatar spritesheets; no actual PNG assets, `SpriteFrames`, `CharacterBody2D` scene, or prototype wiring exists yet.
+- `hack_enemies_atlas.png` region mapping criteria are documented for future security-program, trace-agent, guard-node, turret, alarm, blocker, corruption, and daemon enemy visuals; no actual atlas PNG, mapping Resource / JSON / CSV, enemy scene, AI, spawn logic, or gameplay wiring exists yet.
 - Quarterview room shell layer application is planned in `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md` with same-canvas `1920x1080` PNG layers, z-index policy, future asset paths, and import-setting candidates; no PNG assets or scene wiring exist yet.
 - `QuarterviewRoomShellPrototype.tscn` prepares a visual-only shell-layer check for `qv_room_floor_base.png`, `qv_room_walls_back.png`, and `qv_room_walls_side.png`, loading expected paths if present and showing missing status if absent. No actual PNG asset or production scene wiring exists yet.
 - Window city view layer criteria are documented for `qv_room_window_city_view.png`; no actual PNG asset or scene wiring exists yet.
@@ -270,6 +271,7 @@
 - `docs/QV_PROPS_AND_CABLE_ATLAS_BACKLOG.md`, `docs/ASSET_PIPELINE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md`, `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`, `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`, `docs/QV_FX_ATLAS_REGION_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document deferred props / cable atlas scope, category boundaries, lightweight mapping candidates, z-index candidates, start conditions, and future work candidates without adding PNG assets or mapping files.
 - `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `hack_arena_tiles_atlas.png` tile size, key naming, category, mapping schema, collision / navigation / hazard / objective hints, `HackingMissionDefinition` links, TileSet / TileMap candidates, z-index, autotile / edge candidates, and pre-application checklist without adding PNG assets, TileSet data, or scene wiring.
 - `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future hacking avatar 4-direction filenames, row order, frame layout, pivot / anchor policy, import setting candidates, animation names, arena tile scale relationship, and enemy / projectile / FX split without adding PNG assets, `SpriteFrames`, or scene wiring.
+- `docs/HACK_ENEMIES_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `hack_enemies_atlas.png` enemy key, region key, category, animation state, mapping schema, behavior / danger hints, collision / hitbox / hurtbox separation, Trace / mission relation, z-index, playback policy, and checklist without adding PNG assets, mapping files, enemy scenes, or gameplay wiring.
 
 ## Validation Results
 
@@ -360,6 +362,7 @@
 - QV props / cable atlas backlog 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `find godot ... qv_props_atlas / qv_cable_atlas`, `ls docs`, and `grep -R "qv_props_atlas\|qv_cable_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Hacking arena tiles atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `find godot ... hack_arena_tiles_atlas`, `ls docs`, and `grep -R "hack_arena_tiles_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Hack avatar spritesheet import 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `find godot ... hack_avatar`, `ls docs`, and `grep -R "hack_avatar" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Hack enemies atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "hack_enemies_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -426,12 +429,13 @@
 - `qv_props_atlas.png` and `qv_cable_atlas.png` are deferred backlog items; actual atlas creation, detailed mapping, props placement, cable path policy, power visual sync, and readability checks should wait until core room composition and interaction flow are stable.
 - `hack_arena_tiles_atlas.png` is criteria-only; actual hacking arena tile asset creation, tile size lock, TileSet / TileMapLayer setup, collision / navigation custom data, hazard / objective wiring, and Hacking prototype integration still need separate implementation passes.
 - `hack_avatar_idle_4dir.png` and `hack_avatar_walk_4dir.png` are criteria-only; actual avatar asset creation, import settings, `SpriteFrames`, player visual prototype, anchor tuning, and Hacking prototype integration still need separate implementation passes.
+- `hack_enemies_atlas.png` is criteria-only; actual enemy atlas creation, region coordinate extraction, mapping format choice, enemy region viewer prototype, `SpriteFrames`, enemy visual replacement, AI / spawn logic, collision / hitbox / hurtbox, and Trace / mission wiring still need separate implementation passes.
 
 ## Next Recommended Task
 
 1. floor / back wall / side wall 실제 shell PNG를 expected path에 추가하고 `QuarterviewRoomShellPrototype`에서 alignment를 확인한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 세 layer의 `1920x1080` image size / canvas match가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
 2. `yui_qv_idle_4dir.png` / `yui_qv_walk_4dir.png` asset 제작과 import prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`와 `docs/YUI_CHARACTER_BRIEF.md`이며, 완료 기준은 down / up / left / right row order, foot anchor, scale, foreground occluder / lighting readability가 확인되는 것이다.
-3. `hack_avatar_idle_4dir.png` / `hack_avatar_walk_4dir.png` asset 제작과 import prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, and `docs/HACKING_ACTION_DIRECTION.md`이며, 완료 기준은 row order, anchor stability, arena tile scale match, enemy / projectile / FX separation, and non-fantasy cyber avatar readability가 확인되는 것이다.
+3. `hack_enemies_atlas.png` asset 제작과 enemy region viewer prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/HACK_ENEMIES_ATLAS_REGION_MAPPING.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, and `docs/HACKING_ACTION_DIRECTION.md`이며, 완료 기준은 enemy/player/projectile/FX separation, stable animation anchors, arena tile readability, cyber security-program silhouette, and danger-role readability가 확인되는 것이다.
 
 ## Archive
 

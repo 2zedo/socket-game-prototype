@@ -104,6 +104,8 @@ Laptop mission selection은 장기적으로 `HackingMissionDefinition` Resource 
 
 Future hacking missions may use `map_scene_path` plus `hack_arena_tiles_atlas.png` / TileSet mapping to construct mission spaces. This is not wired yet.
 
+Future hacking missions may select enemy visuals and behavior hints from `hack_enemies_atlas.png` mapping data. This is not wired yet.
+
 ## 현재 구현
 
 - 노트북은 방 안 상호작용 오브젝트다.

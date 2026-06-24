@@ -379,13 +379,15 @@ Layer candidates:
 Other asset candidates:
 
 ```text
-hack_enemy_atlas.png
+hack_enemies_atlas.png
 hack_projectile_atlas.png
 hack_fx_atlas.png
 hack_arena_tiles_atlas.png
 ```
 
 Do not bake too much attack / hit / state FX into body animation. Movement sprites, attack visuals, projectiles, and FX should remain separable.
+
+`hack_avatar` silhouettes should remain visually distinct from enemies defined through `hack_enemies_atlas.png`.
 
 ## Collision And Gameplay Separation
 
