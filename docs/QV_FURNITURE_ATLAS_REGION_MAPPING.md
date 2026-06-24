@@ -275,6 +275,8 @@ Speaker is not furniture. It is a hacking / audio-analysis device candidate and 
 
 Fridge, microwave, and air conditioner are living appliances and should stay in an appliances atlas.
 
+Small props and cables are deferred to `qv_props_atlas.png` / `qv_cable_atlas.png` and should not be mixed into `qv_furniture_atlas.png` unless they are inseparable from a furniture body.
+
 ## Pivot And Anchor Criteria
 
 Default placement rules:

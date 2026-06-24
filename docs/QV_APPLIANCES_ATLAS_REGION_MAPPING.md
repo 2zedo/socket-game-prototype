@@ -333,6 +333,8 @@ UPS can be treated as power storage / support. Whether it belongs in `qv_applian
 
 Appliance body regions should keep strong glow, flicker, warning, and spark effects separate. Those localized effects may be mapped through `qv_fx_atlas.png` instead of being baked into appliance bodies.
 
+Appliance body sprites should not include loose cable / plug detail unless it is inseparable from the object silhouette. Cable visuals are deferred to `qv_cable_atlas.png`.
+
 ## Pivot And Anchor Criteria
 
 Default placement rules:

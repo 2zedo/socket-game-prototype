@@ -196,6 +196,13 @@ Future FX atlas check:
 - [ ] Prompt / UI readability remains clear.
 - [ ] Full-room lighting is not accidentally baked into localized FX.
 
+Future props / cable atlas check:
+
+- [ ] Props do not overpower interactable objects.
+- [ ] Cables do not clutter the player path or room readability.
+- [ ] Cable visuals are not mistaken for actual power logic.
+- [ ] Props / cable categories are not mixed with furniture, appliance, work-device, or FX atlases.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.

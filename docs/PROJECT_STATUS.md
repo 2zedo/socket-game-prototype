@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `3ba32d7`
-- Phase: QV FX atlas region mapping criteria
+- Current commit at task start: `463fa3f`
+- Phase: QV props / cable atlas backlog criteria
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -56,6 +56,7 @@
 - `qv_appliances_atlas.png` region mapping criteria are documented for future appliance and life-support body sprites; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
 - `qv_work_devices_atlas.png` region mapping criteria are documented for future work / hacking / information-device body sprites; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
 - `qv_fx_atlas.png` region mapping criteria are documented for future localized screen glow, signal wave, warning, spark, pulse, scan, waveform, glitch, and flicker effects; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
+- `qv_props_atlas.png` and `qv_cable_atlas.png` are documented as deferred detail / polish atlas backlog items; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
 - Quarterview room shell layer application is planned in `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md` with same-canvas `1920x1080` PNG layers, z-index policy, future asset paths, and import-setting candidates; no PNG assets or scene wiring exist yet.
 - `QuarterviewRoomShellPrototype.tscn` prepares a visual-only shell-layer check for `qv_room_floor_base.png`, `qv_room_walls_back.png`, and `qv_room_walls_side.png`, loading expected paths if present and showing missing status if absent. No actual PNG asset or production scene wiring exists yet.
 - Window city view layer criteria are documented for `qv_room_window_city_view.png`; no actual PNG asset or scene wiring exists yet.
@@ -264,6 +265,7 @@
 - `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/LIVING_DEVICE_DEFINITION.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `qv_appliances_atlas.png` region key, `LivingDeviceDefinition` link candidates, state variations, lighting / FX split, and pre-application checklist without adding PNG assets or mapping files.
 - `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/ROOM_OBJECT_DEFINITION.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `qv_work_devices_atlas.png` region key, RoomObject / DeviceDefinition / HackingMission links, state variations, screen / glow / signal FX split, and pre-application checklist without adding PNG assets or mapping files.
 - `docs/QV_FX_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`, `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`, `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `qv_fx_atlas.png` region key naming, mapping schema, frame / playback metadata, FX / body / static lighting split, target links, z-index, blend / alpha, trigger candidates, and pre-application checklist without adding PNG assets or mapping files.
+- `docs/QV_PROPS_AND_CABLE_ATLAS_BACKLOG.md`, `docs/ASSET_PIPELINE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md`, `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`, `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`, `docs/QV_FX_ATLAS_REGION_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document deferred props / cable atlas scope, category boundaries, lightweight mapping candidates, z-index candidates, start conditions, and future work candidates without adding PNG assets or mapping files.
 
 ## Validation Results
 
@@ -351,6 +353,7 @@
 - QV appliances atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 open scene roots와 `res://assets/rooms/quarterview` search를 read-only 확인했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_appliances_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - QV work devices atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 open scene roots와 `res://assets/rooms/quarterview` search를 read-only 확인했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_work_devices_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - QV FX atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 open scene roots와 `res://assets/rooms/quarterview` / `qv_fx_atlas` search를 read-only 확인했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_fx_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- QV props / cable atlas backlog 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `find godot ... qv_props_atlas / qv_cable_atlas`, `ls docs`, and `grep -R "qv_props_atlas\|qv_cable_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -414,6 +417,7 @@
 - `qv_appliances_atlas.png` is criteria-only; actual atlas creation, state variation art, region coordinate extraction, mapping format choice, lighting / FX split checks, and appliance placement checks still need separate implementation passes.
 - `qv_work_devices_atlas.png` is criteria-only; actual atlas creation, state variation art, region coordinate extraction, mapping format choice, screen / signal FX split checks, and work-device placement checks still need separate implementation passes.
 - `qv_fx_atlas.png` is criteria-only; actual FX atlas creation, region coordinate extraction, mapping format choice, animated frame checks, trigger wiring, blend / alpha tuning, and readability checks still need separate implementation passes.
+- `qv_props_atlas.png` and `qv_cable_atlas.png` are deferred backlog items; actual atlas creation, detailed mapping, props placement, cable path policy, power visual sync, and readability checks should wait until core room composition and interaction flow are stable.
 
 ## Next Recommended Task
 

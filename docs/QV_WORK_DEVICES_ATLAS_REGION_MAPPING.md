@@ -390,6 +390,8 @@ NODE-17 is a `mystery_device` and core story / signal / forbidden-log device can
 
 Charger, plug, and cable-only sprites should generally belong to a cable / power atlas rather than this work-devices atlas.
 
+Cables, plugs, and adapters should usually be separated into `qv_cable_atlas.png`. Screen glow, signal wave, warning flash, and scan effects remain `qv_fx_atlas.png`.
+
 ## Pivot And Anchor Criteria
 
 Default placement rules:

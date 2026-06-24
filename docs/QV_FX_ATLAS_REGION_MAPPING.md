@@ -391,9 +391,12 @@ qv_work_devices_atlas.png
 qv_appliances_atlas.png
 qv_furniture_atlas.png
 qv_cable_atlas.png
+qv_props_atlas.png
 qv_room_static_lighting_overlay.png
 qv_room_neon_reflection_overlay.png
 ```
+
+Cable body sprites belong to `qv_cable_atlas.png`, while sparks, glow, warning flashes, signal waves, and other localized visual effects belong to `qv_fx_atlas.png`.
 
 ## Pivot And Anchor Criteria
 
