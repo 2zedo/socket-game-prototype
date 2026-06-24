@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `f97916c`
-- Phase: Living device Resource design
+- Current commit at task start: `ede246e`
+- Phase: Quarterview room shell layer planning
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -51,6 +51,7 @@
 - 쿼터뷰 prototype은 `World/FloorLayer`, `WallBackLayer`, `FurnitureBackLayer`, `ObjectLayer`, `PlayerLayer`, `FurnitureFrontLayer`, `InteractionDebugLayer`, `LabelLayer` 구조로 Main 이식 전 레이어 책임을 확인한다.
 - 쿼터뷰 prototype object contract는 `godot/resources/rooms/quarterview/objects/*.tres`의 `RoomObjectDefinition` Resource가 소유하며, `QuarterviewRoomPrototype`은 이 Resource들을 읽어 placeholder, prompt, panel을 구성한다.
 - 쿼터뷰 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`에서 room layer, atlas, Yui spritesheet, visual mapping Resource 후보 기준으로 계획한다.
+- Quarterview room shell layer application is planned in `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md` with same-canvas `1920x1080` PNG layers, z-index policy, future asset paths, and import-setting candidates; no PNG assets or scene wiring exist yet.
 - 채택된 쿼터뷰 방 콘티는 최종 아트가 아니라 `docs/QUARTERVIEW_ROOM_DIRECTION.md`의 layout mood reference로 고정한다.
 - 해킹 액션은 기존 Main과 연결하지 않은 독립 prototype scene `res://scenes/prototypes/HackingActionPrototype.tscn`에서 조작, 전투, objective, exit 흐름을 먼저 검증한다.
 - Hacking Action prototype은 `READY`, `RUNNING`, `OBJECTIVE_EXTRACTED`, `SUCCESS`, `FAILED` mission state와 script-local tuning constants로 정리되어 있다.
@@ -191,6 +192,8 @@
 - `docs/HACKING_MISSION_DEFINITION.md`: documents the hacking mission Resource contract, field meanings, device requirement rules, and next-step boundaries.
 - `docs/GRID_CREDIT_SYSTEM.md`: documents Grid Credit meaning, current skeleton scope, API, transaction log structure, and future wiring boundaries.
 - `docs/LIVING_DEVICE_DEFINITION.md`: documents the living device Resource contract, DeviceDefinition boundary, field meanings, candidate devices, and no-wiring scope.
+- `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`: documents same-canvas quarterview room shell layers, target file names, future asset paths, z-index policy, import candidates, and application order.
+- `docs/ASSET_PIPELINE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: link quarterview room shell layer planning to the existing asset, room direction, and migration docs.
 - `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
 - `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
 - `docs/ASSET_PIPELINE.md`: links large-asset and LFS handling back to the dedicated Git LFS policy.
@@ -314,6 +317,7 @@
 - HackingMissionDefinition Resource class 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 실제 mission `.tres`와 gameplay wiring은 추가하지 않았다.
 - GridCreditState skeleton 추가 후 `git diff --check`, Grid Credit GUT `8/8 passed`, SurvivalState GUT `5/5 passed`, full GUT unit suite `48/48 passed`, and Godot 4.5.1 headless project parse가 완료됐다.
 - LivingDeviceDefinition Resource class 추가 후 `git diff --check`, Living Device GUT `6/6 passed`, SurvivalState GUT `5/5 passed`, full GUT unit suite `54/54 passed`, and Godot 4.5.1 headless project parse가 완료됐다. 실제 living device `.tres`와 gameplay wiring은 추가하지 않았다.
+- Quarterview room shell layer 계획 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 project name을 read-only 확인했고, `godot/assets` 경로를 filesystem에서 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
@@ -367,12 +371,13 @@
 - `HackingMissionDefinition` has no sample `.tres` mission and no dedicated GUT helper test yet; it is a Resource class preparation step only.
 - Grid Credit has a standalone state skeleton and GUT tests, but no UI, save/load, Result, `SurvivalState`, or hacking mission reward wiring yet.
 - `LivingDeviceDefinition` has no sample `.tres` living devices yet and is not wired to Main, `SurvivalState`, Outlet, Phone, Result, or any condition system.
+- Quarterview room shell layer file names, z-indexes, and import settings are planned only; actual PNG generation, alpha cleanup, Godot import settings, and scene layer placement still need separate implementation and GUI review.
 
 ## Next Recommended Task
 
-1. 첫 `LivingDeviceDefinition` sample `.tres` 후보를 별도 작업으로 만든다. 시작 파일은 `godot/scripts/resources/LivingDeviceDefinition.gd`와 `docs/LIVING_DEVICE_DEFINITION.md`이며, 완료 기준은 fridge / microwave / aircon / fluorescent_light / ups 후보 Resource만 만들고 Main / `SurvivalState` / UI wiring은 하지 않는 것이다.
-2. 생활 장치 효과가 `SurvivalState`에 들어갈지, 별도 생활 상태 시스템으로 분리될지 문서로 결정한다. 시작 문서는 `docs/ROOM_DEVICE_DIRECTION.md`, `docs/DAILY_LOOP_REVISED.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`이며, 완료 기준은 comfort / fatigue / focus / food preservation의 owner와 Result 반영 시점을 정하는 것이다.
-3. `HackingMissionDefinition` GUT 테스트를 추가한다. 시작 파일은 `godot/scripts/resources/HackingMissionDefinition.gd`이며, 완료 기준은 valid / invalid definition, difficulty label, required / recommended device lookup, result text fallback을 production wiring 없이 보호하는 것이다.
+1. Quarterview room shell layer PNG 준비 작업을 별도 단계로 진행한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`와 `docs/QUARTERVIEW_ROOM_DIRECTION.md`이며, 완료 기준은 same-canvas `1920x1080` layer 파일을 준비하되 scene 적용은 다음 단계로 분리하는 것이다.
+2. RoomShellPrototype 또는 `QuarterviewPerspectiveBlockout`에 shell layer를 적용하는 visual-only 작업을 진행한다. 시작 파일은 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`와 `godot/scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`이며, 완료 기준은 floor / walls / window / occluder / lighting layer가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
+3. 첫 `LivingDeviceDefinition` sample `.tres` 후보를 별도 작업으로 만든다. 시작 파일은 `godot/scripts/resources/LivingDeviceDefinition.gd`와 `docs/LIVING_DEVICE_DEFINITION.md`이며, 완료 기준은 fridge / microwave / aircon / fluorescent_light / ups 후보 Resource만 만들고 Main / `SurvivalState` / UI wiring은 하지 않는 것이다.
 
 ## Archive
 

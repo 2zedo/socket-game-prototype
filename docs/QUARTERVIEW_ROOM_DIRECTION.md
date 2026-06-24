@@ -143,6 +143,12 @@
 - 노트북, Phone, 충전기, 멀티탭은 작지만 상호작용 대상으로 식별 가능해야 한다.
 - 가구와 전면 오브젝트는 캐릭터를 가릴 수 있으므로, 장기적으로 Y-sort나 전면 레이어 분리가 필요할 수 있다.
 
+## Room Shell Layer 기준
+
+실제 room art는 한 장짜리 배경으로 끝내지 않고, floor, back wall, side wall, window city view, foreground occluders, static lighting overlay 같은 shell layer로 분리하는 방향을 우선 검토한다.
+
+Room shell layer의 파일명, `1920x1080` same-canvas 기준, z-index 초안, Godot 적용 순서는 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`에서 관리한다.
+
 ## 플레이 루프를 드러내는 방
 
 쿼터뷰 방의 목표는 보기 좋은 배경 한 장이 아니다. 방 자체가 아래 루프를 자연스럽게 드러내야 한다.
