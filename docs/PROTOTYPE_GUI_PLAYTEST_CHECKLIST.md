@@ -168,6 +168,15 @@ Future furniture atlas check:
 - [ ] Pivot / anchor placement is stable.
 - [ ] Player scale and occlusion remain readable.
 
+Future appliances atlas check:
+
+- [ ] Atlas regions display without cropping.
+- [ ] Appliance region keys match `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`.
+- [ ] Appliance, furniture, and work-device categories are not mixed.
+- [ ] State variations keep stable anchors.
+- [ ] Glow / FX are not over-baked into appliance body sprites.
+- [ ] Player scale and occlusion remain readable.
+
 ## HackingActionPrototype
 
 이 scene은 조작 / 상태 / 피드백 prototype이다. 현재 시점은 정수리뷰에 가까울 수 있으며, 최종 `3/4 top-down cyber action view` 시점 확인은 `HackingPerspectiveBlockout`에서 한다.

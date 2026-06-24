@@ -126,3 +126,10 @@
 - `room_object_key`는 나중에 `RoomObjectDefinition.key`와 생활 장치 정의를 연결하는 기준이 될 수 있다.
 
 이번 단계에서는 실제 기능 연결, Result 반영, Phone / Outlet UI 연결, 쿼터뷰 Main 교체, 생활 장치 `.tres` 생성을 하지 않는다.
+
+## Visual Atlas Mapping
+
+`LivingDeviceDefinition` visuals may later be mapped to `qv_appliances_atlas` region keys through a separate mapping layer.
+`LivingDeviceDefinition` itself should not directly store raw atlas rect coordinates at this stage.
+
+Appliance atlas region naming, state variation, pivot / anchor, z-index, and lighting / FX split criteria are documented in `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`.
