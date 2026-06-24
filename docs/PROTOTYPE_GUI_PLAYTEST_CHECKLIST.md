@@ -110,8 +110,12 @@
 - [ ] Expected canvas `1920x1080` 정보가 보인다.
 - [ ] expected path `res://assets/rooms/quarterview/shell/qv_room_floor_base.png`가 보인다.
 - [ ] `qv_room_floor_base.png`가 있으면 floor texture가 표시된다.
-- [ ] `qv_room_floor_base.png`가 없으면 missing placeholder가 표시되고 scene이 깨지지 않는다.
+- [ ] `qv_room_walls_back.png`가 있으면 back wall texture가 floor 위에 표시된다.
+- [ ] `qv_room_walls_side.png`가 있으면 side wall texture가 floor / back wall 위에 표시된다.
+- [ ] 누락된 layer는 missing status로 표시되고 scene이 깨지지 않는다.
 - [ ] asset이 있으면 image size와 canvas match 여부가 status에 표시된다.
+- [ ] asset이 `1920x1080`이 아니면 size warning이 표시된다.
+- [ ] `1` / `2` / `3`으로 floor / back wall / side wall layer visibility를 toggle할 수 있다.
 - [ ] `D` 키로 guide overlay ON / OFF가 된다.
 - [ ] `R`로 prototype이 reload된다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.

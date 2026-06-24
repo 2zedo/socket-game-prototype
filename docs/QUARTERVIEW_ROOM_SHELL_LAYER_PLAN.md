@@ -153,9 +153,11 @@ godot/assets/rooms/quarterview/shell/export/
 `qv_room_floor_base.png` 적용은 먼저 `res://scenes/prototypes/QuarterviewRoomShellPrototype.tscn`에서 검증한다.
 
 - prototype은 `res://assets/rooms/quarterview/shell/qv_room_floor_base.png`를 runtime에서 로드한다.
+- `qv_room_walls_back.png`와 `qv_room_walls_side.png`도 floor base 다음 단계로 같은 prototype에서 검증한다.
+- back wall과 side wall은 floor base와 같은 `1920x1080` canvas, 같은 origin, 같은 scale 정책을 공유해야 한다.
 - asset이 있으면 `1920x1080` image size와 expected canvas match 여부를 표시한다.
 - asset이 없으면 missing placeholder와 expected path를 표시한다.
-- 이 prototype은 floor base만 확인하며, back wall, side wall, window, occluder, lighting layer는 실제로 로드하지 않는다.
+- 현재 이 prototype은 floor / back wall / side wall까지 확인하며, window, occluder, lighting layer는 실제로 로드하지 않는다.
 
 ## 이미지 생성 / 편집 파이프라인
 
