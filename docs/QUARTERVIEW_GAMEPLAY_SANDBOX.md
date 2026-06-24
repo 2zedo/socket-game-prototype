@@ -23,9 +23,11 @@
 - sandbox-only Phone panel
 - sandbox-only Outlet panel
 - sandbox-only Result panel
+- sandbox-only Test Mode panel
 - sandbox-local clock from `20:00` to `02:00`
 - sandbox-only `02:00` auto end state
 - `D` debug overlay
+- `F2` sandbox Test Mode
 - `B` / `Backspace` PrototypeHub 복귀
 - `R` sandbox restart
 - PrototypeHub 등록
@@ -92,12 +94,15 @@ payload에는 가능한 경우 아래 값이 포함된다.
 - Auto end target: `02:00`
 - Speed: `10` sandbox minutes per real second
 - Test shortcut: `T` adds `30` sandbox minutes, `Shift+T` adds `2` sandbox hours
+- Test Mode: `F2` opens a sandbox-only panel for local time / end / result checks
 
 이 시간은 기존 Main / DAY1 clock, `SurvivalState`, Phone UI 시간과 연결하지 않는다.
 
 Sandbox 정책:
 
 - InteractionPanel / EndDayPanel / PhonePanel / OutletPanel이 열려 있어도 sandbox-local clock은 계속 흐른다.
+- Test Mode panel이 열려 있는 동안은 의도치 않은 `02:00` 도달을 막기 위해 sandbox-local clock을 멈춘다.
+- Test Mode panel을 닫으면 terminal state가 아닌 경우 열기 전 clock running 상태를 복구한다.
 - `02:00`에 도달하면 sandbox-only auto end가 한 번만 발생한다.
 - auto end 후 clock은 멈추고 room input은 잠긴다.
 - auto end 후 `E`, `Tab`, Bed / Phone / Power interaction은 무시된다.
@@ -135,7 +140,7 @@ Debug ON:
 - real Result / `DayResultPanel`
 - `SurvivalState` gameplay flow
 - `HackingActionPrototype`
-- Test Mode
+- real Main Test Mode
 - real Main `02:00` auto end / Result flow
 - reward / Grid Credit / save / story flag
 
@@ -220,6 +225,36 @@ Panel 동작:
 - `B` / `Backspace`: `PrototypeHub`로 복귀한다.
 
 이 panel은 기존 `res://scenes/ui/DayResultPanel.tscn`을 열지 않는다. 기존 `DayResultPanel`은 `SurvivalState`와 DAY result data 전제를 가지므로 sandbox mock result에는 직접 재사용하지 않는다.
+
+## Sandbox Test Mode Panel
+
+`F2`는 `res://scenes/prototypes/SandboxTestModePanel.tscn`을 열고 닫는다.
+
+Test Mode 표시 정보:
+
+- sandbox-local time
+- elapsed minutes
+- clock running / restore-on-close state
+- auto end triggered 여부
+- sandbox Result open 여부
+- end reason
+- 현재 open modal
+- Main / DAY1 미연결 안내
+
+Test Mode 동작:
+
+- `+30 min`: sandbox-local time을 `30`분 진행한다.
+- `+2 hours`: sandbox-local time을 `2`시간 진행한다.
+- `Jump 01:50`: sandbox-local time을 `01:50`으로 맞추고 auto end는 아직 발생시키지 않는다.
+- `Trigger Auto End`: 기존 sandbox auto end helper를 호출하고 sandbox Result UI를 연다.
+- `Trigger Manual Result`: sandbox-only manual Bed result helper 흐름을 호출한다.
+- `Reset Sandbox`: time `20:00`, elapsed `0`, end / result / modal 상태를 초기화한다.
+- `Toggle Clock On Close`: Test Mode를 닫을 때 clock을 다시 running으로 둘지 여부를 바꾼다.
+- `ESC` / Close: Test Mode를 닫고 terminal state가 아니면 room input과 clock 상태를 복구한다.
+
+Test Mode가 열려 있는 동안 room stub player movement, `E` interaction, `Tab` Phone toggle, Bed / Phone / Power panel open은 잠긴다. `B` / `Backspace` PrototypeHub 복귀와 `R` restart는 우선 유지된다.
+
+이 panel은 기존 Main Test Mode, `SurvivalState`, `DeviceDefinition`, `PhoneUI`, `OutletMode`, `DayResultPanel`, reward, save / load, story flag를 조작하지 않는다.
 
 ## Sandbox Phone Panel
 

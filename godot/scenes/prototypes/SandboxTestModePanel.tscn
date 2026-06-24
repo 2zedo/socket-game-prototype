@@ -1,0 +1,121 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/prototypes/SandboxTestModePanel.gd" id="1_test_mode"]
+
+[node name="SandboxTestModePanel" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_test_mode")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.010, 0.012, 0.017, 0.58)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 780.0
+offset_top = 72.0
+offset_right = 1238.0
+offset_bottom = 648.0
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.82, 0.58, 1)
+theme_override_font_sizes/font_size = 24
+text = "Sandbox Test Mode"
+
+[node name="StateLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.88, 0.86, 1)
+theme_override_font_sizes/font_size = 14
+text = "Auto End: false"
+autowrap_mode = 2
+
+[node name="TimeLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.88, 0.96, 1)
+theme_override_font_sizes/font_size = 15
+text = "Time: 20:00"
+autowrap_mode = 2
+
+[node name="ButtonContainer" type="VBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ToggleClockButton" type="Button" parent="Panel/Margin/VBox/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 34)
+theme_override_font_sizes/font_size = 13
+text = "Toggle Clock On Close"
+
+[node name="Add30MinButton" type="Button" parent="Panel/Margin/VBox/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 34)
+theme_override_font_sizes/font_size = 13
+text = "+30 min"
+
+[node name="Add2HourButton" type="Button" parent="Panel/Margin/VBox/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 34)
+theme_override_font_sizes/font_size = 13
+text = "+2 hours"
+
+[node name="Jump0150Button" type="Button" parent="Panel/Margin/VBox/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 34)
+theme_override_font_sizes/font_size = 13
+text = "Jump 01:50"
+
+[node name="TriggerAutoEndButton" type="Button" parent="Panel/Margin/VBox/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 34)
+theme_override_font_sizes/font_size = 13
+text = "Trigger Auto End"
+
+[node name="TriggerManualResultButton" type="Button" parent="Panel/Margin/VBox/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 34)
+theme_override_font_sizes/font_size = 13
+text = "Trigger Manual Result"
+
+[node name="ResetSandboxButton" type="Button" parent="Panel/Margin/VBox/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 34)
+theme_override_font_sizes/font_size = 13
+text = "Reset Sandbox"
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/ButtonContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(260, 34)
+theme_override_font_sizes/font_size = 13
+text = "Close"
+
+[node name="HelpLabel" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.72, 0.54, 1)
+theme_override_font_sizes/font_size = 13
+text = "F2: Test Mode\nESC / Close: close\nB / Backspace: PrototypeHub\nR: Restart sandbox\nSandbox-only. Main / DAY1 is not modified."
+autowrap_mode = 2

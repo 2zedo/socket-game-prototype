@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `0ad59d3`
-- Phase: Quarterview Gameplay Sandbox result panel
+- Current commit at task start: `7806abe`
+- Phase: Quarterview Gameplay Sandbox test mode panel
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -111,6 +111,7 @@
 - Quarterview Gameplay Sandbox full sandbox-only flow was checked; the sandbox controller now also receives the room stub `room_back_requested` signal and routes it to PrototypeHub without Main / DAY1 wiring.
 - Quarterview Gameplay Sandbox now has a sandbox-local `20:00` to `02:00` clock and sandbox-only auto end state; it does not open Result, advance `SurvivalState`, or call Main / DAY1 day flow.
 - Quarterview Gameplay Sandbox now opens a sandbox-only Result panel after manual Bed end or `02:00` auto end; it does not open `DayResultPanel`, advance `SurvivalState`, grant rewards, save/load, or set story flags.
+- Quarterview Gameplay Sandbox now has a sandbox-only `F2` Test Mode panel for local time advance, `01:50` jump, auto end trigger, manual result trigger, reset, and clock pause / restore checks. It does not modify Main / DAY1, `SurvivalState`, `DeviceDefinition`, `PhoneUI`, `OutletMode`, or `DayResultPanel`.
 
 ## Current DAY 1 Decisions
 
@@ -270,6 +271,7 @@
 - `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: connects the room stub `room_back_requested` signal to sandbox Hub return without touching Main / DAY1 routing.
 - `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`, `godot/scripts/prototypes/SandboxEndDayPanel.gd`: add sandbox-local clock state, `02:00` auto end message, manual / auto end reason tracking, post-auto-end input lock, and sandbox-only `T` / `Shift+T` time advance shortcuts.
 - `godot/scenes/prototypes/SandboxResultPanel.tscn`, `godot/scripts/prototypes/SandboxResultPanel.gd`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: add sandbox-only result summary UI for manual Bed end and `02:00` auto end with Restart / Hub / Hide Details actions.
+- `godot/scenes/prototypes/SandboxTestModePanel.tscn`, `godot/scripts/prototypes/SandboxTestModePanel.gd`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: add sandbox-only `F2` Test Mode controls for local time advance, `01:50` jump, auto end / manual result trigger, reset, and clock pause / restore without Main / DAY1 wiring.
 - `docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`, `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: record the full sandbox-only flow check, modal priority, input lock rules, and remaining GUI checks.
 - `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Gameplay Sandbox as a separate Hub entry.
 - `godot/scenes/prototypes/QuarterviewRoomShellPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomShellPrototype.gd`: add and extend a visual-only room shell layer prototype for floor, back wall, and side wall paths with missing status, `1920x1080` size checks, layer toggles, canvas guides, reload, debug guide toggle, and Hub return.
@@ -368,6 +370,7 @@
 - Quarterview Gameplay Sandbox 전체 흐름 점검 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview Gameplay Sandbox `02:00` 자동 종료 연결 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview Gameplay Sandbox Result panel 연결 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Quarterview Gameplay Sandbox Test Mode panel 연결 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
 - Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
 - Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
@@ -452,6 +455,7 @@
 - Quarterview Gameplay Sandbox modal priority still needs hands-on GUI checks for overlap prevention, `ESC` current-modal close, movement lock / restore, `R` restart, `D` debug, and `B` / `Backspace` Hub priority.
 - Quarterview Gameplay Sandbox `02:00` auto end, `T` / `Shift+T` time advance, post-auto-end input lock, and manual / auto end reason display need hands-on GUI confirmation.
 - Quarterview Gameplay Sandbox Result panel needs hands-on GUI checks for manual / auto summary text, Restart / Hub / Hide Details buttons, terminal input lock, and no real `DayResultPanel` opening.
+- Quarterview Gameplay Sandbox Test Mode panel needs hands-on GUI checks for `F2` open / close, clock pause / restore, `+30 min`, `+2 hours`, `Jump 01:50`, auto end trigger, manual result trigger, reset, movement lock, and no real Main / `SurvivalState` / Phone / Outlet / Result wiring.
 - Hacking Action mission state is now covered by GUT, but movement feel, input timing, combat feel, and visual perspective remain GUI/manual checks.
 - `HackingMissionDefinition` has no sample `.tres` mission and no dedicated GUT helper test yet; it is a Resource class preparation step only.
 - Grid Credit has a standalone state skeleton and GUT tests, but no UI, save/load, Result, `SurvivalState`, or hacking mission reward wiring yet.
@@ -482,9 +486,9 @@
 
 ## Next Recommended Task
 
-1. floor / back wall / side wall 실제 shell PNG를 expected path에 추가하고 `QuarterviewRoomShellPrototype`에서 alignment를 확인한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 세 layer의 `1920x1080` image size / canvas match가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
-2. `yui_qv_idle_4dir.png` / `yui_qv_walk_4dir.png` asset 제작과 import prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`와 `docs/YUI_CHARACTER_BRIEF.md`이며, 완료 기준은 down / up / left / right row order, foot anchor, scale, foreground occluder / lighting readability가 확인되는 것이다.
-3. `ui_common_atlas.png` / `ui_hud_atlas.png` / `ui_phone_atlas.png` / `ui_outlet_atlas.png` / `ui_result_log_atlas.png` / `ui_dialogue_atlas.png` / `ui_device_icons_atlas.png` asset 제작과 UI atlas region viewer prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_HUD_ATLAS_MAPPING.md`, `docs/UI_PHONE_ATLAS_MAPPING.md`, `docs/UI_OUTLET_ATLAS_MAPPING.md`, `docs/UI_RESULT_LOG_ATLAS_MAPPING.md`, `docs/UI_DIALOGUE_ATLAS_MAPPING.md`, `docs/UI_DEVICE_ICONS_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, and `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`이며, 완료 기준은 common panel/button/icon region display, HUD meter frame/fill alignment, Phone frame/card/message region display, Outlet slot/device-card/drag-drop state display, Result log card/reward row display, Dialogue panel/choice state display, device icon readability/state overlay display, 9-slice margin stability, dark UI readability, and Kenney input prompt separation이 확인되는 것이다.
+1. `QuarterviewGameplaySandbox` Test Mode를 GUI에서 수동 확인한다. 시작 파일은 `godot/scenes/prototypes/QuarterviewGameplaySandbox.tscn`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`, `godot/scenes/prototypes/SandboxTestModePanel.tscn`, and `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`이며, 완료 기준은 `F2` open / close, clock pause / restore, `+30 min`, `+2 hours`, `Jump 01:50`, auto end trigger, manual result trigger, reset, movement lock, `R`, `B` / `Backspace`, and no real Main / `SurvivalState` / Phone / Outlet / Result wiring이 확인되는 것이다.
+2. floor / back wall / side wall 실제 shell PNG를 expected path에 추가하고 `QuarterviewRoomShellPrototype`에서 alignment를 확인한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 세 layer의 `1920x1080` image size / canvas match가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
+3. `yui_qv_idle_4dir.png` / `yui_qv_walk_4dir.png` asset 제작과 import prototype 적용을 별도 작업으로 진행한다. 시작 문서는 `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`와 `docs/YUI_CHARACTER_BRIEF.md`이며, 완료 기준은 down / up / left / right row order, foot anchor, scale, foreground occluder / lighting readability가 확인되는 것이다.
 
 ## Archive
 

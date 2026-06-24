@@ -8,6 +8,7 @@ const END_DAY_PANEL_SCENE := preload("res://scenes/prototypes/SandboxEndDayPanel
 const PHONE_PANEL_SCENE := preload("res://scenes/prototypes/SandboxPhonePanel.tscn")
 const OUTLET_PANEL_SCENE := preload("res://scenes/prototypes/SandboxOutletPanel.tscn")
 const RESULT_PANEL_SCENE := preload("res://scenes/prototypes/SandboxResultPanel.tscn")
+const TEST_MODE_PANEL_SCENE := preload("res://scenes/prototypes/SandboxTestModePanel.tscn")
 
 const SANDBOX_START_HOUR := 20
 const SANDBOX_START_MINUTE := 0
@@ -22,6 +23,7 @@ var end_day_panel
 var phone_panel
 var outlet_panel
 var result_panel
+var test_mode_panel
 var sfx
 var room_contract_connected := false
 var debug_overlay_enabled := false
@@ -32,6 +34,8 @@ var sandbox_elapsed_minutes := 0.0
 var sandbox_clock_running := true
 var sandbox_auto_end_triggered := false
 var sandbox_result_open := false
+var sandbox_test_mode_open := false
+var clock_was_running_before_test_mode := false
 var sandbox_end_reason := ""
 var sandbox_state := "running"
 var phone_source := "-"
@@ -65,6 +69,7 @@ func _ready() -> void:
 	_spawn_phone_panel()
 	_spawn_outlet_panel()
 	_spawn_result_panel()
+	_spawn_test_mode_panel()
 	_spawn_room_stub()
 	_set_debug_overlay_enabled(false)
 	_append_log("Sandbox time started at %s. No Main/DAY1 wiring." % _get_sandbox_time_text())
@@ -90,6 +95,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if sandbox_result_open:
 		if PROTOTYPE_UTILS.is_cancel_event(event):
 			_append_log("Sandbox Result is terminal. Press R or B / Backspace.")
+			get_viewport().set_input_as_handled()
+		return
+
+	if _is_test_mode_toggle_event(event):
+		_toggle_test_mode()
+		get_viewport().set_input_as_handled()
+		return
+
+	if _is_test_mode_panel_open():
+		if PROTOTYPE_UTILS.is_cancel_event(event):
+			_close_test_mode()
 			get_viewport().set_input_as_handled()
 		return
 
@@ -160,7 +176,7 @@ func _configure_sfx() -> void:
 
 
 func _configure_help() -> void:
-	help_label.text = "RoomSceneContract signal test\nNot Main / Not final quarterview art\nE: Request interaction\nTab: Sandbox Phone\nPower primary: sandbox Outlet\nBed primary: sandbox End Day confirm only\nT: +30m / Shift+T: +2h sandbox time\nD: Debug\nR: Restart\nB / Backspace: Prototype Hub"
+	help_label.text = "RoomSceneContract signal test\nNot Main / Not final quarterview art\nE: Request interaction\nTab: Sandbox Phone\nPower primary: sandbox Outlet\nBed primary: sandbox End Day confirm only\nF2: Sandbox Test Mode\nT: +30m / Shift+T: +2h sandbox time\nD: Debug\nR: Restart\nB / Backspace: Prototype Hub"
 
 
 func _spawn_room_stub() -> void:
@@ -214,6 +230,208 @@ func _spawn_result_panel() -> void:
 	result_panel.connect("restart_requested", Callable(self, "_restart_sandbox"))
 	result_panel.connect("hub_requested", Callable(self, "_go_to_prototype_hub"))
 	result_panel.connect("closed", Callable(self, "_on_result_panel_closed"))
+
+
+func _spawn_test_mode_panel() -> void:
+	test_mode_panel = TEST_MODE_PANEL_SCENE.instantiate()
+	ui_layer.add_child(test_mode_panel)
+	test_mode_panel.connect("toggle_clock_requested", Callable(self, "_on_test_mode_toggle_clock_requested"))
+	test_mode_panel.connect("add_minutes_requested", Callable(self, "_on_test_mode_add_minutes_requested"))
+	test_mode_panel.connect("jump_time_requested", Callable(self, "_on_test_mode_jump_time_requested"))
+	test_mode_panel.connect("trigger_auto_end_requested", Callable(self, "_on_test_mode_trigger_auto_end_requested"))
+	test_mode_panel.connect("trigger_manual_result_requested", Callable(self, "_on_test_mode_trigger_manual_result_requested"))
+	test_mode_panel.connect("reset_sandbox_requested", Callable(self, "_on_test_mode_reset_sandbox_requested"))
+	test_mode_panel.connect("close_requested", Callable(self, "_on_test_mode_close_requested"))
+
+
+func _toggle_test_mode() -> void:
+	if _is_test_mode_panel_open():
+		_close_test_mode()
+	else:
+		_open_test_mode()
+
+
+func _open_test_mode() -> void:
+	if _is_terminal_sandbox_state():
+		_append_log("Terminal sandbox state blocks Test Mode. Press R or B / Backspace.")
+		return
+	if _is_test_mode_panel_open():
+		return
+
+	clock_was_running_before_test_mode = sandbox_clock_running
+	sandbox_test_mode_open = true
+	sandbox_clock_running = false
+	panel_state = "test_mode_open"
+	last_action = "open_test_mode"
+	_set_room_input_enabled(false)
+	test_mode_panel.show_test_mode(_build_test_mode_summary())
+	_append_log("Sandbox Test Mode opened. Clock paused locally.")
+	print("Sandbox Test Mode opened / no Main Test Mode, SurvivalState, PhoneUI, OutletMode, or DayResultPanel wiring")
+	sfx.play_open()
+	_update_status()
+
+
+func _close_test_mode(restore_clock: bool = true) -> void:
+	if not _is_test_mode_panel_open() and not sandbox_test_mode_open:
+		return
+
+	sandbox_test_mode_open = false
+	if test_mode_panel != null and test_mode_panel.has_method("close"):
+		test_mode_panel.close(false)
+
+	if restore_clock and not _is_terminal_sandbox_state():
+		sandbox_clock_running = clock_was_running_before_test_mode
+	if not _is_terminal_sandbox_state():
+		sandbox_state = "running"
+		panel_state = "closed"
+	last_action = "close_test_mode"
+	_restore_room_input_if_no_modal()
+	_append_log("Sandbox Test Mode closed.")
+	sfx.play_cancel()
+	_update_status()
+
+
+func _build_test_mode_summary() -> Dictionary:
+	return {
+		"time": _get_sandbox_time_text(),
+		"elapsed_minutes": int(round(sandbox_elapsed_minutes)),
+		"clock_running": "running" if sandbox_clock_running else "paused",
+		"restore_clock_on_close": "running" if clock_was_running_before_test_mode else "paused",
+		"auto_end_triggered": str(sandbox_auto_end_triggered),
+		"result_open": str(sandbox_result_open),
+		"end_reason": sandbox_end_reason if not sandbox_end_reason.is_empty() else "none",
+		"open_modal": _get_open_modal_name(),
+		"main_wiring": "not connected",
+	}
+
+
+func _refresh_test_mode_panel() -> void:
+	if _is_test_mode_panel_open() and test_mode_panel.has_method("update_summary"):
+		test_mode_panel.update_summary(_build_test_mode_summary())
+
+
+func _on_test_mode_close_requested() -> void:
+	_close_test_mode()
+
+
+func _on_test_mode_toggle_clock_requested() -> void:
+	if _is_terminal_sandbox_state():
+		_append_log("Terminal sandbox state blocks clock toggle.")
+		_refresh_test_mode_panel()
+		return
+	clock_was_running_before_test_mode = not clock_was_running_before_test_mode
+	_append_log("Test Mode clock restore set to %s." % ("running" if clock_was_running_before_test_mode else "paused"))
+	_refresh_test_mode_panel()
+
+
+func _on_test_mode_add_minutes_requested(minutes: int) -> void:
+	_advance_sandbox_minutes_for_test(minutes)
+
+
+func _on_test_mode_jump_time_requested(hour: int, minute: int) -> void:
+	_jump_sandbox_time_for_test(hour, minute)
+
+
+func _on_test_mode_trigger_auto_end_requested() -> void:
+	if _is_terminal_sandbox_state():
+		_append_log("Terminal sandbox state ignores Test Mode auto end trigger.")
+		_refresh_test_mode_panel()
+		return
+	_close_test_mode(false)
+	_trigger_sandbox_auto_end()
+
+
+func _on_test_mode_trigger_manual_result_requested() -> void:
+	if _is_terminal_sandbox_state():
+		_append_log("Terminal sandbox state ignores Test Mode manual result trigger.")
+		_refresh_test_mode_panel()
+		return
+	_close_test_mode(false)
+	day_end_confirmed = true
+	sandbox_clock_running = false
+	sandbox_end_reason = "manual_bed"
+	sandbox_state = "test_manual_result"
+	panel_state = "test_manual_result"
+	last_action = "test_manual_result"
+	last_interaction = "test_mode / manual_bed"
+	_set_room_input_enabled(false)
+	_append_log("Test Mode triggered sandbox manual result.")
+	print("Sandbox Test Mode manual result / no Main End Day, SurvivalState, or DayResultPanel wiring")
+	_show_sandbox_result("manual_bed")
+
+
+func _on_test_mode_reset_sandbox_requested() -> void:
+	_reset_sandbox_local_state()
+
+
+func _advance_sandbox_minutes_for_test(minutes: int) -> void:
+	if _is_terminal_sandbox_state():
+		_append_log("Terminal sandbox state ignores Test Mode time advance.")
+		_refresh_test_mode_panel()
+		return
+
+	sandbox_elapsed_minutes += float(minutes)
+	_update_sandbox_clock_display_from_elapsed()
+	_append_log("Test Mode advanced sandbox time by %d minutes." % minutes)
+	if sandbox_elapsed_minutes >= float(SANDBOX_AUTO_END_AFTER_MINUTES):
+		_close_test_mode(false)
+		_trigger_sandbox_auto_end()
+	else:
+		_update_status()
+		_refresh_test_mode_panel()
+
+
+func _jump_sandbox_time_for_test(hour: int, minute: int) -> void:
+	if _is_terminal_sandbox_state():
+		_append_log("Terminal sandbox state ignores Test Mode time jump.")
+		_refresh_test_mode_panel()
+		return
+
+	sandbox_elapsed_minutes = _get_elapsed_minutes_for_clock_time(hour, minute)
+	_update_sandbox_clock_display_from_elapsed()
+	_append_log("Test Mode jumped sandbox time to %02d:%02d." % [hour, minute])
+	_update_status()
+	_refresh_test_mode_panel()
+
+
+func _get_elapsed_minutes_for_clock_time(hour: int, minute: int) -> float:
+	var start_minutes := SANDBOX_START_HOUR * 60 + SANDBOX_START_MINUTE
+	var target_minutes := hour * 60 + minute
+	if target_minutes < start_minutes:
+		target_minutes += 24 * 60
+	return float(max(0, target_minutes - start_minutes))
+
+
+func _reset_sandbox_local_state() -> void:
+	_close_all_sandbox_modals_silently()
+	sandbox_hour = SANDBOX_START_HOUR
+	sandbox_minute = SANDBOX_START_MINUTE
+	sandbox_elapsed_minutes = 0.0
+	sandbox_clock_running = true
+	sandbox_auto_end_triggered = false
+	sandbox_result_open = false
+	sandbox_test_mode_open = false
+	clock_was_running_before_test_mode = false
+	day_end_confirmed = false
+	sandbox_end_reason = ""
+	sandbox_state = "running"
+	phone_source = "-"
+	outlet_source = "-"
+	last_interaction = "-"
+	last_nearest = "-"
+	last_object = "-"
+	last_role = "-"
+	last_action = "reset_sandbox"
+	panel_state = "closed"
+	end_day_close_reason = "Sandbox End Day closed."
+	event_log.clear()
+	prompt_label.text = ""
+	log_label.text = "Event Log:"
+	_set_room_input_enabled(true)
+	_append_log("Sandbox Test Mode reset local state to 20:00.")
+	print("Sandbox Test Mode reset / no Main, SurvivalState, PhoneUI, OutletMode, or DayResultPanel state changed")
+	sfx.play_confirm()
+	_update_status()
 
 
 func _go_to_prototype_hub() -> void:
@@ -362,7 +580,7 @@ func _append_log(text: String) -> void:
 
 
 func _update_status() -> void:
-	status_label.text = "Quarterview Gameplay Sandbox\nNot Main\nNo Phone/Outlet/real Result wiring yet\nRoom contract connected: %s\nSandbox time: %s\nAuto end: %02d:%02d\nClock: %s\nEnd reason: %s\nSandbox result: %s\nSandbox state: %s\nDay end confirmed: %s\nPhone UI: %s\nPhone source: %s\nOutlet UI: %s\nOutlet source: %s\nOutlet implementation: %s\nMain Phone/Outlet wiring: not connected\nSurvivalState: none / mock only\nLast interaction: %s\nLast nearest: %s\nPanel: %s\nLast object: %s\nLast role: %s\nLast action: %s\nReal wiring: none\nDebug: %s" % [
+	status_label.text = "Quarterview Gameplay Sandbox\nNot Main\nNo Phone/Outlet/real Result wiring yet\nRoom contract connected: %s\nSandbox time: %s\nAuto end: %02d:%02d\nClock: %s\nEnd reason: %s\nSandbox result: %s\nTest Mode: %s\nSandbox state: %s\nDay end confirmed: %s\nPhone UI: %s\nPhone source: %s\nOutlet UI: %s\nOutlet source: %s\nOutlet implementation: %s\nMain Phone/Outlet wiring: not connected\nSurvivalState: none / mock only\nLast interaction: %s\nLast nearest: %s\nPanel: %s\nLast object: %s\nLast role: %s\nLast action: %s\nReal wiring: none\nDebug: %s" % [
 		"yes" if room_contract_connected else "no",
 		_get_sandbox_time_text(),
 		SANDBOX_AUTO_END_HOUR,
@@ -370,6 +588,7 @@ func _update_status() -> void:
 		"running" if sandbox_clock_running else "stopped",
 		sandbox_end_reason if not sandbox_end_reason.is_empty() else "none",
 		"open" if sandbox_result_open else "closed",
+		"open" if _is_test_mode_panel_open() else "closed",
 		sandbox_state,
 		str(day_end_confirmed),
 		"open" if _is_phone_panel_open() else "closed",
@@ -385,6 +604,7 @@ func _update_status() -> void:
 		last_action,
 		"on" if debug_overlay_enabled else "off",
 	]
+	_refresh_test_mode_panel()
 
 
 func _update_debug_label() -> void:
@@ -395,13 +615,14 @@ func _update_debug_label() -> void:
 	if room != null and room.has_method("get_debug_text"):
 		room_debug = room.call("get_debug_text")
 
-	debug_label.text = "Sandbox Debug\nplayer=(%.0f, %.0f)\ntime=%s\nelapsed_minutes=%.1f\nauto_end_triggered=%s\nresult_open=%s\nend_reason=%s\ncontract_connected=%s\nsandbox_state=%s\nday_end_confirmed=%s\nphone_open=%s\nphone_source=%s\noutlet_open=%s\noutlet_source=%s\nlast_interaction=%s\nlast_nearest=%s\n%s" % [
+	debug_label.text = "Sandbox Debug\nplayer=(%.0f, %.0f)\ntime=%s\nelapsed_minutes=%.1f\nauto_end_triggered=%s\nresult_open=%s\ntest_mode_open=%s\nend_reason=%s\ncontract_connected=%s\nsandbox_state=%s\nday_end_confirmed=%s\nphone_open=%s\nphone_source=%s\noutlet_open=%s\noutlet_source=%s\nlast_interaction=%s\nlast_nearest=%s\n%s" % [
 		player_position.x,
 		player_position.y,
 		_get_sandbox_time_text(),
 		sandbox_elapsed_minutes,
 		str(sandbox_auto_end_triggered),
 		str(sandbox_result_open),
+		str(_is_test_mode_panel_open()),
 		sandbox_end_reason if not sandbox_end_reason.is_empty() else "none",
 		str(room_contract_connected),
 		sandbox_state,
@@ -614,10 +835,18 @@ func _is_result_panel_open() -> bool:
 	return result_panel != null and result_panel.has_method("is_open") and result_panel.is_open()
 
 
+func _is_test_mode_panel_open() -> bool:
+	return test_mode_panel != null and test_mode_panel.has_method("is_open") and test_mode_panel.is_open()
+
+
 func _is_phone_toggle_event(event: InputEvent) -> bool:
 	if event.is_action_pressed("open_phone"):
 		return true
 	return event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_TAB
+
+
+func _is_test_mode_toggle_event(event: InputEvent) -> bool:
+	return event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F2
 
 
 func _is_time_advance_event(event: InputEvent) -> bool:
@@ -638,7 +867,23 @@ func _restore_room_input_if_no_modal() -> void:
 
 
 func _has_open_modal() -> bool:
-	return _is_result_panel_open() or _is_outlet_panel_open() or _is_phone_panel_open() or _is_end_day_panel_open() or _is_interaction_panel_open()
+	return _is_result_panel_open() or _is_test_mode_panel_open() or _is_outlet_panel_open() or _is_phone_panel_open() or _is_end_day_panel_open() or _is_interaction_panel_open()
+
+
+func _get_open_modal_name() -> String:
+	if _is_result_panel_open():
+		return "result"
+	if _is_test_mode_panel_open():
+		return "test_mode"
+	if _is_outlet_panel_open():
+		return "outlet"
+	if _is_phone_panel_open():
+		return "phone"
+	if _is_end_day_panel_open():
+		return "end_day"
+	if _is_interaction_panel_open():
+		return "interaction"
+	return "none"
 
 
 func _is_terminal_sandbox_state() -> bool:
@@ -719,6 +964,9 @@ func _close_all_sandbox_modals_silently() -> void:
 		end_day_panel.visible = false
 	if result_panel != null:
 		result_panel.visible = false
+	if test_mode_panel != null:
+		test_mode_panel.close(false)
+	sandbox_test_mode_open = false
 
 
 func _show_sandbox_result(end_reason: String) -> void:

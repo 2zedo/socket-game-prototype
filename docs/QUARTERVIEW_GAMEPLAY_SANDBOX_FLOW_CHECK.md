@@ -18,6 +18,7 @@
 - `Tab` 또는 Phone Primary -> sandbox-only Phone panel
 - Power Primary -> sandbox-only Outlet panel
 - sandbox-local clock from `20:00` to `02:00`
+- sandbox-only Test Mode panel
 - `02:00` sandbox-only auto end
 - sandbox-only Result panel
 - modal open 중 player input lock
@@ -26,6 +27,7 @@
 - `D` debug toggle
 - `B` / `Backspace` PrototypeHub 복귀
 - `ESC` current modal close
+- `F2` Test Mode open / close
 
 ## 현재 연결된 Sandbox-Only 기능
 
@@ -51,6 +53,8 @@ Sandbox-local clock은 `20:00`에 시작해 `02:00`에 도달하면 auto end 상
 
 Manual Bed End confirm과 `02:00` auto end는 모두 `SandboxResultPanel`을 연다. 이 panel은 기존 `DayResultPanel`을 열지 않고 sandbox-local summary만 표시한다.
 
+`F2`는 `SandboxTestModePanel`을 열고 닫는다. Test Mode는 sandbox-local time, end state, Result state만 조작하며 Main / DAY1 Test Mode, `SurvivalState`, `PhoneUI`, `OutletMode`, `DayResultPanel`을 호출하지 않는다.
+
 ## Modal Priority
 
 현재 `_unhandled_input` 기준 우선순위는 아래와 같다.
@@ -58,15 +62,17 @@ Manual Bed End confirm과 `02:00` auto end는 모두 `SandboxResultPanel`을 연
 1. `B` / `Backspace`: PrototypeHub 복귀
 2. `R`: current sandbox restart
 3. Result UI terminal state handling
-4. `T` / `Shift+T`: sandbox time test advance, if clock is running
-5. auto end triggered state: block normal interactions
-6. 열린 Outlet panel 처리
-7. 열린 Phone panel 처리
-8. 열린 End Day panel 처리
-9. 열린 Interaction panel 처리
-10. `Tab`: Phone panel toggle
-11. `D`: debug overlay toggle
-12. `E`: nearest interaction request
+4. `F2`: sandbox-only Test Mode open / close
+5. 열린 Test Mode panel 처리
+6. `T` / `Shift+T`: sandbox time test advance, if clock is running
+7. auto end triggered state: block normal interactions
+8. 열린 Outlet panel 처리
+9. 열린 Phone panel 처리
+10. 열린 End Day panel 처리
+11. 열린 Interaction panel 처리
+12. `Tab`: Phone panel toggle
+13. `D`: debug overlay toggle
+14. `E`: nearest interaction request
 
 이 구조는 열린 modal 위에 다른 modal이 겹쳐 열리는 것을 피하고, `B` / `Backspace`와 `R`은 modal 상태와 관계없이 우선 처리한다.
 
@@ -80,6 +86,7 @@ Room stub player input은 sandbox modal이 열릴 때 잠기고, 모든 modal이
 - `SandboxEndDayPanel`
 - `SandboxPhonePanel`
 - `SandboxOutletPanel`
+- `SandboxTestModePanel`
 
 `_has_open_modal()`과 `_restore_room_input_if_no_modal()`이 modal overlap과 premature input restore를 막는 기준으로 사용된다.
 
@@ -155,6 +162,21 @@ Room stub player input은 sandbox modal이 열릴 때 잠기고, 모든 modal이
 - Result `Hide Details`는 panel만 숨기며 gameplay는 종료 상태로 유지한다.
 - 기존 `DayResultPanel`, `Main`, `SurvivalState`, reward, save / load, story flag는 호출하지 않는다.
 
+### Sandbox Test Mode Flow
+
+- `F2`는 `SandboxTestModePanel`을 열고 닫는다.
+- Test Mode open 중 sandbox-local clock은 pause된다.
+- Test Mode close 시 terminal state가 아니면 open 전 clock running 상태를 복구한다.
+- Test Mode open 중 room stub movement, `E` interaction, `Tab` Phone toggle, Bed / Phone / Power panel open은 잠긴다.
+- `B` / `Backspace` Hub 복귀와 `R` restart는 Test Mode보다 우선 처리된다.
+- `+30 min`과 `+2 hours`는 sandbox-local elapsed minutes만 진행한다.
+- time advance가 `02:00`에 도달하면 기존 sandbox auto end helper를 호출한다.
+- `Jump 01:50`은 sandbox-local time을 `01:50`으로 맞추며 auto end는 아직 발생시키지 않는다.
+- `Trigger Auto End`는 기존 sandbox auto end / Result helper 흐름을 사용한다.
+- `Trigger Manual Result`는 sandbox-only manual Bed result helper 흐름을 사용한다.
+- `Reset Sandbox`는 time `20:00`, elapsed `0`, end / result / modal 상태를 초기화하고 room input을 복구한다.
+- Test Mode는 Main Test Mode, `SurvivalState`, `DeviceDefinition`, `PhoneUI`, `OutletMode`, `DayResultPanel`, reward, save / load, story flag를 조작하지 않는다.
+
 ### Phone Panel Flow
 
 - `Tab`으로 sandbox Phone panel을 열고 닫는 경로가 있다.
@@ -191,7 +213,7 @@ Room stub player input은 sandbox modal이 열릴 때 잠기고, 모든 modal이
 - real `SurvivalState` connected / active state
 - Apartment wire overlay
 - real Main `02:00` auto end / Result flow
-- Test Mode
+- real Main Test Mode
 - Laptop -> `HackingActionPrototype`
 - reward / Result / story flag
 - save / load

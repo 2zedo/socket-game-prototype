@@ -398,6 +398,17 @@ Future hack avatar spritesheet check:
 - [ ] auto end target `02:00`이 표시된다.
 - [ ] `T`로 sandbox time이 `30`분 전진한다.
 - [ ] `Shift+T`로 sandbox time이 `2`시간 전진한다.
+- [ ] `F2`로 sandbox Test Mode panel이 열린다.
+- [ ] Test Mode panel에 sandbox time / elapsed / clock / auto end / result state가 표시된다.
+- [ ] Test Mode open 중 player movement, `E` interaction, `Tab` Phone toggle이 잠긴다.
+- [ ] Test Mode의 `+30 min`이 sandbox-local time만 전진시킨다.
+- [ ] Test Mode의 `+2 hours`가 sandbox-local time만 전진시킨다.
+- [ ] Test Mode의 `Jump 01:50`이 auto end 직전 시간으로 이동한다.
+- [ ] Test Mode의 `Trigger Auto End`가 sandbox-only auto end / Result 흐름을 연다.
+- [ ] Test Mode의 `Trigger Manual Result`가 sandbox-only manual result 흐름을 연다.
+- [ ] Test Mode의 `Reset Sandbox`가 time `20:00`, end state, result state, modal state를 초기화한다.
+- [ ] Test Mode를 닫으면 terminal state가 아닌 경우 player movement와 clock 상태가 복구된다.
+- [ ] Test Mode가 Main Test Mode, `SurvivalState`, real `PhoneUI`, real `OutletMode`, real `DayResultPanel`을 조작하지 않는다.
 - [ ] `E`를 누르면 `interaction_requested` event log가 표시된다.
 - [ ] 가까운 object에서 `E`를 누르면 object interaction panel이 열린다.
 - [ ] Panel에 key / role / future_source / visual_state가 표시된다.
