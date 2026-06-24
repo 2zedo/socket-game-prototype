@@ -17,6 +17,7 @@
 - `RoomSceneContract`와 같은 signal / method를 제공하는 room stub
 - `interaction_requested` signal 수신
 - `nearest_interactable_changed` signal 수신
+- `room_back_requested` signal 수신
 - sandbox-only interaction panel
 - sandbox-only Bed -> End Day confirmation panel
 - sandbox-only Phone panel
@@ -63,6 +64,8 @@
 9. Panel이 열린 동안 `room.set_player_input_enabled(false)`로 room input을 잠근다.
 10. Primary / Inspect / Close는 event log와 Godot output에 no-op 기록만 남긴다.
 11. Close 또는 `ESC`로 panel을 닫으면 `room.set_player_input_enabled(true)`로 room input을 복구한다.
+
+Room stub에서 `room_back_requested`가 emit되면 sandbox controller는 PrototypeHub 복귀로 처리한다. 이 흐름은 sandbox / prototype navigation 전용이며 본게임 Main back routing과 연결하지 않는다.
 
 Bed의 Primary action은 예외적으로 `SandboxEndDayPanel`을 연다. 이 흐름도 sandbox-only 확인이며 `SurvivalState.end_current_day()`, `DayResultPanel`, 기존 Main End Day routing은 호출하지 않는다.
 
@@ -194,6 +197,12 @@ Panel 동작:
 - `B` / `Backspace`: panel 상태와 무관하게 PrototypeHub 복귀를 유지한다.
 
 기존 `res://scenes/ui/OutletMode.tscn`은 실제 `SurvivalState` 슬롯 / 연결 상태와 본게임 adapter UI 전제를 가지고 있으므로 이번 sandbox 단계에서는 직접 재사용하지 않는다.
+
+## Flow Check
+
+`docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`는 현재 sandbox-only 흐름 점검 결과를 기록한다. 확인 범위는 Hub 진입, scene startup, room contract signal 수신, InteractionPanel, Bed confirmation, Phone panel, Outlet panel, modal priority, input lock, `R` restart, `D` debug, `B` / `Backspace` Hub 복귀다.
+
+이번 점검에서 sandbox controller가 room stub의 `room_back_requested` signal도 수신하도록 연결했다. 이 변경은 sandbox 내부 복귀 signal 처리만 보강하며 Main / DAY1에는 연결하지 않는다.
 
 ## PrototypeHub 등록
 

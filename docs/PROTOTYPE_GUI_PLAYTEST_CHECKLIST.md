@@ -389,6 +389,7 @@ Future hack avatar spritesheet check:
 이 scene은 미래 쿼터뷰 Main 이식 전에 `RoomSceneContract` signal flow를 확인하는 sandbox다. 실제 `Main`, Result, Hacking 연결은 확인 대상이 아니다. Bed End Day, Phone, Power / Outlet은 sandbox-only panel까지만 확인한다.
 
 - [ ] Scene이 정상 실행된다.
+- [ ] `PrototypeHub`에서 `6` / `G`, focused `E` / `Enter`, 또는 버튼으로 진입된다.
 - [ ] 화면에 `Quarterview Gameplay Sandbox`와 `Not Main` 안내가 보인다.
 - [ ] `Room contract connected: yes` 상태가 표시된다.
 - [ ] `WASD` / 방향키로 room stub player가 이동한다.
@@ -417,13 +418,24 @@ Future hack avatar spritesheet check:
 - [ ] Close 또는 `ESC`로 panel이 닫힌다.
 - [ ] Panel이 열려 있는 동안 player movement가 잠긴다.
 - [ ] Panel을 닫으면 player movement가 복구된다.
+- [ ] InteractionPanel이 열려 있을 때 `Tab`으로 Phone panel이 겹쳐 열리지 않는다.
+- [ ] End Day confirmation이 열려 있을 때 Phone / Outlet panel이 겹쳐 열리지 않는다.
+- [ ] Phone panel이 열려 있을 때 InteractionPanel이나 Outlet panel이 새로 겹쳐 열리지 않는다.
+- [ ] Outlet panel이 열려 있을 때 InteractionPanel이나 Phone panel이 새로 겹쳐 열리지 않는다.
+- [ ] `ESC`는 현재 열린 sandbox modal을 닫는다.
 - [ ] Panel이 열려 있어도 `B` / `Backspace` Hub 복귀 규칙이 유지된다.
 - [ ] Godot output에 no-op interaction 로그가 출력된다.
 - [ ] `D` 키로 debug overlay ON / OFF가 된다.
 - [ ] Debug ON에서 object label, interaction radius, player position, signal log가 보인다.
 - [ ] `R`로 sandbox가 restart된다.
+- [ ] Confirmed End Day 상태에서도 `R` restart가 가능하다.
 - [ ] `B` / `Backspace`로 `PrototypeHub`에 복귀된다.
 - [ ] real Main Phone / Outlet / Result / 실제 Main End Day / Hacking이 실제로 열리지 않는다.
+
+메모:
+
+- `docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`는 현재 code path와 headless startup 기준의 흐름 점검 결과다.
+- GUI 수동 확인에서는 특히 modal priority, movement lock / restore, `Tab` / `ESC` / `R` / `D` / `B` 우선순위를 본다.
 
 ## SFX 확인 항목
 

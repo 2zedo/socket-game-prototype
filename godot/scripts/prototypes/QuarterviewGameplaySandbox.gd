@@ -137,6 +137,7 @@ func _spawn_room_stub() -> void:
 
 	room.connect("interaction_requested", Callable(self, "_on_room_interaction_requested"))
 	room.connect("nearest_interactable_changed", Callable(self, "_on_nearest_interactable_changed"))
+	room.connect("room_back_requested", Callable(self, "_on_room_back_requested"))
 	room.connect("debug_overlay_toggled", Callable(self, "_on_room_debug_overlay_toggled"))
 	room.connect("player_position_changed", Callable(self, "_on_player_position_changed"))
 	room.connect("room_ready", Callable(self, "_on_room_ready"))
@@ -246,6 +247,11 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 	debug_layer.visible = debug_overlay_enabled
 	_update_status()
 	_update_debug_label()
+
+
+func _on_room_back_requested() -> void:
+	_append_log("Room back requested by sandbox room stub.")
+	_go_to_prototype_hub()
 
 
 func _on_player_position_changed(position: Vector2) -> void:
