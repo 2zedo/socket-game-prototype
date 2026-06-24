@@ -92,6 +92,7 @@ Laptop, Phone, NODE-17, Speaker, Signal Booster, UPS, and power-related visuals 
 - 기존 `Apartment`는 `SurvivalState.powered_devices`와 connected state에 따라 map wire overlay를 표시한다.
 - 쿼터뷰에서는 기존 2D map wire overlay를 그대로 쓰기 어렵다.
 - 장기적으로는 `qv_cable_atlas` 또는 cable node 기반 시각화가 필요할 수 있다.
+- Existing `OutletMode` visual replacement may later use `ui_outlet_atlas.png`, but current Main / DAY 1 behavior remains unchanged.
 - connected state 자체는 계속 `SurvivalState` 기준으로 유지한다.
 - 이번 작업에서는 cable visual, wire overlay, connected sync를 구현하지 않는다.
 

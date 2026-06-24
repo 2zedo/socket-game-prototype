@@ -52,6 +52,8 @@ Gameplay-specific persistent HUD elements such as power, time, battery, Trace, H
 
 Phone-specific frames, app tiles, message bubbles, notifications, and phone screen parts belong to the separate `ui_phone_atlas.png` workflow documented in `docs/UI_PHONE_ATLAS_MAPPING.md`.
 
+Outlet-specific socket slots, device cards, drag / drop highlights, and outlet power-state visuals belong to the separate `ui_outlet_atlas.png` workflow documented in `docs/UI_OUTLET_ATLAS_MAPPING.md`.
+
 Owns:
 
 - Panel frame.

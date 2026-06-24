@@ -312,6 +312,17 @@ Future hack avatar spritesheet check:
 - [ ] Localization text is not baked into Phone UI images.
 - [ ] Sandbox phone panel can test visuals before replacing existing PhoneUI.
 
+## Future ui_outlet_atlas check
+
+- [ ] Outlet panel / slot / device card regions display without cropping.
+- [ ] 9-slice margins preserve corners and borders.
+- [ ] Slot / device card state regions keep consistent size.
+- [ ] 1-slot and 2-slot devices are visually distinct.
+- [ ] Connected and active states are visually distinct.
+- [ ] Drag / drop valid and invalid states are readable.
+- [ ] Localization text is not baked into Outlet UI images.
+- [ ] Sandbox outlet panel can test visuals before replacing existing OutletMode.
+
 ## HackingPerspectiveBlockout 확인 항목
 
 - [ ] Scene이 정상 실행된다.
