@@ -165,6 +165,8 @@ NODE-17
 
 이 구분은 장기 설계 방향이다. 현재 DAY 1 구현의 Light / Fan / 멀티탭 구조를 이번 문서로 변경하지 않는다.
 
+생활 유지 장치의 장기 행동과 전력 모델은 `LivingDeviceDefinition` Resource class로 분리할 준비를 시작했다. 이 구조는 냉장고, 전자레인지, 에어컨, 형광등, UPS 같은 후보를 문서화하기 위한 기반이며, 이번 단계에서 실제 장치 값이나 gameplay wiring은 추가하지 않는다.
+
 ## 추천 임시 수치
 
 아래 값은 플레이테스트 전 문서상 후보값이다. 이번 작업에서 `godot/resources/devices/*.tres`나 기존 밸런스 값을 수정하지 않는다.

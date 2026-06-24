@@ -14,6 +14,8 @@
 
 현재 sandbox의 첫 UI routing 단계는 `interaction_requested`를 sandbox-only interaction panel로 표시하는 것이다. 실제 기능 매핑은 아직 future work로 유지한다.
 
+생활 가전 / 생활 유지 장치의 장기 행동 후보는 `LivingDeviceDefinition` Resource class로 분리할 준비를 시작했다. 이 class는 현재 기능 이식이 아니라 Fridge, Microwave, Air Conditioner, Fluorescent Light, UPS 같은 후보의 전력 모델과 생활 효과를 나중에 기록하기 위한 구조다.
+
 ## 현재 구현 요약
 
 - 현재 본게임 방 화면은 탑뷰 `Apartment` 기반이다.
@@ -34,13 +36,13 @@
 | Power Strip / Outlet | `Apartment.gd`, `Main.gd`, `OutletMode.gd`, `SurvivalState.gd` | `power_strip` | `power` | `power_management` | `OutletMode.open(survival_state)`, `set_powerstrip_slot_occupancy(...)`, `set_powered_devices(...)` | sandbox first | `sandbox_outlet_panel_connected` | Sandbox Outlet panel은 power object primary action으로 열 수 있다. 실제 Main / DAY1 Outlet flow, `SurvivalState` connected / active state, Apartment wire overlay는 아직 연결하지 않았다. |
 | Phone / Charger | `Main.gd`, `PhoneUI.gd`, `SurvivalState.gd`, `DeviceDefinition` | `Tab` Phone UI, `charger` active device | `phone` | `phone_charge` 또는 `phone_status` | `PhoneUI.set_open(...)`, `SurvivalState.toggle_day1_action_active("charger")` | sandbox first | `sandbox_phone_mock_connected` | Sandbox Phone panel은 `Tab`과 phone object primary action으로 열 수 있다. 실제 Main / DAY1 Phone flow, `SurvivalState` battery / charging state는 아직 연결하지 않았다. |
 | Communication Device | `Apartment.gd`, `SurvivalState.gd`, `DeviceDefinition` | `communication_device` | `comm` | `communication` | active toggle, Result flag `sent_or_received_signal` | later sandbox | `sandbox_candidate` | 해킹 의뢰, 외부 신호, NODE-17 연계 후보. 현재 DeviceDefinition 값은 유지한다. |
-| Light / Lamp / Fluorescent | `Apartment.gd`, `SurvivalState.gd`, `DeviceDefinition` | `light` | 미정: `fluorescent_light` 또는 background fixture | `background_structure` 또는 `background_life_hint` | 현재는 active toggle. 장기적으로 기본 설비 후보 | design decision first | `blocked_by_design_decision` | 현재 1-slot 장치와 장기 형광등 기본 설비 방향이 충돌한다. 이번 문서에서 정책만 기록한다. |
-| Fan / Air Conditioner | `Apartment.gd`, `SurvivalState.gd`, `DeviceDefinition` | `fan` | `aircon` | `living_appliance` | 현재는 Fan active toggle. 장기 AC는 미구현 | design decision first | `blocked_by_design_decision` | 현재 Fan은 유지. 장기 방향은 AC 교체 검토지만 실제 Fan 제거 / AC 구현은 별도 작업이다. |
-| Fridge | 미구현 | 없음 | `fridge` | `living_appliance` | future survival state or upkeep logic | future sandbox | `future_candidate` | 생활 유지 장치 후보. 식량 / 컨디션 / 비용 리스크는 아직 본 구현 아님. |
-| Microwave | 미구현 | 없음 | `microwave` | `living_appliance` | future instant power spend / time advance | future sandbox | `future_candidate` | 순간 소비 장치 후보. 식사 / 컨디션 회복은 아직 본 구현 아님. |
+| Light / Lamp / Fluorescent | `Apartment.gd`, `SurvivalState.gd`, `DeviceDefinition` | `light` | 미정: `fluorescent_light` 또는 background fixture | `background_structure` 또는 `background_life_hint` | 현재는 active toggle. 장기적으로 기본 설비 후보 | design decision first | `blocked_by_design_decision` | 현재 1-slot 장치와 장기 형광등 기본 설비 방향이 충돌한다. `LivingDeviceDefinition`에서는 `background_fixture` / `passive` 후보로 기록 가능하지만, 이번 문서에서 정책만 기록한다. |
+| Fan / Air Conditioner | `Apartment.gd`, `SurvivalState.gd`, `DeviceDefinition` | `fan` | `aircon` | `living_appliance` | 현재는 Fan active toggle. 장기 AC는 미구현 | design decision first | `blocked_by_design_decision` | 현재 Fan은 유지. 장기 방향은 AC 교체 검토지만 실제 Fan 제거 / AC 구현은 별도 작업이다. `LivingDeviceDefinition`의 environment / continuous 후보가 될 수 있다. |
+| Fridge | 미구현 | 없음 | `fridge` | `living_appliance` | future survival state or upkeep logic | future sandbox | `future_candidate` | 생활 유지 장치 후보. 식량 / 컨디션 / 비용 리스크는 아직 본 구현 아님. 장기 행동은 `LivingDeviceDefinition` 후보. |
+| Microwave | 미구현 | 없음 | `microwave` | `living_appliance` | future instant power spend / time advance | future sandbox | `future_candidate` | 순간 소비 장치 후보. 식사 / 컨디션 회복은 아직 본 구현 아님. 장기 행동은 `LivingDeviceDefinition` 후보. |
 | NODE-17 | 미구현 | 없음 | `node17` | `mystery_device` | future story flag / signal state | future sandbox | `future_candidate` | 메인 미스터리 장치. Laptop / Hacking / Communication과 장기 연계한다. |
 | Speaker | 미구현 | 없음 | `speaker` | `audio_hacking_device` | future audio log / signal analysis UI | future sandbox | `future_candidate` | 장식품이 아니라 해킹 활동 관련 오디오 장비다. 작업 구역 배치 기준이다. |
-| UPS / Backup Battery | 미구현 | 없음 | `ups` | `support_device` | future charge / storage state | future sandbox | `future_candidate` | 오늘 전력을 나중을 위해 저장하는 시스템 후보. 본 구현 아님. |
+| UPS / Backup Battery | 미구현 | 없음 | `ups` | `support_device` | future charge / storage state | future sandbox | `future_candidate` | 오늘 전력을 나중을 위해 저장하는 시스템 후보. 본 구현 아님. 장기 행동은 `LivingDeviceDefinition`의 storage / support 후보로 기록 가능하다. |
 | Signal Booster | 미구현 | 없음 | `signal_booster` | `support_device` 후보 | future hacking condition / signal quality | future sandbox | `future_candidate` | 해킹 미션 조건, 신호 품질, 추적률, 추가 데이터 노드 연계 후보. |
 | Door | `Apartment.gd` visual / collision context | 직접 기능 대상 아님 | `door` | `background_structure` | 없음 | no gameplay migration | `prototype_contract_ready` | 생활 구조 암시용. 현관 직접 기능 구현 대상 아님. |
 | Bathroom Door | `Apartment.gd` visual / collision context | 직접 기능 대상 아님 | `bathroom_door` | `background_structure` | 없음 | no gameplay migration | `prototype_contract_ready` | 욕실 내부를 크게 보여주지 않고 문 / 환기구 등으로 암시한다. “화장실” 텍스트 라벨은 금지. |
@@ -66,6 +68,7 @@
 | `SurvivalState` | `godot/scripts/SurvivalState.gd` | sandbox에서도 source of truth로 재사용 | Main modal routing과 분리할 때 회귀 위험 | `godot/test/unit/test_survival_state.gd` 일부 covered by GUT |
 | `DeviceDefinition` Resource | `godot/scripts/resources/DeviceDefinition.gd`, `godot/resources/devices/*.tres` | 장치 이름, 슬롯, 부하, drain, Result flag 유지 | Fan / Light 장기 정책과 충돌 가능 | GUT device value test |
 | `RoomObjectDefinition` Resource | `godot/scripts/resources/RoomObjectDefinition.gd`, `godot/resources/rooms/quarterview/objects/*.tres` | 쿼터뷰 object key / role / 위치 / interaction 후보 재사용 | 본게임 데이터와 prototype blockout 값이 섞일 수 있음 | Not covered by GUT |
+| `LivingDeviceDefinition` Resource | `godot/scripts/resources/LivingDeviceDefinition.gd` | 생활 가전 / 생활 유지 장치의 전력 모델과 생활 효과 후보를 정의 | 아직 `.tres`와 gameplay wiring이 없어 정책 후보에 머무름 | `godot/test/unit/test_living_device_definition.gd` |
 | connected / active 분리 | `SurvivalState`, `OutletMode`, `Main` | 그대로 유지 | object primary action이 connection 없이 active를 켜면 안 됨 | GUT connected / active test |
 | hourly drain | `SurvivalState.get_active_power_drain_per_game_hour()` | 그대로 유지 | DAY 시간 / modal pause와 엮일 때 drift 위험 | GUT active drain test |
 | clock pause by modal | `Main._sync_player_movement_with_modal_state()`, `SurvivalState.set_clock_paused_by_modal()` | sandbox modal에도 동일 정책 적용 | UI overlay 중 시간이 흐르는 회귀 위험 | GUT modal pause test |

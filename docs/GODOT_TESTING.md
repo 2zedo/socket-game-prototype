@@ -25,6 +25,7 @@ GUT `v9.5.0` is used because the project currently runs on Godot `4.5.1`. Do not
 - `godot/test/unit/test_hacking_action_state_machine.gd`
 - `godot/test/unit/test_asset_smoke.gd`
 - `godot/test/unit/test_grid_credit_state.gd`
+- `godot/test/unit/test_living_device_definition.gd`
 
 Covered behavior:
 
@@ -40,6 +41,7 @@ Covered behavior:
 - `HackingActionPrototype` scene instantiation, initial mission state, objective extraction, exit success, Trace failure, HP failure, reset, and failed-state exit guard.
 - Selected prototype Kenney SFX / input prompt files exist, load through Godot, keep copied license files, and remain documented in the third-party asset inventory.
 - `GridCreditState` reset, earn, spend, adjust, summary, and transaction log copy behavior.
+- `LivingDeviceDefinition` validity, type / power helpers, effect summary, result text fallback, and debug summary behavior.
 
 ## Command Line
 
@@ -71,6 +73,12 @@ Run the Grid Credit skeleton test directly with:
 
 ```bash
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_grid_credit_state.gd -gexit
+```
+
+Run the Living Device definition test directly with:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gtest=res://test/unit/test_living_device_definition.gd -gexit
 ```
 
 For all future GUT tests, prefer adding test files under:
