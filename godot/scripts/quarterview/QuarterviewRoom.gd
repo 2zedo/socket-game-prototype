@@ -4,6 +4,10 @@ signal interaction_requested(object_key: String, action_key: String, payload: Di
 signal nearest_interactable_changed(object_key: String, display_name: String)
 
 const ACTION_PRIMARY := "primary"
+const TEMP_BACKGROUND_PATH := "res://assets/art/quarterview/room/temp_qv_room_background.png"
+const REFERENCE_BACKGROUND_PATH := "res://assets/art/quarterview/reference/qv_room_concept_reference.png"
+const BACKGROUND_TARGET_SIZE := Vector2(1280, 720)
+const REFERENCE_OVERLAY_ALPHA := 0.38
 
 const OBJECT_RESOURCE_PATHS := [
 	"res://resources/rooms/quarterview/objects/door.tres",
@@ -252,7 +256,9 @@ const VISUAL_BLOCKS := [
 var object_definitions: Array = []
 var nearest_key := ""
 var debug_enabled := false
+var background_mode := "none"
 var prompt_label: Label
+var reference_notice_label: Label
 var floor_points := PackedVector2Array([
 	Vector2(244, 150),
 	Vector2(1018, 150),
@@ -262,6 +268,8 @@ var floor_points := PackedVector2Array([
 	Vector2(154, 430),
 ])
 
+@onready var background_layer: Node2D = $BackgroundLayer
+@onready var background_sprite: Sprite2D = $BackgroundLayer/BackgroundSprite
 @onready var floor_layer: Node2D = $FloorLayer
 @onready var wall_back_layer: Node2D = $WallBackLayer
 @onready var wall_side_layer: Node2D = $WallSideLayer
@@ -276,9 +284,11 @@ var floor_points := PackedVector2Array([
 
 func _ready() -> void:
 	_configure_layers()
+	_configure_background_art()
 	_build_room_shell()
 	_build_visual_details()
 	_build_prompt()
+	_build_reference_notice()
 	_load_object_definitions()
 	_build_object_placeholders()
 	_build_wall_blockers()
@@ -302,6 +312,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _configure_layers() -> void:
 	var ordered_layers := [
+		background_layer,
 		floor_layer,
 		wall_back_layer,
 		wall_side_layer,
@@ -316,6 +327,43 @@ func _configure_layers() -> void:
 		var layer: Node2D = ordered_layers[index]
 		layer.z_as_relative = false
 		layer.z_index = index * 10
+
+
+func _configure_background_art() -> void:
+	var image_path := ""
+	var alpha := 1.0
+
+	if FileAccess.file_exists(TEMP_BACKGROUND_PATH):
+		image_path = TEMP_BACKGROUND_PATH
+		background_mode = "runtime_background"
+	elif FileAccess.file_exists(REFERENCE_BACKGROUND_PATH):
+		image_path = REFERENCE_BACKGROUND_PATH
+		background_mode = "reference_overlay"
+		alpha = REFERENCE_OVERLAY_ALPHA
+	else:
+		background_mode = "missing"
+		background_sprite.visible = false
+		push_warning("QuarterviewRoom has no temporary background or concept reference image.")
+		return
+
+	var texture := load(image_path) as Texture2D
+	if texture == null:
+		background_mode = "missing"
+		background_sprite.visible = false
+		push_warning("QuarterviewRoom could not load background image: %s" % image_path)
+		return
+
+	background_sprite.texture = texture
+	background_sprite.centered = false
+	var texture_size := texture.get_size()
+	var scale_value: float = min(
+		BACKGROUND_TARGET_SIZE.x / texture_size.x,
+		BACKGROUND_TARGET_SIZE.y / texture_size.y
+	)
+	background_sprite.scale = Vector2(scale_value, scale_value)
+	background_sprite.position = (BACKGROUND_TARGET_SIZE - texture_size * scale_value) * 0.5
+	background_sprite.modulate = Color(1.0, 1.0, 1.0, alpha)
+	background_sprite.visible = true
 
 
 func _build_room_shell() -> void:
@@ -480,6 +528,21 @@ func _build_prompt() -> void:
 	prompt_label.add_theme_constant_override("outline_size", 4)
 	prompt_label.add_theme_font_size_override("font_size", 18)
 	prompt_layer.add_child(prompt_label)
+
+
+func _build_reference_notice() -> void:
+	if background_mode != "reference_overlay":
+		return
+
+	reference_notice_label = Label.new()
+	reference_notice_label.name = "ReferenceNoticeLabel"
+	reference_notice_label.text = "Reference overlay only"
+	reference_notice_label.position = Vector2(22, 660)
+	reference_notice_label.add_theme_color_override("font_color", Color(0.95, 0.78, 0.42, 0.82))
+	reference_notice_label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.012, 1.0))
+	reference_notice_label.add_theme_constant_override("outline_size", 3)
+	reference_notice_label.add_theme_font_size_override("font_size", 14)
+	prompt_layer.add_child(reference_notice_label)
 
 
 func _load_object_definitions() -> void:
@@ -722,6 +785,15 @@ func _get_definition(object_key: String) -> Resource:
 
 func _set_debug_enabled(enabled: bool) -> void:
 	debug_enabled = enabled
+	for layer in [
+		floor_layer,
+		wall_back_layer,
+		wall_side_layer,
+		object_back_layer,
+		object_layer,
+		foreground_layer,
+	]:
+		layer.visible = debug_enabled
 	debug_layer.visible = debug_enabled
 
 
