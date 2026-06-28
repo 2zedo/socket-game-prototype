@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+# Candidate movement tuning. Keep these near the top so GUI feedback can map
+# directly to a small number of values.
 const MOVE_SPEED := 230.0
 const TARGET_REACHED_DISTANCE := 10.0
 
@@ -10,8 +12,6 @@ var path_index := 0
 
 func set_keyboard_input_enabled(enabled: bool) -> void:
 	keyboard_input_enabled = enabled
-	if enabled:
-		clear_move_target()
 
 
 func set_move_target(target: Vector2) -> void:

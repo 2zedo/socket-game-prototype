@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `02bc38c`
-- Phase: QuarterviewMain click pathfinding crash hardening
+- Current commit at task start: `c5589b5`
+- Phase: QuarterviewMain movement tuning / debug overlay stabilization
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -34,6 +34,7 @@
 - Project identity consolidation: added `docs/CONCENT_PROJECT_IDENTITY.md` and `docs/PROJECT_WORK_LOG.md`, and made AGENTS point to the identity document.
 - Room / power / hacking design direction docs: fixed the current direction for mouse-centric room flow, desk close-up, modular power, hunger, hacking infiltration, and defense.
 - Deprecated / scoped document notice pass: added targeted notices to legacy / conflict candidate docs, while leaving current source-of-truth docs unchanged.
+- QuarterviewMain movement/debug tuning: organized click/path tuning constants, kept debug toggle from changing room/camera/player transforms, and made D show debug overlays without reintroducing blockout visual shift.
 - QuarterviewMain click pathfinding hardening: guarded empty path results and removed the `skew` shadow warning in the candidate room script.
 - QuarterviewMain click movement feel: enlarged the temporary player marker and added candidate grid pathfinding around blockers for click movement and object approach.
 - QuarterviewMain mouse interaction cleanup: normal view now uses mouse-click movement, object click approach, candidate interaction panel, and debug-only keyboard / blockout display.
@@ -42,7 +43,9 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/quarterview/QuarterviewRoom.gd`: guards empty path results, treats same-position targets as arrived, reports path failure reasons, and removes the local `skew` shadow warning.
+- `godot/scripts/quarterview/QuarterviewRoom.gd`: groups movement/debug tuning constants, keeps blockout layers hidden by default, clamps click targets with a small margin, and preserves room/player transforms during debug toggles.
+- `godot/scripts/quarterview/QuarterviewPlayer.gd`: keeps click paths active when toggling debug keyboard mode until actual keyboard movement starts.
+- `godot/scripts/QuarterviewMain.gd`: preserves room/camera transforms while updating debug status text.
 - `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain cleanup pass.
 
 ## Validation Results
@@ -60,13 +63,13 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI spam-click confirmation is still needed for player scale, path feel, obstacle avoidance, object approach points, debug failure reasons, and panel placement.
+- GUI confirmation is still needed for debug ON/OFF screen stability, player scale, path feel, obstacle avoidance, object approach points, debug failure reasons, and panel placement.
 
 ## Next Recommended Task
 
 1. QuarterviewMain GUI check:
    - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
-   - Complete when background, player scale, obstacle-aware click movement, spam-click stability, blocker/object approach, candidate panel, `D` debug path overlay, and `R` restart are manually verified.
+   - Complete when background, debug ON/OFF stability, player scale, obstacle-aware click movement, spam-click stability, blocker/object approach, candidate panel, `D` debug path overlay, and `R` restart are manually verified.
 2. Main replacement gate review:
    - Start files: `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/MAIN_REPLACEMENT_WORK_PLAN.md`.
    - Complete when Go / No-Go items are reviewed before any production entry change.

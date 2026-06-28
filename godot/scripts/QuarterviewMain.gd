@@ -3,6 +3,7 @@ extends Node2D
 const RESTART_KEY := KEY_R
 const CANCEL_KEY := KEY_ESCAPE
 
+@onready var camera: Camera2D = $Camera2D
 @onready var quarterview_room: Node2D = $QuarterviewRoom
 @onready var status_label: Label = $UILayer/StatusPanel/Margin/VBox/StatusLabel
 @onready var log_label: Label = $UILayer/StatusPanel/Margin/VBox/LogLabel
@@ -67,8 +68,14 @@ func _on_nearest_interactable_changed(object_key: String, display_name: String) 
 
 
 func _on_room_debug_overlay_toggled(enabled: bool) -> void:
+	var room_transform := quarterview_room.global_transform
+	var camera_transform := camera.global_transform
+	var camera_zoom := camera.zoom
 	room_debug_enabled = enabled
 	_update_status("Debug overlay %s." % ("ON" if enabled else "OFF"))
+	quarterview_room.global_transform = room_transform
+	camera.global_transform = camera_transform
+	camera.zoom = camera_zoom
 
 
 func _on_room_movement_path_failed(reason: String) -> void:

@@ -11,12 +11,27 @@ const TEMP_BACKGROUND_PATH := "res://assets/art/quarterview/room/temp_qv_room_ba
 const REFERENCE_BACKGROUND_PATH := "res://assets/art/quarterview/reference/qv_room_concept_reference.png"
 const BACKGROUND_TARGET_SIZE := Vector2(1280, 720)
 const REFERENCE_OVERLAY_ALPHA := 0.38
+
+# Candidate click/path tuning. Adjust these first when GUI feedback says the
+# player sticks to furniture, takes too wide a route, or arrives too early/late.
 const WALK_TARGET_BOUNDS := Rect2(Vector2(190, 190), Vector2(900, 438))
 const CLICK_OBJECT_PADDING := 28.0
+const CLICK_TARGET_CLAMP_MARGIN := 8.0
 const PATH_GRID_CELL_SIZE := 24.0
 const PATH_BLOCKER_PADDING := 24.0
 const PATH_TARGET_REACHED_DISTANCE := 10.0
+const OBJECT_APPROACH_INTERACTION_MARGIN := 8.0
 const PLAYER_COLLISION_DEBUG_RADIUS := 16.0
+
+# Debug display tuning. Blockout layers stay hidden by default so D toggles only
+# measurement overlays and cannot visually shift the room/background.
+const DEBUG_SHOW_BLOCKOUT_LAYERS := false
+const DEBUG_BLOCKER_LINE_WIDTH := 2.0
+const DEBUG_INTERACTION_LINE_WIDTH := 2.0
+const DEBUG_APPROACH_MARKER_HALF_SIZE := 6.0
+const DEBUG_PATH_LINE_WIDTH := 3.0
+const DEBUG_CLICK_TARGET_MARKER_HALF_SIZE := 9.0
+const DEBUG_FAILURE_LABEL_POSITION := Vector2(24, 616)
 
 const OBJECT_RESOURCE_PATHS := [
 	"res://resources/rooms/quarterview/objects/door.tres",
@@ -316,6 +331,7 @@ func _ready() -> void:
 	_build_wall_blockers()
 	_rebuild_path_grid()
 	_build_path_debug()
+	_set_blockout_layers_visible(false)
 	_set_debug_enabled(false)
 
 
@@ -732,14 +748,14 @@ func _add_debug_for_definition(definition: Resource) -> void:
 	var approach := Line2D.new()
 	approach.name = "%sApproachPoint" % String(definition.key).capitalize().replace("_", "")
 	approach.closed = true
-	approach.width = 2.0
+	approach.width = DEBUG_INTERACTION_LINE_WIDTH
 	approach.default_color = Color(1.0, 0.82, 0.24, 0.82)
 	var approach_position := _get_object_approach_position(definition)
 	approach.points = PackedVector2Array([
-		approach_position + Vector2(-6, -6),
-		approach_position + Vector2(6, -6),
-		approach_position + Vector2(6, 6),
-		approach_position + Vector2(-6, 6),
+		approach_position + Vector2(-DEBUG_APPROACH_MARKER_HALF_SIZE, -DEBUG_APPROACH_MARKER_HALF_SIZE),
+		approach_position + Vector2(DEBUG_APPROACH_MARKER_HALF_SIZE, -DEBUG_APPROACH_MARKER_HALF_SIZE),
+		approach_position + Vector2(DEBUG_APPROACH_MARKER_HALF_SIZE, DEBUG_APPROACH_MARKER_HALF_SIZE),
+		approach_position + Vector2(-DEBUG_APPROACH_MARKER_HALF_SIZE, DEBUG_APPROACH_MARKER_HALF_SIZE),
 	])
 	debug_layer.add_child(approach)
 
@@ -833,7 +849,19 @@ func _get_definition(object_key: String) -> Resource:
 
 
 func _set_debug_enabled(enabled: bool) -> void:
+	var room_transform := global_transform
+	var player_transform := player.global_transform
 	debug_enabled = enabled
+	_set_blockout_layers_visible(DEBUG_SHOW_BLOCKOUT_LAYERS and debug_enabled)
+	debug_layer.visible = debug_enabled
+	if player.has_method("set_keyboard_input_enabled"):
+		player.set_keyboard_input_enabled(debug_enabled)
+	global_transform = room_transform
+	player.global_transform = player_transform
+	debug_overlay_toggled.emit(debug_enabled)
+
+
+func _set_blockout_layers_visible(visible: bool) -> void:
 	for layer in [
 		floor_layer,
 		wall_back_layer,
@@ -842,11 +870,7 @@ func _set_debug_enabled(enabled: bool) -> void:
 		object_layer,
 		foreground_layer,
 	]:
-		layer.visible = debug_enabled
-	debug_layer.visible = debug_enabled
-	if player.has_method("set_keyboard_input_enabled"):
-		player.set_keyboard_input_enabled(debug_enabled)
-	debug_overlay_toggled.emit(debug_enabled)
+		layer.visible = visible
 
 
 func get_background_mode() -> String:
@@ -919,7 +943,8 @@ func _find_path_to_target(target: Vector2) -> PackedVector2Array:
 		return PackedVector2Array()
 
 	var clamped_target := _clamp_walk_target(target)
-	if player.global_position.distance_to(clamped_target) <= PATH_TARGET_REACHED_DISTANCE:
+	var target_is_blocked := _is_world_point_blocked_for_path(clamped_target)
+	if player.global_position.distance_to(clamped_target) <= PATH_TARGET_REACHED_DISTANCE and not target_is_blocked:
 		return PackedVector2Array([clamped_target])
 
 	var start_id := _find_nearest_walkable_grid_id(player.global_position)
@@ -931,9 +956,10 @@ func _find_path_to_target(target: Vector2) -> PackedVector2Array:
 	if target_id == Vector2i(-1, -1):
 		path_failure_reason = "No path: target blocked"
 		return PackedVector2Array()
+	var resolved_target := _grid_id_to_world(target_id) if target_is_blocked else clamped_target
 
 	if start_id == target_id:
-		return PackedVector2Array([_grid_id_to_world(target_id)])
+		return PackedVector2Array([resolved_target])
 
 	var id_path := path_grid.get_id_path(start_id, target_id, false)
 	if id_path.size() == 0:
@@ -948,7 +974,7 @@ func _find_path_to_target(target: Vector2) -> PackedVector2Array:
 		path_failure_reason = "No path: empty path"
 		return PackedVector2Array()
 
-	path[path.size() - 1] = _grid_id_to_world(target_id)
+	path[path.size() - 1] = resolved_target
 	return path
 
 
@@ -1013,7 +1039,7 @@ func _build_path_debug() -> void:
 	walk_bounds_debug_line = Line2D.new()
 	walk_bounds_debug_line.name = "WalkableBounds"
 	walk_bounds_debug_line.closed = true
-	walk_bounds_debug_line.width = 2.0
+	walk_bounds_debug_line.width = DEBUG_BLOCKER_LINE_WIDTH
 	walk_bounds_debug_line.default_color = Color(0.35, 0.62, 1.0, 0.62)
 	walk_bounds_debug_line.points = PackedVector2Array([
 		WALK_TARGET_BOUNDS.position,
@@ -1025,27 +1051,27 @@ func _build_path_debug() -> void:
 
 	path_debug_line = Line2D.new()
 	path_debug_line.name = "CurrentPath"
-	path_debug_line.width = 4.0
+	path_debug_line.width = DEBUG_PATH_LINE_WIDTH
 	path_debug_line.default_color = Color(0.28, 0.84, 1.0, 0.86)
 	debug_layer.add_child(path_debug_line)
 
 	click_target_debug_line = Line2D.new()
 	click_target_debug_line.name = "ClickTarget"
 	click_target_debug_line.closed = true
-	click_target_debug_line.width = 3.0
+	click_target_debug_line.width = DEBUG_BLOCKER_LINE_WIDTH
 	click_target_debug_line.default_color = Color(1.0, 0.84, 0.18, 0.92)
 	debug_layer.add_child(click_target_debug_line)
 
 	player_collision_debug_line = Line2D.new()
 	player_collision_debug_line.name = "PlayerCollisionRadius"
 	player_collision_debug_line.closed = true
-	player_collision_debug_line.width = 2.0
+	player_collision_debug_line.width = DEBUG_INTERACTION_LINE_WIDTH
 	player_collision_debug_line.default_color = Color(0.92, 0.92, 1.0, 0.68)
 	debug_layer.add_child(player_collision_debug_line)
 
 	path_failure_label = Label.new()
 	path_failure_label.name = "PathFailureLabel"
-	path_failure_label.position = Vector2(24, 616)
+	path_failure_label.position = DEBUG_FAILURE_LABEL_POSITION
 	path_failure_label.add_theme_color_override("font_color", Color(1.0, 0.46, 0.32, 0.92))
 	path_failure_label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.012, 1.0))
 	path_failure_label.add_theme_constant_override("outline_size", 3)
@@ -1067,10 +1093,10 @@ func _update_path_debug(path: PackedVector2Array, target: Vector2) -> void:
 	if click_target_debug_line != null:
 		if has_click_target:
 			click_target_debug_line.points = PackedVector2Array([
-				current_click_target + Vector2(-9, -9),
-				current_click_target + Vector2(9, -9),
-				current_click_target + Vector2(9, 9),
-				current_click_target + Vector2(-9, 9),
+				current_click_target + Vector2(-DEBUG_CLICK_TARGET_MARKER_HALF_SIZE, -DEBUG_CLICK_TARGET_MARKER_HALF_SIZE),
+				current_click_target + Vector2(DEBUG_CLICK_TARGET_MARKER_HALF_SIZE, -DEBUG_CLICK_TARGET_MARKER_HALF_SIZE),
+				current_click_target + Vector2(DEBUG_CLICK_TARGET_MARKER_HALF_SIZE, DEBUG_CLICK_TARGET_MARKER_HALF_SIZE),
+				current_click_target + Vector2(-DEBUG_CLICK_TARGET_MARKER_HALF_SIZE, DEBUG_CLICK_TARGET_MARKER_HALF_SIZE),
 			])
 		else:
 			click_target_debug_line.points = PackedVector2Array()
@@ -1101,7 +1127,7 @@ func _update_pending_focus() -> void:
 	pending_focus_key = ""
 	if definition == null:
 		return
-	if player.global_position.distance_to(_get_object_interaction_position(definition)) > _get_object_interaction_radius(definition):
+	if player.global_position.distance_to(_get_object_interaction_position(definition)) > _get_object_interaction_radius(definition) + OBJECT_APPROACH_INTERACTION_MARGIN:
 		return
 
 	nearest_key = definition.key
@@ -1145,8 +1171,16 @@ func _get_object_approach_position(definition: Resource) -> Vector2:
 
 func _clamp_walk_target(target: Vector2) -> Vector2:
 	return Vector2(
-		clampf(target.x, WALK_TARGET_BOUNDS.position.x, WALK_TARGET_BOUNDS.end.x),
-		clampf(target.y, WALK_TARGET_BOUNDS.position.y, WALK_TARGET_BOUNDS.end.y)
+		clampf(
+			target.x,
+			WALK_TARGET_BOUNDS.position.x + CLICK_TARGET_CLAMP_MARGIN,
+			WALK_TARGET_BOUNDS.end.x - CLICK_TARGET_CLAMP_MARGIN
+		),
+		clampf(
+			target.y,
+			WALK_TARGET_BOUNDS.position.y + CLICK_TARGET_CLAMP_MARGIN,
+			WALK_TARGET_BOUNDS.end.y - CLICK_TARGET_CLAMP_MARGIN
+		)
 	)
 
 
