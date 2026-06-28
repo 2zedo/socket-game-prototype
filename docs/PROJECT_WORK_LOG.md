@@ -64,10 +64,18 @@
 - Validation: `git diff --check`, `git diff --cached --check`
 - Next: `PROJECT_STATUS.md`가 200줄을 넘는 상태이므로 별도 작업에서 로테이션 여부를 검토한다.
 
-### this commit - PROJECT_STATUS 로테이션 및 문서 인벤토리 생성
+### cc47319 - PROJECT_STATUS 로테이션 및 문서 인벤토리 생성
 
-- Commit: `this commit`
+- Commit: `cc47319`
 - Result: `PROJECT_STATUS.md`를 `docs/old`로 보존하고, 새 짧은 상태판과 `DOCUMENT_INVENTORY.md`를 만들었다.
 - Changed: `docs/PROJECT_STATUS.md`, `docs/old/PROJECT_STATUS_20260628_01.md`, `docs/DOCUMENT_INVENTORY.md`, `docs/PROJECT_WORK_LOG.md`, `AGENTS.md`
 - Validation: `git diff --check`, `git diff --cached --check`
 - Next: deprecated notice 정리나 세부 문서 정리는 별도 작업에서 검토한다.
+
+### this commit - deprecated notice 정리
+
+- Commit: `this commit`
+- Result: legacy / conflict candidate docs에 superseded 또는 scope notice를 붙였고, archive 이동은 하지 않았다.
+- Changed: candidate docs notice, `docs/DOCUMENT_INVENTORY.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`
+- Validation: `git diff --check`, `git diff --cached --check`, `find docs -type f | sort`, targeted `wc -l`
+- Next: 필요하면 superseded 문서를 current identity 기준으로 통합하거나 archive stub 처리한다.

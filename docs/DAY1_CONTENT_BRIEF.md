@@ -1,5 +1,10 @@
 # DAY 1 Content Brief
 
+> [!NOTE]
+> Scope: 이 문서는 현재 top-view Main / DAY1 범위에 대한 문서다.
+> 현재 게임 정체성과 최신 디자인 방향은 `docs/CONCENT_PROJECT_IDENTITY.md`를 우선한다.
+> 이 문서의 내용이 identity 문서와 충돌하면 identity 문서를 우선한다.
+
 ## DAY 1 Purpose
 
 DAY 1 is the tutorial and core loop proof. It should teach the player that power is limited, connected devices can be switched on or off, active time consumes power, and the day ends with a simple summary.

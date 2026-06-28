@@ -1,5 +1,10 @@
 # Asset Application Notes
 
+> [!NOTE]
+> Scope: 이 문서는 현재 적용된 Main / DAY1 asset 기록에 대한 문서다.
+> 현재 게임 정체성과 최신 디자인 방향은 `docs/CONCENT_PROJECT_IDENTITY.md`를 우선한다.
+> 이 문서의 내용이 identity 문서와 충돌하면 identity 문서를 우선한다.
+
 ## Active Runtime Assets
 
 - Apartment base map: `godot/assets/art/maps/apartment/map_base_no_wires.png`

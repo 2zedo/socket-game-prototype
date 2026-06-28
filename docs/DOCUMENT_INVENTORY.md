@@ -23,13 +23,13 @@
 | `docs/CONCENT_ROOM_POWER_HACKING_DESIGN_DIRECTION.md` | Current | 메인방, 책상 클로즈업, 전력 장비, 허기, 해킹 침투 / 방어 방향 | identity의 근거 문서 |
 | `docs/QUARTERVIEW_ROOM_DIRECTION.md` | Current | 쿼터뷰 방 콘티, 분위기, 공간 배치 기준 | identity와 충돌하면 identity 우선 |
 | `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md` | Current | top-down, 3/4 top-down, quarterview, cutaway 용어 정리 | prototype 역할 구분 기준 |
-| `docs/PROJECT_DIRECTION_REVISED.md` | Planning | 구현 상태와 장기 방향 구분 | 일부 내용은 identity로 요약됨 |
-| `docs/IMPLEMENTATION_ROADMAP_REVISED.md` | Planning | 추천 구현 순서와 prototype 우선 원칙 | 오래된 항목은 확인 필요 |
+| `docs/PROJECT_DIRECTION_REVISED.md` | Superseded Notice Added | 구현 상태와 장기 방향 구분 | 최신 identity와 충돌하면 identity 우선 |
+| `docs/IMPLEMENTATION_ROADMAP_REVISED.md` | Superseded Notice Added | 추천 구현 순서와 prototype 우선 원칙 | 최신 QuarterviewMain / sandbox 상태와 충돌하면 identity 우선 |
 | `docs/ROADMAP.md` | Planning | 간단한 큰 단계 roadmap | 최신 세부 방향은 identity 우선 |
-| `docs/DAILY_LOOP_REVISED.md` | Planning | 하루 루프, 현실 / 해킹 / 보상 방향 | Main / DAY1 실제 구현과 함께 확인 |
+| `docs/DAILY_LOOP_REVISED.md` | Superseded Notice Added | 하루 루프, 현실 / 해킹 / 보상 방향 | 최신 room / hacking / reward 방향과 충돌하면 identity 우선 |
 | `docs/WORLD_BIBLE.md` | Planning | 세계관 요약 | 상위 분위기 참고 |
 | `docs/YUI_CHARACTER_BRIEF.md` | Planning | 유이 캐릭터 방향 | 방 모티프는 identity 우선 |
-| `docs/VISUAL_DIRECTION.md` | Planning | 전반 visual 방향 | 최신 room / power / hacking 방향과 함께 확인 |
+| `docs/VISUAL_DIRECTION.md` | Superseded Notice Added | 전반 visual 방향 | 최신 room / power / hacking 방향과 충돌하면 identity 우선 |
 
 ## 4. 구현 / 시스템 문서
 
@@ -41,7 +41,7 @@
 | `docs/QUARTERVIEW_APARTMENT_MAPPING.md` | Planning | 기존 Apartment / Main 기능과 quarterview object 대응표 | 실제 연결 전 sandbox first |
 | `docs/ROOM_SCENE_CONTRACT.md` | Planning | 미래 room scene signal / method contract | skeleton만 존재 |
 | `docs/ROOM_OBJECT_DEFINITION.md` | Current | `RoomObjectDefinition` Resource field / helper 기준 | `.tres` object resources와 연결 |
-| `docs/ROOM_DEVICE_DIRECTION.md` | Planning | 방 장치 방향 | 최신 power board 방향과 함께 확인 |
+| `docs/ROOM_DEVICE_DIRECTION.md` | Superseded Notice Added | 방 장치 방향 | 최신 power board / room identity와 충돌하면 identity 우선 |
 | `docs/QUARTERVIEW_OBJECT_CONTRACT.md` | Current | object key, zone, role, future_source, visual_state 계약 | contract 기준 |
 | `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md` | Prototype-only | QuarterviewRoomPrototype object panel 흐름 | production UI 아님 |
 | `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md` | Planning | room shell PNG layer 정책 | actual PNG 적용 아님 |
@@ -66,8 +66,8 @@
 
 | Path | 현재성 | 짧은 설명 | 비고 |
 | --- | --- | --- | --- |
-| `docs/DAY1_CONTENT_BRIEF.md` | Current / Main-only | DAY1 device / power / result 내용 | top-view Main 기준 |
-| `docs/GODOT_DAY1_MVP_PLAN.md` | Current / Main-only | Godot DAY1 MVP 기준 | protected golden path 참고 |
+| `docs/DAY1_CONTENT_BRIEF.md` | Current / Main-only / Scope Notice Added | DAY1 device / power / result 내용 | top-view Main 기준 |
+| `docs/GODOT_DAY1_MVP_PLAN.md` | Current / Main-only / Scope Notice Added | Godot DAY1 MVP 기준 | protected golden path 참고 |
 | `docs/LIVING_DEVICE_DEFINITION.md` | Planning | future living device Resource contract | `.tres` / gameplay wiring 없음 |
 | `docs/THIRD_PARTY_ASSET_INVENTORY.md` | Current | 설치 / 선별 third-party asset inventory | asset 적용 전 확인 |
 | `docs/GIT_LFS_ASSET_POLICY.md` | Current | large asset / LFS 도입 정책 | LFS 아직 비활성 |
@@ -76,7 +76,7 @@
 
 | Path | 현재성 | 짧은 설명 | 비고 |
 | --- | --- | --- | --- |
-| `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md` | Current / Main-only | current top-view UI visual notes | Quarterview final UI 기준 아님 |
+| `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md` | Current / Main-only / Scope Notice Added | current top-view UI visual notes | Quarterview final UI 기준 아님 |
 | `docs/GODOT_PLAYTEST_CHECKLIST.md` | Current / Main-only | DAY1 manual playtest checklist | current Main 확인용 |
 | `docs/TITLE_AND_PAUSE_MENU_PROTOTYPE.md` | Prototype-only | Title / Pause menu prototype 기준 | production start / ESC 미연결 |
 
@@ -95,7 +95,7 @@
 | Path | 현재성 | 짧은 설명 | 비고 |
 | --- | --- | --- | --- |
 | `docs/ASSET_PIPELINE.md` | Current | asset folder / replacement target / warning 기준 | 실제 적용 전 확인 |
-| `docs/ASSET_APPLICATION_NOTES.md` | Current / Main-only | applied asset notes | Quarterview final art 기준 아님 |
+| `docs/ASSET_APPLICATION_NOTES.md` | Current / Main-only / Scope Notice Added | applied asset notes | Quarterview final art 기준 아님 |
 | `docs/QUARTERVIEW_ART_ASSET_PLAN.md` | Planning | qv art priority and atlas principles | actual art 적용 아님 |
 | `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md` | Documented-only | qv furniture atlas region plan | PNG / mapping 없음 |
 | `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md` | Documented-only | qv appliances atlas region plan | PNG / mapping 없음 |
@@ -140,27 +140,27 @@
 | `docs/old/UI_VISUAL_IMPLEMENTATION_NOTES_20260619.md` | Archived | 이전 UI visual implementation notes | 현재 UI notes와 identity 우선 |
 | `docs/old/PROJECT_STATUS_20260628_01.md` | Archived | 로테이션 전 누적 `PROJECT_STATUS.md` | 자세한 과거 기록 보존 |
 
-## 8. deprecated 후보 / 충돌 후보
+## 8. deprecated 후보 / 충돌 후보 처리 결과
 
-이번 작업에서는 각 문서에 deprecated notice를 붙이지 않는다. 아래는 검토 후보 목록이다.
+이번 작업에서 아래 후보 문서에 scope / superseded notice를 붙였다. Archive 이동은 하지 않았다.
 
-| Path | 이유 | 충돌 가능성 | 추천 후속 조치 |
-| --- | --- | --- | --- |
-| `docs/CONCENT_GAME_SPEC.md` | 오래된 상위 game spec일 수 있음 | identity의 mouse-click room / power board / hacking split과 충돌 가능 | 내용 확인 후 keep / update / deprecated notice 판단 |
-| `docs/PROJECT_DIRECTION_REVISED.md` | 이전 상위 방향 요약 | "해킹 액션 미구현", "쿼터뷰 미구현" 등 일부 문구가 최신 candidate / prototype 상태와 다를 수 있음 | identity 기준으로 notice 추가 검토 |
-| `docs/IMPLEMENTATION_ROADMAP_REVISED.md` | 이전 roadmap | 현재 QuarterviewMain / sandbox / atlas 문서 상태와 순서가 다를 수 있음 | 최신 roadmap으로 갱신할지 검토 |
-| `docs/DAILY_LOOP_REVISED.md` | 하루 루프 방향 문서 | 최신 hacking / power / hunger 방향과 일부 재정렬 필요 가능 | identity와 맞춰 review |
-| `docs/GODOT_DAY1_MVP_PLAN.md` | DAY1 MVP 기준 | Main-only 기준은 유효하지만 QuarterviewMain 방향과 섞이면 혼란 가능 | Main-only label 유지 여부 검토 |
-| `docs/DAY1_CONTENT_BRIEF.md` | DAY1 content 기준 | 기존 Light / Fan / multitap 방향과 future power board 방향이 충돌 가능 | current Main-only로 명확히 표시할지 검토 |
-| `docs/ROOM_DEVICE_DIRECTION.md` | room device direction | 최신 modular power board 방향과 비교 필요 | 통합 또는 notice 검토 |
-| `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md` | top-view Main visual 누적 notes | Quarterview / new UI atlas 방향과 혼동 가능 | Main-only notice 검토 |
-| `docs/ASSET_APPLICATION_NOTES.md` | current applied asset notes | future asset / atlas 계획과 혼동 가능 | applied-current 범위 명시 검토 |
-| `docs/VISUAL_DIRECTION.md` | old broad visual direction일 수 있음 | 최신 room / power / hacking direction과 충돌 가능 | identity 기준 review |
+| Path | 처리 | 이유 | 충돌 가능성 | 추천 후속 조치 |
+| --- | --- | --- | --- | --- |
+| `docs/CONCENT_GAME_SPEC.md` | Superseded Notice Added | 오래된 상위 game spec | identity의 mouse-click room / power board / hacking split과 충돌 가능 | 필요 시 identity 기준으로 재작성하거나 historical spec으로 유지 |
+| `docs/PROJECT_DIRECTION_REVISED.md` | Superseded Notice Added | 이전 상위 방향 요약 | "해킹 액션 미구현", "쿼터뷰 미구현" 등 일부 문구가 최신 candidate / prototype 상태와 다를 수 있음 | identity 기준으로만 참고 |
+| `docs/IMPLEMENTATION_ROADMAP_REVISED.md` | Superseded Notice Added | 이전 roadmap | 현재 QuarterviewMain / sandbox / atlas 문서 상태와 순서가 다를 수 있음 | 최신 roadmap 갱신이 필요하면 별도 작업 |
+| `docs/DAILY_LOOP_REVISED.md` | Superseded Notice Added | 이전 하루 루프 방향 문서 | 최신 hacking / power / hunger 방향과 일부 재정렬 필요 | identity 기준으로만 참고 |
+| `docs/GODOT_DAY1_MVP_PLAN.md` | Scope Notice Added | DAY1 MVP 기준 | Main-only 기준은 유효하지만 QuarterviewMain 방향과 섞이면 혼란 가능 | protected Main / DAY1 문서로 유지 |
+| `docs/DAY1_CONTENT_BRIEF.md` | Scope Notice Added | DAY1 content 기준 | 기존 Light / Fan / multitap 방향과 future power board 방향이 충돌 가능 | current Main-only로 유지 |
+| `docs/ROOM_DEVICE_DIRECTION.md` | Superseded Notice Added | room device direction | 최신 modular power board 방향과 비교 필요 | identity / design direction 문서 우선 |
+| `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md` | Scope Notice Added | top-view Main visual 누적 notes | Quarterview / new UI atlas 방향과 혼동 가능 | current Main-only implementation 기록으로 유지 |
+| `docs/ASSET_APPLICATION_NOTES.md` | Scope Notice Added | current applied asset notes | future asset / atlas 계획과 혼동 가능 | applied-current 범위로 유지 |
+| `docs/VISUAL_DIRECTION.md` | Superseded Notice Added | old broad visual direction | 최신 room / power / hacking direction과 충돌 가능 | identity 기준으로만 참고 |
 
 ## 9. Non-goals
 
 - 기존 문서 삭제 없음.
 - 기존 세부 문서 대량 이동 없음.
 - `docs/old` 삭제 없음.
-- deprecated notice 부착 없음.
+- 추가 archive stub 생성 없음.
 - 문서 내용을 새 기준에 맞게 전부 다시 쓰지 않음.

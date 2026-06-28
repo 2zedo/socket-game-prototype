@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `2d0db19`
-- Phase: PROJECT_STATUS rotation and document inventory
+- Current commit at task start: `cc47319`
+- Phase: Deprecated / scoped document notice pass
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -33,22 +33,21 @@
 
 - Project identity consolidation: added `docs/CONCENT_PROJECT_IDENTITY.md` and `docs/PROJECT_WORK_LOG.md`, and made AGENTS point to the identity document.
 - Room / power / hacking design direction docs: fixed the current direction for mouse-centric room flow, desk close-up, modular power, hunger, hacking infiltration, and defense.
+- Deprecated / scoped document notice pass: added targeted notices to legacy / conflict candidate docs, while leaving current source-of-truth docs unchanged.
 - QuarterviewMain temporary background: added a temporary room background / reference flow while keeping production systems unwired.
 - QuarterviewMain candidate skeleton: created the first production candidate scene without replacing old Main.
 
 ## Changed Files In Latest Work
 
-- `docs/PROJECT_STATUS.md`: replaced the long accumulated status with this short current status.
-- `docs/old/PROJECT_STATUS_20260628_01.md`: preserves the previous accumulated status.
-- `docs/DOCUMENT_INVENTORY.md`: adds a navigation index for current docs and `docs/old`.
-- `docs/PROJECT_WORK_LOG.md`: adds the status rotation / document inventory work log entry.
-- `AGENTS.md`: minimally points document lookup to `docs/DOCUMENT_INVENTORY.md`.
+- Superseded notices added: `docs/CONCENT_GAME_SPEC.md`, `docs/PROJECT_DIRECTION_REVISED.md`, `docs/IMPLEMENTATION_ROADMAP_REVISED.md`, `docs/DAILY_LOOP_REVISED.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/VISUAL_DIRECTION.md`.
+- Scope notices added: `docs/GODOT_DAY1_MVP_PLAN.md`, `docs/DAY1_CONTENT_BRIEF.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/ASSET_APPLICATION_NOTES.md`.
+- `docs/DOCUMENT_INVENTORY.md`: records notice results and confirms no archive moves in this pass.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the notice cleanup pass.
 
 ## Validation Results
 
 - `find docs -type f | sort` was checked.
-- `find docs -type f -name "*.md" -exec wc -l {} +` was checked before rotation.
-- `wc -l docs/PROJECT_STATUS.md docs/PROJECT_WORK_LOG.md docs/CONCENT_PROJECT_IDENTITY.md AGENTS.md` was checked.
+- `wc -l docs/PROJECT_STATUS.md docs/PROJECT_WORK_LOG.md docs/CONCENT_PROJECT_IDENTITY.md docs/DOCUMENT_INVENTORY.md AGENTS.md` was checked.
 - `git diff --check` passed.
 - `git diff --cached --check` passed.
 - Godot headless was not run because this was docs-only.
@@ -60,12 +59,13 @@
 - Most image / atlas plans remain documented-only.
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
+- Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
 
 ## Next Recommended Task
 
-1. Deprecated notice review:
-   - Start files: `docs/DOCUMENT_INVENTORY.md`, candidate docs listed under "deprecated / conflict review candidates".
-   - Complete when each chosen document has a clear notice or is explicitly kept as current.
+1. Deprecated content consolidation:
+   - Start files: `docs/DOCUMENT_INVENTORY.md`, docs marked `Superseded Notice Added`.
+   - Complete when each old direction doc is either rewritten into current docs, archived with a stub, or intentionally kept as historical context.
 2. QuarterviewMain GUI check:
    - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
    - Complete when background, prompt, invisible interaction / collision, `D` debug, and `R` restart are manually verified.

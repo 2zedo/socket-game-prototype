@@ -1,5 +1,11 @@
 # Visual Direction
 
+> [!WARNING]
+> Deprecated / Superseded:
+> 이 문서는 과거 설계 방향을 포함할 수 있다.
+> 현재 게임 정체성, 메인방 조작 방식, 전력 장비, 해킹 모드 기준은 `docs/CONCENT_PROJECT_IDENTITY.md`를 우선한다.
+> 이 문서와 identity 문서가 충돌하면 identity 문서를 따른다.
+
 ## Overall Mood
 
 The visual direction is a quiet survival mood in a power-starved city. The images suggest a dark, narrow apartment life where every working device feels valuable. The tone should be lonely, tense, and grounded, but not an exaggerated horror game.

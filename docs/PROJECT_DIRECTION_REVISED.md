@@ -1,5 +1,11 @@
 # 프로젝트 방향 개정 요약
 
+> [!WARNING]
+> Deprecated / Superseded:
+> 이 문서는 과거 설계 방향을 포함할 수 있다.
+> 현재 게임 정체성, 메인방 조작 방식, 전력 장비, 해킹 모드 기준은 `docs/CONCENT_PROJECT_IDENTITY.md`를 우선한다.
+> 이 문서와 identity 문서가 충돌하면 identity 문서를 따른다.
+
 ## 목적
 
 이 문서는 `CONCENT / 전력 부족의 시대`의 현재 구현 상태와 장기 방향을 한 번에 구분하기 위한 상위 기준 문서다.

@@ -1,5 +1,10 @@
 # Godot DAY 1 MVP Plan
 
+> [!NOTE]
+> Scope: 이 문서는 현재 top-view Main / DAY1 범위에 대한 문서다.
+> 현재 게임 정체성과 최신 디자인 방향은 `docs/CONCENT_PROJECT_IDENTITY.md`를 우선한다.
+> 이 문서의 내용이 identity 문서와 충돌하면 identity 문서를 우선한다.
+
 ## Purpose
 
 Define the smallest Godot implementation that proves the core `CONCENT / 전력 부족의 시대` loop: limited power, object interaction, feedback, and day completion.

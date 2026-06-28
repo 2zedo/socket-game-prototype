@@ -1,5 +1,11 @@
 # CONCENT Game Spec
 
+> [!WARNING]
+> Deprecated / Superseded:
+> 이 문서는 과거 설계 방향을 포함할 수 있다.
+> 현재 게임 정체성, 메인방 조작 방식, 전력 장비, 해킹 모드 기준은 `docs/CONCENT_PROJECT_IDENTITY.md`를 우선한다.
+> 이 문서와 identity 문서가 충돌하면 identity 문서를 따른다.
+
 ## Game Concept
 
 `CONCENT / 전력 부족의 시대` is a 2D narrative survival adventure about living through a power-starved apartment crisis. The player survives by deciding where limited electricity goes and what comfort, information, or safety is worth spending it on.
