@@ -32,6 +32,9 @@ const DEBUG_APPROACH_MARKER_HALF_SIZE := 6.0
 const DEBUG_PATH_LINE_WIDTH := 3.0
 const DEBUG_CLICK_TARGET_MARKER_HALF_SIZE := 9.0
 const DEBUG_FAILURE_LABEL_POSITION := Vector2(24, 616)
+const DEBUG_VISUAL_RECT_COLOR := Color(0.82, 0.82, 0.78, 0.34)
+const DEBUG_CLICK_AREA_COLOR := Color(0.35, 0.62, 1.0, 0.62)
+const DEBUG_FOOTPRINT_COLOR := Color(1.0, 0.42, 0.18, 0.72)
 
 const INTERACTION_PRIORITY_DEFAULT := 50
 const INTERACTION_PRIORITY_BY_KEY := {
@@ -76,12 +79,30 @@ const OBJECT_RESOURCE_PATHS := [
 ]
 
 const WALL_BLOCKERS := [
-	{"name": "BackWallBlocker", "rect": Rect2(Vector2(244, 76), Vector2(774, 74))},
-	{"name": "LeftWallBlocker", "rect": Rect2(Vector2(132, 170), Vector2(92, 400))},
-	{"name": "RightWallBlocker", "rect": Rect2(Vector2(1082, 184), Vector2(66, 318))},
-	{"name": "FrontLipBlocker", "rect": Rect2(Vector2(392, 636), Vector2(592, 40))},
+	{
+		"name": "BackWallBlocker",
+		"rect": Rect2(Vector2(244, 76), Vector2(774, 74)),
+		"blocker_footprint": [Vector2(236, 146), Vector2(1026, 146), Vector2(1042, 184), Vector2(220, 184)],
+	},
+	{
+		"name": "LeftWallBlocker",
+		"rect": Rect2(Vector2(132, 170), Vector2(92, 400)),
+		"blocker_footprint": [Vector2(142, 184), Vector2(226, 156), Vector2(236, 460), Vector2(170, 586), Vector2(112, 536)],
+	},
+	{
+		"name": "RightWallBlocker",
+		"rect": Rect2(Vector2(1082, 184), Vector2(66, 318)),
+		"blocker_footprint": [Vector2(1018, 154), Vector2(1114, 184), Vector2(1154, 486), Vector2(1136, 514), Vector2(1084, 400)],
+	},
+	{
+		"name": "FrontLipBlocker",
+		"rect": Rect2(Vector2(392, 636), Vector2(592, 40)),
+		"blocker_footprint": [Vector2(372, 642), Vector2(992, 622), Vector2(1014, 668), Vector2(354, 688)],
+	},
 ]
 
+# `blocker_footprint` is the candidate floor-contact polygon that blocks Yui.
+# It is intentionally smaller/different than the visual body rect in this 3/4 room.
 const OBJECT_LAYOUT := {
 	"door": {
 		"position": Vector2(216, 412),
@@ -89,6 +110,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 12.0,
 		"layer": "WallSideLayer",
 		"blocker_rect": Rect2(Vector2(166, 344), Vector2(70, 126)),
+		"blocker_footprint": [Vector2(168, 438), Vector2(242, 454), Vector2(246, 562), Vector2(184, 572), Vector2(160, 508)],
 		"interaction_position": Vector2(272, 482),
 		"approach_position": Vector2(286, 522),
 		"interaction_radius": 60.0,
@@ -100,6 +122,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 10.0,
 		"layer": "WallSideLayer",
 		"blocker_rect": Rect2(Vector2(290, 256), Vector2(70, 122)),
+		"blocker_footprint": [Vector2(292, 356), Vector2(366, 350), Vector2(382, 420), Vector2(298, 432)],
 		"interaction_position": Vector2(382, 386),
 		"approach_position": Vector2(390, 404),
 		"interaction_radius": 56.0,
@@ -111,6 +134,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 38.0,
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(324, 290), Vector2(282, 132)),
+		"blocker_footprint": [Vector2(324, 368), Vector2(602, 356), Vector2(626, 430), Vector2(354, 458)],
 		"interaction_position": Vector2(548, 452),
 		"approach_position": Vector2(560, 472),
 		"interaction_radius": 94.0,
@@ -122,6 +146,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 42.0,
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(652, 292), Vector2(316, 112)),
+		"blocker_footprint": [Vector2(654, 362), Vector2(972, 356), Vector2(956, 430), Vector2(684, 446)],
 		"interaction_position": Vector2(790, 428),
 		"approach_position": Vector2(788, 456),
 		"interaction_radius": 96.0,
@@ -199,6 +224,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 54.0,
 		"layer": "ForegroundLayer",
 		"blocker_rect": Rect2(Vector2(794, 502), Vector2(178, 112)),
+		"blocker_footprint": [Vector2(794, 548), Vector2(972, 536), Vector2(1018, 606), Vector2(816, 632)],
 		"interaction_position": Vector2(758, 540),
 		"approach_position": Vector2(754, 548),
 		"interaction_radius": 106.0,
@@ -210,6 +236,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 44.0,
 		"layer": "ForegroundLayer",
 		"blocker_rect": Rect2(Vector2(962, 500), Vector2(108, 92)),
+		"blocker_footprint": [Vector2(962, 546), Vector2(1068, 538), Vector2(1088, 604), Vector2(976, 616)],
 		"interaction_position": Vector2(934, 544),
 		"approach_position": Vector2(932, 556),
 		"interaction_radius": 82.0,
@@ -221,6 +248,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 26.0,
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(988, 254), Vector2(110, 178)),
+		"blocker_footprint": [Vector2(988, 374), Vector2(1100, 368), Vector2(1110, 438), Vector2(996, 448)],
 		"interaction_position": Vector2(958, 374),
 		"approach_position": Vector2(952, 410),
 		"interaction_radius": 94.0,
@@ -232,6 +260,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 20.0,
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(956, 222), Vector2(118, 58)),
+		"blocker_footprint": [Vector2(946, 294), Vector2(1070, 290), Vector2(1068, 330), Vector2(940, 334)],
 		"interaction_position": Vector2(940, 310),
 		"approach_position": Vector2(934, 324),
 		"interaction_radius": 78.0,
@@ -265,6 +294,7 @@ const OBJECT_LAYOUT := {
 		"thickness": 28.0,
 		"layer": "ObjectLayer",
 		"blocker_rect": Rect2(Vector2(540, 506), Vector2(170, 92)),
+		"blocker_footprint": [Vector2(538, 548), Vector2(714, 540), Vector2(724, 604), Vector2(552, 616)],
 		"interaction_position": Vector2(620, 650),
 		"interaction_radius": 78.0,
 		"color": Color(0.33, 0.20, 0.11, 1.0),
@@ -295,6 +325,7 @@ const VISUAL_BLOCKS := [
 		"thickness": 36.0,
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(902, 366), Vector2(128, 84)),
+		"blocker_footprint": [Vector2(904, 424), Vector2(1034, 414), Vector2(1032, 468), Vector2(912, 478)],
 		"color": Color(0.25, 0.22, 0.18, 1.0),
 	},
 	{
@@ -321,6 +352,7 @@ var debug_enabled := false
 var background_mode := "none"
 var pending_focus_key := ""
 var blocker_rects: Array[Rect2] = []
+var blocker_footprints: Array = []
 var path_grid := AStarGrid2D.new()
 var path_grid_size := Vector2i.ZERO
 var current_debug_path := PackedVector2Array()
@@ -332,6 +364,9 @@ var room_input_enabled := true
 var debug_label_nodes := {}
 var debug_radius_nodes := {}
 var debug_approach_nodes := {}
+var debug_visual_rect_nodes := {}
+var debug_click_area_nodes := {}
+var debug_footprint_nodes := {}
 var prompt_label: Label
 var reference_notice_label: Label
 var path_debug_line: Line2D
@@ -603,7 +638,11 @@ func _add_visual_block(visual: Dictionary) -> void:
 	)
 
 	if visual.has("blocker_rect"):
-		_add_blocker("%sBlocker" % node.name, visual["blocker_rect"])
+		_add_blocker(
+			"%sBlocker" % node.name,
+			visual["blocker_rect"],
+			_get_layout_footprint(visual)
+		)
 
 
 func _add_cable_line(points: PackedVector2Array) -> void:
@@ -656,7 +695,10 @@ func _load_object_definitions() -> void:
 func _build_object_placeholders() -> void:
 	for definition in object_definitions:
 		_add_object_placeholder(definition)
-		if definition.blocks and _get_object_blocker_rect(definition).size != Vector2.ZERO:
+		if definition.blocks and (
+			_get_object_blocker_rect(definition).size != Vector2.ZERO
+			or _get_object_blocker_footprint(definition).size() >= 3
+		):
 			_add_object_blocker(definition)
 
 
@@ -741,40 +783,47 @@ func _add_device_hint(definition: Resource, node: Node2D) -> void:
 func _add_object_blocker(definition: Resource) -> void:
 	_add_blocker(
 		"%sBlocker" % String(definition.key).capitalize().replace("_", ""),
-		_get_object_blocker_rect(definition)
+		_get_object_blocker_rect(definition),
+		_get_object_blocker_footprint(definition)
 	)
 
 
 func _build_wall_blockers() -> void:
 	for blocker in WALL_BLOCKERS:
-		_add_blocker(blocker["name"], blocker["rect"])
+		_add_blocker(blocker["name"], blocker["rect"], _get_layout_footprint(blocker))
 
 
-func _add_blocker(blocker_name: String, rect: Rect2) -> void:
-	blocker_rects.append(rect)
-
+func _add_blocker(blocker_name: String, rect: Rect2, footprint := PackedVector2Array()) -> void:
+	var has_footprint := footprint.size() >= 3
 	var body := StaticBody2D.new()
 	body.name = blocker_name
-	body.position = rect.position + rect.size * 0.5
 	add_child(body)
 
-	var shape := CollisionShape2D.new()
-	var rectangle := RectangleShape2D.new()
-	rectangle.size = rect.size
-	shape.shape = rectangle
-	body.add_child(shape)
+	if has_footprint:
+		blocker_footprints.append(footprint)
+
+		var polygon_shape := CollisionPolygon2D.new()
+		polygon_shape.polygon = footprint
+		body.add_child(polygon_shape)
+	elif rect.size != Vector2.ZERO:
+		blocker_rects.append(rect)
+		body.position = rect.position + rect.size * 0.5
+
+		var shape := CollisionShape2D.new()
+		var rectangle := RectangleShape2D.new()
+		rectangle.size = rect.size
+		shape.shape = rectangle
+		body.add_child(shape)
+	else:
+		body.queue_free()
+		return
 
 	var guide := Line2D.new()
 	guide.name = "%sGuide" % blocker_name
 	guide.closed = true
-	guide.width = 2.0
-	guide.default_color = Color(1.0, 0.24, 0.18, 0.72)
-	guide.points = PackedVector2Array([
-		rect.position,
-		rect.position + Vector2(rect.size.x, 0),
-		rect.position + rect.size,
-		rect.position + Vector2(0, rect.size.y),
-	])
+	guide.width = DEBUG_BLOCKER_LINE_WIDTH
+	guide.default_color = DEBUG_FOOTPRINT_COLOR if has_footprint else Color(1.0, 0.24, 0.18, 0.38)
+	guide.points = footprint if has_footprint else _rect_to_points(rect)
 	debug_layer.add_child(guide)
 
 
@@ -803,6 +852,35 @@ func _add_debug_for_definition(definition: Resource) -> void:
 	radius.points = points
 	debug_layer.add_child(radius)
 	debug_radius_nodes[key] = radius
+
+	var visual_rect := Line2D.new()
+	visual_rect.name = "%sVisualRect" % key.capitalize().replace("_", "")
+	visual_rect.closed = true
+	visual_rect.width = 1.0
+	visual_rect.default_color = DEBUG_VISUAL_RECT_COLOR
+	visual_rect.points = _rect_to_points(_get_object_visual_rect(definition))
+	debug_layer.add_child(visual_rect)
+	debug_visual_rect_nodes[key] = visual_rect
+
+	var click_area := Line2D.new()
+	click_area.name = "%sClickArea" % key.capitalize().replace("_", "")
+	click_area.closed = true
+	click_area.width = DEBUG_INTERACTION_LINE_WIDTH
+	click_area.default_color = DEBUG_CLICK_AREA_COLOR
+	click_area.points = _rect_to_points(_get_object_click_rect(definition))
+	debug_layer.add_child(click_area)
+	debug_click_area_nodes[key] = click_area
+
+	var footprint_points := _get_object_blocker_footprint(definition)
+	if footprint_points.size() >= 3:
+		var footprint := Line2D.new()
+		footprint.name = "%sFootprint" % key.capitalize().replace("_", "")
+		footprint.closed = true
+		footprint.width = DEBUG_BLOCKER_LINE_WIDTH
+		footprint.default_color = DEBUG_FOOTPRINT_COLOR
+		footprint.points = footprint_points
+		debug_layer.add_child(footprint)
+		debug_footprint_nodes[key] = footprint
 
 	var approach := Line2D.new()
 	approach.name = "%sApproachPoint" % key.capitalize().replace("_", "")
@@ -884,6 +962,17 @@ func _update_object_debug_visibility() -> void:
 
 		var radius: Line2D = debug_radius_nodes[key]
 		radius.visible = is_focus
+
+		var visual_rect: Line2D = debug_visual_rect_nodes[key]
+		visual_rect.visible = is_focus
+
+		var click_area: Line2D = debug_click_area_nodes[key]
+		click_area.visible = is_focus
+
+		if debug_footprint_nodes.has(key):
+			var footprint: Line2D = debug_footprint_nodes[key]
+			footprint.visible = not is_background_hint or is_focus
+			footprint.modulate = Color(1.0, 1.0, 1.0, 1.0 if is_focus else 0.55)
 
 		var approach: Line2D = debug_approach_nodes[key]
 		approach.visible = is_focus or priority <= 20
@@ -1009,13 +1098,16 @@ func get_debug_focus_summary() -> String:
 		return "Debug focus: %s / missing definition" % focus_key
 
 	var click_rect := _get_object_click_rect(definition)
-	return "Focus: %s / priority=%d / role=%s / zone=%s\napproach=%s / click=%s" % [
+	var footprint := _get_object_blocker_footprint(definition)
+	var footprint_text := "none" if footprint.size() < 3 else _format_rect(_get_polygon_bounds(footprint))
+	return "Focus: %s / priority=%d / role=%s / zone=%s\napproach=%s / click=%s\nfootprint=%s" % [
 		focus_key,
 		_get_object_interaction_priority(definition),
 		String(definition.role),
 		String(definition.zone),
 		_format_vector(_get_object_approach_position(definition)),
 		_format_rect(click_rect),
+		footprint_text,
 	]
 
 
@@ -1170,11 +1262,57 @@ func _is_world_point_blocked_for_path(world_point: Vector2) -> bool:
 	if not Geometry2D.is_point_in_polygon(world_point, floor_points):
 		return true
 
+	for footprint in blocker_footprints:
+		if _is_point_blocked_by_footprint(world_point, footprint, PATH_BLOCKER_PADDING):
+			return true
+
 	for rect in blocker_rects:
 		if rect.grow(PATH_BLOCKER_PADDING).has_point(world_point):
 			return true
 
 	return false
+
+
+func _is_point_blocked_by_footprint(world_point: Vector2, footprint: PackedVector2Array, padding: float) -> bool:
+	if footprint.size() < 3:
+		return false
+	if not _get_polygon_bounds(footprint).grow(padding).has_point(world_point):
+		return false
+	if Geometry2D.is_point_in_polygon(world_point, footprint):
+		return true
+	if padding <= 0.0:
+		return false
+
+	for index in footprint.size():
+		var start := footprint[index]
+		var end := footprint[(index + 1) % footprint.size()]
+		if _distance_to_segment(world_point, start, end) <= padding:
+			return true
+	return false
+
+
+func _get_polygon_bounds(points: PackedVector2Array) -> Rect2:
+	if points.size() == 0:
+		return Rect2()
+
+	var min_point := points[0]
+	var max_point := points[0]
+	for point in points:
+		min_point.x = min(min_point.x, point.x)
+		min_point.y = min(min_point.y, point.y)
+		max_point.x = max(max_point.x, point.x)
+		max_point.y = max(max_point.y, point.y)
+	return Rect2(min_point, max_point - min_point)
+
+
+func _distance_to_segment(point: Vector2, start: Vector2, end: Vector2) -> float:
+	var segment := end - start
+	var length_squared := segment.length_squared()
+	if length_squared <= 0.001:
+		return point.distance_to(start)
+
+	var projection := clampf((point - start).dot(segment) / length_squared, 0.0, 1.0)
+	return point.distance_to(start + segment * projection)
 
 
 func _build_path_debug() -> void:
@@ -1401,6 +1539,13 @@ func _get_object_sort_y(definition: Resource) -> float:
 	return _get_object_position(definition).y
 
 
+func _get_object_visual_rect(definition: Resource) -> Rect2:
+	return Rect2(
+		_get_object_position(definition) - _get_object_size(definition) * 0.5,
+		_get_object_size(definition)
+	)
+
+
 func _get_object_blocker_rect(definition: Resource) -> Rect2:
 	var layout := _get_object_layout(definition)
 	if layout.has("blocker_rect"):
@@ -1409,6 +1554,19 @@ func _get_object_blocker_rect(definition: Resource) -> Rect2:
 	if definition.has_method("has_blocker_rect") and definition.has_blocker_rect():
 		return definition.blocker_rect
 	return Rect2(_get_object_position(definition) - definition.get_collision_size() * 0.5, definition.get_collision_size())
+
+
+func _get_object_blocker_footprint(definition: Resource) -> PackedVector2Array:
+	return _get_layout_footprint(_get_object_layout(definition))
+
+
+func _get_layout_footprint(layout: Dictionary) -> PackedVector2Array:
+	var value = layout.get("blocker_footprint", PackedVector2Array())
+	if value is PackedVector2Array:
+		return value
+	if value is Array:
+		return PackedVector2Array(value)
+	return PackedVector2Array()
 
 
 func _get_object_click_rect(definition: Resource) -> Rect2:
@@ -1432,6 +1590,17 @@ func _get_object_interaction_position(definition: Resource) -> Vector2:
 func _get_object_interaction_radius(definition: Resource) -> float:
 	var layout := _get_object_layout(definition)
 	return float(layout.get("interaction_radius", definition.interaction_radius))
+
+
+func _rect_to_points(rect: Rect2) -> PackedVector2Array:
+	if rect.size == Vector2.ZERO:
+		return PackedVector2Array()
+	return PackedVector2Array([
+		rect.position,
+		rect.position + Vector2(rect.size.x, 0),
+		rect.position + rect.size,
+		rect.position + Vector2(0, rect.size.y),
+	])
 
 
 func _format_vector(value: Vector2) -> String:

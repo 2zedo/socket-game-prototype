@@ -107,6 +107,12 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if desk_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_desk_closeup_content_point(event.position):
+			_hide_desk_closeup()
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == RESTART_KEY:
 			get_tree().reload_current_scene()
@@ -297,8 +303,9 @@ func _build_desk_closeup_overlay() -> void:
 	desk_closeup_backdrop.visible = false
 	desk_closeup_backdrop.color = Color(0.0, 0.0, 0.0, 0.32)
 	desk_closeup_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	desk_closeup_backdrop.z_index = 100
 	desk_closeup_backdrop.position = Vector2.ZERO
-	desk_closeup_backdrop.size = get_viewport().get_visible_rect().size
+	desk_closeup_backdrop.size = _get_viewport_ui_size()
 	desk_closeup_backdrop.gui_input.connect(_on_desk_closeup_backdrop_gui_input)
 	$UILayer.add_child(desk_closeup_backdrop)
 
@@ -306,6 +313,7 @@ func _build_desk_closeup_overlay() -> void:
 	desk_closeup_panel.name = "DeskCloseupCandidate"
 	desk_closeup_panel.visible = false
 	desk_closeup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	desk_closeup_panel.z_index = 101
 	desk_closeup_panel.position = DESK_CLOSEUP_POSITION
 	desk_closeup_panel.custom_minimum_size = DESK_CLOSEUP_SIZE
 	$UILayer.add_child(desk_closeup_panel)
@@ -423,7 +431,7 @@ func _open_desk_closeup(source_key: String) -> void:
 	desk_closeup_open = true
 	_hide_interaction_panel()
 	_set_room_input_locked(true)
-	desk_closeup_backdrop.size = get_viewport().get_visible_rect().size
+	desk_closeup_backdrop.size = _get_viewport_ui_size()
 	desk_closeup_backdrop.visible = true
 	desk_closeup_panel.visible = true
 
@@ -455,6 +463,20 @@ func _on_desk_closeup_backdrop_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_hide_desk_closeup()
 		get_viewport().set_input_as_handled()
+
+
+func _is_desk_closeup_content_point(viewport_point: Vector2) -> bool:
+	if desk_closeup_panel == null or not desk_closeup_panel.visible:
+		return false
+	var panel_size := desk_closeup_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = DESK_CLOSEUP_SIZE
+	return Rect2(desk_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _get_viewport_ui_size() -> Vector2:
+	var viewport_size := get_viewport().get_visible_rect().size
+	return Vector2(max(viewport_size.x, 1280.0), max(viewport_size.y, 720.0))
 
 
 func _on_desk_hotspot_pressed(hotspot_key: String) -> void:

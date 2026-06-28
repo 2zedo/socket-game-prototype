@@ -136,10 +136,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 desk / laptop 사용하기, close-up Close / ESC, room movement lock, hotspot no-op status, `D` debug, `R` restart를 수동 확인한다.
 
-### this commit - QuarterviewMain debug / close-up input 안정화
+### 8a0b4b3 - QuarterviewMain debug / close-up input 안정화
 
-- Commit: `this commit`
+- Commit: `8a0b4b3`
 - Result: debug detail의 mixed payload 값을 안전하게 문자열화하고, shadow warning을 정리했으며, Desk close-up 빈 backdrop 클릭으로 overlay를 닫을 수 있게 했다.
 - Changed: QuarterviewMain debug detail / close-up backdrop input, QuarterviewRoom debug visibility parameter, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 debug ON object click, close-up 빈 영역 닫기, hotspot click overlay 유지, room movement lock 복구를 수동 확인한다.
+
+### this commit - QuarterviewMain footprint interaction tuning
+
+- Commit: `this commit`
+- Result: Desk close-up 빈 영역 클릭 닫기를 fallback으로 보강하고, QuarterviewRoom 이동 blocker를 visual rect / click area / floor footprint polygon 후보로 분리했다.
+- Changed: QuarterviewMain close-up outside-click handling, QuarterviewRoom polygon footprint collision / path blocking / debug guides, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
+- Next: GUI에서 close-up 빈 영역 닫기, hotspot overlay 유지, footprint polygon debug 색상, bed / desk / power / fridge 주변 이동감을 수동 확인한다.
