@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `a885d97`
-- Phase: QuarterviewMain temporary visual reference pass
+- Current commit at task start: `a6833bf`
+- Phase: Room / power / hacking design direction documentation
 - Main target: Godot project under `godot/`
 - Web prototype: reference only
 
@@ -115,6 +115,7 @@
 - Main replacement risk checklist is documented in `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`; replacing current Main / DAY1 now has explicit Go / No-Go, validation, protected-file, and rollback gates. No Main / DAY1 or production wiring was changed.
 - Main replacement work plan is documented in `docs/MAIN_REPLACEMENT_WORK_PLAN.md`; recommended replacement is a new `QuarterviewMain` production candidate with an isolated final `project.godot` start-scene switch. No Main / DAY1, scene, script, Resource, or asset change was made.
 - `QuarterviewMain.tscn` now exists as the first production candidate skeleton with a separate `QuarterviewRoom.tscn` room shell, placeholder movement / collision / prompt / interaction signal flow, and status logging. It now uses `godot/assets/art/quarterview/room/temp_qv_room_background.png` as a temporary room background, while the polygon / blockout visual is hidden by default and reserved for `D` debug. It is not wired to `project.godot`, `Main.gd`, `SurvivalState`, Phone, Outlet, Result, Hacking, Grid Credit, story flags, or save/load.
+- Main room, desk close-up, modular power equipment, Yui room motifs, hunger, hacking infiltration, and hacking defense design direction is documented in `docs/CONCENT_ROOM_POWER_HACKING_DESIGN_DIRECTION.md`. This is design direction only and does not change code, scenes, assets, `project.godot`, or Main / DAY1 wiring.
 
 ## Current DAY 1 Decisions
 
@@ -125,6 +126,7 @@
 
 ## Changed Files
 
+- `docs/CONCENT_ROOM_POWER_HACKING_DESIGN_DIRECTION.md`: documents the agreed direction for mouse-centric main room flow, desk close-up, compact modular power equipment, Yui's sea / freedom room motifs, hunger, hacking infiltration styles, and event-based hacking defense.
 - `docs/MAIN_REPLACEMENT_WORK_PLAN.md`: defines the Main replacement strategy, phase plan, file impact plan, state ownership, UI routing, input / modal policy, asset readiness, tests, commit strategy, rollback, Go / No-Go gate, and open questions.
 - `godot/scenes/quarterview/QuarterviewRoom.tscn`, `godot/scripts/quarterview/QuarterviewRoom.gd`: add the temporary background art layer, load the runtime room background when present, keep the concept image as fallback reference overlay, and hide polygon / blockout visuals until `D` debug is enabled.
 - `godot/assets/art/quarterview/room/temp_qv_room_background.png`, `godot/assets/art/quarterview/reference/qv_room_concept_reference.png`: provide the current temporary runtime room background and concept reference source used by QuarterviewMain visual alignment.
@@ -419,6 +421,7 @@
 - Result / Log UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, existing `DayResultPanel.tscn` / `DayResultPanel.gd`, `find godot/assets ... ui / result / log`, and `grep -R "ui_result_log_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Dialogue UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, `find godot/assets ... dialogue / ui / panel`, and `grep -R "ui_dialogue_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Device Icons UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, `find godot/assets ... device / icon / ui`, existing `DeviceDefinition` / `LivingDeviceDefinition` / `RoomObjectDefinition` / `HackingMissionDefinition` scripts, device `.tres`, and `grep -R "ui_device_icons_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Room / power / hacking design direction 문서화 후 `git diff --check`가 완료됐다. 문서 작업이라 Godot headless 실행은 생략했다.
 - Phone input requires user manual verification because GUI key simulation was intentionally not run.
 
 ## Current Risks Or Known Issues
