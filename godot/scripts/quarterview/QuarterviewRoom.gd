@@ -328,6 +328,7 @@ var current_click_target := Vector2.ZERO
 var has_click_target := false
 var path_failure_reason := ""
 var selected_key := ""
+var room_input_enabled := true
 var debug_label_nodes := {}
 var debug_radius_nodes := {}
 var debug_approach_nodes := {}
@@ -379,8 +380,11 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	_update_nearest_interactable()
-	_update_pending_focus()
+	if room_input_enabled:
+		_update_nearest_interactable()
+		_update_pending_focus()
+	elif prompt_label != null:
+		prompt_label.visible = false
 	_update_player_collision_debug()
 	_update_object_debug_visibility()
 
@@ -391,10 +395,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_set_debug_enabled(not debug_enabled)
 			get_viewport().set_input_as_handled()
 			return
+		if not room_input_enabled:
+			return
 		if event.keycode == KEY_E or event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
 			_request_nearest_interaction()
 			get_viewport().set_input_as_handled()
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif room_input_enabled and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_handle_left_click(get_global_mouse_position())
 		get_viewport().set_input_as_handled()
 
@@ -972,6 +978,25 @@ func get_background_mode() -> String:
 
 func is_debug_overlay_enabled() -> bool:
 	return debug_enabled
+
+
+func set_room_input_enabled(enabled: bool) -> void:
+	room_input_enabled = enabled
+	if enabled:
+		return
+
+	pending_focus_key = ""
+	selected_key = ""
+	if player != null and player.has_method("clear_move_target"):
+		player.clear_move_target()
+	if prompt_label != null:
+		prompt_label.visible = false
+	_update_path_debug(PackedVector2Array(), Vector2.ZERO)
+	_update_object_debug_visibility()
+
+
+func is_room_input_enabled() -> bool:
+	return room_input_enabled
 
 
 func get_debug_focus_summary() -> String:

@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `de33465`
-- Phase: QuarterviewMain interaction click / approach / debug readability tuning
+- Current commit at task start: `e7f8ee7`
+- Phase: QuarterviewMain desk close-up candidate
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -21,7 +21,7 @@
 ## Current Implementation State
 
 - Current Main / DAY1: implemented top-view golden path; protected until explicit replacement approval.
-- QuarterviewMain: production candidate skeleton with temporary room background and status logging only.
+- QuarterviewMain: production candidate skeleton with temporary room background, candidate interaction panel, desk close-up candidate overlay, and status logging only.
 - QuarterviewRoom: candidate room shell using `RoomObjectDefinition` data, prompt / interaction signals, and debug overlay.
 - QuarterviewGameplaySandbox: sandbox-only flow for interaction, mock panels, local clock, local result, and local test mode.
 - Phone / Outlet / Result: still current Main-only production UI; not wired to QuarterviewMain.
@@ -34,6 +34,7 @@
 - Project identity consolidation: added `docs/CONCENT_PROJECT_IDENTITY.md` and `docs/PROJECT_WORK_LOG.md`, and made AGENTS point to the identity document.
 - Room / power / hacking design direction docs: fixed the current direction for mouse-centric room flow, desk close-up, modular power, hunger, hacking infiltration, and defense.
 - Deprecated / scoped document notice pass: added targeted notices to legacy / conflict candidate docs, while leaving current source-of-truth docs unchanged.
+- QuarterviewMain desk close-up candidate: added a no-op desk close-up overlay for desk / laptop use and locked room click movement while candidate UI is open.
 - QuarterviewMain interaction tuning: added object click priority, tuned approach points, clamped candidate panel placement, and reduced debug overlay text clutter.
 - QuarterviewMain debug input split: separated the `D` debug toggle from movement input, limited debug keyboard movement to arrow keys, and kept normal interaction panels free of developer-only object details.
 - QuarterviewMain movement/debug tuning: organized click/path tuning constants, kept debug toggle from changing room/camera/player transforms, and made D show debug overlays without reintroducing blockout visual shift.
@@ -45,9 +46,9 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/quarterview/QuarterviewRoom.gd`: adds click priority, click-only desk / door candidates, tuned approach points, selected / nearest debug focus, and focused interaction radius display.
-- `godot/scripts/QuarterviewMain.gd`: clamps candidate panel placement and shows object priority / approach / click area only in debug detail.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain cleanup pass.
+- `godot/scripts/QuarterviewMain.gd`: adds the desk close-up candidate overlay, no-op desk hotspot actions, ESC close behavior, and room input lock while candidate UI is open.
+- `godot/scripts/quarterview/QuarterviewRoom.gd`: adds a candidate room input lock so modal / close-up UI can stop click movement and pending focus without touching production Main.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain desk close-up pass.
 
 ## Validation Results
 
@@ -64,13 +65,13 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI confirmation is still needed for object click priority around desk / power / kitchen objects, tuned approach points, candidate panel clamp behavior, debug readability, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
+- GUI confirmation is still needed for desk / laptop close-up entry, close-up ESC / Close behavior, room click lock while close-up is open, hotspot no-op status messages, object click priority around desk / power / kitchen objects, tuned approach points, candidate panel clamp behavior, debug readability, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
 
 ## Next Recommended Task
 
 1. QuarterviewMain GUI check:
    - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
-   - Complete when background, desk / laptop / power click priority, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
+   - Complete when background, desk / laptop close-up entry, close-up ESC / Close, room input lock during close-up, desk / laptop / power click priority, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
 2. Main replacement gate review:
    - Start files: `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/MAIN_REPLACEMENT_WORK_PLAN.md`.
    - Complete when Go / No-Go items are reviewed before any production entry change.

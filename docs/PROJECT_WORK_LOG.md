@@ -120,10 +120,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 `D` 반복 입력 시 player 위치 유지, debug ON arrow-key 이동, normal/debug panel 표시 차이를 수동 확인한다.
 
-### this commit - QuarterviewMain interaction 튜닝
+### e7f8ee7 - QuarterviewMain interaction 튜닝
 
-- Commit: `this commit`
+- Commit: `e7f8ee7`
 - Result: object click priority를 추가해 책상 / 노트북 / 전력 장비가 장식 오브젝트보다 우선 잡히도록 하고, 주요 object approach point와 candidate panel 위치 clamp를 정리했다. Debug overlay는 전체 상세 텍스트 대신 selected / nearest focus 중심으로 priority, role, approach, click area를 읽게 했다.
 - Changed: QuarterviewRoom click priority / approach / debug focus, QuarterviewMain panel placement / debug detail, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 desk / laptop / power / door / fridge / microwave 클릭 우선순위와 접근 위치, panel 위치, debug 가독성을 수동 확인한다.
+
+### this commit - QuarterviewMain Desk close-up candidate
+
+- Commit: `this commit`
+- Result: desk / laptop `사용하기`에서 no-op Desk close-up candidate overlay를 열고, candidate UI가 열린 동안 room click movement와 pending focus를 잠그도록 정리했다.
+- Changed: QuarterviewMain desk close-up overlay / hotspot no-op log, QuarterviewRoom modal input lock, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
+- Next: GUI에서 desk / laptop 사용하기, close-up Close / ESC, room movement lock, hotspot no-op status, `D` debug, `R` restart를 수동 확인한다.
