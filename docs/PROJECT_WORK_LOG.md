@@ -72,10 +72,18 @@
 - Validation: `git diff --check`, `git diff --cached --check`
 - Next: deprecated notice 정리나 세부 문서 정리는 별도 작업에서 검토한다.
 
-### this commit - deprecated notice 정리
+### 0f53ccc - deprecated notice 정리
 
-- Commit: `this commit`
+- Commit: `0f53ccc`
 - Result: legacy / conflict candidate docs에 superseded 또는 scope notice를 붙였고, archive 이동은 하지 않았다.
 - Changed: candidate docs notice, `docs/DOCUMENT_INVENTORY.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`
 - Validation: `git diff --check`, `git diff --cached --check`, `find docs -type f | sort`, targeted `wc -l`
 - Next: 필요하면 superseded 문서를 current identity 기준으로 통합하거나 archive stub 처리한다.
+
+### this commit - QuarterviewMain 1차 정리
+
+- Commit: `this commit`
+- Result: QuarterviewMain normal view를 mouse-click 이동 중심으로 정리하고, object click 접근 / candidate panel / debug-only blockout 흐름을 추가했다.
+- Changed: QuarterviewMain script / scene, QuarterviewRoom script, QuarterviewPlayer script, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
+- Next: GUI에서 normal view, click movement, object approach, `D` debug, `R` restart를 수동 확인한다.

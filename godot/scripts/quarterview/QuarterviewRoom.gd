@@ -2,12 +2,16 @@ extends Node2D
 
 signal interaction_requested(object_key: String, action_key: String, payload: Dictionary)
 signal nearest_interactable_changed(object_key: String, display_name: String)
+signal debug_overlay_toggled(enabled: bool)
 
 const ACTION_PRIMARY := "primary"
+const ACTION_FOCUS := "focus"
 const TEMP_BACKGROUND_PATH := "res://assets/art/quarterview/room/temp_qv_room_background.png"
 const REFERENCE_BACKGROUND_PATH := "res://assets/art/quarterview/reference/qv_room_concept_reference.png"
 const BACKGROUND_TARGET_SIZE := Vector2(1280, 720)
 const REFERENCE_OVERLAY_ALPHA := 0.38
+const WALK_TARGET_BOUNDS := Rect2(Vector2(190, 190), Vector2(900, 438))
+const CLICK_OBJECT_PADDING := 28.0
 
 const OBJECT_RESOURCE_PATHS := [
 	"res://resources/rooms/quarterview/objects/door.tres",
@@ -257,6 +261,7 @@ var object_definitions: Array = []
 var nearest_key := ""
 var debug_enabled := false
 var background_mode := "none"
+var pending_focus_key := ""
 var prompt_label: Label
 var reference_notice_label: Label
 var floor_points := PackedVector2Array([
@@ -297,6 +302,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_nearest_interactable()
+	_update_pending_focus()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -308,6 +314,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_E or event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
 			_request_nearest_interaction()
 			get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_handle_left_click(get_global_mouse_position())
+		get_viewport().set_input_as_handled()
 
 
 func _configure_layers() -> void:
@@ -725,7 +734,7 @@ func _update_nearest_interactable() -> void:
 	var best_distance := INF
 
 	for definition in object_definitions:
-		if not definition.interactable:
+		if not _is_normal_interactable(definition):
 			continue
 		var distance := player.global_position.distance_to(_get_object_interaction_position(definition))
 		if distance <= _get_object_interaction_radius(definition) and distance < best_distance:
@@ -764,6 +773,10 @@ func _request_nearest_interaction() -> void:
 	if definition == null:
 		return
 
+	_emit_interaction_request(definition, ACTION_PRIMARY)
+
+
+func _emit_interaction_request(definition: Resource, action_key: String) -> void:
 	var payload := {
 		"key": definition.key,
 		"display_name": definition.display_name,
@@ -771,9 +784,9 @@ func _request_nearest_interaction() -> void:
 		"zone": definition.zone,
 		"future_source": definition.future_source,
 		"visual_state": definition.visual_state,
-		"action": ACTION_PRIMARY,
+		"action": action_key,
 	}
-	interaction_requested.emit(definition.key, ACTION_PRIMARY, payload)
+	interaction_requested.emit(definition.key, action_key, payload)
 
 
 func _get_definition(object_key: String) -> Resource:
@@ -795,6 +808,98 @@ func _set_debug_enabled(enabled: bool) -> void:
 	]:
 		layer.visible = debug_enabled
 	debug_layer.visible = debug_enabled
+	if player.has_method("set_keyboard_input_enabled"):
+		player.set_keyboard_input_enabled(debug_enabled)
+	debug_overlay_toggled.emit(debug_enabled)
+
+
+func get_background_mode() -> String:
+	return background_mode
+
+
+func is_debug_overlay_enabled() -> bool:
+	return debug_enabled
+
+
+func _handle_left_click(click_position: Vector2) -> void:
+	var clicked_definition := _get_definition_at_position(click_position)
+	if clicked_definition != null and _is_normal_interactable(clicked_definition):
+		pending_focus_key = clicked_definition.key
+		_move_player_to(_get_object_approach_position(clicked_definition))
+		return
+
+	pending_focus_key = ""
+	_move_player_to(_clamp_walk_target(click_position))
+
+
+func _move_player_to(target: Vector2) -> void:
+	if player.has_method("set_move_target"):
+		player.set_move_target(_clamp_walk_target(target))
+
+
+func _update_pending_focus() -> void:
+	if pending_focus_key.is_empty():
+		return
+	if player.has_method("has_active_target") and player.has_active_target():
+		return
+
+	var definition := _get_definition(pending_focus_key)
+	pending_focus_key = ""
+	if definition == null:
+		return
+	if player.global_position.distance_to(_get_object_interaction_position(definition)) > _get_object_interaction_radius(definition):
+		return
+
+	nearest_key = definition.key
+	nearest_interactable_changed.emit(definition.key, definition.display_name)
+	_update_prompt()
+	_emit_interaction_request(definition, ACTION_FOCUS)
+
+
+func _get_definition_at_position(click_position: Vector2) -> Resource:
+	var best_definition: Resource = null
+	var best_distance := INF
+
+	for definition in object_definitions:
+		if not _is_normal_interactable(definition):
+			continue
+
+		var distance := click_position.distance_to(_get_object_interaction_position(definition))
+		if distance <= _get_object_interaction_radius(definition) and distance < best_distance:
+			best_definition = definition
+			best_distance = distance
+			continue
+
+		var object_rect := Rect2(
+			_get_object_position(definition) - _get_object_size(definition) * 0.5 - Vector2.ONE * CLICK_OBJECT_PADDING,
+			_get_object_size(definition) + Vector2.ONE * CLICK_OBJECT_PADDING * 2.0
+		)
+		if object_rect.has_point(click_position):
+			var rect_distance := click_position.distance_to(_get_object_position(definition))
+			if rect_distance < best_distance:
+				best_definition = definition
+				best_distance = rect_distance
+
+	return best_definition
+
+
+func _get_object_approach_position(definition: Resource) -> Vector2:
+	var layout := _get_object_layout(definition)
+	var value: Vector2 = layout.get("approach_position", _get_object_interaction_position(definition))
+	return _clamp_walk_target(value)
+
+
+func _clamp_walk_target(target: Vector2) -> Vector2:
+	return Vector2(
+		clampf(target.x, WALK_TARGET_BOUNDS.position.x, WALK_TARGET_BOUNDS.end.x),
+		clampf(target.y, WALK_TARGET_BOUNDS.position.y, WALK_TARGET_BOUNDS.end.y)
+	)
+
+
+func _is_normal_interactable(definition: Resource) -> bool:
+	if not definition.interactable:
+		return false
+	return String(definition.key) != "small_table"
 
 
 func _get_object_layout(definition: Resource) -> Dictionary:
