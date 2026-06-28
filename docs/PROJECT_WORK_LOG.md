@@ -144,10 +144,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 debug ON object click, close-up 빈 영역 닫기, hotspot click overlay 유지, room movement lock 복구를 수동 확인한다.
 
-### this commit - QuarterviewMain footprint interaction tuning
+### 511c606 - QuarterviewMain footprint interaction tuning
 
-- Commit: `this commit`
+- Commit: `511c606`
 - Result: Desk close-up 빈 영역 클릭 닫기를 fallback으로 보강하고, QuarterviewRoom 이동 blocker를 visual rect / click area / floor footprint polygon 후보로 분리했다.
 - Changed: QuarterviewMain close-up outside-click handling, QuarterviewRoom polygon footprint collision / path blocking / debug guides, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 close-up 빈 영역 닫기, hotspot overlay 유지, footprint polygon debug 색상, bed / desk / power / fridge 주변 이동감을 수동 확인한다.
+
+### this commit - QuarterviewMain footprint tuning mode
+
+- Commit: `this commit`
+- Result: object candidate panel 빈 영역 클릭 닫기를 추가하고, footprint 좌표를 final blocker가 아닌 debug / tuning candidate로 분리했다. `D` debug ON 뒤 `F3`으로 selected object footprint tuning mode를 켜고, `[ / ]`로 대상 전환, `C`로 layout snippet을 출력할 수 있게 했다.
+- Changed: QuarterviewMain candidate panel outside-click handling, QuarterviewRoom footprint tuning mode / debug visibility / path blocker separation, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
+- Next: GUI에서 panel 빈 영역 닫기, close-up 빈 영역 닫기, `D` / `F3` tuning mode, `[ / ]` object selection, `C` snippet output / clipboard, selected footprint / click area / approach marker 가독성을 수동 확인한다.

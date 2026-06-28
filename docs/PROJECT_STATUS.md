@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `8a0b4b3`
-- Phase: QuarterviewMain footprint interaction tuning
+- Current commit at task start: `511c606`
+- Phase: QuarterviewMain footprint tuning mode
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -35,6 +35,7 @@
 - Room / power / hacking design direction docs: fixed the current direction for mouse-centric room flow, desk close-up, modular power, hunger, hacking infiltration, and defense.
 - Deprecated / scoped document notice pass: added targeted notices to legacy / conflict candidate docs, while leaving current source-of-truth docs unchanged.
 - QuarterviewMain footprint tuning: split visual body, click area, and blocker footprint candidates, and made path / collision blockers prefer floor-contact polygons over top-view rectangles.
+- QuarterviewMain footprint tuning mode: added object panel outside-click close, kept guessed footprints as debug/tuning candidates unless path-enabled, and added a debug-only F3 tuning mode for selected object footprint / approach / click area inspection.
 - QuarterviewMain debug / close-up stabilization: fixed debug detail mixed-value text conversion, removed shadow warnings, and added empty-backdrop click close for the desk close-up candidate.
 - QuarterviewMain desk close-up candidate: added a no-op desk close-up overlay for desk / laptop use and locked room click movement while candidate UI is open.
 - QuarterviewMain interaction tuning: added object click priority, tuned approach points, clamped candidate panel placement, and reduced debug overlay text clutter.
@@ -48,8 +49,8 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/QuarterviewMain.gd`: adds a fallback empty-area close check for the desk close-up so outside clicks close the overlay and never become room movement.
-- `godot/scripts/quarterview/QuarterviewRoom.gd`: adds floor-contact blocker footprint polygons, polygon collision / path blocking, and separate debug guides for visual rect, click area, and footprint.
+- `godot/scripts/QuarterviewMain.gd`: adds candidate interaction panel outside-click close so empty clicks close the panel and never become room movement.
+- `godot/scripts/quarterview/QuarterviewRoom.gd`: marks existing footprint polygons as tuning candidates, separates debug-only footprints from path blockers, and adds F3 footprint tuning mode with `[ / ]` selection and `C` snippet output.
 - `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain footprint / close-up input pass.
 
 ## Validation Results
@@ -67,13 +68,13 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI confirmation is still needed for close-up empty-area click close, hotspot clicks keeping the overlay open, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, debug ON object click without errors, desk / laptop close-up entry, close-up ESC / Close behavior, room click lock while close-up is open, hotspot no-op status messages, tuned approach points, candidate panel clamp behavior, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
+- GUI confirmation is still needed for candidate panel empty-area click close, close-up empty-area click close, hotspot clicks keeping the overlay open, `D` then `F3` footprint tuning mode, `[ / ]` object selection, `C` layout snippet output / clipboard behavior, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, debug ON object click without errors, desk / laptop close-up entry, close-up ESC / Close behavior, room click lock while close-up is open, hotspot no-op status messages, tuned approach points, candidate panel clamp behavior, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
 
 ## Next Recommended Task
 
 1. QuarterviewMain GUI check:
    - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
-   - Complete when background, close-up empty-area close, hotspot clicks keeping overlay open, debug ON visual rect / click area / footprint distinction, bed / desk / power / fridge / kitchen polygon movement, debug ON object click, desk / laptop close-up entry, close-up ESC / Close, room input lock during close-up, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
+   - Complete when background, candidate panel empty-area close, close-up empty-area close, hotspot clicks keeping overlay open, `D` / `F3` footprint tuning, `[ / ]` selection, `C` snippet output, debug ON visual rect / click area / footprint distinction, bed / desk / power / fridge / kitchen movement, debug ON object click, desk / laptop close-up entry, close-up ESC / Close, room input lock during close-up, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
 2. Main replacement gate review:
    - Start files: `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/MAIN_REPLACEMENT_WORK_PLAN.md`.
    - Complete when Go / No-Go items are reviewed before any production entry change.

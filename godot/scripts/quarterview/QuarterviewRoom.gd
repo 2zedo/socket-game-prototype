@@ -35,6 +35,8 @@ const DEBUG_FAILURE_LABEL_POSITION := Vector2(24, 616)
 const DEBUG_VISUAL_RECT_COLOR := Color(0.82, 0.82, 0.78, 0.34)
 const DEBUG_CLICK_AREA_COLOR := Color(0.35, 0.62, 1.0, 0.62)
 const DEBUG_FOOTPRINT_COLOR := Color(1.0, 0.42, 0.18, 0.72)
+const TUNING_TOGGLE_KEY := KEY_F3
+const TUNING_PRINT_KEY := KEY_C
 
 const INTERACTION_PRIORITY_DEFAULT := 50
 const INTERACTION_PRIORITY_BY_KEY := {
@@ -101,8 +103,9 @@ const WALL_BLOCKERS := [
 	},
 ]
 
-# `blocker_footprint` is the candidate floor-contact polygon that blocks Yui.
-# It is intentionally smaller/different than the visual body rect in this 3/4 room.
+# `blocker_footprint` is the candidate floor-contact polygon for debug/tuning.
+# It only drives path/collision when `footprint_path_enabled` is explicitly true.
+# This keeps guessed coordinates visible without treating them as final blockers.
 const OBJECT_LAYOUT := {
 	"door": {
 		"position": Vector2(216, 412),
@@ -349,6 +352,7 @@ const VISUAL_BLOCKS := [
 var object_definitions: Array = []
 var nearest_key := ""
 var debug_enabled := false
+var footprint_tuning_enabled := false
 var background_mode := "none"
 var pending_focus_key := ""
 var blocker_rects: Array[Rect2] = []
@@ -360,6 +364,8 @@ var current_click_target := Vector2.ZERO
 var has_click_target := false
 var path_failure_reason := ""
 var selected_key := ""
+var tuning_object_index := 0
+var tuning_status_message := ""
 var room_input_enabled := true
 var debug_label_nodes := {}
 var debug_radius_nodes := {}
@@ -367,6 +373,7 @@ var debug_approach_nodes := {}
 var debug_visual_rect_nodes := {}
 var debug_click_area_nodes := {}
 var debug_footprint_nodes := {}
+var debug_blocker_guide_nodes: Array[Line2D] = []
 var prompt_label: Label
 var reference_notice_label: Label
 var path_debug_line: Line2D
@@ -374,6 +381,7 @@ var click_target_debug_line: Line2D
 var walk_bounds_debug_line: Line2D
 var player_collision_debug_line: Line2D
 var path_failure_label: Label
+var tuning_vertex_labels: Array[Label] = []
 var floor_points := PackedVector2Array([
 	Vector2(244, 150),
 	Vector2(1018, 150),
@@ -428,6 +436,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_D:
 			_set_debug_enabled(not debug_enabled)
+			get_viewport().set_input_as_handled()
+			return
+		if debug_enabled and event.keycode == TUNING_TOGGLE_KEY:
+			_set_footprint_tuning_enabled(not footprint_tuning_enabled)
+			get_viewport().set_input_as_handled()
+			return
+		if debug_enabled and footprint_tuning_enabled and event.unicode == 91:
+			_select_tuning_object(-1)
+			get_viewport().set_input_as_handled()
+			return
+		if debug_enabled and footprint_tuning_enabled and event.unicode == 93:
+			_select_tuning_object(1)
+			get_viewport().set_input_as_handled()
+			return
+		if debug_enabled and footprint_tuning_enabled and event.keycode == TUNING_PRINT_KEY:
+			_print_tuning_layout_snippet()
 			get_viewport().set_input_as_handled()
 			return
 		if not room_input_enabled:
@@ -641,7 +665,8 @@ func _add_visual_block(visual: Dictionary) -> void:
 		_add_blocker(
 			"%sBlocker" % node.name,
 			visual["blocker_rect"],
-			_get_layout_footprint(visual)
+			_get_layout_footprint(visual),
+			_is_layout_footprint_enabled_for_path(visual)
 		)
 
 
@@ -784,22 +809,33 @@ func _add_object_blocker(definition: Resource) -> void:
 	_add_blocker(
 		"%sBlocker" % String(definition.key).capitalize().replace("_", ""),
 		_get_object_blocker_rect(definition),
-		_get_object_blocker_footprint(definition)
+		_get_object_blocker_footprint(definition),
+		_is_object_footprint_enabled_for_path(definition)
 	)
 
 
 func _build_wall_blockers() -> void:
 	for blocker in WALL_BLOCKERS:
-		_add_blocker(blocker["name"], blocker["rect"], _get_layout_footprint(blocker))
+		_add_blocker(
+			blocker["name"],
+			blocker["rect"],
+			_get_layout_footprint(blocker),
+			_is_layout_footprint_enabled_for_path(blocker)
+		)
 
 
-func _add_blocker(blocker_name: String, rect: Rect2, footprint := PackedVector2Array()) -> void:
+func _add_blocker(
+	blocker_name: String,
+	rect: Rect2,
+	footprint := PackedVector2Array(),
+	use_footprint_for_path := false
+) -> void:
 	var has_footprint := footprint.size() >= 3
 	var body := StaticBody2D.new()
 	body.name = blocker_name
 	add_child(body)
 
-	if has_footprint:
+	if has_footprint and use_footprint_for_path:
 		blocker_footprints.append(footprint)
 
 		var polygon_shape := CollisionPolygon2D.new()
@@ -822,9 +858,14 @@ func _add_blocker(blocker_name: String, rect: Rect2, footprint := PackedVector2A
 	guide.name = "%sGuide" % blocker_name
 	guide.closed = true
 	guide.width = DEBUG_BLOCKER_LINE_WIDTH
-	guide.default_color = DEBUG_FOOTPRINT_COLOR if has_footprint else Color(1.0, 0.24, 0.18, 0.38)
+	guide.default_color = (
+		DEBUG_FOOTPRINT_COLOR
+		if has_footprint and use_footprint_for_path
+		else Color(1.0, 0.42, 0.18, 0.34)
+	)
 	guide.points = footprint if has_footprint else _rect_to_points(rect)
 	debug_layer.add_child(guide)
+	debug_blocker_guide_nodes.append(guide)
 
 
 func _add_debug_for_definition(definition: Resource) -> void:
@@ -957,7 +998,7 @@ func _update_object_debug_visibility() -> void:
 		var is_background_hint := priority >= 80
 
 		var label: Label = debug_label_nodes[key]
-		label.visible = not is_background_hint or is_focus
+		label.visible = is_focus if footprint_tuning_enabled else not is_background_hint or is_focus
 		label.modulate = Color(1.0, 1.0, 1.0, 1.0 if is_focus else 0.72)
 
 		var radius: Line2D = debug_radius_nodes[key]
@@ -971,17 +1012,128 @@ func _update_object_debug_visibility() -> void:
 
 		if debug_footprint_nodes.has(key):
 			var footprint: Line2D = debug_footprint_nodes[key]
-			footprint.visible = not is_background_hint or is_focus
-			footprint.modulate = Color(1.0, 1.0, 1.0, 1.0 if is_focus else 0.55)
+			footprint.visible = is_focus if footprint_tuning_enabled else not is_background_hint or is_focus
+			footprint.modulate = Color(1.0, 1.0, 1.0, 1.0 if is_focus else 0.38)
 
 		var approach: Line2D = debug_approach_nodes[key]
-		approach.visible = is_focus or priority <= 20
+		approach.visible = is_focus if footprint_tuning_enabled else is_focus or priority <= 20
+
+	_update_tuning_vertex_markers()
+	_update_debug_blocker_guide_visibility()
 
 
 func _get_debug_focus_key() -> String:
+	if footprint_tuning_enabled:
+		return _get_tuning_object_key()
 	if not selected_key.is_empty():
 		return selected_key
 	return nearest_key
+
+
+func _set_footprint_tuning_enabled(enabled: bool) -> void:
+	if enabled and object_definitions.is_empty():
+		tuning_status_message = "Footprint Tuning Mode unavailable: no objects"
+		footprint_tuning_enabled = false
+		debug_overlay_toggled.emit(debug_enabled)
+		return
+
+	footprint_tuning_enabled = enabled
+	if footprint_tuning_enabled:
+		var preferred_key := selected_key if not selected_key.is_empty() else nearest_key
+		if not preferred_key.is_empty():
+			for index in object_definitions.size():
+				if String(object_definitions[index].key) == preferred_key:
+					tuning_object_index = index
+					break
+		tuning_object_index = clampi(tuning_object_index, 0, object_definitions.size() - 1)
+		selected_key = _get_tuning_object_key()
+		tuning_status_message = "Footprint Tuning Mode ON"
+	else:
+		tuning_status_message = "Footprint Tuning Mode OFF"
+
+	_update_object_debug_visibility()
+	_update_tuning_vertex_markers()
+	debug_overlay_toggled.emit(debug_enabled)
+
+
+func _select_tuning_object(direction: int) -> void:
+	if object_definitions.is_empty():
+		return
+
+	tuning_object_index = wrapi(tuning_object_index + direction, 0, object_definitions.size())
+	selected_key = _get_tuning_object_key()
+	var definition := _get_tuning_definition()
+	if definition != null:
+		tuning_status_message = "Tuning selected: %s" % String(definition.key)
+	_update_object_debug_visibility()
+	debug_overlay_toggled.emit(debug_enabled)
+
+
+func _get_tuning_object_key() -> String:
+	var definition := _get_tuning_definition()
+	if definition == null:
+		return ""
+	return String(definition.key)
+
+
+func _get_tuning_definition() -> Resource:
+	if object_definitions.is_empty():
+		return null
+	tuning_object_index = clampi(tuning_object_index, 0, object_definitions.size() - 1)
+	return object_definitions[tuning_object_index]
+
+
+func _update_tuning_vertex_markers() -> void:
+	var should_show := debug_enabled and footprint_tuning_enabled
+	var footprint := PackedVector2Array()
+	if should_show:
+		var definition := _get_tuning_definition()
+		if definition != null:
+			footprint = _get_object_blocker_footprint(definition)
+
+	for index in footprint.size():
+		if index >= tuning_vertex_labels.size():
+			var label := Label.new()
+			label.name = "TuningVertex%d" % index
+			label.add_theme_color_override("font_color", Color(1.0, 0.84, 0.18, 1.0))
+			label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.012, 1.0))
+			label.add_theme_constant_override("outline_size", 3)
+			label.add_theme_font_size_override("font_size", 12)
+			debug_layer.add_child(label)
+			tuning_vertex_labels.append(label)
+
+		var label: Label = tuning_vertex_labels[index]
+		label.text = str(index)
+		label.position = footprint[index] + Vector2(5, -18)
+		label.visible = should_show and footprint.size() >= 3
+
+	for index in range(footprint.size(), tuning_vertex_labels.size()):
+		tuning_vertex_labels[index].visible = false
+
+
+func _update_debug_blocker_guide_visibility() -> void:
+	var should_show := debug_enabled and not footprint_tuning_enabled
+	for guide in debug_blocker_guide_nodes:
+		if is_instance_valid(guide):
+			guide.visible = should_show
+
+
+func _print_tuning_layout_snippet() -> void:
+	var definition := _get_tuning_definition()
+	if definition == null:
+		return
+
+	var snippet := "%s: {\n\t\"approach_position\": %s,\n\t\"click_rect\": %s,\n\t\"blocker_footprint\": %s,\n\t\"footprint_path_enabled\": %s,\n}," % [
+		JSON.stringify(String(definition.key)),
+		_format_vector_snippet(_get_object_approach_position(definition)),
+		_format_rect_snippet(_get_object_click_rect(definition)),
+		_format_footprint_snippet(_get_object_blocker_footprint(definition)),
+		str(_is_object_footprint_enabled_for_path(definition)).to_lower(),
+	]
+	print(snippet)
+	DisplayServer.clipboard_set(snippet)
+	tuning_status_message = "Printed layout snippet for %s" % String(definition.key)
+	debug_overlay_toggled.emit(debug_enabled)
 
 
 func _update_prompt() -> void:
@@ -1039,11 +1191,15 @@ func _set_debug_enabled(enabled: bool) -> void:
 	var room_transform := global_transform
 	var player_transform := player.global_transform
 	debug_enabled = enabled
+	if not debug_enabled:
+		footprint_tuning_enabled = false
 	_set_blockout_layers_visible(DEBUG_SHOW_BLOCKOUT_LAYERS and debug_enabled)
 	debug_layer.visible = debug_enabled
 	if player.has_method("set_keyboard_input_enabled"):
 		player.set_keyboard_input_enabled(debug_enabled)
 	_update_object_debug_visibility()
+	_update_tuning_vertex_markers()
+	_update_debug_blocker_guide_visibility()
 	global_transform = room_transform
 	player.global_transform = player_transform
 	debug_overlay_toggled.emit(debug_enabled)
@@ -1091,7 +1247,7 @@ func is_room_input_enabled() -> bool:
 func get_debug_focus_summary() -> String:
 	var focus_key := _get_debug_focus_key()
 	if focus_key.is_empty():
-		return "Debug focus: -"
+		return "Debug focus: -\nF3: footprint tuning"
 
 	var definition := _get_definition(focus_key)
 	if definition == null:
@@ -1100,7 +1256,11 @@ func get_debug_focus_summary() -> String:
 	var click_rect := _get_object_click_rect(definition)
 	var footprint := _get_object_blocker_footprint(definition)
 	var footprint_text := "none" if footprint.size() < 3 else _format_rect(_get_polygon_bounds(footprint))
-	return "Focus: %s / priority=%d / role=%s / zone=%s\napproach=%s / click=%s\nfootprint=%s" % [
+	var mode_text := "Footprint Tuning: ON" if footprint_tuning_enabled else "Footprint Tuning: OFF"
+	var help_text := "F3: tuning | [ / ]: select | C: print layout" if footprint_tuning_enabled else "F3: footprint tuning"
+	var status_text := "\n%s" % tuning_status_message if not tuning_status_message.is_empty() else ""
+	return "%s\nFocus: %s / priority=%d / role=%s / zone=%s\napproach=%s / click=%s\nfootprint=%s / path=%s\n%s%s" % [
+		mode_text,
 		focus_key,
 		_get_object_interaction_priority(definition),
 		String(definition.role),
@@ -1108,6 +1268,9 @@ func get_debug_focus_summary() -> String:
 		_format_vector(_get_object_approach_position(definition)),
 		_format_rect(click_rect),
 		footprint_text,
+		"enabled" if _is_object_footprint_enabled_for_path(definition) else "debug-only",
+		help_text,
+		status_text,
 	]
 
 
@@ -1560,6 +1723,14 @@ func _get_object_blocker_footprint(definition: Resource) -> PackedVector2Array:
 	return _get_layout_footprint(_get_object_layout(definition))
 
 
+func _is_object_footprint_enabled_for_path(definition: Resource) -> bool:
+	return _is_layout_footprint_enabled_for_path(_get_object_layout(definition))
+
+
+func _is_layout_footprint_enabled_for_path(layout: Dictionary) -> bool:
+	return bool(layout.get("footprint_path_enabled", false))
+
+
 func _get_layout_footprint(layout: Dictionary) -> PackedVector2Array:
 	var value = layout.get("blocker_footprint", PackedVector2Array())
 	if value is PackedVector2Array:
@@ -1614,6 +1785,28 @@ func _format_rect(rect: Rect2) -> String:
 		int(round(rect.size.x)),
 		int(round(rect.size.y)),
 	]
+
+
+func _format_vector_snippet(value: Vector2) -> String:
+	return "Vector2(%d, %d)" % [int(round(value.x)), int(round(value.y))]
+
+
+func _format_rect_snippet(rect: Rect2) -> String:
+	return "Rect2(%s, Vector2(%d, %d))" % [
+		_format_vector_snippet(rect.position),
+		int(round(rect.size.x)),
+		int(round(rect.size.y)),
+	]
+
+
+func _format_footprint_snippet(points: PackedVector2Array) -> String:
+	if points.size() == 0:
+		return "[]"
+
+	var values := []
+	for point in points:
+		values.append(_format_vector_snippet(point))
+	return "[%s]" % ", ".join(values)
 
 
 func _add_polygon(parent: Node, points: PackedVector2Array, color: Color) -> void:

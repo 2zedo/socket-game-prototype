@@ -113,6 +113,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	if _is_interaction_panel_open() and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_interaction_panel_content_point(event.position):
+			_hide_interaction_panel()
+			_update_status("Candidate panel closed.")
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == RESTART_KEY:
 			get_tree().reload_current_scene()
@@ -472,6 +479,19 @@ func _is_desk_closeup_content_point(viewport_point: Vector2) -> bool:
 	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
 		panel_size = DESK_CLOSEUP_SIZE
 	return Rect2(desk_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _is_interaction_panel_open() -> bool:
+	return interaction_panel != null and interaction_panel.visible
+
+
+func _is_interaction_panel_content_point(viewport_point: Vector2) -> bool:
+	if not _is_interaction_panel_open():
+		return false
+	var panel_size := interaction_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = PANEL_FALLBACK_SIZE
+	return Rect2(interaction_panel.global_position, panel_size).has_point(viewport_point)
 
 
 func _get_viewport_ui_size() -> Vector2:
