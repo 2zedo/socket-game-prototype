@@ -80,10 +80,18 @@
 - Validation: `git diff --check`, `git diff --cached --check`, `find docs -type f | sort`, targeted `wc -l`
 - Next: 필요하면 superseded 문서를 current identity 기준으로 통합하거나 archive stub 처리한다.
 
-### this commit - QuarterviewMain 1차 정리
+### 22b3356 - QuarterviewMain 1차 정리
 
-- Commit: `this commit`
+- Commit: `22b3356`
 - Result: QuarterviewMain normal view를 mouse-click 이동 중심으로 정리하고, object click 접근 / candidate panel / debug-only blockout 흐름을 추가했다.
 - Changed: QuarterviewMain script / scene, QuarterviewRoom script, QuarterviewPlayer script, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 normal view, click movement, object approach, `D` debug, `R` restart를 수동 확인한다.
+
+### this commit - QuarterviewMain 이동감 개선
+
+- Commit: `this commit`
+- Result: QuarterviewMain player marker를 키우고, click / object approach 이동에 blocker-aware candidate grid pathfinding을 추가했다.
+- Changed: QuarterviewPlayer path follow / marker size, QuarterviewRoom path grid / debug overlay, QuarterviewMain path failure status, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
+- Next: GUI에서 침대 / 책상 / power rack 근처 우회 이동과 debug path overlay를 수동 확인한다.

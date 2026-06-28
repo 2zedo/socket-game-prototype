@@ -4,8 +4,8 @@
 [ext_resource type="Script" path="res://scripts/quarterview/QuarterviewPlayer.gd" id="2_player"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_player"]
-radius = 12.0
-height = 44.0
+radius = 16.0
+height = 58.0
 
 [node name="QuarterviewRoom" type="Node2D"]
 script = ExtResource("1_room")

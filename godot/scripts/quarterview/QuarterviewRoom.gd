@@ -3,6 +3,7 @@ extends Node2D
 signal interaction_requested(object_key: String, action_key: String, payload: Dictionary)
 signal nearest_interactable_changed(object_key: String, display_name: String)
 signal debug_overlay_toggled(enabled: bool)
+signal movement_path_failed(reason: String)
 
 const ACTION_PRIMARY := "primary"
 const ACTION_FOCUS := "focus"
@@ -12,6 +13,9 @@ const BACKGROUND_TARGET_SIZE := Vector2(1280, 720)
 const REFERENCE_OVERLAY_ALPHA := 0.38
 const WALK_TARGET_BOUNDS := Rect2(Vector2(190, 190), Vector2(900, 438))
 const CLICK_OBJECT_PADDING := 28.0
+const PATH_GRID_CELL_SIZE := 24.0
+const PATH_BLOCKER_PADDING := 24.0
+const PLAYER_COLLISION_DEBUG_RADIUS := 16.0
 
 const OBJECT_RESOURCE_PATHS := [
 	"res://resources/rooms/quarterview/objects/door.tres",
@@ -262,8 +266,20 @@ var nearest_key := ""
 var debug_enabled := false
 var background_mode := "none"
 var pending_focus_key := ""
+var blocker_rects: Array[Rect2] = []
+var path_grid := AStarGrid2D.new()
+var path_grid_size := Vector2i.ZERO
+var current_debug_path := PackedVector2Array()
+var current_click_target := Vector2.ZERO
+var has_click_target := false
+var path_failure_reason := ""
 var prompt_label: Label
 var reference_notice_label: Label
+var path_debug_line: Line2D
+var click_target_debug_line: Line2D
+var walk_bounds_debug_line: Line2D
+var player_collision_debug_line: Line2D
+var path_failure_label: Label
 var floor_points := PackedVector2Array([
 	Vector2(244, 150),
 	Vector2(1018, 150),
@@ -297,12 +313,15 @@ func _ready() -> void:
 	_load_object_definitions()
 	_build_object_placeholders()
 	_build_wall_blockers()
+	_rebuild_path_grid()
+	_build_path_debug()
 	_set_debug_enabled(false)
 
 
 func _process(_delta: float) -> void:
 	_update_nearest_interactable()
 	_update_pending_focus()
+	_update_player_collision_debug()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -660,6 +679,8 @@ func _build_wall_blockers() -> void:
 
 
 func _add_blocker(blocker_name: String, rect: Rect2) -> void:
+	blocker_rects.append(rect)
+
 	var body := StaticBody2D.new()
 	body.name = blocker_name
 	body.position = rect.position + rect.size * 0.5
@@ -706,6 +727,20 @@ func _add_debug_for_definition(definition: Resource) -> void:
 		points.append(_get_object_interaction_position(definition) + Vector2(cos(angle), sin(angle)) * _get_object_interaction_radius(definition))
 	radius.points = points
 	debug_layer.add_child(radius)
+
+	var approach := Line2D.new()
+	approach.name = "%sApproachPoint" % String(definition.key).capitalize().replace("_", "")
+	approach.closed = true
+	approach.width = 2.0
+	approach.default_color = Color(1.0, 0.82, 0.24, 0.82)
+	var approach_position := _get_object_approach_position(definition)
+	approach.points = PackedVector2Array([
+		approach_position + Vector2(-6, -6),
+		approach_position + Vector2(6, -6),
+		approach_position + Vector2(6, 6),
+		approach_position + Vector2(-6, 6),
+	])
+	debug_layer.add_child(approach)
 
 
 func _get_layer_for_definition(definition: Resource) -> Node2D:
@@ -762,7 +797,7 @@ func _update_prompt() -> void:
 		return
 
 	prompt_label.text = "[E] %s" % definition.display_name
-	prompt_label.position = player.global_position + Vector2(-48, -78)
+	prompt_label.position = player.global_position + Vector2(-64, -100)
 	prompt_label.visible = true
 
 
@@ -824,17 +859,219 @@ func is_debug_overlay_enabled() -> bool:
 func _handle_left_click(click_position: Vector2) -> void:
 	var clicked_definition := _get_definition_at_position(click_position)
 	if clicked_definition != null and _is_normal_interactable(clicked_definition):
-		pending_focus_key = clicked_definition.key
-		_move_player_to(_get_object_approach_position(clicked_definition))
+		if _move_player_to(_get_object_approach_position(clicked_definition)):
+			pending_focus_key = clicked_definition.key
+		else:
+			pending_focus_key = ""
 		return
 
 	pending_focus_key = ""
 	_move_player_to(_clamp_walk_target(click_position))
 
 
-func _move_player_to(target: Vector2) -> void:
-	if player.has_method("set_move_target"):
-		player.set_move_target(_clamp_walk_target(target))
+func _move_player_to(target: Vector2) -> bool:
+	var path := _find_path_to_target(target)
+	if path.size() == 0:
+		if player.has_method("clear_move_target"):
+			player.clear_move_target()
+		_update_path_debug(PackedVector2Array(), _clamp_walk_target(target))
+		movement_path_failed.emit(path_failure_reason)
+		return false
+
+	if player.has_method("set_path"):
+		player.set_path(path)
+	else:
+		player.set_move_target(path[path.size() - 1])
+	_update_path_debug(path, path[path.size() - 1])
+	return true
+
+
+func _rebuild_path_grid() -> void:
+	path_grid_size = Vector2i(
+		int(ceil(WALK_TARGET_BOUNDS.size.x / PATH_GRID_CELL_SIZE)),
+		int(ceil(WALK_TARGET_BOUNDS.size.y / PATH_GRID_CELL_SIZE))
+	)
+	path_grid = AStarGrid2D.new()
+	path_grid.region = Rect2i(Vector2i.ZERO, path_grid_size)
+	path_grid.cell_size = Vector2.ONE
+	path_grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	path_grid.default_compute_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	path_grid.default_estimate_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	path_grid.update()
+
+	for y in path_grid_size.y:
+		for x in path_grid_size.x:
+			var cell_id := Vector2i(x, y)
+			if _is_world_point_blocked_for_path(_grid_id_to_world(cell_id)):
+				path_grid.set_point_solid(cell_id, true)
+
+
+func _find_path_to_target(target: Vector2) -> PackedVector2Array:
+	# Candidate-only navigation: a coarse grid is enough to test click movement around
+	# room blockers before the final room art and tuned navigation data exist.
+	path_failure_reason = ""
+	var start_id := _find_nearest_walkable_grid_id(player.global_position)
+	if start_id == Vector2i(-1, -1):
+		path_failure_reason = "No path: player is outside walkable area"
+		return PackedVector2Array()
+
+	var clamped_target := _clamp_walk_target(target)
+	var target_id := _find_nearest_walkable_grid_id(clamped_target)
+	if target_id == Vector2i(-1, -1):
+		path_failure_reason = "No path: target is outside walkable area"
+		return PackedVector2Array()
+
+	var id_path := path_grid.get_id_path(start_id, target_id, false)
+	if id_path.size() == 0:
+		path_failure_reason = "No path: blocked by room objects"
+		return PackedVector2Array()
+
+	var path := PackedVector2Array()
+	for id in id_path:
+		path.append(_grid_id_to_world(id))
+
+	if path.size() > 0:
+		path[path.size() - 1] = _grid_id_to_world(target_id)
+	return path
+
+
+func _find_nearest_walkable_grid_id(world_point: Vector2) -> Vector2i:
+	var origin := _world_to_grid_id(world_point)
+	if _is_grid_id_walkable(origin):
+		return origin
+
+	var best_id := Vector2i(-1, -1)
+	var best_distance := INF
+	var max_radius: int = max(path_grid_size.x, path_grid_size.y)
+	for radius in range(1, max_radius + 1):
+		for y in range(origin.y - radius, origin.y + radius + 1):
+			for x in range(origin.x - radius, origin.x + radius + 1):
+				if abs(x - origin.x) != radius and abs(y - origin.y) != radius:
+					continue
+				var candidate := Vector2i(x, y)
+				if not _is_grid_id_walkable(candidate):
+					continue
+				var distance := _grid_id_to_world(candidate).distance_to(world_point)
+				if distance < best_distance:
+					best_distance = distance
+					best_id = candidate
+		if best_id != Vector2i(-1, -1):
+			return best_id
+
+	return best_id
+
+
+func _world_to_grid_id(world_point: Vector2) -> Vector2i:
+	var local := (world_point - WALK_TARGET_BOUNDS.position) / PATH_GRID_CELL_SIZE
+	return Vector2i(
+		clamp(int(floor(local.x)), 0, max(path_grid_size.x - 1, 0)),
+		clamp(int(floor(local.y)), 0, max(path_grid_size.y - 1, 0))
+	)
+
+
+func _grid_id_to_world(cell_id: Vector2i) -> Vector2:
+	return WALK_TARGET_BOUNDS.position + Vector2(cell_id) * PATH_GRID_CELL_SIZE + Vector2.ONE * PATH_GRID_CELL_SIZE * 0.5
+
+
+func _is_grid_id_walkable(cell_id: Vector2i) -> bool:
+	if cell_id.x < 0 or cell_id.y < 0 or cell_id.x >= path_grid_size.x or cell_id.y >= path_grid_size.y:
+		return false
+	return not path_grid.is_point_solid(cell_id)
+
+
+func _is_world_point_blocked_for_path(world_point: Vector2) -> bool:
+	if not WALK_TARGET_BOUNDS.has_point(world_point):
+		return true
+	if not Geometry2D.is_point_in_polygon(world_point, floor_points):
+		return true
+
+	for rect in blocker_rects:
+		if rect.grow(PATH_BLOCKER_PADDING).has_point(world_point):
+			return true
+
+	return false
+
+
+func _build_path_debug() -> void:
+	walk_bounds_debug_line = Line2D.new()
+	walk_bounds_debug_line.name = "WalkableBounds"
+	walk_bounds_debug_line.closed = true
+	walk_bounds_debug_line.width = 2.0
+	walk_bounds_debug_line.default_color = Color(0.35, 0.62, 1.0, 0.62)
+	walk_bounds_debug_line.points = PackedVector2Array([
+		WALK_TARGET_BOUNDS.position,
+		WALK_TARGET_BOUNDS.position + Vector2(WALK_TARGET_BOUNDS.size.x, 0),
+		WALK_TARGET_BOUNDS.end,
+		WALK_TARGET_BOUNDS.position + Vector2(0, WALK_TARGET_BOUNDS.size.y),
+	])
+	debug_layer.add_child(walk_bounds_debug_line)
+
+	path_debug_line = Line2D.new()
+	path_debug_line.name = "CurrentPath"
+	path_debug_line.width = 4.0
+	path_debug_line.default_color = Color(0.28, 0.84, 1.0, 0.86)
+	debug_layer.add_child(path_debug_line)
+
+	click_target_debug_line = Line2D.new()
+	click_target_debug_line.name = "ClickTarget"
+	click_target_debug_line.closed = true
+	click_target_debug_line.width = 3.0
+	click_target_debug_line.default_color = Color(1.0, 0.84, 0.18, 0.92)
+	debug_layer.add_child(click_target_debug_line)
+
+	player_collision_debug_line = Line2D.new()
+	player_collision_debug_line.name = "PlayerCollisionRadius"
+	player_collision_debug_line.closed = true
+	player_collision_debug_line.width = 2.0
+	player_collision_debug_line.default_color = Color(0.92, 0.92, 1.0, 0.68)
+	debug_layer.add_child(player_collision_debug_line)
+
+	path_failure_label = Label.new()
+	path_failure_label.name = "PathFailureLabel"
+	path_failure_label.position = Vector2(24, 616)
+	path_failure_label.add_theme_color_override("font_color", Color(1.0, 0.46, 0.32, 0.92))
+	path_failure_label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.012, 1.0))
+	path_failure_label.add_theme_constant_override("outline_size", 3)
+	path_failure_label.add_theme_font_size_override("font_size", 14)
+	debug_layer.add_child(path_failure_label)
+
+	_update_path_debug(PackedVector2Array(), Vector2.ZERO)
+	_update_player_collision_debug()
+
+
+func _update_path_debug(path: PackedVector2Array, target: Vector2) -> void:
+	current_debug_path = path
+	current_click_target = target
+	has_click_target = target != Vector2.ZERO
+
+	if path_debug_line != null:
+		path_debug_line.points = current_debug_path
+
+	if click_target_debug_line != null:
+		if has_click_target:
+			click_target_debug_line.points = PackedVector2Array([
+				current_click_target + Vector2(-9, -9),
+				current_click_target + Vector2(9, -9),
+				current_click_target + Vector2(9, 9),
+				current_click_target + Vector2(-9, 9),
+			])
+		else:
+			click_target_debug_line.points = PackedVector2Array()
+
+	if path_failure_label != null:
+		path_failure_label.text = path_failure_reason
+		path_failure_label.visible = not path_failure_reason.is_empty()
+
+
+func _update_player_collision_debug() -> void:
+	if player_collision_debug_line == null:
+		return
+
+	var points := PackedVector2Array()
+	for index in 32:
+		var angle := TAU * float(index) / 32.0
+		points.append(player.global_position + Vector2(cos(angle), sin(angle)) * PLAYER_COLLISION_DEBUG_RADIUS)
+	player_collision_debug_line.points = points
 
 
 func _update_pending_focus() -> void:

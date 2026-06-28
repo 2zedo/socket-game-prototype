@@ -24,6 +24,8 @@ func _ready() -> void:
 		quarterview_room.connect("nearest_interactable_changed", Callable(self, "_on_nearest_interactable_changed"))
 	if quarterview_room.has_signal("debug_overlay_toggled"):
 		quarterview_room.connect("debug_overlay_toggled", Callable(self, "_on_room_debug_overlay_toggled"))
+	if quarterview_room.has_signal("movement_path_failed"):
+		quarterview_room.connect("movement_path_failed", Callable(self, "_on_room_movement_path_failed"))
 
 	if quarterview_room.has_method("get_background_mode"):
 		background_mode = quarterview_room.get_background_mode()
@@ -67,6 +69,10 @@ func _on_nearest_interactable_changed(object_key: String, display_name: String) 
 func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 	room_debug_enabled = enabled
 	_update_status("Debug overlay %s." % ("ON" if enabled else "OFF"))
+
+
+func _on_room_movement_path_failed(reason: String) -> void:
+	_update_status(reason)
 
 
 func _update_status(message: String) -> void:
