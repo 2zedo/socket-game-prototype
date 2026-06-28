@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `e7f8ee7`
-- Phase: QuarterviewMain desk close-up candidate
+- Current commit at task start: `ab6371c`
+- Phase: QuarterviewMain debug detail / close-up input stabilization
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -34,6 +34,7 @@
 - Project identity consolidation: added `docs/CONCENT_PROJECT_IDENTITY.md` and `docs/PROJECT_WORK_LOG.md`, and made AGENTS point to the identity document.
 - Room / power / hacking design direction docs: fixed the current direction for mouse-centric room flow, desk close-up, modular power, hunger, hacking infiltration, and defense.
 - Deprecated / scoped document notice pass: added targeted notices to legacy / conflict candidate docs, while leaving current source-of-truth docs unchanged.
+- QuarterviewMain debug / close-up stabilization: fixed debug detail mixed-value text conversion, removed shadow warnings, and added empty-backdrop click close for the desk close-up candidate.
 - QuarterviewMain desk close-up candidate: added a no-op desk close-up overlay for desk / laptop use and locked room click movement while candidate UI is open.
 - QuarterviewMain interaction tuning: added object click priority, tuned approach points, clamped candidate panel placement, and reduced debug overlay text clutter.
 - QuarterviewMain debug input split: separated the `D` debug toggle from movement input, limited debug keyboard movement to arrow keys, and kept normal interaction panels free of developer-only object details.
@@ -46,9 +47,9 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/QuarterviewMain.gd`: adds the desk close-up candidate overlay, no-op desk hotspot actions, ESC close behavior, and room input lock while candidate UI is open.
-- `godot/scripts/quarterview/QuarterviewRoom.gd`: adds a candidate room input lock so modal / close-up UI can stop click movement and pending focus without touching production Main.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain desk close-up pass.
+- `godot/scripts/QuarterviewMain.gd`: fixes debug detail payload text conversion, keeps mixed payload values safe, and adds a fullscreen close-up backdrop that closes on empty-area click without forwarding movement input.
+- `godot/scripts/quarterview/QuarterviewRoom.gd`: renames a shadowing debug visibility parameter while preserving room input lock behavior.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain debug / close-up stabilization pass.
 
 ## Validation Results
 
@@ -65,13 +66,13 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI confirmation is still needed for desk / laptop close-up entry, close-up ESC / Close behavior, room click lock while close-up is open, hotspot no-op status messages, object click priority around desk / power / kitchen objects, tuned approach points, candidate panel clamp behavior, debug readability, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
+- GUI confirmation is still needed for debug ON object click without errors, desk / laptop close-up entry, close-up empty-backdrop click close, close-up ESC / Close behavior, hotspot clicks keeping the overlay open, room click lock while close-up is open, hotspot no-op status messages, object click priority around desk / power / kitchen objects, tuned approach points, candidate panel clamp behavior, debug readability, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
 
 ## Next Recommended Task
 
 1. QuarterviewMain GUI check:
    - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
-   - Complete when background, desk / laptop close-up entry, close-up ESC / Close, room input lock during close-up, desk / laptop / power click priority, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
+   - Complete when background, debug ON object click, desk / laptop close-up entry, close-up empty-area close, close-up ESC / Close, room input lock during close-up, desk / laptop / power click priority, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
 2. Main replacement gate review:
    - Start files: `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/MAIN_REPLACEMENT_WORK_PLAN.md`.
    - Complete when Go / No-Go items are reviewed before any production entry change.

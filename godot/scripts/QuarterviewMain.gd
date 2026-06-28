@@ -77,6 +77,7 @@ var selected_desk_hotspot_key := "laptop"
 var interaction_panel: PanelContainer
 var interaction_title_label: Label
 var interaction_detail_label: Label
+var desk_closeup_backdrop: ColorRect
 var desk_closeup_panel: PanelContainer
 var desk_hotspot_buttons := {}
 var desk_hotspot_title_label: Label
@@ -291,6 +292,16 @@ func _should_open_desk_closeup() -> bool:
 
 
 func _build_desk_closeup_overlay() -> void:
+	desk_closeup_backdrop = ColorRect.new()
+	desk_closeup_backdrop.name = "DeskCloseupBackdrop"
+	desk_closeup_backdrop.visible = false
+	desk_closeup_backdrop.color = Color(0.0, 0.0, 0.0, 0.32)
+	desk_closeup_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	desk_closeup_backdrop.position = Vector2.ZERO
+	desk_closeup_backdrop.size = get_viewport().get_visible_rect().size
+	desk_closeup_backdrop.gui_input.connect(_on_desk_closeup_backdrop_gui_input)
+	$UILayer.add_child(desk_closeup_backdrop)
+
 	desk_closeup_panel = PanelContainer.new()
 	desk_closeup_panel.name = "DeskCloseupCandidate"
 	desk_closeup_panel.visible = false
@@ -412,6 +423,8 @@ func _open_desk_closeup(source_key: String) -> void:
 	desk_closeup_open = true
 	_hide_interaction_panel()
 	_set_room_input_locked(true)
+	desk_closeup_backdrop.size = get_viewport().get_visible_rect().size
+	desk_closeup_backdrop.visible = true
 	desk_closeup_panel.visible = true
 
 	var initial_key := source_key
@@ -429,11 +442,19 @@ func _open_desk_closeup(source_key: String) -> void:
 
 
 func _hide_desk_closeup() -> void:
+	if desk_closeup_backdrop != null:
+		desk_closeup_backdrop.visible = false
 	if desk_closeup_panel != null:
 		desk_closeup_panel.visible = false
 	desk_closeup_open = false
 	_set_room_input_locked(false)
 	_update_status("Desk close-up closed.")
+
+
+func _on_desk_closeup_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_hide_desk_closeup()
+		get_viewport().set_input_as_handled()
 
 
 func _on_desk_hotspot_pressed(hotspot_key: String) -> void:
@@ -537,10 +558,10 @@ func _get_normal_object_description(payload: Dictionary) -> String:
 func _get_debug_object_detail(object_key: String, payload: Dictionary) -> String:
 	return "key: %s\nrole: %s\nzone: %s\naction: %s\npriority: %s\napproach: %s\nclick: %s\ncandidate no-op only" % [
 		object_key,
-		String(payload.get("role", "-")),
-		String(payload.get("zone", "-")),
-		String(payload.get("action", "-")),
-		String(payload.get("priority", "-")),
+		_get_debug_payload_text(payload, "role"),
+		_get_debug_payload_text(payload, "zone"),
+		_get_debug_payload_text(payload, "action"),
+		_get_debug_payload_text(payload, "priority"),
 		_format_vector(_get_payload_vector(payload, "approach_position")),
 		_format_rect(_get_payload_rect(payload, "click_area")),
 	]
@@ -593,10 +614,10 @@ func _position_interaction_panel(payload: Dictionary) -> void:
 	interaction_panel.position = target_position
 
 
-func _clamp_panel_position(position: Vector2, panel_size: Vector2, viewport_size: Vector2) -> Vector2:
+func _clamp_panel_position(panel_position: Vector2, panel_size: Vector2, viewport_size: Vector2) -> Vector2:
 	return Vector2(
-		clampf(position.x, PANEL_VIEWPORT_MARGIN, viewport_size.x - PANEL_VIEWPORT_MARGIN - panel_size.x),
-		clampf(position.y, PANEL_VIEWPORT_MARGIN, viewport_size.y - PANEL_VIEWPORT_MARGIN - panel_size.y)
+		clampf(panel_position.x, PANEL_VIEWPORT_MARGIN, viewport_size.x - PANEL_VIEWPORT_MARGIN - panel_size.x),
+		clampf(panel_position.y, PANEL_VIEWPORT_MARGIN, viewport_size.y - PANEL_VIEWPORT_MARGIN - panel_size.y)
 	)
 
 
@@ -618,6 +639,20 @@ func _get_payload_rect(payload: Dictionary, key: String) -> Rect2:
 	if value is Rect2:
 		return value
 	return Rect2()
+
+
+func _get_debug_payload_text(payload: Dictionary, key: String) -> String:
+	return _debug_value_to_text(payload.get(key, null))
+
+
+func _debug_value_to_text(value: Variant) -> String:
+	if value == null:
+		return "N/A"
+	if value is Vector2:
+		return _format_vector(value)
+	if value is Rect2:
+		return _format_rect(value)
+	return str(value)
 
 
 func _format_vector(value: Vector2) -> String:

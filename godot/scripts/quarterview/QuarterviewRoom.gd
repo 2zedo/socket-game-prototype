@@ -960,7 +960,7 @@ func _set_debug_enabled(enabled: bool) -> void:
 	debug_overlay_toggled.emit(debug_enabled)
 
 
-func _set_blockout_layers_visible(visible: bool) -> void:
+func _set_blockout_layers_visible(should_show: bool) -> void:
 	for layer in [
 		floor_layer,
 		wall_back_layer,
@@ -969,7 +969,7 @@ func _set_blockout_layers_visible(visible: bool) -> void:
 		object_layer,
 		foreground_layer,
 	]:
-		layer.visible = visible
+		layer.visible = should_show
 
 
 func get_background_mode() -> String:
