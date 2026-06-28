@@ -9,6 +9,7 @@ const CANCEL_KEY := KEY_ESCAPE
 @onready var log_label: Label = $UILayer/StatusPanel/Margin/VBox/LogLabel
 
 var last_interaction := "-"
+var last_interaction_debug := "-"
 var room_debug_enabled := false
 var background_mode := "unknown"
 var focused_object_key := ""
@@ -52,12 +53,13 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_room_interaction_requested(object_key: String, action_key: String, payload: Dictionary) -> void:
 	var role := String(payload.get("role", "-"))
 	var display_name := String(payload.get("display_name", object_key))
-	last_interaction = "%s / role=%s / action=%s" % [object_key, role, action_key]
-	print("QuarterviewMain candidate interaction: %s / display=%s" % [last_interaction, display_name])
+	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
+	last_interaction_debug = "%s / role=%s / action=%s" % [object_key, role, action_key]
+	print("QuarterviewMain candidate interaction: %s / display=%s" % [last_interaction_debug, display_name])
 	focused_object_key = object_key
 	focused_payload = payload.duplicate(true)
 	_show_interaction_panel(object_key, payload)
-	_update_status("Interaction candidate received.")
+	_update_status("%s selected." % display_name)
 
 
 func _on_nearest_interactable_changed(object_key: String, display_name: String) -> void:
@@ -73,6 +75,8 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 	var camera_zoom := camera.zoom
 	room_debug_enabled = enabled
 	_update_status("Debug overlay %s." % ("ON" if enabled else "OFF"))
+	if interaction_panel != null and interaction_panel.visible and not focused_payload.is_empty():
+		_refresh_interaction_panel_detail(focused_object_key, focused_payload)
 	quarterview_room.global_transform = room_transform
 	camera.global_transform = camera_transform
 	camera.zoom = camera_zoom
@@ -83,9 +87,12 @@ func _on_room_movement_path_failed(reason: String) -> void:
 
 
 func _update_status(message: String) -> void:
-	var debug_text := "Debug ON: keyboard move enabled" if room_debug_enabled else "Normal: mouse click movement"
+	var debug_text := "Debug ON: arrow-key move enabled" if room_debug_enabled else "Normal: mouse click movement"
 	status_label.text = "Candidate only / no production wiring\n%s\n%s" % [message, debug_text]
-	log_label.text = "Last: %s\nD: debug | R: restart | BG: %s" % [last_interaction, background_mode]
+	if room_debug_enabled:
+		log_label.text = "Last: %s\nD: debug | R: restart | BG: %s" % [last_interaction_debug, background_mode]
+	else:
+		log_label.text = "Last: %s\nD: debug | R: restart" % [last_interaction]
 
 
 func _build_interaction_panel() -> void:
@@ -140,17 +147,16 @@ func _build_interaction_panel() -> void:
 
 func _show_interaction_panel(object_key: String, payload: Dictionary) -> void:
 	var display_name := String(payload.get("display_name", object_key))
-	var role := String(payload.get("role", "-"))
-	var zone := String(payload.get("zone", "-"))
-	var action := String(payload.get("action", "-"))
 	interaction_title_label.text = display_name
-	interaction_detail_label.text = "key: %s\nrole: %s\nzone: %s\naction: %s\ncandidate no-op only" % [
-		object_key,
-		role,
-		zone,
-		action,
-	]
+	_refresh_interaction_panel_detail(object_key, payload)
 	interaction_panel.visible = true
+
+
+func _refresh_interaction_panel_detail(object_key: String, payload: Dictionary) -> void:
+	if room_debug_enabled:
+		interaction_detail_label.text = _get_debug_object_detail(object_key, payload)
+	else:
+		interaction_detail_label.text = _get_normal_object_description(payload)
 
 
 func _hide_interaction_panel() -> void:
@@ -174,6 +180,54 @@ func _on_cancel_pressed() -> void:
 func _log_candidate_panel_action(action_key: String) -> void:
 	var role := String(focused_payload.get("role", "-"))
 	var display_name := String(focused_payload.get("display_name", focused_object_key))
-	last_interaction = "%s / role=%s / action=%s" % [focused_object_key, role, action_key]
-	print("QuarterviewMain candidate panel: %s / display=%s / no production wiring" % [last_interaction, display_name])
-	_update_status("Candidate panel action: %s." % action_key)
+	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
+	last_interaction_debug = "%s / role=%s / action=%s" % [focused_object_key, role, action_key]
+	print("QuarterviewMain candidate panel: %s / display=%s / no production wiring" % [last_interaction_debug, display_name])
+	_update_status("%s: %s." % [display_name, _get_action_display_name(action_key)])
+
+
+func _get_normal_object_description(payload: Dictionary) -> String:
+	match String(payload.get("role", "")):
+		"manual_end_day":
+			return "잠시 쉬거나 하루를 정리할 수 있을 것 같다."
+		"laptop_job":
+			return "작업과 의뢰를 확인할 수 있을 것 같다."
+		"phone_status", "phone_charge":
+			return "연락과 충전 상태를 확인할 수 있을 것 같다."
+		"power_management":
+			return "방의 전력 장비를 살펴볼 수 있을 것 같다."
+		"communication":
+			return "외부 신호 상태를 확인할 수 있을 것 같다."
+		"mystery_device":
+			return "정체를 알 수 없는 장치가 조용히 켜져 있다."
+		"audio_hacking_device":
+			return "소리와 신호를 분석하는 장비처럼 보인다."
+		"living_appliance":
+			return "생활에 필요한 작은 장비다."
+		_:
+			return "가까이에서 살펴볼 수 있다."
+
+
+func _get_debug_object_detail(object_key: String, payload: Dictionary) -> String:
+	return "key: %s\nrole: %s\nzone: %s\naction: %s\nfuture: %s\nstate: %s\ncandidate no-op only" % [
+		object_key,
+		String(payload.get("role", "-")),
+		String(payload.get("zone", "-")),
+		String(payload.get("action", "-")),
+		String(payload.get("future_source", "-")),
+		String(payload.get("visual_state", "-")),
+	]
+
+
+func _get_action_display_name(action_key: String) -> String:
+	match action_key:
+		"primary":
+			return "사용하기"
+		"inspect":
+			return "설명"
+		"cancel":
+			return "취소"
+		"focus":
+			return "선택"
+		_:
+			return action_key
