@@ -194,11 +194,23 @@ git diff --cached --name-only
 
 ## 12. 문서 규칙
 
+* 작업 시작 시 `AGENTS.md` 다음으로 `docs/CONCENT_PROJECT_IDENTITY.md`를 읽는다.
+* 디자인 / 기능 방향 판단은 아래 우선순위를 따른다.
+
+  1. `AGENTS.md`
+  2. `docs/CONCENT_PROJECT_IDENTITY.md`
+  3. 직접 관련 세부 문서
+  4. `docs/PROJECT_STATUS.md`
+* 세부 문서가 `docs/CONCENT_PROJECT_IDENTITY.md`와 충돌하면 identity 문서를 우선한다.
+* 단, 실제 구현 상태는 repo 파일, Godot scene, Resource, test 결과를 함께 확인한다.
+* `docs/old`는 과거 기록이며 current decision source가 아니다.
 * `docs/PROJECT_STATUS.md`는 현재 상태판이지 긴 작업 일지가 아니다.
+* `docs/PROJECT_WORK_LOG.md`는 작업 완료 로그를 짧게 누적하는 파일이다.
 * `AGENTS.md`에는 1~52 작업 이력을 전부 넣지 않는다.
 * 없는 tracking 문서를 임의로 만들지 않는다.
 * `NEXT_TASKS.md`, `WORK_LOG.md` 같은 파일은 사용자가 요청하지 않으면 만들지 않는다.
 * 의미 있는 작업 단위가 끝나면 `docs/PROJECT_STATUS.md`를 갱신한다.
+* 의미 있는 작업 단위가 끝나면 `docs/PROJECT_WORK_LOG.md`에도 commit / 작업명 / 결과 / 다음 작업을 짧게 추가한다.
 * task 성격에 맞는 세부 문서만 갱신한다.
 * `docs/ROADMAP.md`는 큰 방향 / 단계 변경 때만 갱신한다.
 * `docs/GODOT_DAY1_MVP_PLAN.md`는 MVP 성공 기준이나 구현 계획이 바뀔 때만 갱신한다.
@@ -207,6 +219,11 @@ git diff --cached --name-only
 * `docs/YUI_ANIMATION_NOTES.md`는 유이의 실제 in-game sprite / animation을 바꿀 때만 갱신한다.
 * `README.md`는 개요와 실행 안내 중심으로 유지하고, 작은 변경마다 갱신하지 않는다.
 * 문서에 과한 날짜 / 시간을 넣지 않는다. 날짜와 작성자는 Git commit을 기준으로 본다.
+* active progress 문서가 200줄을 넘으면 로테이션 후보로 본다.
+* 로테이션은 자동으로 하지 않는다. 해당 문서를 갱신해야 하는 작업에서만 판단하고, 필요하면 별도 작업으로 진행한다.
+* 로테이션 시 기존 파일은 `docs/old/<ORIGINAL_NAME>_<YYYYMMDD>_<NN>.md`로 이동하고, active 문서는 최신 요약 / 현재 상태 / 다음 작업만 남긴다.
+* `AGENTS.md`와 `docs/CONCENT_PROJECT_IDENTITY.md`는 로테이션하지 않는다.
+* 설계 기준 문서는 deprecated 판단이 명확할 때만 별도 보고 후 `docs/old` 이동을 검토한다.
 
 ## 13. 테스트 / 검증 명령
 
