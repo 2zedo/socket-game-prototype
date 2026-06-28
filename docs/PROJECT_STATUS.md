@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `c4d7d00`
-- Phase: QuarterviewMain debug input separation / normal-debug UI split
+- Current commit at task start: `de33465`
+- Phase: QuarterviewMain interaction click / approach / debug readability tuning
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -34,6 +34,7 @@
 - Project identity consolidation: added `docs/CONCENT_PROJECT_IDENTITY.md` and `docs/PROJECT_WORK_LOG.md`, and made AGENTS point to the identity document.
 - Room / power / hacking design direction docs: fixed the current direction for mouse-centric room flow, desk close-up, modular power, hunger, hacking infiltration, and defense.
 - Deprecated / scoped document notice pass: added targeted notices to legacy / conflict candidate docs, while leaving current source-of-truth docs unchanged.
+- QuarterviewMain interaction tuning: added object click priority, tuned approach points, clamped candidate panel placement, and reduced debug overlay text clutter.
 - QuarterviewMain debug input split: separated the `D` debug toggle from movement input, limited debug keyboard movement to arrow keys, and kept normal interaction panels free of developer-only object details.
 - QuarterviewMain movement/debug tuning: organized click/path tuning constants, kept debug toggle from changing room/camera/player transforms, and made D show debug overlays without reintroducing blockout visual shift.
 - QuarterviewMain click pathfinding hardening: guarded empty path results and removed the `skew` shadow warning in the candidate room script.
@@ -44,8 +45,8 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/quarterview/QuarterviewPlayer.gd`: limits debug keyboard movement to arrow keys so `D` remains debug-toggle only.
-- `godot/scripts/QuarterviewMain.gd`: separates normal interaction text from debug object details and clarifies debug status text.
+- `godot/scripts/quarterview/QuarterviewRoom.gd`: adds click priority, click-only desk / door candidates, tuned approach points, selected / nearest debug focus, and focused interaction radius display.
+- `godot/scripts/QuarterviewMain.gd`: clamps candidate panel placement and shows object priority / approach / click area only in debug detail.
 - `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain cleanup pass.
 
 ## Validation Results
@@ -63,13 +64,13 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI confirmation is still needed for repeated `D` toggles without movement, normal/debug candidate panel text, debug ON/OFF screen stability, player scale, path feel, obstacle avoidance, object approach points, debug failure reasons, and panel placement.
+- GUI confirmation is still needed for object click priority around desk / power / kitchen objects, tuned approach points, candidate panel clamp behavior, debug readability, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
 
 ## Next Recommended Task
 
 1. QuarterviewMain GUI check:
    - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
-   - Complete when background, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, blocker/object approach, `D` debug path overlay, and `R` restart are manually verified.
+   - Complete when background, desk / laptop / power click priority, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
 2. Main replacement gate review:
    - Start files: `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/MAIN_REPLACEMENT_WORK_PLAN.md`.
    - Complete when Go / No-Go items are reviewed before any production entry change.

@@ -33,6 +33,28 @@ const DEBUG_PATH_LINE_WIDTH := 3.0
 const DEBUG_CLICK_TARGET_MARKER_HALF_SIZE := 9.0
 const DEBUG_FAILURE_LABEL_POSITION := Vector2(24, 616)
 
+const INTERACTION_PRIORITY_DEFAULT := 50
+const INTERACTION_PRIORITY_BY_KEY := {
+	"desk": 10,
+	"laptop": 10,
+	"power": 10,
+	"bed": 20,
+	"door": 20,
+	"fridge": 20,
+	"microwave": 20,
+	"comm": 30,
+	"phone": 30,
+	"speaker": 30,
+	"ups": 30,
+	"signal_booster": 30,
+	"node17": 30,
+	"aircon": 40,
+	"bathroom_door": 80,
+	"shelf": 90,
+	"small_table": 90,
+}
+const CLICK_ONLY_INTERACTABLE_KEYS := ["desk", "door"]
+
 const OBJECT_RESOURCE_PATHS := [
 	"res://resources/rooms/quarterview/objects/door.tres",
 	"res://resources/rooms/quarterview/objects/bathroom_door.tres",
@@ -68,6 +90,7 @@ const OBJECT_LAYOUT := {
 		"layer": "WallSideLayer",
 		"blocker_rect": Rect2(Vector2(166, 344), Vector2(70, 126)),
 		"interaction_position": Vector2(272, 482),
+		"approach_position": Vector2(286, 522),
 		"interaction_radius": 60.0,
 		"color": Color(0.21, 0.19, 0.15, 1.0),
 	},
@@ -78,6 +101,7 @@ const OBJECT_LAYOUT := {
 		"layer": "WallSideLayer",
 		"blocker_rect": Rect2(Vector2(290, 256), Vector2(70, 122)),
 		"interaction_position": Vector2(382, 386),
+		"approach_position": Vector2(390, 404),
 		"interaction_radius": 56.0,
 		"color": Color(0.30, 0.29, 0.25, 1.0),
 	},
@@ -88,6 +112,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(324, 290), Vector2(282, 132)),
 		"interaction_position": Vector2(548, 452),
+		"approach_position": Vector2(560, 472),
 		"interaction_radius": 94.0,
 		"color": Color(0.23, 0.34, 0.25, 1.0),
 	},
@@ -98,6 +123,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(652, 292), Vector2(316, 112)),
 		"interaction_position": Vector2(790, 428),
+		"approach_position": Vector2(788, 456),
 		"interaction_radius": 96.0,
 		"color": Color(0.35, 0.21, 0.11, 1.0),
 	},
@@ -108,6 +134,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectLayer",
 		"blocker_rect": Rect2(),
 		"interaction_position": Vector2(790, 420),
+		"approach_position": Vector2(788, 456),
 		"interaction_radius": 94.0,
 		"color": Color(0.05, 0.11, 0.15, 1.0),
 	},
@@ -118,6 +145,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectLayer",
 		"blocker_rect": Rect2(),
 		"interaction_position": Vector2(820, 425),
+		"approach_position": Vector2(812, 456),
 		"interaction_radius": 82.0,
 		"color": Color(0.06, 0.18, 0.22, 1.0),
 	},
@@ -128,6 +156,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectLayer",
 		"blocker_rect": Rect2(),
 		"interaction_position": Vector2(858, 424),
+		"approach_position": Vector2(840, 456),
 		"interaction_radius": 88.0,
 		"color": Color(0.12, 0.17, 0.17, 1.0),
 	},
@@ -138,6 +167,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectLayer",
 		"blocker_rect": Rect2(),
 		"interaction_position": Vector2(888, 430),
+		"approach_position": Vector2(858, 462),
 		"interaction_radius": 86.0,
 		"color": Color(0.08, 0.09, 0.13, 1.0),
 	},
@@ -148,6 +178,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectLayer",
 		"blocker_rect": Rect2(),
 		"interaction_position": Vector2(892, 424),
+		"approach_position": Vector2(866, 456),
 		"interaction_radius": 84.0,
 		"color": Color(0.07, 0.08, 0.08, 1.0),
 	},
@@ -158,6 +189,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectLayer",
 		"blocker_rect": Rect2(),
 		"interaction_position": Vector2(882, 432),
+		"approach_position": Vector2(854, 466),
 		"interaction_radius": 84.0,
 		"color": Color(0.10, 0.15, 0.17, 1.0),
 	},
@@ -168,6 +200,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ForegroundLayer",
 		"blocker_rect": Rect2(Vector2(794, 502), Vector2(178, 112)),
 		"interaction_position": Vector2(758, 540),
+		"approach_position": Vector2(754, 548),
 		"interaction_radius": 106.0,
 		"color": Color(0.13, 0.15, 0.14, 1.0),
 	},
@@ -178,6 +211,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ForegroundLayer",
 		"blocker_rect": Rect2(Vector2(962, 500), Vector2(108, 92)),
 		"interaction_position": Vector2(934, 544),
+		"approach_position": Vector2(932, 556),
 		"interaction_radius": 82.0,
 		"color": Color(0.11, 0.13, 0.15, 1.0),
 	},
@@ -188,6 +222,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(988, 254), Vector2(110, 178)),
 		"interaction_position": Vector2(958, 374),
+		"approach_position": Vector2(952, 410),
 		"interaction_radius": 94.0,
 		"color": Color(0.42, 0.46, 0.45, 1.0),
 	},
@@ -198,6 +233,7 @@ const OBJECT_LAYOUT := {
 		"layer": "ObjectBackLayer",
 		"blocker_rect": Rect2(Vector2(956, 222), Vector2(118, 58)),
 		"interaction_position": Vector2(940, 310),
+		"approach_position": Vector2(934, 324),
 		"interaction_radius": 78.0,
 		"color": Color(0.34, 0.36, 0.35, 1.0),
 	},
@@ -208,6 +244,7 @@ const OBJECT_LAYOUT := {
 		"layer": "WallBackLayer",
 		"blocker_rect": Rect2(),
 		"interaction_position": Vector2(460, 220),
+		"approach_position": Vector2(460, 236),
 		"interaction_radius": 48.0,
 		"color": Color(0.48, 0.48, 0.43, 1.0),
 	},
@@ -218,6 +255,7 @@ const OBJECT_LAYOUT := {
 		"layer": "WallBackLayer",
 		"blocker_rect": Rect2(),
 		"interaction_position": Vector2(980, 260),
+		"approach_position": Vector2(948, 290),
 		"interaction_radius": 50.0,
 		"color": Color(0.31, 0.20, 0.11, 1.0),
 	},
@@ -289,6 +327,10 @@ var current_debug_path := PackedVector2Array()
 var current_click_target := Vector2.ZERO
 var has_click_target := false
 var path_failure_reason := ""
+var selected_key := ""
+var debug_label_nodes := {}
+var debug_radius_nodes := {}
+var debug_approach_nodes := {}
 var prompt_label: Label
 var reference_notice_label: Label
 var path_debug_line: Line2D
@@ -330,6 +372,7 @@ func _ready() -> void:
 	_build_object_placeholders()
 	_build_wall_blockers()
 	_rebuild_path_grid()
+	_build_object_debug_guides()
 	_build_path_debug()
 	_set_blockout_layers_visible(false)
 	_set_debug_enabled(false)
@@ -339,6 +382,7 @@ func _process(_delta: float) -> void:
 	_update_nearest_interactable()
 	_update_pending_focus()
 	_update_player_collision_debug()
+	_update_object_debug_visibility()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -608,7 +652,12 @@ func _build_object_placeholders() -> void:
 		_add_object_placeholder(definition)
 		if definition.blocks and _get_object_blocker_rect(definition).size != Vector2.ZERO:
 			_add_object_blocker(definition)
+
+
+func _build_object_debug_guides() -> void:
+	for definition in object_definitions:
 		_add_debug_for_definition(definition)
+	_update_object_debug_visibility()
 
 
 func _add_object_placeholder(definition: Resource) -> void:
@@ -724,29 +773,33 @@ func _add_blocker(blocker_name: String, rect: Rect2) -> void:
 
 
 func _add_debug_for_definition(definition: Resource) -> void:
+	var key := String(definition.key)
 	var label := Label.new()
-	label.name = "%sDebugLabel" % String(definition.key).capitalize().replace("_", "")
-	label.text = "%s\n%s" % [definition.display_name, definition.role]
+	label.name = "%sDebugLabel" % key.capitalize().replace("_", "")
+	label.text = definition.display_name
 	label.position = _get_object_position(definition) + Vector2(-44, -_get_object_size(definition).y * 0.5 - 34)
 	label.add_theme_color_override("font_color", Color(0.55, 0.93, 0.96, 1.0))
 	label.add_theme_color_override("font_outline_color", Color(0.01, 0.01, 0.02, 1.0))
 	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_font_size_override("font_size", 12)
 	debug_layer.add_child(label)
+	debug_label_nodes[key] = label
 
 	var radius := Line2D.new()
-	radius.name = "%sInteractionRadius" % String(definition.key).capitalize().replace("_", "")
+	radius.name = "%sInteractionRadius" % key.capitalize().replace("_", "")
 	radius.closed = true
 	radius.width = 2.0
-	radius.default_color = Color(0.28, 0.88, 0.76, 0.34)
+	radius.default_color = Color(0.28, 0.88, 0.76, 0.42)
 	var points := PackedVector2Array()
 	for index in 48:
 		var angle := TAU * float(index) / 48.0
 		points.append(_get_object_interaction_position(definition) + Vector2(cos(angle), sin(angle)) * _get_object_interaction_radius(definition))
 	radius.points = points
 	debug_layer.add_child(radius)
+	debug_radius_nodes[key] = radius
 
 	var approach := Line2D.new()
-	approach.name = "%sApproachPoint" % String(definition.key).capitalize().replace("_", "")
+	approach.name = "%sApproachPoint" % key.capitalize().replace("_", "")
 	approach.closed = true
 	approach.width = DEBUG_INTERACTION_LINE_WIDTH
 	approach.default_color = Color(1.0, 0.82, 0.24, 0.82)
@@ -758,6 +811,7 @@ func _add_debug_for_definition(definition: Resource) -> void:
 		approach_position + Vector2(-DEBUG_APPROACH_MARKER_HALF_SIZE, DEBUG_APPROACH_MARKER_HALF_SIZE),
 	])
 	debug_layer.add_child(approach)
+	debug_approach_nodes[key] = approach
 
 
 func _get_layer_for_definition(definition: Resource) -> Node2D:
@@ -801,6 +855,38 @@ func _update_nearest_interactable() -> void:
 	nearest_key = best_key
 	nearest_interactable_changed.emit(nearest_key, best_display_name)
 	_update_prompt()
+	_update_object_debug_visibility()
+
+
+func _update_object_debug_visibility() -> void:
+	if not debug_enabled:
+		return
+
+	var focus_key := _get_debug_focus_key()
+	for key in debug_label_nodes.keys():
+		var definition := _get_definition(String(key))
+		if definition == null:
+			continue
+
+		var priority := _get_object_interaction_priority(definition)
+		var is_focus := String(key) == focus_key
+		var is_background_hint := priority >= 80
+
+		var label: Label = debug_label_nodes[key]
+		label.visible = not is_background_hint or is_focus
+		label.modulate = Color(1.0, 1.0, 1.0, 1.0 if is_focus else 0.72)
+
+		var radius: Line2D = debug_radius_nodes[key]
+		radius.visible = is_focus
+
+		var approach: Line2D = debug_approach_nodes[key]
+		approach.visible = is_focus or priority <= 20
+
+
+func _get_debug_focus_key() -> String:
+	if not selected_key.is_empty():
+		return selected_key
+	return nearest_key
 
 
 func _update_prompt() -> void:
@@ -825,6 +911,8 @@ func _request_nearest_interaction() -> void:
 	if definition == null:
 		return
 
+	selected_key = definition.key
+	_update_object_debug_visibility()
 	_emit_interaction_request(definition, ACTION_PRIMARY)
 
 
@@ -837,6 +925,10 @@ func _emit_interaction_request(definition: Resource, action_key: String) -> void
 		"future_source": definition.future_source,
 		"visual_state": definition.visual_state,
 		"action": action_key,
+		"priority": _get_object_interaction_priority(definition),
+		"interaction_position": _get_object_interaction_position(definition),
+		"approach_position": _get_object_approach_position(definition),
+		"click_area": _get_object_click_rect(definition),
 	}
 	interaction_requested.emit(definition.key, action_key, payload)
 
@@ -856,6 +948,7 @@ func _set_debug_enabled(enabled: bool) -> void:
 	debug_layer.visible = debug_enabled
 	if player.has_method("set_keyboard_input_enabled"):
 		player.set_keyboard_input_enabled(debug_enabled)
+	_update_object_debug_visibility()
 	global_transform = room_transform
 	player.global_transform = player_transform
 	debug_overlay_toggled.emit(debug_enabled)
@@ -881,9 +974,31 @@ func is_debug_overlay_enabled() -> bool:
 	return debug_enabled
 
 
+func get_debug_focus_summary() -> String:
+	var focus_key := _get_debug_focus_key()
+	if focus_key.is_empty():
+		return "Debug focus: -"
+
+	var definition := _get_definition(focus_key)
+	if definition == null:
+		return "Debug focus: %s / missing definition" % focus_key
+
+	var click_rect := _get_object_click_rect(definition)
+	return "Focus: %s / priority=%d / role=%s / zone=%s\napproach=%s / click=%s" % [
+		focus_key,
+		_get_object_interaction_priority(definition),
+		String(definition.role),
+		String(definition.zone),
+		_format_vector(_get_object_approach_position(definition)),
+		_format_rect(click_rect),
+	]
+
+
 func _handle_left_click(click_position: Vector2) -> void:
 	var clicked_definition := _get_definition_at_position(click_position)
-	if clicked_definition != null and _is_normal_interactable(clicked_definition):
+	if clicked_definition != null and _is_click_candidate(clicked_definition):
+		selected_key = clicked_definition.key
+		_update_object_debug_visibility()
 		if _move_player_to(_get_object_approach_position(clicked_definition)):
 			pending_focus_key = clicked_definition.key
 		else:
@@ -891,6 +1006,8 @@ func _handle_left_click(click_position: Vector2) -> void:
 		return
 
 	pending_focus_key = ""
+	selected_key = ""
+	_update_object_debug_visibility()
 	_move_player_to(_clamp_walk_target(click_position))
 
 
@@ -1139,26 +1256,26 @@ func _update_pending_focus() -> void:
 func _get_definition_at_position(click_position: Vector2) -> Resource:
 	var best_definition: Resource = null
 	var best_distance := INF
+	var best_priority := INF
 
 	for definition in object_definitions:
-		if not _is_normal_interactable(definition):
+		if not _is_click_candidate(definition):
 			continue
 
 		var distance := click_position.distance_to(_get_object_interaction_position(definition))
-		if distance <= _get_object_interaction_radius(definition) and distance < best_distance:
-			best_definition = definition
-			best_distance = distance
+		var object_rect := _get_object_click_rect(definition)
+		if distance > _get_object_interaction_radius(definition) and not object_rect.has_point(click_position):
 			continue
 
-		var object_rect := Rect2(
-			_get_object_position(definition) - _get_object_size(definition) * 0.5 - Vector2.ONE * CLICK_OBJECT_PADDING,
-			_get_object_size(definition) + Vector2.ONE * CLICK_OBJECT_PADDING * 2.0
-		)
+		var priority := _get_object_interaction_priority(definition)
+		var candidate_distance := distance
 		if object_rect.has_point(click_position):
-			var rect_distance := click_position.distance_to(_get_object_position(definition))
-			if rect_distance < best_distance:
-				best_definition = definition
-				best_distance = rect_distance
+			candidate_distance = min(candidate_distance, click_position.distance_to(_get_object_position(definition)))
+
+		if priority < best_priority or (priority == best_priority and candidate_distance < best_distance):
+			best_definition = definition
+			best_distance = candidate_distance
+			best_priority = priority
 
 	return best_definition
 
@@ -1166,7 +1283,18 @@ func _get_definition_at_position(click_position: Vector2) -> Resource:
 func _get_object_approach_position(definition: Resource) -> Vector2:
 	var layout := _get_object_layout(definition)
 	var value: Vector2 = layout.get("approach_position", _get_object_interaction_position(definition))
-	return _clamp_walk_target(value)
+	return _resolve_walkable_target(value)
+
+
+func _resolve_walkable_target(target: Vector2) -> Vector2:
+	var clamped_target := _clamp_walk_target(target)
+	if path_grid_size == Vector2i.ZERO or not _is_world_point_blocked_for_path(clamped_target):
+		return clamped_target
+
+	var walkable_id := _find_nearest_walkable_grid_id(clamped_target)
+	if walkable_id == Vector2i(-1, -1):
+		return clamped_target
+	return _grid_id_to_world(walkable_id)
 
 
 func _clamp_walk_target(target: Vector2) -> Vector2:
@@ -1188,6 +1316,17 @@ func _is_normal_interactable(definition: Resource) -> bool:
 	if not definition.interactable:
 		return false
 	return String(definition.key) != "small_table"
+
+
+func _is_click_candidate(definition: Resource) -> bool:
+	var key := String(definition.key)
+	if key in CLICK_ONLY_INTERACTABLE_KEYS:
+		return true
+	return _is_normal_interactable(definition)
+
+
+func _get_object_interaction_priority(definition: Resource) -> int:
+	return int(INTERACTION_PRIORITY_BY_KEY.get(String(definition.key), INTERACTION_PRIORITY_DEFAULT))
 
 
 func _get_object_layout(definition: Resource) -> Dictionary:
@@ -1247,6 +1386,18 @@ func _get_object_blocker_rect(definition: Resource) -> Rect2:
 	return Rect2(_get_object_position(definition) - definition.get_collision_size() * 0.5, definition.get_collision_size())
 
 
+func _get_object_click_rect(definition: Resource) -> Rect2:
+	var layout := _get_object_layout(definition)
+	if layout.has("click_rect"):
+		var click_rect: Rect2 = layout["click_rect"]
+		return click_rect
+	var padding := float(layout.get("click_padding", CLICK_OBJECT_PADDING))
+	return Rect2(
+		_get_object_position(definition) - _get_object_size(definition) * 0.5 - Vector2.ONE * padding,
+		_get_object_size(definition) + Vector2.ONE * padding * 2.0
+	)
+
+
 func _get_object_interaction_position(definition: Resource) -> Vector2:
 	var layout := _get_object_layout(definition)
 	var value: Vector2 = layout.get("interaction_position", definition.get_interaction_position())
@@ -1256,6 +1407,19 @@ func _get_object_interaction_position(definition: Resource) -> Vector2:
 func _get_object_interaction_radius(definition: Resource) -> float:
 	var layout := _get_object_layout(definition)
 	return float(layout.get("interaction_radius", definition.interaction_radius))
+
+
+func _format_vector(value: Vector2) -> String:
+	return "(%d, %d)" % [int(round(value.x)), int(round(value.y))]
+
+
+func _format_rect(rect: Rect2) -> String:
+	return "(%d, %d, %d, %d)" % [
+		int(round(rect.position.x)),
+		int(round(rect.position.y)),
+		int(round(rect.size.x)),
+		int(round(rect.size.y)),
+	]
 
 
 func _add_polygon(parent: Node, points: PackedVector2Array, color: Color) -> void:

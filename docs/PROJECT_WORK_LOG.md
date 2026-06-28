@@ -112,10 +112,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 debug ON/OFF 화면 밀림, obstacle-aware movement, object approach, fast click stability를 수동 확인한다.
 
-### this commit - QuarterviewMain debug toggle / UI 분리
+### de33465 - QuarterviewMain debug toggle / UI 분리
 
-- Commit: `this commit`
+- Commit: `de33465`
 - Result: `D` debug toggle과 player movement input을 분리하고, debug keyboard movement를 arrow key 전용으로 제한했다. Normal candidate panel은 display name / 짧은 설명 / 버튼 중심으로 정리하고, key / role / zone / action 같은 개발자 정보는 debug ON에서만 보이게 했다.
 - Changed: QuarterviewPlayer debug input, QuarterviewMain candidate panel / status text, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 `D` 반복 입력 시 player 위치 유지, debug ON arrow-key 이동, normal/debug panel 표시 차이를 수동 확인한다.
+
+### this commit - QuarterviewMain interaction 튜닝
+
+- Commit: `this commit`
+- Result: object click priority를 추가해 책상 / 노트북 / 전력 장비가 장식 오브젝트보다 우선 잡히도록 하고, 주요 object approach point와 candidate panel 위치 clamp를 정리했다. Debug overlay는 전체 상세 텍스트 대신 selected / nearest focus 중심으로 priority, role, approach, click area를 읽게 했다.
+- Changed: QuarterviewRoom click priority / approach / debug focus, QuarterviewMain panel placement / debug detail, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
+- Next: GUI에서 desk / laptop / power / door / fridge / microwave 클릭 우선순위와 접근 위치, panel 위치, debug 가독성을 수동 확인한다.

@@ -2,6 +2,10 @@ extends Node2D
 
 const RESTART_KEY := KEY_R
 const CANCEL_KEY := KEY_ESCAPE
+const PANEL_VIEWPORT_MARGIN := 18.0
+const PANEL_OBJECT_OFFSET := Vector2(34, -118)
+const PANEL_FALLBACK_SIZE := Vector2(340, 152)
+const STATUS_PANEL_AVOID_RECT := Rect2(Vector2(10, 10), Vector2(334, 160))
 
 @onready var camera: Camera2D = $Camera2D
 @onready var quarterview_room: Node2D = $QuarterviewRoom
@@ -90,7 +94,12 @@ func _update_status(message: String) -> void:
 	var debug_text := "Debug ON: arrow-key move enabled" if room_debug_enabled else "Normal: mouse click movement"
 	status_label.text = "Candidate only / no production wiring\n%s\n%s" % [message, debug_text]
 	if room_debug_enabled:
-		log_label.text = "Last: %s\nD: debug | R: restart | BG: %s" % [last_interaction_debug, background_mode]
+		var room_debug_summary := _get_room_debug_summary()
+		log_label.text = "Last: %s\nD: debug | R: restart | BG: %s\n%s" % [
+			last_interaction_debug,
+			background_mode,
+			room_debug_summary,
+		]
 	else:
 		log_label.text = "Last: %s\nD: debug | R: restart" % [last_interaction]
 
@@ -150,6 +159,7 @@ func _show_interaction_panel(object_key: String, payload: Dictionary) -> void:
 	interaction_title_label.text = display_name
 	_refresh_interaction_panel_detail(object_key, payload)
 	interaction_panel.visible = true
+	_position_interaction_panel(payload)
 
 
 func _refresh_interaction_panel_detail(object_key: String, payload: Dictionary) -> void:
@@ -209,13 +219,14 @@ func _get_normal_object_description(payload: Dictionary) -> String:
 
 
 func _get_debug_object_detail(object_key: String, payload: Dictionary) -> String:
-	return "key: %s\nrole: %s\nzone: %s\naction: %s\nfuture: %s\nstate: %s\ncandidate no-op only" % [
+	return "key: %s\nrole: %s\nzone: %s\naction: %s\npriority: %s\napproach: %s\nclick: %s\ncandidate no-op only" % [
 		object_key,
 		String(payload.get("role", "-")),
 		String(payload.get("zone", "-")),
 		String(payload.get("action", "-")),
-		String(payload.get("future_source", "-")),
-		String(payload.get("visual_state", "-")),
+		String(payload.get("priority", "-")),
+		_format_vector(_get_payload_vector(payload, "approach_position")),
+		_format_rect(_get_payload_rect(payload, "click_area")),
 	]
 
 
@@ -231,3 +242,76 @@ func _get_action_display_name(action_key: String) -> String:
 			return "선택"
 		_:
 			return action_key
+
+
+func _position_interaction_panel(payload: Dictionary) -> void:
+	var anchor := _get_payload_vector(payload, "approach_position")
+	if anchor == Vector2.ZERO:
+		anchor = _get_payload_vector(payload, "interaction_position")
+	if anchor == Vector2.ZERO:
+		anchor = Vector2(860, 360)
+
+	var viewport_size := get_viewport().get_visible_rect().size
+	var panel_size := PANEL_FALLBACK_SIZE
+	if interaction_panel.size.x > 1.0 and interaction_panel.size.y > 1.0:
+		panel_size = Vector2(
+			max(interaction_panel.size.x, PANEL_FALLBACK_SIZE.x),
+			max(interaction_panel.size.y, PANEL_FALLBACK_SIZE.y)
+		)
+
+	# Prefer the object's right/top side, then flip left when the selected object is
+	# near the room's right edge. The final clamp keeps this candidate UI inside the viewport.
+	var target_position := anchor + PANEL_OBJECT_OFFSET
+	if target_position.x + panel_size.x > viewport_size.x - PANEL_VIEWPORT_MARGIN:
+		target_position.x = anchor.x - panel_size.x - PANEL_OBJECT_OFFSET.x
+	if target_position.y + panel_size.y > viewport_size.y - PANEL_VIEWPORT_MARGIN:
+		target_position.y = viewport_size.y - PANEL_VIEWPORT_MARGIN - panel_size.y
+
+	target_position = _clamp_panel_position(target_position, panel_size, viewport_size)
+	var panel_rect := Rect2(target_position, panel_size)
+	if panel_rect.intersects(STATUS_PANEL_AVOID_RECT):
+		target_position.y = STATUS_PANEL_AVOID_RECT.end.y + PANEL_VIEWPORT_MARGIN
+		if target_position.y + panel_size.y > viewport_size.y - PANEL_VIEWPORT_MARGIN:
+			target_position = Vector2(STATUS_PANEL_AVOID_RECT.end.x + PANEL_VIEWPORT_MARGIN, PANEL_VIEWPORT_MARGIN)
+	target_position = _clamp_panel_position(target_position, panel_size, viewport_size)
+	interaction_panel.position = target_position
+
+
+func _clamp_panel_position(position: Vector2, panel_size: Vector2, viewport_size: Vector2) -> Vector2:
+	return Vector2(
+		clampf(position.x, PANEL_VIEWPORT_MARGIN, viewport_size.x - PANEL_VIEWPORT_MARGIN - panel_size.x),
+		clampf(position.y, PANEL_VIEWPORT_MARGIN, viewport_size.y - PANEL_VIEWPORT_MARGIN - panel_size.y)
+	)
+
+
+func _get_room_debug_summary() -> String:
+	if quarterview_room.has_method("get_debug_focus_summary"):
+		return String(quarterview_room.get_debug_focus_summary())
+	return "Debug focus: unavailable"
+
+
+func _get_payload_vector(payload: Dictionary, key: String) -> Vector2:
+	var value = payload.get(key, Vector2.ZERO)
+	if value is Vector2:
+		return value
+	return Vector2.ZERO
+
+
+func _get_payload_rect(payload: Dictionary, key: String) -> Rect2:
+	var value = payload.get(key, Rect2())
+	if value is Rect2:
+		return value
+	return Rect2()
+
+
+func _format_vector(value: Vector2) -> String:
+	return "(%d, %d)" % [int(round(value.x)), int(round(value.y))]
+
+
+func _format_rect(rect: Rect2) -> String:
+	return "(%d, %d, %d, %d)" % [
+		int(round(rect.position.x)),
+		int(round(rect.position.y)),
+		int(round(rect.size.x)),
+		int(round(rect.size.y)),
+	]
