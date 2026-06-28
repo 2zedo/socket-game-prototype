@@ -15,6 +15,7 @@ const WALK_TARGET_BOUNDS := Rect2(Vector2(190, 190), Vector2(900, 438))
 const CLICK_OBJECT_PADDING := 28.0
 const PATH_GRID_CELL_SIZE := 24.0
 const PATH_BLOCKER_PADDING := 24.0
+const PATH_TARGET_REACHED_DISTANCE := 10.0
 const PLAYER_COLLISION_DEBUG_RADIUS := 16.0
 
 const OBJECT_RESOURCE_PATHS := [
@@ -615,20 +616,20 @@ func _add_object_placeholder(definition: Resource) -> void:
 
 func _add_pseudo_block(parent: Node, size: Vector2, depth: float, base_color: Color, outlined: bool) -> void:
 	var half := size * 0.5
-	var skew := Vector2(18.0, 12.0)
+	var projection_skew := Vector2(18.0, 12.0)
 	var shadow_points := PackedVector2Array([
 		Vector2(-half.x + 8.0, -half.y + 18.0),
 		Vector2(half.x + 20.0, -half.y + 18.0),
-		Vector2(half.x + skew.x + 24.0, half.y + skew.y + depth + 18.0),
-		Vector2(-half.x + skew.x + 12.0, half.y + skew.y + depth + 18.0),
+		Vector2(half.x + projection_skew.x + 24.0, half.y + projection_skew.y + depth + 18.0),
+		Vector2(-half.x + projection_skew.x + 12.0, half.y + projection_skew.y + depth + 18.0),
 	])
 	_add_local_polygon(parent, shadow_points, Color(0.0, 0.0, 0.0, 0.22))
 
 	var top_points := PackedVector2Array([
 		Vector2(-half.x, -half.y),
 		Vector2(half.x, -half.y),
-		Vector2(half.x + skew.x, half.y + skew.y),
-		Vector2(-half.x + skew.x, half.y + skew.y),
+		Vector2(half.x + projection_skew.x, half.y + projection_skew.y),
+		Vector2(-half.x + projection_skew.x, half.y + projection_skew.y),
 	])
 	var front_points := PackedVector2Array([
 		top_points[3],
@@ -872,17 +873,20 @@ func _handle_left_click(click_position: Vector2) -> void:
 func _move_player_to(target: Vector2) -> bool:
 	var path := _find_path_to_target(target)
 	if path.size() == 0:
+		if path_failure_reason.is_empty():
+			path_failure_reason = "No path: empty path"
 		if player.has_method("clear_move_target"):
 			player.clear_move_target()
 		_update_path_debug(PackedVector2Array(), _clamp_walk_target(target))
 		movement_path_failed.emit(path_failure_reason)
 		return false
 
+	var final_target := path[path.size() - 1]
 	if player.has_method("set_path"):
 		player.set_path(path)
 	else:
-		player.set_move_target(path[path.size() - 1])
-	_update_path_debug(path, path[path.size() - 1])
+		player.set_move_target(final_target)
+	_update_path_debug(path, final_target)
 	return true
 
 
@@ -910,28 +914,41 @@ func _find_path_to_target(target: Vector2) -> PackedVector2Array:
 	# Candidate-only navigation: a coarse grid is enough to test click movement around
 	# room blockers before the final room art and tuned navigation data exist.
 	path_failure_reason = ""
+	if path_grid_size == Vector2i.ZERO:
+		path_failure_reason = "No path: grid not ready"
+		return PackedVector2Array()
+
+	var clamped_target := _clamp_walk_target(target)
+	if player.global_position.distance_to(clamped_target) <= PATH_TARGET_REACHED_DISTANCE:
+		return PackedVector2Array([clamped_target])
+
 	var start_id := _find_nearest_walkable_grid_id(player.global_position)
 	if start_id == Vector2i(-1, -1):
 		path_failure_reason = "No path: player is outside walkable area"
 		return PackedVector2Array()
 
-	var clamped_target := _clamp_walk_target(target)
 	var target_id := _find_nearest_walkable_grid_id(clamped_target)
 	if target_id == Vector2i(-1, -1):
-		path_failure_reason = "No path: target is outside walkable area"
+		path_failure_reason = "No path: target blocked"
 		return PackedVector2Array()
+
+	if start_id == target_id:
+		return PackedVector2Array([_grid_id_to_world(target_id)])
 
 	var id_path := path_grid.get_id_path(start_id, target_id, false)
 	if id_path.size() == 0:
-		path_failure_reason = "No path: blocked by room objects"
+		path_failure_reason = "No path: empty path"
 		return PackedVector2Array()
 
 	var path := PackedVector2Array()
 	for id in id_path:
 		path.append(_grid_id_to_world(id))
 
-	if path.size() > 0:
-		path[path.size() - 1] = _grid_id_to_world(target_id)
+	if path.size() == 0:
+		path_failure_reason = "No path: empty path"
+		return PackedVector2Array()
+
+	path[path.size() - 1] = _grid_id_to_world(target_id)
 	return path
 
 

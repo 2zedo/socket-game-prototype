@@ -88,10 +88,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 normal view, click movement, object approach, `D` debug, `R` restart를 수동 확인한다.
 
-### this commit - QuarterviewMain 이동감 개선
+### 02bc38c - QuarterviewMain 이동감 개선
 
-- Commit: `this commit`
+- Commit: `02bc38c`
 - Result: QuarterviewMain player marker를 키우고, click / object approach 이동에 blocker-aware candidate grid pathfinding을 추가했다.
 - Changed: QuarterviewPlayer path follow / marker size, QuarterviewRoom path grid / debug overlay, QuarterviewMain path failure status, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 침대 / 책상 / power rack 근처 우회 이동과 debug path overlay를 수동 확인한다.
+
+### this commit - QuarterviewMain pathfinding 에러 수정
+
+- Commit: `this commit`
+- Result: 빠른 클릭 중 empty path가 나와도 crash하지 않도록 guard를 추가하고, `skew` local variable shadow warning을 정리했다.
+- Changed: QuarterviewRoom path failure handling / same-position arrival handling / debug failure reason, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
+- Next: GUI에서 빠른 연속 클릭, blocker 위 / 근처 클릭, object click 반복, `D` debug failure reason 표시를 수동 확인한다.
