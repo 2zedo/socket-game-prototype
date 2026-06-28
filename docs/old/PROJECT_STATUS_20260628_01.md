@@ -1,0 +1,522 @@
+# Project Status
+
+## Snapshot
+
+- Project: `CONCENT / 전력 부족의 시대`
+- Branch: `main`
+- Current commit at task start: `920128a`
+- Phase: Project identity and documentation workflow consolidation
+- Main target: Godot project under `godot/`
+- Web prototype: reference only
+
+## Current State
+
+- DAY 1 separates outlet connection from device active state; connected devices can be switched on/off and only active time drains the daily budget.
+- Yui uses a processed four-direction walk sheet based on `docs/reference/yui-1.png`.
+- Yui quarterview 4-direction spritesheet import criteria are documented for future `yui_qv_idle_4dir.png` and `yui_qv_walk_4dir.png`; no actual PNG asset, `SpriteFrames`, or scene wiring exists yet.
+- The apartment uses `map_base_no_wires.png` as its visible base map.
+- The multitap screen uses draggable adapter PNGs rather than card-based device selection.
+- `SurvivalState.gd` is the source of truth for slot occupancy, connected devices, outlet load, and daily power state.
+- DAY 1 장치의 이름, 부하, 슬롯, 시간당 소비량, Result 플래그는 `godot/resources/devices/*.tres`가 소유한다.
+- Connected devices reveal their matching map wire overlays; disconnected devices keep those overlays hidden.
+- Laptop occupies two adjacent slots and cannot start from slot 4.
+- Communication Device currently occupies one slot.
+- Pressing `P` toggles a developer Test Mode with gameplay-state text and collision/interaction overlays.
+- 테스트 모드에서 `F1` 도움말과 시간·휴대폰 배터리·오늘 전력 조정 키를 사용할 수 있으며, 상태 조정은 탐색 중에만 허용된다.
+- Test Mode 2차 조작은 작동 장치 전체 끄기, 모든 연결 해제, `01:50` 이동, 배터리 경고 직전값, 전력 `0.5`, 현재 상태 출력을 제공한다.
+- Modal input is routed through `Main.gd`; movement is locked while interaction, outlet, end-day, phone, or result UI is active.
+- `Tab` opens the existing Phone UI during exploration; it closes with `Tab` or `ESC` and locks Yui movement while visible.
+- Phone UI 시간은 기존 DAY 길이를 유지하면서 `08:00`부터 다음 날 `02:00`까지 표시되며, 일반 HUD에는 시간 정보를 표시하지 않는다.
+- `02:00` 도달 시 시간과 전력 소비가 멈추고 오른쪽 확인 패널 없이 유이 대사와 `[E] 계속` 힌트만 표시된다.
+- Apartment outer-wall collision now follows the walkable floor inside the map art, with overlapping corners to prevent diagonal escape gaps.
+- Exploration hides the left status HUD; Phone UI is the primary status view while prompts, controls, and Test Mode remain visible.
+- The in-game clock advances only during free exploration and pauses for Phone, Outlet, Interaction, End Day, and Result modals.
+- Room objects can be activated by left-clicking their existing interaction rectangle while Yui is within the same proximity range used by `E`; room clicks are ignored while a modal is open.
+- Interaction panels expose clickable use and cancel/close buttons that reuse the existing `E` and `ESC` action paths.
+- Interaction buttons brighten their border on hover/press; informational panels without a primary action close with either `E`, `ESC`, or the close button.
+- Informational interaction panels label their shared close action as `[E / ESC] 닫기`.
+- Outlet dragging highlights only the targeted existing slot hitbox: green for a valid drop and red for an invalid drop, with two-slot adapters spanning both affected slots.
+- Normal outlet presentation hides slot borders and exposes the PNG's built-in green LED only for occupied slots; empty-slot LEDs are darkened while drag-time feedback remains separate.
+- Connected adapters no longer retain a selection-like border after placement; borders remain limited to active drag feedback and Test Mode diagnostics.
+- Outlet preview and drop now resolve the same target slot, preventing valid two-slot Laptop feedback from disagreeing with placement.
+- Connected adapter placement exposes per-device offset and scale tuning while retaining the previous zero-offset/unit-scale defaults.
+- Phone battery warnings appear whenever battery crosses `20%`, `10%`, `5%`, or `0%` downward; charging above a threshold naturally rearms it, while active charging suppresses warnings.
+- At `0%`, Phone UI remains accessible but hides status details until charging restores the battery.
+- Active drain uses per-game-hour tuning: Light `0.5`, Laptop `3.0`, Fan `1.0`, Charger `1.0`, and Communication Device `2.0` units per game hour.
+- 현재 `60`초 DAY는 `08:00`부터 다음 날 `02:00`까지 18시간으로 변환되며, 최초 작동 기록은 이후 켜기/끄기를 막지 않는다.
+- Disconnecting a device clears its active state, while map wire overlays continue to follow connection state.
+- Phone UI is a current-status view only: time, period, battery, remaining power, hourly drain, and active devices. Historical use remains exclusive to Result.
+- 결과 화면은 기존 계산 데이터를 유지하면서 `DAY n 생존 기록`, 한국어 하루 요약, 장치·정보·상태 자연문을 표시한다.
+- 쿼터뷰 방 전환은 기존 Main을 대체하지 않고 `res://scenes/prototypes/QuarterviewRoomPrototype.tscn` 독립 prototype에서 먼저 검증한다.
+- 쿼터뷰 prototype placeholder는 `key`, `zone`, `role`, `blocks`, `interactable` 중심으로 정리하고, 기존 Apartment 기능 대응은 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
+- 쿼터뷰 prototype은 `World/FloorLayer`, `WallBackLayer`, `FurnitureBackLayer`, `ObjectLayer`, `PlayerLayer`, `FurnitureFrontLayer`, `InteractionDebugLayer`, `LabelLayer` 구조로 Main 이식 전 레이어 책임을 확인한다.
+- 쿼터뷰 prototype object contract는 `godot/resources/rooms/quarterview/objects/*.tres`의 `RoomObjectDefinition` Resource가 소유하며, `QuarterviewRoomPrototype`은 이 Resource들을 읽어 placeholder, prompt, panel을 구성한다.
+- 쿼터뷰 아트는 `docs/QUARTERVIEW_ART_ASSET_PLAN.md`에서 room layer, atlas, Yui spritesheet, visual mapping Resource 후보 기준으로 계획한다.
+- `qv_furniture_atlas.png` region mapping criteria are documented for future furniture body sprites; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
+- `qv_appliances_atlas.png` region mapping criteria are documented for future appliance and life-support body sprites; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
+- `qv_work_devices_atlas.png` region mapping criteria are documented for future work / hacking / information-device body sprites; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
+- `qv_fx_atlas.png` region mapping criteria are documented for future localized screen glow, signal wave, warning, spark, pulse, scan, waveform, glitch, and flicker effects; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
+- `qv_props_atlas.png` and `qv_cable_atlas.png` are documented as deferred detail / polish atlas backlog items; no actual atlas PNG, mapping Resource / JSON / CSV, or scene wiring exists yet.
+- `hack_arena_tiles_atlas.png` region mapping criteria are documented for future hacking arena floor, wall, obstacle, hazard, objective, exit, and spawn tile bodies; no actual atlas PNG, TileSet, mapping Resource / JSON / CSV, or scene wiring exists yet.
+- `hack_avatar_idle_4dir.png` and `hack_avatar_walk_4dir.png` import criteria are documented for future hacking avatar spritesheets; no actual PNG assets, `SpriteFrames`, `CharacterBody2D` scene, or prototype wiring exists yet.
+- `hack_enemies_atlas.png` region mapping criteria are documented for future security-program, trace-agent, guard-node, turret, alarm, blocker, corruption, and daemon enemy visuals; no actual atlas PNG, mapping Resource / JSON / CSV, enemy scene, AI, spawn logic, or gameplay wiring exists yet.
+- `hack_objects_atlas.png` region mapping criteria are documented for future objective, terminal, gate, cache, access-node, relay, trace-device, and security-device visuals; no actual atlas PNG, mapping Resource / JSON / CSV, object scene, objective logic, interaction logic, or gameplay wiring exists yet.
+- `hack_fx_atlas.png` region mapping criteria are documented for future dash trails, hit impacts, projectile trails, Trace warnings, extraction beams, gate pulses, alarm sweeps, firewall bursts, enemy dissolve, and arena feedback FX; no actual atlas PNG, mapping Resource / JSON / CSV, FX scene, trigger system, shader, particle, or gameplay wiring exists yet.
+- `ui_common_atlas.png` mapping criteria are documented for future common UI panels, modals, buttons, icons, meters, badges, dividers, tabs, close buttons, and prompt frames; no actual atlas PNG, Theme, StyleBoxTexture, mapping Resource / JSON / CSV, Control node, or scene wiring exists yet.
+- `ui_hud_atlas.png` mapping criteria are documented for future persistent gameplay HUD frames, power / battery / Trace / HP / timer meters, status chips, warning banners, DAY / time badges, objective markers, and small notifications; no actual atlas PNG, Theme, StyleBoxTexture, mapping Resource / JSON / CSV, Control node, HUD scene, or gameplay wiring exists yet.
+- `ui_phone_atlas.png` mapping criteria are documented for future Phone UI device frames, screen backgrounds, status bars, app tiles, message bubbles, notification cards, mission / log cards, battery / signal / charge icons, warning states, and empty-state panels; no actual atlas PNG, Theme, StyleBoxTexture, mapping Resource / JSON / CSV, Control node, Phone UI scene, or gameplay wiring exists yet.
+- `ui_outlet_atlas.png` mapping criteria are documented for future Outlet UI panel frames, socket slot states, device cards, connection / active badges, slot-count badges, drag / drop highlights, power / drain meters, warning chips, and outlet-specific headers / tabs / dividers; no actual atlas PNG, Theme, StyleBoxTexture, mapping Resource / JSON / CSV, Control node, Outlet UI scene, or gameplay wiring exists yet.
+- `ui_result_log_atlas.png` mapping criteria are documented for future day result summaries, mission results, power / device reports, reward / Grid Credit rows, story logs, warning entries, success / fail / neutral badges, score chips, and empty-state panels; no actual atlas PNG, Theme, StyleBoxTexture, mapping Resource / JSON / CSV, Control node, Result UI scene, or gameplay wiring exists yet.
+- `ui_dialogue_atlas.png` mapping criteria are documented for future dialogue panels, narration / system / thought panels, speaker nameplates, portrait frames, choice buttons, continue indicators, dialogue markers, and dialogue history entries; no actual atlas PNG, Theme, StyleBoxTexture, mapping Resource / JSON / CSV, Control node, Dialogue UI scene, dialogue system, story flag, or gameplay wiring exists yet.
+- `ui_device_icons_atlas.png` mapping criteria are documented for future small UI device icons used by HUD, Phone UI, Outlet UI, Result / Log UI, mission selection, and sandbox / debug displays; no actual atlas PNG, mapping Resource / JSON / CSV, icon UI scene, Control node, Theme, Resource, or gameplay wiring exists yet.
+- Quarterview room shell layer application is planned in `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md` with same-canvas `1920x1080` PNG layers, z-index policy, future asset paths, and import-setting candidates; no PNG assets or scene wiring exist yet.
+- `QuarterviewRoomShellPrototype.tscn` prepares a visual-only shell-layer check for `qv_room_floor_base.png`, `qv_room_walls_back.png`, and `qv_room_walls_side.png`, loading expected paths if present and showing missing status if absent. No actual PNG asset or production scene wiring exists yet.
+- Window city view layer criteria are documented for `qv_room_window_city_view.png`; no actual PNG asset or scene wiring exists yet.
+- Foreground occluder application criteria are documented for `qv_room_foreground_occluders.png`; no actual PNG asset or scene wiring exists yet.
+- Static lighting overlay criteria are documented for `qv_room_static_lighting_overlay.png`; no actual PNG asset or scene wiring exists yet.
+- 채택된 쿼터뷰 방 콘티는 최종 아트가 아니라 `docs/QUARTERVIEW_ROOM_DIRECTION.md`의 layout mood reference로 고정한다.
+- 해킹 액션은 기존 Main과 연결하지 않은 독립 prototype scene `res://scenes/prototypes/HackingActionPrototype.tscn`에서 조작, 전투, objective, exit 흐름을 먼저 검증한다.
+- Hacking Action prototype은 `READY`, `RUNNING`, `OBJECTIVE_EXTRACTED`, `SUCCESS`, `FAILED` mission state와 script-local tuning constants로 정리되어 있다.
+- Hacking Action prototype은 `D` debug overlay, 최신 event message, hit / damage / Trace / objective / exit 상태 피드백을 표시한다.
+- `HackingPerspectiveBlockout.tscn` is a separate visual-only blockout for the long-term `3/4 top-down cyber action view`; it does not replace `HackingActionPrototype`.
+- `res://scenes/prototypes/PrototypeHub.tscn`에서 Room Object Contract, Quarterview Perspective, Hacking Action, Hacking Perspective, Title / Pause prototype을 키, 포커스 실행, 또는 버튼으로 실행할 수 있다.
+- Title / Pause 메뉴 방향은 독립 prototype scene `res://scenes/prototypes/TitleMenuPrototype.tscn`에서 검증하며, 아직 실제 Main 시작/ESC 흐름에 연결하지 않는다.
+- Quarterview, Hacking Action, Title / Pause Menu prototype은 `B` 또는 `Backspace`로 `PrototypeHub`에 복귀할 수 있으며, 각 prototype의 기존 `ESC` 의미는 유지한다.
+- Quarterview Room prototype은 가까운 오브젝트에서 `E`를 누르면 registry 기반 object interaction panel을 열고, Primary / Inspect / Close button은 실제 기능 연결 없이 no-op 로그만 출력한다.
+- Quarterview Room prototype은 기본 화면에서 전체 debug label / collision / interaction range를 숨기고, `D`로 prototype 전용 debug overlay를 토글한다.
+- `QuarterviewRoomPrototype.tscn` is now presented in UI as `Room Object Contract Prototype` to clarify that it tests object registry, prompt, panel, and contract flow rather than final quarterview art.
+- `QuarterviewPerspectiveBlockout.tscn` is a separate visual-only blockout for quarterview room perspective, pseudo 3D furniture, player scale, collision, and basic occlusion checks.
+- Godot AI MCP editor plugin is installed under `res://addons/godot_ai`, enabled in `project.godot`, and paired with the `_mcp_game_helper` autoload.
+- Installed third-party Asset Library packages are inventoried in `docs/THIRD_PARTY_ASSET_INVENTORY.md` before any SFX, particle, input prompt, or license UI wiring.
+- Prototype-only SFX now uses a small copied Kenney subset under `godot/assets/audio/third_party/kenney/`; Main/DAY1 still has no SFX connection.
+- Prototype-only input prompt icons now use a small copied Kenney subset under `godot/assets/ui/third_party/kenney/input_prompts/`; Main/DAY1 UI still has no input prompt icon connection.
+- Codex / Godot work rules are documented in `docs/CODEX_GODOT_WORKFLOW.md`, including Godot AI MCP-first scene checks, validation expectations, and staging rules.
+- GUT `v9.5.0` is installed under `godot/addons/gut/` for Godot `4.5.x`, with first `SurvivalState` unit tests under `godot/test/unit/`.
+- The GUT unit suite now also covers `DeviceDefinition` resources, `RoomObjectDefinition` helpers/resources, the `RoomSceneContract` skeleton, and `PrototypeSceneUtils` input helper contracts.
+- `HackingActionPrototype` mission state flow is covered by GUT for initial state, objective extraction, exit success, Trace failure, HP failure, reset, and failed-state exit guard.
+- `HackingMissionDefinition.gd` defines the future laptop-driven hacking mission data structure; no mission `.tres`, Laptop wiring, Grid Credit, Result, or Story flag connection exists yet.
+- `GridCreditState.gd` defines a future economy / reward skeleton for Grid Credit balance, earn / spend / adjust operations, and transaction logs; it is not wired to Main, `SurvivalState`, hacking rewards, Result, save data, or UI.
+- `LivingDeviceDefinition.gd` defines a future Resource contract for living appliances and life-support devices such as fridge, microwave, aircon, fluorescent light, and UPS; no `.tres`, Main wiring, `SurvivalState` wiring, UI, or Result connection exists yet.
+- Selected prototype Kenney SFX and input prompt assets are covered by a GUT smoke test for file existence, Godot loadability, copied license files, and third-party inventory mentions.
+- Git LFS is not enabled yet; future large-art, atlas, spritesheet, source-art, and audio decisions are tracked in `docs/GIT_LFS_ASSET_POLICY.md`.
+- Prototype GUI playtest checks for Hub, Quarterview, Hacking, perspective blockouts, Title, SFX, and input prompt icons are collected in `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`.
+- Viewpoint and prototype terminology is clarified in `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: `QuarterviewRoomPrototype` remains an object / interaction contract prototype, while `HackingActionPrototype` remains a control / state arena pending later perspective blockouts.
+- Apartment / Main / SurvivalState 기능을 쿼터뷰 Room 또는 future sandbox로 옮길 때의 object key, UI, state, wire / cable, migration status 대응은 `docs/QUARTERVIEW_APARTMENT_MAPPING.md`에서 추적한다.
+- `RoomSceneContract` skeleton and `docs/ROOM_SCENE_CONTRACT.md` define the future room interface for sandbox-first apartment-to-quarterview migration; no Main wiring is done.
+- `QuarterviewGameplaySandbox.tscn` is an independent sandbox for future quarterview Main migration; it receives `RoomSceneContract` signals from a stub room and logs them without Phone / Outlet / Result wiring.
+- Quarterview Gameplay Sandbox now routes room interaction requests to a sandbox-only interaction panel with Primary / Inspect / Close no-op actions and room input locking.
+- Quarterview Gameplay Sandbox routes `bed` / `manual_end_day` Primary action to a sandbox-only End Day confirmation panel that sets `day_end_confirmed` without calling Main, `SurvivalState`, or Result flow.
+- Quarterview Gameplay Sandbox opens a sandbox-only Phone panel from `Tab` or `phone` / `phone_charge` Primary action, using mock text without Main Phone routing or `SurvivalState` battery wiring.
+- Quarterview Gameplay Sandbox opens a sandbox-only Outlet panel from `power` / `power_management` Primary action, using mock text without Main Outlet routing, `SurvivalState` connected / active wiring, or Apartment wire overlay changes.
+- Quarterview Gameplay Sandbox full sandbox-only flow was checked; the sandbox controller now also receives the room stub `room_back_requested` signal and routes it to PrototypeHub without Main / DAY1 wiring.
+- Quarterview Gameplay Sandbox now has a sandbox-local `20:00` to `02:00` clock and sandbox-only auto end state; it does not open Result, advance `SurvivalState`, or call Main / DAY1 day flow.
+- Quarterview Gameplay Sandbox now opens a sandbox-only Result panel after manual Bed end or `02:00` auto end; it does not open `DayResultPanel`, advance `SurvivalState`, grant rewards, save/load, or set story flags.
+- Quarterview Gameplay Sandbox now has a sandbox-only `F2` Test Mode panel for local time advance, `01:50` jump, auto end trigger, manual result trigger, reset, and clock pause / restore checks. It does not modify Main / DAY1, `SurvivalState`, `DeviceDefinition`, `PhoneUI`, `OutletMode`, or `DayResultPanel`.
+- Main replacement risk checklist is documented in `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`; replacing current Main / DAY1 now has explicit Go / No-Go, validation, protected-file, and rollback gates. No Main / DAY1 or production wiring was changed.
+- Main replacement work plan is documented in `docs/MAIN_REPLACEMENT_WORK_PLAN.md`; recommended replacement is a new `QuarterviewMain` production candidate with an isolated final `project.godot` start-scene switch. No Main / DAY1, scene, script, Resource, or asset change was made.
+- `QuarterviewMain.tscn` now exists as the first production candidate skeleton with a separate `QuarterviewRoom.tscn` room shell, placeholder movement / collision / prompt / interaction signal flow, and status logging. It now uses `godot/assets/art/quarterview/room/temp_qv_room_background.png` as a temporary room background, while the polygon / blockout visual is hidden by default and reserved for `D` debug. It is not wired to `project.godot`, `Main.gd`, `SurvivalState`, Phone, Outlet, Result, Hacking, Grid Credit, story flags, or save/load.
+- Main room, desk close-up, modular power equipment, Yui room motifs, hunger, hacking infiltration, and hacking defense design direction is documented in `docs/CONCENT_ROOM_POWER_HACKING_DESIGN_DIRECTION.md`. This is design direction only and does not change code, scenes, assets, `project.godot`, or Main / DAY1 wiring.
+- `docs/CONCENT_PROJECT_IDENTITY.md` is now the single current identity and direction reference after `AGENTS.md`; `docs/PROJECT_WORK_LOG.md` holds short completion logs. Existing docs and `docs/old` were not deleted or moved in this pass.
+
+## Current DAY 1 Decisions
+
+- Laptop: keep at `2` outlet slots to create meaningful space pressure.
+- Communication Device: keep at `1` outlet slot so DAY 1 does not become overly restrictive.
+- Light: decision required. Current code treats it as a connected `1`-slot Lamp/Light, while the narrative art still reads as a built-in fluorescent ceiling light.
+- Until the Light decision is resolved, current documents must distinguish implemented behavior from intended design.
+
+## Changed Files
+
+- `docs/CONCENT_PROJECT_IDENTITY.md`: defines the current project identity, design direction, implementation status boundaries, document trust rules, superseded directions, and document rotation policy.
+- `docs/PROJECT_WORK_LOG.md`: starts a compact commit-oriented work log so `PROJECT_STATUS.md` does not keep growing as a detailed history.
+- `AGENTS.md`: now tells Codex to read the identity document after AGENTS and use it ahead of older detail docs when directions conflict.
+- `docs/CONCENT_ROOM_POWER_HACKING_DESIGN_DIRECTION.md`: documents the agreed direction for mouse-centric main room flow, desk close-up, compact modular power equipment, Yui's sea / freedom room motifs, hunger, hacking infiltration styles, and event-based hacking defense.
+- `docs/MAIN_REPLACEMENT_WORK_PLAN.md`: defines the Main replacement strategy, phase plan, file impact plan, state ownership, UI routing, input / modal policy, asset readiness, tests, commit strategy, rollback, Go / No-Go gate, and open questions.
+- `godot/scenes/quarterview/QuarterviewRoom.tscn`, `godot/scripts/quarterview/QuarterviewRoom.gd`: add the temporary background art layer, load the runtime room background when present, keep the concept image as fallback reference overlay, and hide polygon / blockout visuals until `D` debug is enabled.
+- `godot/assets/art/quarterview/room/temp_qv_room_background.png`, `godot/assets/art/quarterview/reference/qv_room_concept_reference.png`: provide the current temporary runtime room background and concept reference source used by QuarterviewMain visual alignment.
+- `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`: links the risk gate to the replacement work plan.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: links Main replacement gating to both the risk checklist and the work plan.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: points Main replacement GUI preconditions to the work plan.
+- `docs/PROJECT_STATUS.md`: records the documentation-only planning work and keeps Main replacement as a blocked / approval-gated next step.
+- `godot/project.godot`: added Test Mode, reserved phone, and shared cancel input actions.
+- `godot/scripts/Main.gd`: centralized Test Mode and modal input routing.
+- `godot/scripts/Apartment.gd`: added collision, interaction, nearest-object, and wire-anchor overlays.
+- `godot/scripts/ui/OutletMode.gd`: added slot/adapter debug overlays and delegated ESC handling to `Main.gd`.
+- `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: added the Test Mode status/readout.
+- `godot/scenes/ui/PhoneUI.tscn`: updated the reserved phone key hint to `Tab`.
+- `godot/scripts/Main.gd`: routes `open_phone` plus a raw `KEY_TAB` edge through the existing Phone UI toggle and logs each received toggle.
+- `godot/scripts/SurvivalState.gd`: provides the Phone UI clock text and daytime period while the HUD omits those details.
+- `godot/scripts/Apartment.gd`: aligns only the four outer wall blockers to the interior floor boundary.
+- `godot/scenes/ui/SurvivalHUD.tscn`, `godot/scripts/ui/SurvivalHUD.gd`: hide exploration status panels and their power icon.
+- `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`: pause only the display clock while modal UI is active.
+- `godot/scripts/Main.gd`: routes eligible left-clicks through the existing nearest-interactable request used by `E`.
+- `godot/scenes/ui/InteractionPanel.tscn`, `godot/scripts/ui/InteractionPanel.gd`, `godot/scripts/Main.gd`: connect real panel buttons to the existing confirm and cancel handlers.
+- `godot/scripts/ui/InteractionPanel.gd`: adds distinct hover/pressed feedback while preserving existing button actions.
+- `godot/scripts/ui/InteractionPanel.gd`: aligns the no-primary-action hint with its existing `E` and `ESC` close behavior.
+- `godot/scripts/ui/OutletMode.gd`: draws valid/invalid drag feedback above the power-strip art without changing slot coordinates or connection rules.
+- `godot/scripts/ui/OutletMode.gd`: maps occupancy onto the existing LED artwork in `powerstrip_4slot.png` without adding new LED shapes.
+- `godot/scripts/ui/OutletMode.gd`: removes the normal connected-adapter outline while preserving drag feedback.
+- `godot/scripts/ui/OutletMode.gd`: shares one target-slot resolver between drag preview and actual drop.
+- `godot/scripts/ui/OutletMode.gd`: centralizes connected visual offset/scale tuning for Fan, Charger, Communication Device, Lamp, and Laptop.
+- `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: detect repeatable downward battery-threshold crossings and route warning messages to the HUD.
+- `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: show short battery warnings above the screen center.
+- `godot/scripts/SurvivalState.gd`: defines hourly device drain, converts elapsed real time to game hours, and exposes decimal remaining power plus current active drain.
+- `godot/scripts/Main.gd`: shows hourly drain and decimal remaining power in interaction and Test Mode readouts.
+- `godot/scripts/SurvivalState.gd`: removes first-use history and unrelated daily summary fields from Phone text while preserving Result data.
+- `godot/scripts/SurvivalState.gd`, `godot/scripts/Main.gd`: `08:00 → 02:00` 시간 매핑과 자동 하루 마침 확인 흐름을 연결한다.
+- `godot/scripts/Main.gd`, `godot/scripts/ui/InteractionPanel.gd`, `godot/scenes/ui/InteractionPanel.tscn`: 자동 한계 종료를 대사-only 모달과 `E` 진행으로 분리한다.
+- `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`, `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: 테스트 모드 전용 조작과 한국어 도움말을 추가한다.
+- `godot/scripts/Main.gd`, `godot/scripts/SurvivalState.gd`, `godot/scripts/ui/SurvivalHUD.gd`, `godot/scenes/ui/SurvivalHUD.tscn`: Test Mode 2차 키 라우팅, 상태 세팅 함수, 상태 출력, 기본 `F1` 안내와 도움말 전환을 추가한다.
+- `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: Test Mode 2차 수동 확인 항목과 표시 정책을 기록한다.
+- `docs/GODOT_PLAYTEST_CHECKLIST.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`: documented the diagnostic workflow.
+- `godot/scripts/resources/DeviceDefinition.gd`, `godot/resources/devices/*.tres`: 다섯 DAY 1 장치의 공통 데이터 구조와 기존 MVP 값을 정의한다.
+- `godot/scripts/SurvivalState.gd`, `godot/scripts/ui/OutletMode.gd`: Resource 기반 장치 조회를 슬롯, 부하, 소비율, 표시명, Result 플래그에 연결한다.
+- `docs/GODOT_DAY1_MVP_PLAN.md`, `docs/DAY1_CONTENT_BRIEF.md`, `docs/ASSET_PIPELINE.md`: 장치 데이터의 현재 Resource 경로와 유지된 값을 기록한다.
+- `godot/scripts/ui/DayResultPanel.gd`, `godot/scenes/ui/DayResultPanel.tscn`: 기존 결과 데이터를 생존 기록 문장과 `[E] 계속` 안내로 재구성한다.
+- `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/GODOT_PLAYTEST_CHECKLIST.md`: Result 표현 정책과 수동 확인 항목을 기록한다.
+- `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/QuarterviewPrototypePlayer.gd`: 쿼터뷰 구도와 이동 / 충돌 / 가림 / 상호작용 포인트 확인용 독립 prototype을 추가한다.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: prototype scene 경로와 본 전환 전 유지할 범위를 기록한다.
+- `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: prototype placeholder를 `key`, `zone`, `role`, `blocks`, `interactable` 중심의 `PLACEHOLDERS` 구조로 정리한다.
+- `docs/QUARTERVIEW_APARTMENT_MAPPING.md`: 기존 탑뷰 Apartment 기능과 쿼터뷰 placeholder의 대응표를 기록한다.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: 쿼터뷰 대응표 문서 위치를 구조 검토 항목에 연결한다.
+- `docs/QUARTERVIEW_ART_ASSET_PLAN.md`: 쿼터뷰 전환용 P0-P3 아트 우선순위와 atlas / spritesheet 원칙을 기록한다.
+- `docs/ASSET_PIPELINE.md`: 쿼터뷰 아트 계획 문서를 에셋 교체 기준에 짧게 연결한다.
+- `docs/QUARTERVIEW_ROOM_DIRECTION.md`: 채택 콘티 기준, 공간 배치, 피해야 할 디자인, 스피커 / 현관 / 욕실 기준을 기록한다.
+- `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: 독립 쿼터뷰 prototype의 레이어 노드 구조와 placeholder `layer/zone/role` 정의를 정리한다.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: 쿼터뷰 prototype의 레이어 검증 기준을 본 전환 전 확인 항목에 추가한다.
+- `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: 쿼터뷰 prototype object registry에 `display_name`, `future_source`, `visual_state`와 조회 helper를 추가한다.
+- `docs/QUARTERVIEW_OBJECT_CONTRACT.md`: 쿼터뷰 object key, role, future source, visual state 후보와 구현 상태 기준을 기록한다.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`: object contract 문서 위치를 구조 검토 항목에 연결한다.
+- `godot/scenes/prototypes/HackingActionPrototype.tscn`, `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/HackingPrototypePlayer.gd`, `godot/scripts/prototypes/HackingPrototypeEnemy.gd`, `godot/scripts/prototypes/HackingPrototypeProjectile.gd`: 독립 해킹 액션 prototype scene과 placeholder combat loop를 추가한다.
+- `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/HackingPrototypePlayer.gd`, `godot/scripts/prototypes/HackingPrototypeEnemy.gd`, `godot/scripts/prototypes/HackingPrototypeProjectile.gd`: 해킹 액션 mission state, HP / Trace 판정, enemy contact damage signal, tuning constants를 정리한다.
+- `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/HackingPrototypeEnemy.gd`, `godot/scripts/prototypes/HackingPrototypeProjectile.gd`: 해킹 액션 debug overlay, event message, hit flash, projectile hit signal, hazard flash를 추가한다.
+- `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`: prototype scene 경로, 조작, 흐름, 아직 연결하지 않은 시스템을 기록한다.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: 독립 prototype 선택 허브를 추가한다.
+- `docs/PROTOTYPE_HUB.md`: 등록된 prototype, 실행 키, 버튼, 새 prototype 등록 기준을 기록한다.
+- `godot/scenes/prototypes/TitleMenuPrototype.tscn`, `godot/scripts/prototypes/TitleMenuPrototype.gd`: 시작화면, ESC overlay, settings placeholder를 독립 UI prototype으로 추가한다.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: Title / Pause Menu prototype을 `3` / `T`와 버튼으로 등록한다.
+- `docs/TITLE_AND_PAUSE_MENU_PROTOTYPE.md`, `docs/PROTOTYPE_HUB.md`: Title / Pause prototype 구조와 Hub 등록 정보를 기록한다.
+- `godot/scripts/prototypes/PrototypeHub.gd`: prototype 목록을 `PROTOTYPES` registry로 정리하고 기존 실행 키와 버튼 연결을 유지한다.
+- `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/TitleMenuPrototype.gd`: `B` / `Backspace` PrototypeHub 복귀 입력을 추가한다.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `docs/PROTOTYPE_HUB.md`: 공통 복귀 안내 문구를 추가한다.
+- `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: registry 정보를 표시하는 prototype 전용 object interaction panel과 no-op action buttons를 추가한다.
+- `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md`: panel 흐름, 표시 정보, role별 placeholder action label, 향후 연결 후보를 기록한다.
+- `docs/QUARTERVIEW_OBJECT_CONTRACT.md`: role 기반 Primary action label 기준을 추가한다.
+- `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: `D` debug overlay toggle, 기본 화면 prompt 축약, label/range/blocker 숨김, 오른쪽 중앙 고정 panel 위치를 적용한다.
+- `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md`: debug overlay 표시 정책과 panel 상세 정보 표시 조건을 기록한다.
+- `godot/project.godot`, `godot/addons/godot_ai/**`, `godot/godot-ai-LICENSE.txt`: Godot AI MCP editor plugin, runtime helper autoload, and plugin license are tracked for editor/MCP integration.
+- `godot/assets/**/*.png.import`, `godot/scripts/prototypes/*.gd.uid`: source-side Godot metadata generated for tracked assets and prototype scripts is explicitly tracked per repository policy.
+- `.gitignore`: no change required; it already ignores `.godot/` caches while allowing source-side `.import` and `.uid` metadata.
+- `docs/THIRD_PARTY_ASSET_INVENTORY.md`: documents installed Kenney and Simple License packages, license evidence, intended use, current use, and commit status.
+- `docs/ASSET_PIPELINE.md`: points external Asset Library tracking to the third-party asset inventory.
+- `godot/assets/audio/third_party/kenney/ui/*.wav`, `godot/assets/audio/third_party/kenney/interface/*.wav`, `godot/assets/audio/third_party/kenney/LICENSES/*.txt`: selected prototype SFX copies and license evidence only.
+- `godot/scripts/prototypes/PrototypeSfx.gd`: adds a prototype-local SFX helper that loads selected wav files on demand.
+- `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`: wire selected SFX to prototype-only UI/action feedback.
+- `docs/THIRD_PARTY_ASSET_INVENTORY.md`: updates Kenney UI Audio and Interface Sounds current use and commit policy for selected prototype SFX.
+- `godot/assets/ui/third_party/kenney/input_prompts/*.png`, `godot/assets/ui/third_party/kenney/LICENSES/kenney_input_prompts_LICENSE.txt`: selected Kenney Input Prompts copies and license evidence only.
+- `godot/scripts/prototypes/PrototypeInputPrompts.gd`: centralizes prototype prompt icon paths and row creation.
+- `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`: add prototype-only input prompt icon rows while preserving text controls.
+- `docs/THIRD_PARTY_ASSET_INVENTORY.md`: updates Kenney Input Prompts current use and commit policy for selected prototype icons.
+- `docs/CODEX_GODOT_WORKFLOW.md`: records Codex, User, ChatGPT, Godot AI MCP, and Godot Editor responsibilities plus workflow validation and staging rules.
+- `godot/addons/gut/`: installs GUT `v9.5.0` for Godot `4.5.x` unit tests.
+- `godot/test/unit/test_survival_state.gd`: covers DAY 1 device Resource values, connected/active separation, active drain sums, modal pause, and Phone battery warning rearm behavior.
+- `godot/test/unit/test_device_definition_resources.gd`: checks `DeviceDefinition` resources for valid metadata, stable keys, duplicate-key safety, and current DAY 1 values.
+- `godot/test/unit/test_room_object_definition.gd`: checks `RoomObjectDefinition` helpers, role action labels, Resource validity, and key object roles.
+- `godot/test/unit/test_room_scene_contract.gd`: checks `RoomSceneContract` signal names, constants, no-op skeleton methods, and payload helper.
+- `godot/test/unit/test_prototype_scene_utils.gd`: checks prototype-only shared input rules for Hub back, restart, debug, confirm, and cancel events.
+- `godot/test/unit/test_hacking_action_state_machine.gd`: checks Hacking Action scene instantiate, mission state transitions, objective / exit activation, Trace / HP failure, reset, and failed-state exit guard.
+- `godot/test/unit/test_asset_smoke.gd`: checks selected prototype SFX / input prompt file existence, loadability, copied license files, and third-party inventory mentions.
+- `godot/test/unit/test_grid_credit_state.gd`: checks Grid Credit reset, earn, spend, adjust, summary, and transaction log copy behavior.
+- `godot/test/unit/test_living_device_definition.gd`: checks LivingDeviceDefinition validity, type / power helpers, effect summary, result text fallback, and debug summary behavior.
+- `godot/scripts/resources/HackingMissionDefinition.gd`: defines the future hacking mission Resource fields, mission / objective constants, difficulty bounds, and helper methods.
+- `godot/scripts/systems/GridCreditState.gd`: defines a standalone Grid Credit skeleton with current / lifetime totals and transaction helpers.
+- `godot/scripts/resources/LivingDeviceDefinition.gd`: defines the future living device Resource fields, type / power constants, effect candidates, and helper methods.
+- `docs/HACKING_MISSION_DEFINITION.md`: documents the hacking mission Resource contract, field meanings, device requirement rules, and next-step boundaries.
+- `docs/GRID_CREDIT_SYSTEM.md`: documents Grid Credit meaning, current skeleton scope, API, transaction log structure, and future wiring boundaries.
+- `docs/LIVING_DEVICE_DEFINITION.md`: documents the living device Resource contract, DeviceDefinition boundary, field meanings, candidate devices, and no-wiring scope.
+- `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`: documents same-canvas quarterview room shell layers, target file names, future asset paths, z-index policy, import candidates, and application order.
+- `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`: documents `qv_room_window_city_view.png` definition, include / exclude rules, z-index policy, wall-frame relationship, alpha / mask criteria, lighting separation, and THE GRID design criteria.
+- `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`: documents `qv_room_foreground_occluders.png` definition, include / exclude rules, z-index criteria, collision separation, art cleanup, and pre-application checklist.
+- `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`: documents `qv_room_static_lighting_overlay.png` definition, include / exclude rules, z-index policy, blend / alpha candidates, dynamic lighting separation, and THE GRID warm / cool lighting criteria.
+- `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`: documents future Yui quarterview spritesheet filenames, asset paths, 4-direction row order, idle / walk frame layout, foot-anchor policy, import settings, animation names, and room shell layer relationships.
+- `docs/ASSET_PIPELINE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: link quarterview room shell layer planning to the existing asset, room direction, and migration docs.
+- `docs/GODOT_TESTING.md`: documents the GUT version, test location, and headless CLI command with `-gexit`.
+- `docs/GIT_LFS_ASSET_POLICY.md`: records the current tracked and local-installed asset state, LFS candidate patterns, Godot metadata rules, external addon folder policy, and future LFS adoption steps.
+- `docs/ASSET_PIPELINE.md`: links large-asset and LFS handling back to the dedicated Git LFS policy.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: provides manual GUI checks for PrototypeHub, Quarterview, Hacking Action, Title Menu, prototype SFX, input prompt icons, pass criteria, and bug reports.
+- `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: defines top-down, `3/4 top-down`, quarterview, and cutaway room terms, and separates current prototype roles from long-term viewpoint targets.
+- `docs/PROJECT_DIRECTION_REVISED.md`, `docs/IMPLEMENTATION_ROADMAP_REVISED.md`: point long-term hacking and room-view work to the revised viewpoint terminology and future perspective blockouts.
+- `godot/scenes/prototypes/QuarterviewRoomPrototype.tscn`: changes the visible help/title copy to `Room Object Contract Prototype` and states that this is not final quarterview art.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: change the first prototype display title and description to object / interaction contract wording while keeping the same scene path and shortcuts.
+- `docs/QUARTERVIEW_OBJECT_INTERACTION_PROTOTYPE.md`, `docs/QUARTERVIEW_OBJECT_CONTRACT.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/PROTOTYPE_HUB.md`: clarify that `QuarterviewRoomPrototype` is retained as a contract prototype and that real perspective validation belongs in a future blockout.
+- `godot/scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`, `godot/scripts/prototypes/QuarterviewPerspectiveBlockout.gd`, `godot/scripts/prototypes/PerspectiveBlockoutPlayer.gd`: add an independent visual blockout with angled floor, back/side walls, pseudo 3D furniture, player movement, furniture collision, debug overlay, and Hub return.
+- `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: record the new perspective blockout path while keeping `QuarterviewRoomPrototype` as the object / interaction contract prototype.
+- `godot/scenes/prototypes/HackingPerspectiveBlockout.tscn`, `godot/scripts/prototypes/HackingPerspectiveBlockout.gd`, `godot/scripts/prototypes/HackingPerspectivePlayer.gd`: add an independent cyber perspective blockout with angled arena floor, raised barriers, scan / hazard / data node / exit placeholders, player movement, debug overlay, and Hub return.
+- `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md`: distinguish the existing Hacking Action control prototype from the new `3/4 top-down` perspective blockout.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Perspective Blockout and Hacking Perspective Blockout with explicit `scene_path` / `status` registry data and clearer contract-vs-perspective descriptions while preserving existing prototype entries.
+- `docs/PROTOTYPE_HUB_OVERVIEW.md`, `docs/PROTOTYPE_HUB.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the five Hub entries, shortcut keys, and contract-vs-perspective distinction.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: expand Quarterview and Hacking perspective blockout GUI checks with viewpoint, axis, scale, occlusion, role-separation criteria, SFX / input prompt scope, and pass / needs-fix standards.
+- `docs/PROJECT_STATUS.md`: records the checklist update and keeps next manual validation focused on the perspective blockouts.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: adds a QuarterviewRoomPrototype GUI check that the scene presents itself as an object / interaction contract prototype, not final quarterview art.
+- `docs/PROJECT_STATUS.md`: records that no scene/code change was needed because the visible QuarterviewRoomPrototype and PrototypeHub labels already use the contract-prototype wording.
+- `godot/scenes/prototypes/QuarterviewPerspectiveBlockout.tscn`, `godot/scripts/prototypes/QuarterviewPerspectiveBlockout.gd`, `godot/scripts/prototypes/PerspectiveBlockoutPlayer.gd`: reinforce the existing perspective blockout with visible player placeholder drawing, final-art warning copy, and additional work / audio / signal equipment blocks.
+- `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: adds a GUI check that Comm, NODE-17, Speaker, UPS, and Signal Booster read as work-equipment blocks in the perspective scene.
+- `godot/scenes/prototypes/HackingPerspectiveBlockout.tscn`, `godot/scripts/prototypes/HackingPerspectiveBlockout.gd`: reinforce the hacking perspective blockout with `ForegroundLayer`, Sentry, Signal Relay, and a foreground firewall depth test block.
+- `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the perspective-only cyber blockout elements and GUI checks.
+- `godot/scripts/prototypes/PrototypeSceneUtils.gd`: adds a prototype-only helper for common input event checks, Hub return, and current-scene restart support.
+- `godot/scripts/prototypes/PrototypeHub.gd`, `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`, `godot/scripts/prototypes/HackingActionPrototype.gd`, `godot/scripts/prototypes/QuarterviewPerspectiveBlockout.gd`, `godot/scripts/prototypes/HackingPerspectiveBlockout.gd`, `godot/scripts/prototypes/TitleMenuPrototype.gd`: reuse the common helper for shared confirm, cancel, debug, restart, and Hub-back input checks without changing Main / DAY1.
+- `docs/PROTOTYPE_COMMON_RULES.md`, `docs/PROTOTYPE_HUB_OVERVIEW.md`: document prototype-only shared key rules and helper responsibilities.
+- `godot/scripts/resources/RoomObjectDefinition.gd`: extends the room object Resource contract with prototype blockout, interaction, and collision fields.
+- `godot/resources/rooms/quarterview/objects/*.tres`: stores the Room Object Contract prototype definitions formerly kept in `QuarterviewRoomPrototype.gd`.
+- `godot/scripts/prototypes/QuarterviewRoomPrototype.gd`: loads `RoomObjectDefinition` resources through an explicit path list and converts them to the existing runtime dictionary shape.
+- `docs/ROOM_OBJECT_DEFINITION.md`, `docs/QUARTERVIEW_OBJECT_CONTRACT.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: document the room object Resource fields, constants, helper behavior, and future registry migration boundary.
+- `docs/QUARTERVIEW_APARTMENT_MAPPING.md`: expands Apartment / Main / UI / SurvivalState mapping for future Quarterview sandbox migration without changing code or scenes.
+- `godot/scripts/contracts/RoomSceneContract.gd`: adds a lightweight signal / method skeleton for future room scene interface work.
+- `docs/ROOM_SCENE_CONTRACT.md`: documents room interaction request, device visual sync, signal / method contract, and sandbox-first migration boundaries.
+- `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`: link future quarterview feature wiring to `RoomSceneContract` and sandbox-first validation.
+- `godot/scenes/prototypes/QuarterviewGameplaySandbox.tscn`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: add an independent sandbox controller for room contract signal flow, nearest prompt/status, debug overlay, restart, and Hub return.
+- `godot/scenes/prototypes/QuarterviewSandboxRoomStub.tscn`, `godot/scripts/prototypes/QuarterviewSandboxRoomStub.gd`: add a signal-compatible room stub that reads `RoomObjectDefinition` resources, handles movement/nearest detection, and emits no-op interaction requests.
+- `godot/scenes/prototypes/SandboxInteractionPanel.tscn`, `godot/scripts/prototypes/SandboxInteractionPanel.gd`: add a sandbox-only object interaction panel with Primary, Inspect, and Close no-op actions.
+- `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: opens the sandbox panel from `interaction_requested`, locks room input while open, and restores input on Close / ESC.
+- `godot/scenes/prototypes/SandboxEndDayPanel.tscn`, `godot/scripts/prototypes/SandboxEndDayPanel.gd`: add a sandbox-only Bed End Day confirmation panel with Confirm / Cancel / Close paths.
+- `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: routes `bed` / `manual_end_day` Primary action to the sandbox End Day panel, tracks `day_end_confirmed`, and leaves Main / `SurvivalState` / Result unwired.
+- `godot/scenes/prototypes/SandboxPhonePanel.tscn`, `godot/scripts/prototypes/SandboxPhonePanel.gd`: add a sandbox-only mock Phone panel with Close support and explicit Main / DAY1 unwired copy.
+- `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: opens/closes the sandbox Phone panel from `Tab` or phone Primary action, locks room input while open, and leaves existing `PhoneUI.gd` / Main phone routing unchanged.
+- `godot/scenes/prototypes/SandboxOutletPanel.tscn`, `godot/scripts/prototypes/SandboxOutletPanel.gd`: add a sandbox-only mock Outlet panel with Close and mock action buttons.
+- `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: opens/closes the sandbox Outlet panel from power Primary action, locks room input while open, and leaves existing `OutletMode.gd`, Main outlet routing, `SurvivalState`, and Apartment wire overlay unchanged.
+- `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: connects the room stub `room_back_requested` signal to sandbox Hub return without touching Main / DAY1 routing.
+- `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`, `godot/scripts/prototypes/SandboxEndDayPanel.gd`: add sandbox-local clock state, `02:00` auto end message, manual / auto end reason tracking, post-auto-end input lock, and sandbox-only `T` / `Shift+T` time advance shortcuts.
+- `godot/scenes/prototypes/SandboxResultPanel.tscn`, `godot/scripts/prototypes/SandboxResultPanel.gd`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: add sandbox-only result summary UI for manual Bed end and `02:00` auto end with Restart / Hub / Hide Details actions.
+- `godot/scenes/prototypes/SandboxTestModePanel.tscn`, `godot/scripts/prototypes/SandboxTestModePanel.gd`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`: add sandbox-only `F2` Test Mode controls for local time advance, `01:50` jump, auto end / manual result trigger, reset, and clock pause / restore without Main / DAY1 wiring.
+- `docs/QUARTERVIEW_GAMEPLAY_SANDBOX_FLOW_CHECK.md`, `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: record the full sandbox-only flow check, modal priority, input lock rules, and remaining GUI checks.
+- `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`, `docs/GODOT_TESTING.md`: document the Main replacement Go / No-Go gate, risk categories, validation commands, rollback plan, and protected-file list.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Gameplay Sandbox as a separate Hub entry.
+- `godot/scenes/prototypes/QuarterviewRoomShellPrototype.tscn`, `godot/scripts/prototypes/QuarterviewRoomShellPrototype.gd`: add and extend a visual-only room shell layer prototype for floor, back wall, and side wall paths with missing status, `1920x1080` size checks, layer toggles, canvas guides, reload, debug guide toggle, and Hub return.
+- `godot/scenes/prototypes/PrototypeHub.tscn`, `godot/scripts/prototypes/PrototypeHub.gd`: register Quarterview Room Shell Prototype as a separate Hub entry.
+- `docs/QUARTERVIEW_GAMEPLAY_SANDBOX.md`, `docs/ROOM_SCENE_CONTRACT.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the sandbox-only Bed End Day, Phone, and Outlet panel boundaries and manual GUI checks.
+- `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`, `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document the floor shell prototype path, controls, missing fallback, and GUI checklist.
+- `docs/QUARTERVIEW_WINDOW_CITY_VIEW_GUIDE.md`, `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`, `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/ASSET_PIPELINE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document window city view criteria without adding PNG assets or scene wiring.
+- `docs/QUARTERVIEW_FOREGROUND_OCCLUDER_GUIDE.md`, `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`, `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`, `docs/ASSET_PIPELINE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document foreground occluder criteria without adding PNG assets or scene wiring.
+- `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`, `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`, `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/ASSET_PIPELINE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document static lighting overlay criteria without adding PNG assets or scene wiring.
+- `docs/YUI_QV_SPRITESHEET_IMPORT_GUIDE.md`, `docs/ASSET_PIPELINE.md`, `docs/YUI_CHARACTER_BRIEF.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_MIGRATION_PLAN.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document Yui quarterview spritesheet import criteria without adding PNG assets, `SpriteFrames`, or scene wiring.
+- `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/ROOM_OBJECT_DEFINITION.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `qv_furniture_atlas.png` region key, mapping schema, category split, pivot / anchor, z-index, and pre-application checklist without adding PNG assets or mapping files.
+- `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/LIVING_DEVICE_DEFINITION.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `qv_appliances_atlas.png` region key, `LivingDeviceDefinition` link candidates, state variations, lighting / FX split, and pre-application checklist without adding PNG assets or mapping files.
+- `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/ROOM_OBJECT_DEFINITION.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `qv_work_devices_atlas.png` region key, RoomObject / DeviceDefinition / HackingMission links, state variations, screen / glow / signal FX split, and pre-application checklist without adding PNG assets or mapping files.
+- `docs/QV_FX_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/QUARTERVIEW_STATIC_LIGHTING_OVERLAY_GUIDE.md`, `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`, `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `qv_fx_atlas.png` region key naming, mapping schema, frame / playback metadata, FX / body / static lighting split, target links, z-index, blend / alpha, trigger candidates, and pre-application checklist without adding PNG assets or mapping files.
+- `docs/QV_PROPS_AND_CABLE_ATLAS_BACKLOG.md`, `docs/ASSET_PIPELINE.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QV_FURNITURE_ATLAS_REGION_MAPPING.md`, `docs/QV_APPLIANCES_ATLAS_REGION_MAPPING.md`, `docs/QV_WORK_DEVICES_ATLAS_REGION_MAPPING.md`, `docs/QV_FX_ATLAS_REGION_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document deferred props / cable atlas scope, category boundaries, lightweight mapping candidates, z-index candidates, start conditions, and future work candidates without adding PNG assets or mapping files.
+- `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `hack_arena_tiles_atlas.png` tile size, key naming, category, mapping schema, collision / navigation / hazard / objective hints, `HackingMissionDefinition` links, TileSet / TileMap candidates, z-index, autotile / edge candidates, and pre-application checklist without adding PNG assets, TileSet data, or scene wiring.
+- `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future hacking avatar 4-direction filenames, row order, frame layout, pivot / anchor policy, import setting candidates, animation names, arena tile scale relationship, and enemy / projectile / FX split without adding PNG assets, `SpriteFrames`, or scene wiring.
+- `docs/HACK_ENEMIES_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `hack_enemies_atlas.png` enemy key, region key, category, animation state, mapping schema, behavior / danger hints, collision / hitbox / hurtbox separation, Trace / mission relation, z-index, playback policy, and checklist without adding PNG assets, mapping files, enemy scenes, or gameplay wiring.
+- `docs/HACK_OBJECTS_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/HACK_ENEMIES_ATLAS_REGION_MAPPING.md`, `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `hack_objects_atlas.png` object key, region key, category, interaction state, mapping schema, interaction / objective hints, collision / interaction-area separation, `HackingMissionDefinition` links, z-index, playback policy, and checklist without adding PNG assets, mapping files, object scenes, objective logic, or gameplay wiring.
+- `docs/HACK_FX_ATLAS_REGION_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/HACKING_ACTION_DIRECTION.md`, `docs/HACKING_ACTION_CONTROL_PROTOTYPE.md`, `docs/HACKING_ACTION_PROTOTYPE_IMPLEMENTATION.md`, `docs/HACKING_ACTION_MISSION_LOOP.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/HACK_ARENA_TILES_ATLAS_REGION_MAPPING.md`, `docs/HACK_AVATAR_SPRITESHEET_IMPORT_GUIDE.md`, `docs/HACK_ENEMIES_ATLAS_REGION_MAPPING.md`, `docs/HACK_OBJECTS_ATLAS_REGION_MAPPING.md`, `docs/QV_FX_ATLAS_REGION_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `hack_fx_atlas.png` FX key, category, mapping schema, frame / playback metadata, trigger / mission / gameplay state hints, target anchors, z-index, blend / alpha policy, body / FX atlas split, and checklist without adding PNG assets, mapping files, shaders, particles, FX scenes, or gameplay wiring.
+- `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`, `docs/THIRD_PARTY_ASSET_INVENTORY.md`: document future `ui_common_atlas.png` UI key naming, category split, region mapping schema, 9-slice margins, button / tab / icon / meter / badge / prompt criteria, Theme / StyleBoxTexture candidates, Kenney input prompt separation, UI tone, and checklist without adding PNG assets, Theme / StyleBox resources, mapping files, Control nodes, or scene wiring.
+- `docs/UI_HUD_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `ui_hud_atlas.png` HUD key naming, category split, region mapping schema, room / hacking HUD contexts, value binding candidates, meter / warning / status chip criteria, safe-area / anchor / update-policy criteria, `ui_common_atlas` separation, UI tone, and checklist without adding PNG assets, Theme / StyleBox resources, mapping files, Control nodes, HUD scenes, or gameplay wiring.
+- `docs/UI_PHONE_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_HUD_ATLAS_MAPPING.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `ui_phone_atlas.png` Phone UI key naming, category split, region mapping schema, 9-slice criteria, state variations, screen-area and value-binding candidates, existing `PhoneUI` relationship, `ui_common_atlas` / `ui_hud_atlas` separation, UI tone, and checklist without adding PNG assets, Theme / StyleBox resources, mapping files, Control nodes, Phone UI scenes, or gameplay wiring.
+- `docs/UI_OUTLET_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_HUD_ATLAS_MAPPING.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/QUARTERVIEW_APARTMENT_MAPPING.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `ui_outlet_atlas.png` Outlet UI key naming, category split, region mapping schema, 9-slice criteria, socket / device-card / drag-drop states, `SurvivalState` / `DeviceDefinition` binding candidates, existing `OutletMode` relationship, `ui_common_atlas` / `ui_hud_atlas` / `qv_cable_atlas` separation, UI tone, and checklist without adding PNG assets, Theme / StyleBox resources, mapping files, Control nodes, Outlet UI scenes, or gameplay wiring.
+- `docs/UI_RESULT_LOG_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_HUD_ATLAS_MAPPING.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/DAILY_LOOP_REVISED.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/GRID_CREDIT_SYSTEM.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `ui_result_log_atlas.png` Result / Log UI key naming, category split, region mapping schema, 9-slice criteria, day / power / device / mission / reward / story log candidates, existing `DayResultPanel` relationship, `ui_common_atlas` / `ui_hud_atlas` / `ui_phone_atlas` / `ui_outlet_atlas` separation, UI tone, and checklist without adding PNG assets, Theme / StyleBox resources, mapping files, Control nodes, Result UI scenes, or gameplay wiring.
+- `docs/UI_DIALOGUE_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_VISUAL_IMPLEMENTATION_NOTES.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `ui_dialogue_atlas.png` Dialogue UI key naming, category split, region mapping schema, 9-slice criteria, speaker / narration / system / thought / choice separation, future dialogue data candidates, existing UI atlas separation, UI tone, and checklist without adding PNG assets, Theme / StyleBox resources, mapping files, Control nodes, Dialogue UI scenes, dialogue systems, story flags, or gameplay wiring.
+- `docs/UI_DEVICE_ICONS_ATLAS_MAPPING.md`, `docs/ASSET_PIPELINE.md`, `docs/UI_COMMON_ATLAS_MAPPING.md`, `docs/UI_HUD_ATLAS_MAPPING.md`, `docs/UI_PHONE_ATLAS_MAPPING.md`, `docs/UI_OUTLET_ATLAS_MAPPING.md`, `docs/UI_RESULT_LOG_ATLAS_MAPPING.md`, `docs/ROOM_DEVICE_DIRECTION.md`, `docs/HACKING_MISSION_DEFINITION.md`, `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`: document future `ui_device_icons_atlas.png` icon key naming, category split, region mapping schema, icon size and state variation criteria, base icon / status overlay policy, `DeviceDefinition` / `LivingDeviceDefinition` / `RoomObjectDefinition` / `HackingMissionDefinition` connection candidates, UI / room atlas separation, icon style, and checklist without adding PNG assets, mapping files, icon UI scenes, Control nodes, Resources, or gameplay wiring.
+
+## Validation Results
+
+- Local `main` was aligned with `origin/main` at task start.
+- Godot 4.5.1 headless import and Main scene run completed without script or runtime errors.
+- Automated scene checks passed for Test Mode toggle, modal labels, movement locking, outlet/end-day ESC cancellation, and result-screen ESC consumption.
+- A rendered Test Mode capture confirmed that debug text and colored overlays are visible at `1280x720`.
+- `git diff --check` passed. Web files were not modified.
+- Godot 4.5.1 headless editor initialization completed after adding mouse interaction routing.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after converting interaction controls to clickable buttons.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after adding interaction-button hover feedback.
+- Godot 4.5.1 headless Main scene startup completed after updating the interaction close hint.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after the outlet drag-feedback change.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after replacing normal slot borders with LEDs.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after mapping occupancy to the PNG's built-in LEDs.
+- Godot 4.5.1 headless Main scene startup completed after removing connected-adapter borders.
+- Godot 4.5.1 headless Main scene startup completed after unifying outlet preview/drop target selection.
+- Godot 4.5.1 headless editor initialization and Main scene startup completed after exposing connected-adapter tuning values.
+- Godot 4.5.1 headless Main scene startup completed after adding Phone battery warnings and the empty-battery view.
+- Godot 4.5.1 headless Main scene startup completed after separating connected and active power states.
+- Godot 4.5.1 headless Main scene startup completed after converting active drain to per-game-hour units.
+- Godot 4.5.1 headless Main scene startup completed after changing Phone battery warnings to repeatable downward crossings.
+- DAY 시간 확장과 자동 하루 마침 확인 연결 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
+- 자동 하루 종료 대사-only 흐름 분리 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
+- 테스트 모드 조작과 한국어 도움말 추가 후 Godot 4.5.1 headless Main scene 시작을 확인했다.
+- Test Mode 2차 확장 후 `git diff --check`, Godot 4.5.1 headless 편집기 초기화, Main scene 시작이 완료됐다.
+- 쿼터뷰 방 prototype scene 추가 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
+- 쿼터뷰 prototype 구조 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
+- 장치 Resource화 후 Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
+- 결과 화면 1차 개선 후 `git diff --check`, Godot 4.5.1 headless import와 Main scene 시작이 완료됐다.
+- 쿼터뷰 아트 에셋 계획 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- 채택된 쿼터뷰 방 콘티 기준 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- 쿼터뷰 prototype 레이어 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
+- 쿼터뷰 object registry와 contract 정리 후 `git diff --check`와 Godot 4.5.1 headless scene startup이 완료됐다.
+- 해킹 액션 prototype 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
+- PrototypeHub 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
+- Title / Pause Menu prototype 추가 후 Godot 4.5.1 headless scene startup이 완료됐다.
+- Prototype navigation 표준화 후 `git diff --check`와 네 prototype scene의 Godot 4.5.1 headless startup이 완료됐다.
+- Quarterview object interaction panel 추가 후 `git diff --check`와 네 prototype scene의 Godot 4.5.1 headless startup이 완료됐다.
+- Quarterview debug 표시 정리 후 `git diff --check`와 Quarterview / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
+- Hacking Action prototype 구조 정리 후 `git diff --check`와 HackingAction / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
+- Hacking Action feedback 정리 후 `git diff --check`와 HackingAction / PrototypeHub scene의 Godot 4.5.1 headless startup이 완료됐다.
+- Godot AI MCP setup commit 준비 후 `git diff --check`와 Godot 4.5.1 headless project startup이 완료됐다.
+- Third-party asset inventory 문서화 후 `git diff --check`가 완료됐다. Godot scene startup은 문서 작업이라 생략했다.
+- Installed third-party asset folders, their source-side `.import` / `.uid` metadata, and `godot/LICENSE.txt` remain unstaged in this docs-only pass.
+- Prototype SFX 1차 적용 후 `git diff --check`와 Godot 4.5.1 headless startup for PrototypeHub, QuarterviewRoomPrototype, and HackingActionPrototype이 완료됐다.
+- Kenney Input Prompts prototype 적용 후 `git diff --check`와 Godot 4.5.1 headless startup for PrototypeHub, QuarterviewRoomPrototype, and HackingActionPrototype이 완료됐다.
+- Codex / Godot workflow 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- SurvivalState GUT 테스트 추가 후 `git diff --check`, Godot `--headless --import`, and GUT CLI `5/5 passed`가 완료됐다.
+- Git LFS asset policy 문서화 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- Prototype GUI playtest checklist 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 prototype scene 경로 존재를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
+- Viewpoint / prototype terms 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 `QuarterviewRoomPrototype` hierarchy와 prototype scene 경로 존재를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
+- Quarterview contract prototype 표시 정리 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다.
+- Quarterview perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
+- Hacking perspective blockout 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
+- PrototypeHub perspective blockout 등록 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub`, `QuarterviewPerspectiveBlockout`, and `HackingPerspectiveBlockout`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Prototype perspective checklist 문서 갱신 후 `git diff --check`가 완료됐다. Godot 실행은 문서 작업이라 생략했다.
+- Prototype GUI checklist perspective 역할 구분 갱신 후 `git diff --check`가 완료됐다. Godot AI MCP로 `PrototypeHub`, `QuarterviewPerspectiveBlockout`, `HackingPerspectiveBlockout` 경로와 등록 문구를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
+- Prototype common helper 정리 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub`, `QuarterviewRoomPrototype`, `HackingActionPrototype`, `QuarterviewPerspectiveBlockout`, `HackingPerspectiveBlockout`, and `TitleMenuPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- RoomObjectDefinition Resource class 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 실제 room object `.tres` 파일은 생성하지 않았다.
+- Quarterview object registry Resource화 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewRoomPrototype` and `PrototypeHub`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Apartment ↔ Quarterview 기능 대응표 확장 후 `git diff --check`가 완료됐다. Godot AI MCP로 `QuarterviewRoomPrototype` hierarchy를 read-only 확인했고, Godot 실행은 문서 작업이라 생략했다.
+- RoomSceneContract skeleton 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 기존 Main / DAY1 / prototype scene에는 연결하지 않았다.
+- Quarterview Gameplay Sandbox 추가 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Sandbox InteractionPanel 연결 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Sandbox Bed End Day confirmation 연결 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Sandbox Phone panel 연결 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Sandbox Outlet panel 연결 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewGameplaySandbox`, `PrototypeHub`, `QuarterviewRoomPrototype`, and `HackingActionPrototype`이 완료됐다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Quarterview Gameplay Sandbox 전체 흐름 점검 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Quarterview Gameplay Sandbox `02:00` 자동 종료 연결 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Quarterview Gameplay Sandbox Result panel 연결 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Quarterview Gameplay Sandbox Test Mode panel 연결 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `QuarterviewGameplaySandbox` and `PrototypeHub`, and SurvivalState GUT `5/5 passed`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Main replacement risk checklist 작성 후 `git diff --check`와 read-only file existence checks for Main / UI / Sandbox / docs가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, 문서 작업이라 Godot headless 실행은 생략했다.
+- Main replacement work plan 작성 후 `git diff --check`와 `git status --short`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 수행하지 못했고, 문서 작업이라 Godot headless 실행은 생략했다.
+- QuarterviewMain 1차 본방 후보 생성 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `res://scenes/QuarterviewMain.tscn`, and full GUT unit suite `54/54 passed`가 완료됐다. Godot AI MCP로 현재 열린 `QuarterviewRoomPrototype` hierarchy를 read-only 확인했다.
+- QuarterviewMain visual blockout 콘티 방향 재구성 후 `git diff --check`, Godot 4.5.1 headless project parse, and headless startup for `res://scenes/QuarterviewMain.tscn`이 완료됐다. Godot AI MCP로 `QuarterviewRoom.tscn` and `QuarterviewMain.tscn` hierarchy를 read-only 확인했다.
+- QuarterviewMain temporary room background 적용 후 `git diff --check`, Godot 4.5.1 headless project parse, headless startup for `res://scenes/QuarterviewMain.tscn`, and full GUT unit suite `54/54 passed`가 완료됐다. Godot AI MCP로 `QuarterviewRoom.tscn` hierarchy를 read-only 확인했다.
+- Quarterview contract prototype 역할 정리 확인 후 `git diff --check`와 Godot 4.5.1 headless startup for `PrototypeHub` and `QuarterviewRoomPrototype`이 완료됐다. Scene / code는 이미 해당 wording으로 정리되어 있어 수정하지 않았다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Quarterview perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `QuarterviewPerspectiveBlockout`이 완료됐다.
+- Hacking perspective blockout 보강 후 `git diff --check`와 Godot 4.5.1 headless startup for `HackingPerspectiveBlockout`이 완료됐다.
+- GUT 테스트 확장 후 `git diff --check`와 full GUT unit suite `26/26 passed`가 완료됐다.
+- Hacking state machine 테스트 추가 후 `git diff --check`, Hacking state-machine GUT `8/8 passed`, SurvivalState GUT `5/5 passed`, and full GUT unit suite `34/34 passed`가 완료됐다.
+- Asset smoke test 추가 후 `git diff --check`, Asset Smoke GUT `6/6 passed`, SurvivalState GUT `5/5 passed`, and full GUT unit suite `40/40 passed`가 완료됐다.
+- HackingMissionDefinition Resource class 추가 후 `git diff --check`와 Godot 4.5.1 headless project parse가 완료됐다. 실제 mission `.tres`와 gameplay wiring은 추가하지 않았다.
+- GridCreditState skeleton 추가 후 `git diff --check`, Grid Credit GUT `8/8 passed`, SurvivalState GUT `5/5 passed`, full GUT unit suite `48/48 passed`, and Godot 4.5.1 headless project parse가 완료됐다.
+- LivingDeviceDefinition Resource class 추가 후 `git diff --check`, Living Device GUT `6/6 passed`, SurvivalState GUT `5/5 passed`, full GUT unit suite `54/54 passed`, and Godot 4.5.1 headless project parse가 완료됐다. 실제 living device `.tres`와 gameplay wiring은 추가하지 않았다.
+- Quarterview room shell layer 계획 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 project name을 read-only 확인했고, `godot/assets` 경로를 filesystem에서 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Quarterview Room Shell Prototype wall layer 확장 후 `git diff --check`, Godot 4.5.1 headless project parse, and headless startup for `QuarterviewRoomShellPrototype` and `PrototypeHub`이 완료됐다. `qv_room_floor_base.png`, `qv_room_walls_back.png`, `qv_room_walls_side.png`는 repo에 없어 missing status path로 확인했다. `PrototypeHub` startup은 exit code `0`과 함께 기존 ObjectDB leak warning을 출력했다.
+- Quarterview foreground occluder 기준 문서화 후 `git diff --check`가 완료됐다. `ls docs`와 `grep -R "qv_room_foreground_occluders" -n docs`로 문서 경로와 foreground occluder 참조를 확인했고, 문서 작업이라 Godot headless 실행은 생략했다.
+- Quarterview window city view 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 editor readiness를 read-only 확인했고, EditorFileSystem search는 shell prototype / window asset을 반환하지 않아 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_room_window_city_view" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Quarterview static lighting overlay 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 editor readiness를 read-only 확인했고, EditorFileSystem search는 shell prototype / lighting asset을 반환하지 않아 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_room_static_lighting_overlay" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Yui quarterview spritesheet import 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 editor readiness를 read-only 확인했고, EditorFileSystem search는 Yui qv asset을 반환하지 않아 로컬 파일 기준으로 `ls docs`와 `grep -R "yui_qv" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- QV furniture atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 open scene roots를 read-only 확인했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_furniture_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- QV appliances atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 open scene roots와 `res://assets/rooms/quarterview` search를 read-only 확인했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_appliances_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- QV work devices atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 open scene roots와 `res://assets/rooms/quarterview` search를 read-only 확인했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_work_devices_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- QV FX atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP로 open scene roots와 `res://assets/rooms/quarterview` / `qv_fx_atlas` search를 read-only 확인했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "qv_fx_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- QV props / cable atlas backlog 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `find godot ... qv_props_atlas / qv_cable_atlas`, `ls docs`, and `grep -R "qv_props_atlas\|qv_cable_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Hacking arena tiles atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `find godot ... hack_arena_tiles_atlas`, `ls docs`, and `grep -R "hack_arena_tiles_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Hack avatar spritesheet import 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `find godot ... hack_avatar`, `ls docs`, and `grep -R "hack_avatar" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Hack enemies atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "hack_enemies_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Hack objects atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "hack_objects_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Hack FX atlas region mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "hack_fx_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Common UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`와 `grep -R "ui_common_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Gameplay HUD atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, `find godot/assets ... ui / hud`, and `grep -R "ui_hud_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Phone UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, existing `PhoneUI.tscn` / `PhoneUI.gd`, `find godot/assets ... phone / ui`, and `grep -R "ui_phone_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Outlet UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, existing `OutletMode.tscn` / `OutletMode.gd`, `DeviceDefinition.gd`, device `.tres`, `QV_PROPS_AND_CABLE_ATLAS_BACKLOG.md`, and `grep -R "ui_outlet_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Result / Log UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, existing `DayResultPanel.tscn` / `DayResultPanel.gd`, `find godot/assets ... ui / result / log`, and `grep -R "ui_result_log_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Dialogue UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, `find godot/assets ... dialogue / ui / panel`, and `grep -R "ui_dialogue_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Device Icons UI atlas mapping 기준 문서화 후 `git diff --check`가 완료됐다. Godot AI MCP read-only 확인은 local MCP HTTP 연결 실패로 실행하지 못했고, 로컬 파일 기준으로 `ls docs`, `find godot/assets ... device / icon / ui`, existing `DeviceDefinition` / `LivingDeviceDefinition` / `RoomObjectDefinition` / `HackingMissionDefinition` scripts, device `.tres`, and `grep -R "ui_device_icons_atlas" -n docs`를 확인했다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Room / power / hacking design direction 문서화 후 `git diff --check`가 완료됐다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Project identity and documentation workflow consolidation 후 `git diff --check`와 `git diff --cached --check`가 완료됐다. 문서 작업이라 Godot headless 실행은 생략했다.
+- Phone input requires user manual verification because GUI key simulation was intentionally not run.
+
+## Current Risks Or Known Issues
+
+- `docs/PROJECT_STATUS.md` is over the 200-line rotation threshold and should be considered for a separate rotation pass. No rotation was performed in this docs-only consolidation task.
+- The Light model is unresolved: built-in fluorescent circuit versus plug-in Lamp.
+- Reported wall/object pass-through and diagonal collision behavior is now observable but has not been redesigned or fixed in this pass.
+- Dynamic adapter drag/drop, outlet hitboxes, and wire visibility still require hands-on mouse testing in Godot.
+- Laptop desk-wire and several device endpoints may need small visual anchor adjustments.
+- Interaction and blocker overlays require manual alignment review against the map image before collision changes are made.
+- Mouse interaction requires manual checks for all six room targets and out-of-range clicks; no GUI input simulation was run.
+- Interaction-panel button clicks require manual confirmation; GUI input simulation was intentionally not run.
+- Interaction-button hover colors require manual visual confirmation; no GUI or screenshot validation was run.
+- Outlet valid/invalid colors and two-slot span feedback require manual drag confirmation; connection logic was not changed.
+- Outlet LED off/on states, including two-slot Laptop occupancy, require manual visual confirmation.
+- Built-in LED mask alignment and two-slot LED exposure require manual visual confirmation at the target resolution.
+- Two-slot Laptop drops require manual checks at valid starts 1-3 and invalid start 4.
+- 장치 Resource 값과 Outlet 연결 결과가 같은지 GUI 수동 확인이 필요하며, adapter 시각 튜닝은 계속 `OutletMode.gd`에 남는다.
+- `02:00` 대사-only 표시, `[E] 계속`, `ESC` 무시, Result 전환은 수동 GUI 확인이 필요하다.
+- 테스트 모드 도움말 토글과 시간·배터리·전력 조정 키는 수동 GUI 확인이 필요하다.
+- Test Mode 2차의 `O`/`U`/`F8`/숫자 세팅/`L` 출력과 모달 차단은 수동 입력 확인이 필요하다.
+- Continuous drain rate, modal pause, repeated on/off control, disconnect shutdown, and zero-power shutdown require manual gameplay confirmation.
+- Hourly drain totals and one-decimal Phone display require manual timing confirmation, especially Laptop-only and Laptop-plus-Fan cases.
+- Phone current-status-only content and unchanged Result history require manual GUI confirmation.
+- 결과 화면의 한국어 줄바꿈, 빈 사용 기록, 수동 종료와 `02:00` 자동 종료 진입은 GUI 수동 확인이 필요하다.
+- 전용 정전 일지/생존 기록 이미지 스킨은 아직 적용하지 않았다.
+- 해킹 액션 prototype은 GUI 수동 확인이 필요하며, Laptop, Reward, Result, Story flag와 아직 연결하지 않았다.
+- Hacking Action state 전환, HP `0` 실패, Trace `100%` 실패, objective 추출 후 exit 활성화는 GUI 수동 확인이 필요하다.
+- Hacking Action `D` debug overlay, event message 소거, hit / damage / Trace flash는 GUI 수동 확인이 필요하다.
+- PrototypeHub의 키 입력과 버튼 클릭 scene 전환은 GUI 수동 확인이 필요하다.
+- Title prototype의 버튼, ESC overlay, Settings placeholder는 GUI 수동 확인이 필요하다.
+- Prototype SFX는 headless startup만 확인했으며, 실제 청감/볼륨/타이밍은 GUI에서 수동 확인이 필요하다.
+- Prototype input prompt icons are headless-startup checked only; actual icon scale, spacing, and readability need GUI visual confirmation.
+- Asset Smoke Test verifies selected SFX / prompt files load, but does not verify SFX loudness, icon scale, visual quality, or GUI readability.
+- 각 prototype의 `B` / `Backspace` 복귀 입력은 GUI 수동 확인이 필요하다.
+- Quarterview object interaction panel의 `E` open, Primary / Inspect / Close button, `ESC` close, 이동 잠금은 GUI 수동 확인이 필요하다.
+- Quarterview debug overlay의 `D` toggle, 기본 화면 prompt-only 상태, debug ON label/range/blocker 표시는 GUI 수동 확인이 필요하다.
+- Godot AI MCP plugin was checked through project/headless startup only; editor-side MCP operations still need manual confirmation in the Godot editor when used next.
+- Installed Kenney / Simple License assets are documented but not committed or wired; decide which packages should become tracked project dependencies before applying them.
+- GUT CLI requires a headless import once after addon installation so Godot registers GUT class names before running tests.
+- Git LFS is not enabled yet; future large quarterview art, atlas, spritesheet, source-art, or expanded audio imports need a separate LFS, quota, and migration decision before staging.
+- Prototype GUI checklist still requires user-side visual, input, and audio confirmation because headless and MCP checks do not verify SFX loudness, icon readability, or hands-on feel.
+- Actual room and hacking perspective now have initial visual blockouts, but final viewpoint decisions still need GUI review.
+- Updated contract-prototype wording still requires GUI confirmation for text fit and readability in PrototypeHub and Quarterview help UI.
+- PrototypeHub now includes the two perspective blockouts, but shortcut, focused `E` / `Enter`, button execution, and text fit still need GUI confirmation.
+- `QuarterviewPerspectiveBlockout` still needs GUI checks for perspective readability, pseudo 3D scale, collision feel, debug overlay, and B / Backspace return.
+- `HackingPerspectiveBlockout` still needs GUI checks for 3/4 cyber readability, object height cues, movement feel, debug overlay, and B / Backspace return.
+- Quarterview Gameplay Sandbox Bed End Day confirmation needs GUI checks for Bed prompt, Primary transition, Confirm state, Cancel / Close / ESC unlock, `R` restart, and B / Backspace Hub return.
+- Quarterview Gameplay Sandbox Phone panel needs GUI checks for `Tab` open / close, phone object Primary open, `ESC` / Close behavior, movement lock, and B / Backspace Hub return.
+- Quarterview Gameplay Sandbox Outlet panel needs GUI checks for power object Primary open, `ESC` / Close behavior, mock buttons, movement lock, and B / Backspace Hub return.
+- Quarterview Gameplay Sandbox modal priority still needs hands-on GUI checks for overlap prevention, `ESC` current-modal close, movement lock / restore, `R` restart, `D` debug, and `B` / `Backspace` Hub priority.
+- Quarterview Gameplay Sandbox `02:00` auto end, `T` / `Shift+T` time advance, post-auto-end input lock, and manual / auto end reason display need hands-on GUI confirmation.
+- Quarterview Gameplay Sandbox Result panel needs hands-on GUI checks for manual / auto summary text, Restart / Hub / Hide Details buttons, terminal input lock, and no real `DayResultPanel` opening.
+- Quarterview Gameplay Sandbox Test Mode panel needs hands-on GUI checks for `F2` open / close, clock pause / restore, `+30 min`, `+2 hours`, `Jump 01:50`, auto end trigger, manual result trigger, reset, movement lock, and no real Main / `SurvivalState` / Phone / Outlet / Result wiring.
+- Main replacement remains blocked until `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md` and `docs/MAIN_REPLACEMENT_WORK_PLAN.md` are reviewed, all Must Pass items are completed, all No-Go conditions are false, rollback is clear, and the user explicitly approves a dedicated replacement task.
+- `QuarterviewMain.tscn` is a production candidate skeleton only; Phone / Outlet / Result / `SurvivalState` / `project.godot` wiring is intentionally absent and needs separate approved migration tasks.
+- Hacking Action mission state is now covered by GUT, but movement feel, input timing, combat feel, and visual perspective remain GUI/manual checks.
+- `HackingMissionDefinition` has no sample `.tres` mission and no dedicated GUT helper test yet; it is a Resource class preparation step only.
+- Grid Credit has a standalone state skeleton and GUT tests, but no UI, save/load, Result, `SurvivalState`, or hacking mission reward wiring yet.
+- `LivingDeviceDefinition` has no sample `.tres` living devices yet and is not wired to Main, `SurvivalState`, Outlet, Phone, Result, or any condition system.
+- Quarterview room shell layer file names, z-indexes, and import settings are planned only; actual PNG generation, alpha cleanup, Godot import settings, and scene layer placement still need separate implementation and GUI review.
+- Quarterview Room Shell Prototype currently runs the missing-status path because floor / back wall / side wall shell PNGs are not installed. GUI confirmation is still needed for `1` / `2` / `3` layer toggles, guide toggle, reload, Hub return, and future actual shell image alignment.
+- `qv_room_window_city_view.png` is criteria-only; actual asset creation, alpha / mask cleanup, `WindowCityViewLayer` scene placement, independent toggle, and wall-frame alignment checks still need a separate implementation pass.
+- `qv_room_foreground_occluders.png` is criteria-only; actual asset creation, alpha cleanup, `ForegroundOccluderLayer` scene placement, `4` key toggle, and player / prompt visibility checks still need a separate implementation pass.
+- `qv_room_static_lighting_overlay.png` is criteria-only; actual asset creation, blend / alpha tuning, `StaticLightingOverlayLayer` scene placement, independent toggle, and player / prompt readability checks still need a separate implementation pass.
+- `yui_qv_idle_4dir.png` and `yui_qv_walk_4dir.png` are criteria-only; actual asset creation, import settings, `SpriteFrames`, `YuiQuarterviewPlayer`, foot-anchor tuning, and room-shell scale checks still need separate implementation passes.
+- `qv_furniture_atlas.png` is criteria-only; actual atlas creation, region coordinate extraction, mapping format choice, `AtlasTexture` / loader prototype, and furniture placement checks still need separate implementation passes.
+- `qv_appliances_atlas.png` is criteria-only; actual atlas creation, state variation art, region coordinate extraction, mapping format choice, lighting / FX split checks, and appliance placement checks still need separate implementation passes.
+- `qv_work_devices_atlas.png` is criteria-only; actual atlas creation, state variation art, region coordinate extraction, mapping format choice, screen / signal FX split checks, and work-device placement checks still need separate implementation passes.
+- `qv_fx_atlas.png` is criteria-only; actual FX atlas creation, region coordinate extraction, mapping format choice, animated frame checks, trigger wiring, blend / alpha tuning, and readability checks still need separate implementation passes.
+- `qv_props_atlas.png` and `qv_cable_atlas.png` are deferred backlog items; actual atlas creation, detailed mapping, props placement, cable path policy, power visual sync, and readability checks should wait until core room composition and interaction flow are stable.
+- `hack_arena_tiles_atlas.png` is criteria-only; actual hacking arena tile asset creation, tile size lock, TileSet / TileMapLayer setup, collision / navigation custom data, hazard / objective wiring, and Hacking prototype integration still need separate implementation passes.
+- `hack_avatar_idle_4dir.png` and `hack_avatar_walk_4dir.png` are criteria-only; actual avatar asset creation, import settings, `SpriteFrames`, player visual prototype, anchor tuning, and Hacking prototype integration still need separate implementation passes.
+- `hack_enemies_atlas.png` is criteria-only; actual enemy atlas creation, region coordinate extraction, mapping format choice, enemy region viewer prototype, `SpriteFrames`, enemy visual replacement, AI / spawn logic, collision / hitbox / hurtbox, and Trace / mission wiring still need separate implementation passes.
+- `hack_objects_atlas.png` is criteria-only; actual object atlas creation, region coordinate extraction, mapping format choice, object region viewer prototype, `SpriteFrames`, objective / exit visual replacement, interaction logic, collision / interaction areas, and mission wiring still need separate implementation passes.
+- `hack_fx_atlas.png` is criteria-only; actual FX atlas creation, region coordinate extraction, mapping format choice, FX region viewer prototype, `SpriteFrames`, shader / material policy, particle alternatives, trigger wiring, blend / alpha tuning, and Hacking prototype integration still need separate implementation passes.
+- `ui_common_atlas.png` is criteria-only; actual UI atlas creation, region coordinate extraction, 9-slice margin tuning, mapping format choice, Theme / StyleBoxTexture application, common UI region viewer prototype, and Phone / Outlet / Result / Prototype UI integration still need separate implementation passes.
+- `ui_hud_atlas.png` is criteria-only; actual HUD atlas creation, region coordinate extraction, safe-area testing, meter fill behavior, value binding, Theme / StyleBoxTexture application, HUD region viewer prototype, and room / hacking HUD integration still need separate implementation passes.
+- `ui_phone_atlas.png` is criteria-only; actual Phone atlas creation, region coordinate extraction, 9-slice margin tuning, mapping format choice, Phone atlas region viewer prototype, sandbox Phone panel test, existing `PhoneUI` visual replacement, and future message / mission / log UI integration still need separate implementation passes.
+- `ui_outlet_atlas.png` is criteria-only; actual Outlet atlas creation, region coordinate extraction, 9-slice margin tuning, mapping format choice, Outlet atlas region viewer prototype, sandbox Outlet panel test, existing `OutletMode` visual replacement, and future `SurvivalState` / `DeviceDefinition` value binding still need separate implementation passes.
+- `ui_result_log_atlas.png` is criteria-only; actual Result / Log atlas creation, region coordinate extraction, 9-slice margin tuning, mapping format choice, Result atlas region viewer prototype, sandbox result mock test, existing `DayResultPanel` visual replacement, and future `SurvivalState` / `GridCreditState` / `HackingMissionDefinition` / story flag value binding still need separate implementation passes.
+- `ui_dialogue_atlas.png` is criteria-only; actual Dialogue atlas creation, region coordinate extraction, 9-slice margin tuning, mapping format choice, Dialogue atlas region viewer prototype, sandbox dialogue mock test, future DialogueLine / Choice / Sequence definitions, story flag wiring, object interaction text, hacking radio / system message routing, and existing dialogue panel replacement still need separate implementation passes.
+- `ui_device_icons_atlas.png` is criteria-only; actual device icon atlas creation, region coordinate extraction, mapping format choice, icon region viewer prototype, state overlay policy, UI mock application, and future `DeviceDefinition` / `LivingDeviceDefinition` / `RoomObjectDefinition` / `HackingMissionDefinition` binding still need separate implementation passes.
+
+## Next Recommended Task
+
+1. `QuarterviewMain.tscn`을 GUI에서 수동 확인하고 본방 후보 뼈대가 좁은 하층민 1인실 + 해커 작업실로 읽히는지, WASD / Arrow 이동, 큰 오브젝트 collision, `[E]` prompt, interaction status logging, `D` debug, `R` restart가 정상인지 확인한다. 시작 파일은 `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`, and `godot/scripts/quarterview/QuarterviewRoom.gd`이며, 완료 기준은 Main / DAY1 / Phone / Outlet / Result / `SurvivalState` 미연결 상태가 유지되면서 room skeleton이 수동 확인되는 것이다.
+2. `QuarterviewGameplaySandbox` Test Mode를 GUI에서 수동 확인한다. 시작 파일은 `godot/scenes/prototypes/QuarterviewGameplaySandbox.tscn`, `godot/scripts/prototypes/QuarterviewGameplaySandbox.gd`, `godot/scenes/prototypes/SandboxTestModePanel.tscn`, and `docs/PROTOTYPE_GUI_PLAYTEST_CHECKLIST.md`이며, 완료 기준은 `F2` open / close, clock pause / restore, `+30 min`, `+2 hours`, `Jump 01:50`, auto end trigger, manual result trigger, reset, movement lock, `R`, `B` / `Backspace`, and no real Main / `SurvivalState` / Phone / Outlet / Result wiring이 확인되는 것이다.
+3. floor / back wall / side wall 실제 shell PNG를 expected path에 추가하고 `QuarterviewRoomShellPrototype`에서 alignment를 확인한다. 시작 문서는 `docs/QUARTERVIEW_ROOM_SHELL_PROTOTYPE.md`와 `docs/QUARTERVIEW_ROOM_SHELL_LAYER_PLAN.md`이며, 완료 기준은 세 layer의 `1920x1080` image size / canvas match가 표시되고 Main / DAY 1에는 영향이 없는 것이다.
+
+## Archive
+
+- Previous accumulated status history: `docs/old/PROJECT_STATUS_20260619.md`

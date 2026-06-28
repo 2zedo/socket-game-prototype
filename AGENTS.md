@@ -203,6 +203,7 @@ git diff --cached --name-only
   4. `docs/PROJECT_STATUS.md`
 * 세부 문서가 `docs/CONCENT_PROJECT_IDENTITY.md`와 충돌하면 identity 문서를 우선한다.
 * 단, 실제 구현 상태는 repo 파일, Godot scene, Resource, test 결과를 함께 확인한다.
+* 관련 문서를 어디서 찾아야 할지 불명확하면 `docs/DOCUMENT_INVENTORY.md`를 먼저 확인한다.
 * `docs/old`는 과거 기록이며 current decision source가 아니다.
 * `docs/PROJECT_STATUS.md`는 현재 상태판이지 긴 작업 일지가 아니다.
 * `docs/PROJECT_WORK_LOG.md`는 작업 완료 로그를 짧게 누적하는 파일이다.

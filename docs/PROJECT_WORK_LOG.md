@@ -56,10 +56,18 @@
 - Validation: `git diff --check`, `git diff --cached --check`를 실행했다.
 - Next: identity 문서에서 이 방향을 current decision source로 승격한다.
 
-### this commit - 문서 체계 정리 및 identity 문서 생성
+### 2d0db19 - 문서 체계 정리 및 identity 문서 생성
 
-- Commit: `this commit`
+- Commit: `2d0db19`
 - Result: `CONCENT_PROJECT_IDENTITY.md`를 현재 게임 정체성의 단일 기준 문서로 추가하고, 작업 로그와 문서 우선순위 / 로테이션 정책을 정리한다.
 - Changed: `docs/CONCENT_PROJECT_IDENTITY.md`, `docs/PROJECT_WORK_LOG.md`, `AGENTS.md`, `docs/PROJECT_STATUS.md`
 - Validation: `git diff --check`, `git diff --cached --check`
 - Next: `PROJECT_STATUS.md`가 200줄을 넘는 상태이므로 별도 작업에서 로테이션 여부를 검토한다.
+
+### this commit - PROJECT_STATUS 로테이션 및 문서 인벤토리 생성
+
+- Commit: `this commit`
+- Result: `PROJECT_STATUS.md`를 `docs/old`로 보존하고, 새 짧은 상태판과 `DOCUMENT_INVENTORY.md`를 만들었다.
+- Changed: `docs/PROJECT_STATUS.md`, `docs/old/PROJECT_STATUS_20260628_01.md`, `docs/DOCUMENT_INVENTORY.md`, `docs/PROJECT_WORK_LOG.md`, `AGENTS.md`
+- Validation: `git diff --check`, `git diff --cached --check`
+- Next: deprecated notice 정리나 세부 문서 정리는 별도 작업에서 검토한다.
