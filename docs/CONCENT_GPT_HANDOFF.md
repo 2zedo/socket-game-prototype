@@ -195,7 +195,8 @@ ups.tres
 - `[` / `]` selected object 변경
 - `C` selected layout snippet 출력
 - `R` restart
-- QuarterviewMain-only mock HUD: DAY / 시간 / 전력 / 허기 / 컨디션 후보 표시
+- QuarterviewMain-only mock HUD: DAY / 시간 / 전력 / 허기 / 컨디션 / 메모 후보 표시
+- Bed / Food-Kitchen / Power / Phone 후보 행동은 HUD mock 상태만 갱신한다
 - object click -> 유이 이동 -> candidate interaction panel
 - candidate panel은 `사용하기 / 설명(살펴보기) / 취소`
 - normal panel에는 display name / 짧은 설명 중심
@@ -229,6 +230,7 @@ Power close-up:
 
 - mock power-board grid
 - placeholder power modules
+- 모듈 확인은 QuarterviewMain-only mock 전력 상태 / 메모를 갱신한다
 - 실제 drag/drop, 전력 계산, OutletMode, SurvivalState 연결 없음
 
 Phone overlay:
@@ -237,6 +239,7 @@ Phone overlay:
 - Signal
 - Messages
 - Charge Port
+- 선택 / 확인은 QuarterviewMain-only mock 메모 / 정보 수집 후보를 갱신한다
 - 실제 PhoneUI, 실제 배터리 상태, SurvivalState 연결 없음
 
 Bed overlay:
@@ -244,16 +247,15 @@ Bed overlay:
 - 잠깐 쉰다
 - 오늘을 마무리한다
 - 몸 상태를 확인한다
+- `잠깐 쉰다` 선택 시 QuarterviewMain-only mock 컨디션 / 시간 / 메모가 갱신된다
 - `오늘을 마무리한다` 선택 시 QuarterviewMain-only Day Result candidate overlay를 연다
 - 실제 하루 종료, 시간 진행, DayResultPanel, SurvivalState 연결 없음
 
 Day Result candidate:
 
-- 전력 관리: 안정
-- 허기: 보통
-- 정보 수집: 없음
-- 위험도: 낮음
+- 전력 관리 / 허기 / 컨디션 / 정보 수집 / 위험도 / 메모를 현재 mock HUD 상태 기준으로 표시한다
 - 다음 날 후보 버튼은 QuarterviewMain 내부 mock DAY만 +1 한다
+- 다음 날 후보 버튼은 mock 상태를 기본값으로 일부 리셋한다
 - 실제 DayResultPanel, SurvivalState day advance, save-load, story flag 연결 없음
 
 Food / Kitchen overlay:
@@ -266,6 +268,7 @@ Food / Kitchen overlay:
   - 합성 식품 데우기
   - 조리 상태 확인
   - 오늘 먹을 것 생각하기
+- 음식 관련 선택은 QuarterviewMain-only mock 허기 / 전력 / 메모를 갱신한다
 - 실제 허기 수치, food inventory, SurvivalState, DayResultPanel 연결 없음
 
 Door overlay:

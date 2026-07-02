@@ -208,10 +208,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Door object 접근, `사용하기`로 overlay 열기, door option 선택 / 설명 no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk / Power / Phone / Bed / Food-Kitchen close-up 유지 여부를 수동 확인한다.
 
-### this commit - QuarterviewMain minimum day-loop candidate
+### 07d3fbd - QuarterviewMain minimum day-loop candidate
 
-- Commit: `this commit`
+- Commit: `07d3fbd`
 - Result: QuarterviewMain-only prototype HUD를 추가하고, Bed의 `오늘을 마무리한다` 선택에서 mock Day Result candidate overlay를 열 수 있게 했다. `다음 날 후보`는 내부 mock DAY만 증가시키고 room input을 복구한다.
 - Changed: QuarterviewMain prototype HUD / Day Result candidate overlay / Bed end-day routing, handoff / status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 HUD 위치, Bed -> 오늘 마무리 -> Day Result candidate, 다음 날 후보 DAY 증가, ESC / 닫기 / 빈 영역 클릭 close, room movement 복구, 기존 Desk / Power / Phone / Bed / Food-Kitchen / Door overlay 유지 여부를 수동 확인한다.
+
+### this commit - QuarterviewMain mock HUD state reactions
+
+- Commit: `this commit`
+- Result: Bed rest, Food / Kitchen, Power, and Phone candidate actions now update QuarterviewMain-only mock HUD state. Day Result candidate summarizes the current mock power / hunger / condition / info / note values, and next-day candidate still only advances the local mock day.
+- Changed: QuarterviewMain mock HUD state helpers / candidate action reactions / Day Result summary, handoff / status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: GUI에서 Bed short rest, Fridge / Microwave food actions, Power module check, Phone item selection, Day Result summary, next-day reset, and existing overlay close / input-lock behavior를 수동 확인한다.

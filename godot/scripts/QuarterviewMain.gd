@@ -292,8 +292,11 @@ var room_input_locked := false
 var mock_day := 1
 var mock_time := "20:30"
 var mock_power_percent := 62
+var mock_power_state := "안정"
 var mock_hunger := "보통"
 var mock_condition := "안정"
+var mock_info := "없음"
+var mock_status_note := "대기"
 var desk_closeup_open := false
 var power_closeup_open := false
 var phone_closeup_open := false
@@ -560,6 +563,7 @@ func _build_prototype_hud() -> void:
 	prototype_hud_panel.add_child(margin)
 
 	prototype_hud_label = Label.new()
+	prototype_hud_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	prototype_hud_label.add_theme_color_override("font_color", Color(0.86, 0.84, 0.74, 1.0))
 	prototype_hud_label.add_theme_font_size_override("font_size", 13)
 	margin.add_child(prototype_hud_label)
@@ -569,13 +573,49 @@ func _build_prototype_hud() -> void:
 func _refresh_prototype_hud() -> void:
 	if prototype_hud_label == null:
 		return
-	prototype_hud_label.text = "Quarterview HUD (mock)\nDAY %d | 시간 %s\n전력 %d%% | 허기 %s\n컨디션 %s" % [
+	prototype_hud_label.text = "Quarterview HUD (mock)\nDAY %d | 시간 %s\n전력 %d%% (%s) | 허기 %s\n컨디션 %s | 메모 %s" % [
 		mock_day,
 		mock_time,
 		mock_power_percent,
+		mock_power_state,
 		mock_hunger,
 		mock_condition,
+		mock_status_note,
 	]
+
+
+func _refresh_mock_state_views() -> void:
+	_refresh_prototype_hud()
+	if day_result_open:
+		_refresh_day_result_candidate()
+
+
+func _set_mock_status_note(note: String) -> void:
+	mock_status_note = note
+	_refresh_mock_state_views()
+
+
+func _set_mock_power_state(percent: int, state: String, note: String) -> void:
+	mock_power_percent = clampi(percent, 0, 100)
+	mock_power_state = state
+	mock_status_note = note
+	_refresh_mock_state_views()
+
+
+func _set_mock_hunger_state(hunger: String, note: String, power_delta := 0) -> void:
+	mock_hunger = hunger
+	if power_delta != 0:
+		mock_power_percent = clampi(mock_power_percent + power_delta, 0, 100)
+	mock_status_note = note
+	_refresh_mock_state_views()
+
+
+func _set_mock_condition_state(condition: String, note: String, time_label := "") -> void:
+	mock_condition = condition
+	if not time_label.is_empty():
+		mock_time = time_label
+	mock_status_note = note
+	_refresh_mock_state_views()
 
 
 func _build_interaction_panel() -> void:
@@ -1170,6 +1210,7 @@ func _log_power_module_action(action_key: String) -> void:
 
 	var display_name := String(module["display_name"])
 	var role := String(module["role"])
+	var mock_effect := _apply_power_mock_effect(selected_power_module_key, action_key)
 	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
 	last_interaction_debug = "power_closeup:%s / role=%s / action=%s / candidate=%s" % [
 		selected_power_module_key,
@@ -1178,7 +1219,38 @@ func _log_power_module_action(action_key: String) -> void:
 		String(module["candidate_action"]),
 	]
 	print("QuarterviewMain power close-up: %s / no production wiring" % last_interaction_debug)
-	_update_status("%s: 전력 모듈 후보는 아직 연결되지 않았습니다." % display_name)
+	var status_text := "%s: 전력 모듈 후보는 아직 연결되지 않았습니다." % display_name
+	if not mock_effect.is_empty():
+		status_text = "%s: %s" % [display_name, mock_effect]
+	_update_status(status_text)
+
+
+func _apply_power_mock_effect(module_key: String, action_key: String) -> String:
+	if action_key != "primary":
+		return ""
+
+	match module_key:
+		"battery_core":
+			_set_mock_power_state(mock_power_percent + 2, "저장 안정", "배터리 후보 점검")
+			return "mock 전력 저장 상태가 안정 쪽으로 표시됩니다."
+		"socket_rail":
+			_set_mock_power_state(mock_power_percent, "배선 확인", "소켓 레일 확인")
+			return "mock 전력 배선 상태를 확인했습니다."
+		"load_limiter":
+			_set_mock_power_state(mock_power_percent + 1, "과부하 낮음", "제한기 확인")
+			return "mock 과부하 위험이 낮게 표시됩니다."
+		"adapter_bridge":
+			_set_mock_power_state(mock_power_percent - 1, "어댑터 후보", "어댑터 점검")
+			return "mock 전력 값이 어댑터 후보 점검으로 소폭 변했습니다."
+		"priority_bus":
+			_set_mock_power_state(mock_power_percent, "우선순위 정리", "전력 우선순위 확인")
+			return "mock 전력 우선순위가 정리된 것으로 표시됩니다."
+		"warning_meter":
+			_set_mock_power_state(mock_power_percent, "경고 없음", "경고 계기 확인")
+			return "mock 경고 상태를 확인했습니다."
+		_:
+			_set_mock_power_state(mock_power_percent, "확인됨", "전력 후보 확인")
+			return "mock 전력 상태를 확인했습니다."
 
 
 func _get_power_module(module_key: String) -> Dictionary:
@@ -1396,6 +1468,7 @@ func _log_phone_item_action(action_key: String) -> void:
 
 	var display_name := String(item["display_name"])
 	var role := String(item["role"])
+	var mock_effect := _apply_phone_mock_effect(selected_phone_item_key, action_key)
 	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
 	last_interaction_debug = "phone_closeup:%s / role=%s / action=%s / candidate=%s" % [
 		selected_phone_item_key,
@@ -1404,7 +1477,34 @@ func _log_phone_item_action(action_key: String) -> void:
 		String(item["candidate_action"]),
 	]
 	print("QuarterviewMain phone close-up: %s / no production wiring" % last_interaction_debug)
-	_update_status("%s: Phone candidate no-op." % display_name)
+	var status_text := "%s: Phone candidate no-op." % display_name
+	if not mock_effect.is_empty():
+		status_text = "%s: %s" % [display_name, mock_effect]
+	_update_status(status_text)
+
+
+func _apply_phone_mock_effect(item_key: String, action_key: String) -> String:
+	if action_key == "inspect":
+		return ""
+
+	match item_key:
+		"battery":
+			_set_mock_status_note("Phone battery 후보 확인")
+			return "mock HUD 메모에 배터리 확인이 기록됩니다."
+		"signal":
+			mock_info = "신호 약함"
+			_set_mock_status_note("THE GRID 신호 약함")
+			return "mock 정보 수집 항목에 약한 신호가 기록됩니다."
+		"messages":
+			mock_info = "새 메시지 없음"
+			_set_mock_status_note("메시지 없음")
+			return "mock 정보 수집 항목에 메시지 없음이 기록됩니다."
+		"charge_port":
+			_set_mock_status_note("충전 포트 확인")
+			return "mock HUD 메모에 충전 포트 확인이 기록됩니다."
+		_:
+			_set_mock_status_note("Phone 후보 확인")
+			return "mock HUD 메모가 갱신됩니다."
 
 
 func _get_phone_item(item_key: String) -> Dictionary:
@@ -1622,6 +1722,7 @@ func _log_bed_option_action(action_key: String) -> void:
 
 	var display_name := String(option["display_name"])
 	var role := String(option["role"])
+	var mock_effect := _apply_bed_mock_effect(selected_bed_option_key, action_key)
 	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
 	last_interaction_debug = "bed_closeup:%s / role=%s / action=%s / candidate=%s" % [
 		selected_bed_option_key,
@@ -1630,7 +1731,25 @@ func _log_bed_option_action(action_key: String) -> void:
 		String(option["candidate_action"]),
 	]
 	print("QuarterviewMain bed rest candidate: %s / no production wiring" % last_interaction_debug)
-	_update_status("%s: Bed rest candidate no-op." % display_name)
+	var status_text := "%s: Bed rest candidate no-op." % display_name
+	if not mock_effect.is_empty():
+		status_text = "%s: %s" % [display_name, mock_effect]
+	_update_status(status_text)
+
+
+func _apply_bed_mock_effect(option_key: String, action_key: String) -> String:
+	if action_key != "primary":
+		return ""
+
+	match option_key:
+		"short_rest":
+			_set_mock_condition_state("조금 회복", "잠깐 쉼", "21:10")
+			return "mock 컨디션이 조금 좋아지고 시간이 21:10으로 표시됩니다."
+		"check_condition":
+			_set_mock_status_note("컨디션 / 허기 확인")
+			return "mock HUD 상태를 확인했습니다."
+		_:
+			return ""
 
 
 func _get_bed_option(option_key: String) -> Dictionary:
@@ -1766,9 +1885,12 @@ func _on_day_result_next_day_pressed() -> void:
 	mock_day += 1
 	mock_time = "20:30"
 	mock_power_percent = 62
+	mock_power_state = "안정"
 	mock_hunger = "보통"
 	mock_condition = "안정"
-	_refresh_prototype_hud()
+	mock_info = "없음"
+	mock_status_note = "새 하루 후보 시작"
+	_refresh_mock_state_views()
 	last_interaction = "DAY %d / next day candidate" % mock_day
 	last_interaction_debug = "day_result_candidate:day_%d / action=next_day_candidate / no SurvivalState" % mock_day
 	print("QuarterviewMain next day candidate selected / mock day=%d / no production wiring" % mock_day)
@@ -1778,11 +1900,18 @@ func _on_day_result_next_day_pressed() -> void:
 func _refresh_day_result_candidate() -> void:
 	if day_result_summary_label == null:
 		return
-	day_result_summary_label.text = "DAY %d 결과 후보\n전력 관리: 안정\n허기: %s\n정보 수집: 없음\n위험도: 낮음\n메모: 아직은 후보 화면입니다" % [
+	var risk_label := "낮음" if mock_power_percent >= 40 else "주의"
+	day_result_summary_label.text = "DAY %d 결과 후보\n전력 관리: %s (%d%%)\n허기: %s\n컨디션: %s\n정보 수집: %s\n위험도: %s\n메모: %s" % [
 		mock_day,
+		mock_power_state,
+		mock_power_percent,
 		mock_hunger,
+		mock_condition,
+		mock_info,
+		risk_label,
+		mock_status_note,
 	]
-	day_result_detail_label.text = "다음 날 후보를 누르면 QuarterviewMain 내부 mock DAY만 증가합니다. 실제 DayResultPanel, SurvivalState day advance, save-load, story flag는 호출하지 않습니다."
+	day_result_detail_label.text = "다음 날 후보를 누르면 QuarterviewMain 내부 mock DAY만 증가하고 mock HUD 상태가 기본값으로 일부 리셋됩니다. 실제 DayResultPanel, SurvivalState day advance, save-load, story flag는 호출하지 않습니다."
 
 
 func _build_kitchen_closeup_overlay() -> void:
@@ -2006,6 +2135,7 @@ func _log_kitchen_option_action(action_key: String) -> void:
 
 	var display_name := String(option["display_name"])
 	var role := String(option["role"])
+	var mock_effect := _apply_kitchen_mock_effect(selected_kitchen_option_key, action_key)
 	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
 	last_interaction_debug = "kitchen_closeup:%s:%s / role=%s / action=%s / candidate=%s" % [
 		current_kitchen_source_key,
@@ -2015,7 +2145,37 @@ func _log_kitchen_option_action(action_key: String) -> void:
 		String(option["candidate_action"]),
 	]
 	print("QuarterviewMain kitchen candidate: %s / no production wiring" % last_interaction_debug)
-	_update_status("%s: Food / kitchen candidate no-op." % display_name)
+	var status_text := "%s: Food / kitchen candidate no-op." % display_name
+	if not mock_effect.is_empty():
+		status_text = "%s: %s" % [display_name, mock_effect]
+	_update_status(status_text)
+
+
+func _apply_kitchen_mock_effect(option_key: String, action_key: String) -> String:
+	if action_key != "primary":
+		return ""
+
+	match option_key:
+		"find_quick_food":
+			_set_mock_hunger_state("괜찮음", "간단한 식사 후보", 0)
+			return "mock 허기가 괜찮음으로 표시됩니다."
+		"heat_synthetic_food":
+			_set_mock_hunger_state("든든함", "합성 식품 데움", -2)
+			return "mock 허기가 좋아지고 전력이 2% 낮아집니다."
+		"stored_food":
+			_set_mock_status_note("보관 식량 확인")
+			return "mock HUD 메모에 보관 식량 확인이 기록됩니다."
+		"fridge_status":
+			_set_mock_power_state(mock_power_percent, "냉장고 확인", "냉장고 전원 확인")
+			return "mock 전력 상태에 냉장고 확인이 표시됩니다."
+		"cooking_status":
+			_set_mock_power_state(mock_power_percent, "전자레인지 대기", "조리 장비 확인")
+			return "mock 전력 상태에 조리 장비 확인이 표시됩니다."
+		"think_food_plan":
+			_set_mock_status_note("식사 계획 후보")
+			return "mock HUD 메모에 식사 계획 후보가 기록됩니다."
+		_:
+			return ""
 
 
 func _get_default_kitchen_option_key(source_key: String) -> String:
