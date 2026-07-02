@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `0debe85`
-- Phase: QuarterviewMain GUI checklist
+- Current commit at task start: `0290d41`
+- Phase: QuarterviewMain temporary Yui spritesheet
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -41,6 +41,7 @@
 - QuarterviewMain minimum day-loop candidate: added a QuarterviewMain-only mock HUD and Day Result candidate overlay from the Bed end-day option while keeping DayResultPanel, SurvivalState, save-load, and story flags unwired.
 - QuarterviewMain mock HUD state reactions: added local-only HUD changes for Bed rest, Food / Kitchen, Power, Phone, and made Day Result candidate summarize the current mock state while keeping SurvivalState, DayResultPanel, save-load, and story flags unwired.
 - QuarterviewMain GUI checklist: added a focused manual GUI checklist for background, HUD, click movement, candidate panel, all current overlays, mock HUD reactions, input lock, debug, tuning, restart, and stress-click checks.
+- QuarterviewMain temporary Yui spritesheet: generated idle / walk 4-direction PNG sheets and added an optional `QuarterviewPlayer` sprite loader while keeping the drawn placeholder as fallback.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -58,8 +59,10 @@
 
 ## Changed Files In Latest Work
 
-- `docs/QUARTERVIEW_GUI_CHECKLIST.md`: adds the manual GUI checklist for the current QuarterviewMain candidate flow.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the checklist pass.
+- `godot/assets/art/quarterview/character/yui/yui_qv_idle_4dir.png`, `godot/assets/art/quarterview/character/yui/yui_qv_walk_4dir.png`: temporary Yui quarterview spritesheets.
+- `godot/scripts/quarterview/QuarterviewPlayer.gd`: optional temporary Yui sprite loader with placeholder fallback.
+- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`: records frame size, direction order, layout, and temporary-art scope.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the temporary art pass.
 
 ## Validation Results
 

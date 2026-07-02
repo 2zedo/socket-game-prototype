@@ -224,10 +224,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Bed short rest, Fridge / Microwave food actions, Power module check, Phone item selection, Day Result summary, next-day reset, and existing overlay close / input-lock behavior를 수동 확인한다.
 
-### this commit - QuarterviewMain GUI checklist
+### 0290d41 - QuarterviewMain GUI checklist
 
-- Commit: `this commit`
+- Commit: `0290d41`
 - Result: QuarterviewMain GUI 통합 점검을 위한 클릭 순서 중심 체크리스트를 추가했다. 배경, HUD, click movement, candidate panel, Desk / Power / Phone / Bed / Food-Kitchen / Door overlay, Day Result, mock HUD 반응, input lock, debug / tuning, restart, 반복 클릭 안정성을 확인 대상으로 정리했다.
 - Changed: `docs/QUARTERVIEW_GUI_CHECKLIST.md`, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 `docs/QUARTERVIEW_GUI_CHECKLIST.md`를 따라 pass / needs-fix 항목을 기록한다.
+
+### this commit - QuarterviewMain temporary Yui spritesheet
+
+- Commit: `this commit`
+- Result: QuarterviewMain용 임시 Yui idle / walk 4방향 spritesheet v1을 추가하고, `QuarterviewPlayer`가 PNG를 optional로 로드하되 실패 시 기존 placeholder drawing을 유지하도록 했다.
+- Changed: Yui temporary PNG spritesheets, `QuarterviewPlayer.gd`, `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, status docs.
+- Validation: `git diff --check`, PNG size / alpha check, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: Godot GUI에서 Yui sprite scale, frame direction, idle / walk readability, placeholder fallback safety를 수동 확인한다.
