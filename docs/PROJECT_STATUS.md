@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `1f2d13f`
-- Phase: QuarterviewMain Food / Kitchen candidate overlay
+- Current commit at task start: `d5f9882`
+- Phase: CONCENT handoff / identity direction refresh
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -50,19 +50,19 @@
 - QuarterviewMain mouse interaction cleanup: normal view now uses mouse-click movement, object click approach, candidate interaction panel, and debug-only keyboard / blockout display.
 - QuarterviewMain temporary background: added a temporary room background / reference flow while keeping production systems unwired.
 - QuarterviewMain candidate skeleton: created the first production candidate scene without replacing old Main.
+- CONCENT handoff / identity refresh: updated the new-session handoff and identity room direction with the latest compact room, hidden power cabinet, simplified desk, and current QuarterviewMain overlay status.
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/QuarterviewMain.gd`: adds the Food / Kitchen candidate overlay for Fridge and Microwave with source-specific no-op options, room input lock, ESC / close button / backdrop close, and no hunger / inventory / SurvivalState / DayResultPanel wiring.
-- `godot/scripts/quarterview/QuarterviewRoom.gd`: unchanged in the latest work; Fridge and Microwave object identity remains Resource-driven through `RoomObjectDefinition`.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain Food / Kitchen candidate overlay pass.
+- `docs/CONCENT_PROJECT_IDENTITY.md`: updates current main room direction with compact lower-class room layout, simplified desk, hidden power cabinet, and removed clutter / obsolete device placement.
+- `docs/CONCENT_GPT_HANDOFF.md`: expands the new-session handoff with current QuarterviewMain overlays, movement / debug / tuning flow, asset paths, design direction, and next task candidates.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the handoff / identity refresh pass.
 
 ## Validation Results
 
-- `git diff --check` passed.
-- Godot headless project parse passed.
-- `res://scenes/QuarterviewMain.tscn` headless startup passed.
-- Full GUT passed: 54 tests.
+- `git diff --check` passed for this documentation-only pass.
+- Godot headless execution is not required for this documentation-only pass.
+- Previous QuarterviewMain implementation validation passed: Godot project parse, QuarterviewMain headless startup, and full GUT 54 tests.
 
 ## Current Risks / Known Issues
 
@@ -72,7 +72,7 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI confirmation is still needed for Fridge / Microwave object approach, Food / Kitchen `사용하기` opening the new overlay, source-specific no-op option logs, overlay ESC / Close / backdrop close, room movement lock while the overlay is open, existing Bed / Desk / Power / Phone close-up behavior, candidate panel empty-area click close, `D` then `F3` footprint tuning mode, `[ / ]` object selection, `C` layout snippet output / clipboard behavior, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
+- GUI confirmation is still needed for Fridge / Microwave object approach, Food / Kitchen `사용하기` opening the new overlay, source-specific no-op option logs, overlay ESC / Close / backdrop close, room movement lock while the overlay is open, existing Bed / Desk / Power / Phone close-up behavior, candidate panel empty-area click close, `D` then `F3` footprint tuning mode, `[ / ]` object selection, `C` layout snippet output / clipboard behavior, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, debug failure reasons, and whether the latest compact room design direction should drive the next background art pass.
 
 ## Next Recommended Task
 
