@@ -192,10 +192,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Fridge / Microwave object 접근, `사용하기`로 overlay 열기, source별 option 표시, 선택 / 설명 no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk / Power / Phone / Bed close-up 유지 여부를 수동 확인한다.
 
-### this commit - CONCENT GPT handoff / identity refresh
+### e26289f - CONCENT GPT handoff / identity refresh
 
-- Commit: `this commit`
+- Commit: `e26289f`
 - Result: 새 GPT 세션용 handoff를 최신 QuarterviewMain 상태, overlay 목록, mouse-click / debug / tuning 흐름, 실제 quarterview asset 경로, compact room 디자인 방향, hidden power cabinet 방향, simplified desk 방향까지 포함하도록 갱신했다. `CONCENT_PROJECT_IDENTITY.md`에도 최신 메인방 배치 기준을 반영했다.
 - Changed: CONCENT project identity room direction, GPT handoff, status docs.
 - Validation: `git diff --check` passed. Godot execution was not required for this documentation-only pass.
 - Next: GUI에서 최신 compact room 기준을 바탕으로 다음 background art / Door candidate / 최소 하루 루프 후보 중 하나를 진행한다.
+
+### this commit - QuarterviewMain Door candidate overlay
+
+- Commit: `this commit`
+- Result: Door object의 `사용하기`에서 no-op Door candidate overlay를 열고, 문 밖 상황 확인 / 복도 소리 듣기 / 외출 준비 생각하기 후보 행동을 선택할 수 있게 했다. Room movement는 overlay 동안 잠기며, ESC / 닫기 / 빈 영역 클릭으로 닫는다.
+- Changed: QuarterviewMain door candidate overlay / door option no-op log, handoff / status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: GUI에서 Door object 접근, `사용하기`로 overlay 열기, door option 선택 / 설명 no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk / Power / Phone / Bed / Food-Kitchen close-up 유지 여부를 수동 확인한다.

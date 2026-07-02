@@ -208,6 +208,7 @@ ups.tres
 - Phone 사용 시 `Phone candidate overlay`
 - Bed 사용 시 `Bed rest/sleep candidate overlay`
 - Fridge / Microwave 사용 시 `Food / Kitchen candidate overlay`
+- Door 사용 시 `Door candidate overlay`
 
 각 overlay는 현재 no-op / status log만 남긴다. 실제 Hacking, PhoneUI, OutletMode, DayResultPanel, SurvivalState, Grid Credit, save/load와 연결하지 않는다.
 
@@ -254,6 +255,13 @@ Food / Kitchen overlay:
   - 조리 상태 확인
   - 오늘 먹을 것 생각하기
 - 실제 허기 수치, food inventory, SurvivalState, DayResultPanel 연결 없음
+
+Door overlay:
+
+- 문 밖 상황 확인
+- 복도 소리 듣기
+- 외출 준비 생각하기
+- 실제 외부 맵, scene transition, story flag, save-load 연결 없음
 
 공통 close-up 규칙:
 
@@ -433,6 +441,7 @@ WASD:
 가장 가까운 후보:
 
 1. QuarterviewMain GUI 확인
+   - Door overlay
    - Fridge / Microwave Food-Kitchen overlay
    - Bed / Phone / Power overlay
    - Desk close-up
@@ -441,14 +450,11 @@ WASD:
    - debug ON에서 visual rect / click area / footprint 구분
    - bed / desk / power / fridge / kitchen 주변 이동감
    - 빠른 클릭 / object click 반복 / D / F3 / R 유지
-2. Door candidate overlay
-   - Door 클릭 -> 접근 -> 사용하기 -> no-op door / exit candidate
-   - 아직 scene transition, save/load, result 연결 금지
-3. 최소 하루 루프 후보
+2. 최소 하루 루프 후보
    - QuarterviewMain 전용 HUD / status
    - Bed rest/sleep candidate를 day result candidate overlay로 확장
    - 기존 DayResultPanel / SurvivalState production 연결은 별도 승인 전 금지
-4. Main replacement gate review
+3. Main replacement gate review
    - `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`
    - `docs/MAIN_REPLACEMENT_WORK_PLAN.md`
    - start scene 변경 전 반드시 검토

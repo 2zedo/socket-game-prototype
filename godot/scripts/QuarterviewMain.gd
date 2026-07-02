@@ -21,6 +21,9 @@ const BED_CLOSEUP_ENTRY_KEYS := ["bed"]
 const KITCHEN_CLOSEUP_SIZE := Vector2(620, 456)
 const KITCHEN_CLOSEUP_POSITION := Vector2(460, 102)
 const KITCHEN_CLOSEUP_ENTRY_KEYS := ["fridge", "microwave"]
+const DOOR_CLOSEUP_SIZE := Vector2(560, 408)
+const DOOR_CLOSEUP_POSITION := Vector2(500, 126)
+const DOOR_CLOSEUP_ENTRY_KEYS := ["door"]
 const DESK_CLOSEUP_HOTSPOTS := [
 	{
 		"key": "laptop",
@@ -243,6 +246,32 @@ const KITCHEN_CANDIDATE_OPTIONS := [
 		"value": "plan candidate",
 	},
 ]
+const DOOR_CANDIDATE_OPTIONS := [
+	{
+		"key": "check_hallway",
+		"display_name": "문 밖 상황 확인",
+		"role": "door_check",
+		"description": "복도와 문밖 상황을 살피는 후보 행동입니다. 실제 외출 맵이나 이벤트 체크는 없습니다.",
+		"candidate_action": "check_hallway_noop",
+		"value": "outside map not wired",
+	},
+	{
+		"key": "listen_corridor",
+		"display_name": "복도 소리 듣기",
+		"role": "door_listen",
+		"description": "복도의 소음과 인기척을 들어보는 후보 행동입니다. 실제 story flag나 위험도 계산은 없습니다.",
+		"candidate_action": "listen_corridor_noop",
+		"value": "story flag +0",
+	},
+	{
+		"key": "prepare_outing",
+		"display_name": "외출 준비 생각하기",
+		"role": "outing_plan",
+		"description": "나갈지 말지 생각하는 후보 행동입니다. scene transition, save-load, 외부 맵은 아직 연결하지 않았습니다.",
+		"candidate_action": "prepare_outing_noop",
+		"value": "scene transition disabled",
+	},
+]
 
 @onready var camera: Camera2D = $Camera2D
 @onready var quarterview_room: Node2D = $QuarterviewRoom
@@ -261,11 +290,13 @@ var power_closeup_open := false
 var phone_closeup_open := false
 var bed_closeup_open := false
 var kitchen_closeup_open := false
+var door_closeup_open := false
 var selected_desk_hotspot_key := "laptop"
 var selected_power_module_key := "battery_core"
 var selected_phone_item_key := "battery"
 var selected_bed_option_key := "short_rest"
 var selected_kitchen_option_key := "stored_food"
+var selected_door_option_key := "check_hallway"
 var current_kitchen_source_key := "fridge"
 var interaction_panel: PanelContainer
 var interaction_title_label: Label
@@ -304,6 +335,12 @@ var kitchen_description_label: Label
 var kitchen_option_title_label: Label
 var kitchen_option_detail_label: Label
 var kitchen_option_debug_label: Label
+var door_closeup_backdrop: ColorRect
+var door_closeup_panel: PanelContainer
+var door_option_buttons := {}
+var door_option_title_label: Label
+var door_option_detail_label: Label
+var door_option_debug_label: Label
 
 
 func _ready() -> void:
@@ -327,10 +364,17 @@ func _ready() -> void:
 	_build_phone_closeup_overlay()
 	_build_bed_closeup_overlay()
 	_build_kitchen_closeup_overlay()
+	_build_door_closeup_overlay()
 	_update_status("QuarterviewMain candidate ready.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if door_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_door_closeup_content_point(event.position):
+			_hide_door_closeup()
+		get_viewport().set_input_as_handled()
+		return
+
 	if kitchen_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _is_kitchen_closeup_content_point(event.position):
 			_hide_kitchen_closeup()
@@ -374,6 +418,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == CANCEL_KEY:
+			if door_closeup_open:
+				_hide_door_closeup()
+				get_viewport().set_input_as_handled()
+				return
 			if kitchen_closeup_open:
 				_hide_kitchen_closeup()
 				get_viewport().set_input_as_handled()
@@ -440,6 +488,8 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 		_refresh_bed_option_detail()
 	if kitchen_closeup_open:
 		_refresh_kitchen_option_detail()
+	if door_closeup_open:
+		_refresh_door_option_detail()
 	quarterview_room.global_transform = room_transform
 	camera.global_transform = camera_transform
 	camera.zoom = camera_zoom
@@ -538,6 +588,9 @@ func _hide_interaction_panel() -> void:
 
 
 func _on_use_pressed() -> void:
+	if _should_open_door_closeup():
+		_open_door_closeup(focused_object_key)
+		return
 	if _should_open_kitchen_closeup():
 		_open_kitchen_closeup(focused_object_key)
 		return
@@ -584,10 +637,12 @@ func _set_room_input_locked(locked: bool) -> void:
 
 
 func _has_closeup_open() -> bool:
-	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open or kitchen_closeup_open
+	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open or kitchen_closeup_open or door_closeup_open
 
 
 func _get_modal_status_text(default_text: String) -> String:
+	if door_closeup_open:
+		return "Door candidate open / room input locked"
 	if kitchen_closeup_open:
 		return "Food / kitchen candidate open / room input locked"
 	if bed_closeup_open:
@@ -623,6 +678,10 @@ func _should_open_bed_closeup() -> bool:
 
 func _should_open_kitchen_closeup() -> bool:
 	return focused_object_key in KITCHEN_CLOSEUP_ENTRY_KEYS
+
+
+func _should_open_door_closeup() -> bool:
+	return focused_object_key in DOOR_CLOSEUP_ENTRY_KEYS
 
 
 func _build_desk_closeup_overlay() -> void:
@@ -1766,6 +1825,229 @@ func _is_kitchen_option_available(option: Dictionary, source_key: String) -> boo
 
 func _get_kitchen_option(option_key: String) -> Dictionary:
 	for option in KITCHEN_CANDIDATE_OPTIONS:
+		if String(option["key"]) == option_key:
+			return option
+	return {}
+
+
+func _build_door_closeup_overlay() -> void:
+	door_closeup_backdrop = ColorRect.new()
+	door_closeup_backdrop.name = "DoorCloseupBackdrop"
+	door_closeup_backdrop.visible = false
+	door_closeup_backdrop.color = Color(0.0, 0.0, 0.0, 0.30)
+	door_closeup_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	door_closeup_backdrop.z_index = 150
+	door_closeup_backdrop.position = Vector2.ZERO
+	door_closeup_backdrop.size = _get_viewport_ui_size()
+	door_closeup_backdrop.gui_input.connect(_on_door_closeup_backdrop_gui_input)
+	$UILayer.add_child(door_closeup_backdrop)
+
+	door_closeup_panel = PanelContainer.new()
+	door_closeup_panel.name = "DoorCloseupCandidate"
+	door_closeup_panel.visible = false
+	door_closeup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	door_closeup_panel.z_index = 151
+	door_closeup_panel.position = DOOR_CLOSEUP_POSITION
+	door_closeup_panel.custom_minimum_size = DOOR_CLOSEUP_SIZE
+	$UILayer.add_child(door_closeup_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	door_closeup_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "출입문"
+	title.add_theme_color_override("font_color", Color(0.92, 0.84, 0.68, 1.0))
+	title.add_theme_font_size_override("font_size", 22)
+	vbox.add_child(title)
+
+	var description := Label.new()
+	description.text = "문밖과 외출 후보를 확인합니다. scene transition / story flag / save-load 연결 없음."
+	description.add_theme_color_override("font_color", Color(0.76, 0.82, 0.80, 1.0))
+	description.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(description)
+
+	var option_column := VBoxContainer.new()
+	option_column.add_theme_constant_override("separation", 8)
+	vbox.add_child(option_column)
+
+	for option in DOOR_CANDIDATE_OPTIONS:
+		var key := String(option["key"])
+		var button := Button.new()
+		button.name = "%sDoorOptionButton" % key.capitalize().replace("_", "")
+		button.custom_minimum_size = Vector2(500, 48)
+		button.tooltip_text = String(option["description"])
+		button.pressed.connect(_on_door_option_pressed.bind(key))
+		option_column.add_child(button)
+		door_option_buttons[key] = button
+
+	door_option_title_label = Label.new()
+	door_option_title_label.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72, 1.0))
+	door_option_title_label.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(door_option_title_label)
+
+	door_option_detail_label = Label.new()
+	door_option_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	door_option_detail_label.add_theme_color_override("font_color", Color(0.76, 0.82, 0.80, 1.0))
+	door_option_detail_label.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(door_option_detail_label)
+
+	door_option_debug_label = Label.new()
+	door_option_debug_label.visible = false
+	door_option_debug_label.add_theme_color_override("font_color", Color(0.50, 0.93, 0.96, 1.0))
+	door_option_debug_label.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(door_option_debug_label)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(button_row)
+
+	var use_button := Button.new()
+	use_button.text = "선택"
+	use_button.pressed.connect(_on_door_use_pressed)
+	button_row.add_child(use_button)
+
+	var inspect_button := Button.new()
+	inspect_button.text = "설명"
+	inspect_button.pressed.connect(_on_door_inspect_pressed)
+	button_row.add_child(inspect_button)
+
+	var close_button := Button.new()
+	close_button.text = "닫기"
+	close_button.pressed.connect(_hide_door_closeup)
+	button_row.add_child(close_button)
+
+	var close_hint := Label.new()
+	close_hint.text = "ESC 닫기 / 외부 맵, story flag, save-load는 아직 연결하지 않음"
+	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
+	close_hint.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(close_hint)
+
+	_select_door_option(selected_door_option_key)
+
+
+func _open_door_closeup(source_key: String) -> void:
+	door_closeup_open = true
+	_hide_interaction_panel()
+	_set_room_input_locked(true)
+	door_closeup_backdrop.size = _get_viewport_ui_size()
+	door_closeup_backdrop.visible = true
+	door_closeup_panel.visible = true
+
+	if _get_door_option(selected_door_option_key).is_empty():
+		selected_door_option_key = "check_hallway"
+	_select_door_option(selected_door_option_key)
+
+	last_interaction = "Door candidate / open"
+	last_interaction_debug = "%s / role=%s / action=door_candidate" % [
+		source_key,
+		String(focused_payload.get("role", "-")),
+	]
+	print("QuarterviewMain door candidate opened from %s / no production wiring" % source_key)
+	_update_status("Door candidate opened.")
+
+
+func _hide_door_closeup() -> void:
+	if door_closeup_backdrop != null:
+		door_closeup_backdrop.visible = false
+	if door_closeup_panel != null:
+		door_closeup_panel.visible = false
+	door_closeup_open = false
+	_set_room_input_locked(false)
+	_update_status("Door candidate closed.")
+
+
+func _on_door_closeup_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_hide_door_closeup()
+		get_viewport().set_input_as_handled()
+
+
+func _is_door_closeup_content_point(viewport_point: Vector2) -> bool:
+	if door_closeup_panel == null or not door_closeup_panel.visible:
+		return false
+	var panel_size := door_closeup_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = DOOR_CLOSEUP_SIZE
+	return Rect2(door_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _on_door_option_pressed(option_key: String) -> void:
+	_select_door_option(option_key)
+	_log_door_option_action("focus")
+
+
+func _on_door_use_pressed() -> void:
+	_log_door_option_action("primary")
+
+
+func _on_door_inspect_pressed() -> void:
+	_log_door_option_action("inspect")
+
+
+func _select_door_option(option_key: String) -> void:
+	var option := _get_door_option(option_key)
+	if option.is_empty():
+		return
+
+	selected_door_option_key = option_key
+	for key in door_option_buttons.keys():
+		var button: Button = door_option_buttons[key]
+		var button_option := _get_door_option(String(key))
+		var prefix := "> " if String(key) == selected_door_option_key else ""
+		button.text = "%s%s  -  %s" % [
+			prefix,
+			String(button_option.get("display_name", key)),
+			String(button_option.get("value", "")),
+		]
+	_refresh_door_option_detail()
+
+
+func _refresh_door_option_detail() -> void:
+	var option := _get_door_option(selected_door_option_key)
+	if option.is_empty():
+		return
+
+	door_option_title_label.text = String(option["display_name"])
+	door_option_detail_label.text = "%s\n\nDoor candidate only. 실제 외부 맵, scene transition, story flag, save-load는 아직 연결되지 않았습니다." % String(option["description"])
+
+	door_option_debug_label.visible = room_debug_enabled
+	if room_debug_enabled:
+		door_option_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nvalue: %s\nno-op status: scene transition / story flag / save-load disabled" % [
+			String(option["key"]),
+			String(option["role"]),
+			String(option["candidate_action"]),
+			String(option["value"]),
+		]
+
+
+func _log_door_option_action(action_key: String) -> void:
+	var option := _get_door_option(selected_door_option_key)
+	if option.is_empty():
+		return
+
+	var display_name := String(option["display_name"])
+	var role := String(option["role"])
+	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
+	last_interaction_debug = "door_closeup:%s / role=%s / action=%s / candidate=%s" % [
+		selected_door_option_key,
+		role,
+		action_key,
+		String(option["candidate_action"]),
+	]
+	print("QuarterviewMain door candidate: %s / no production wiring" % last_interaction_debug)
+	_update_status("%s: Door candidate no-op." % display_name)
+
+
+func _get_door_option(option_key: String) -> Dictionary:
+	for option in DOOR_CANDIDATE_OPTIONS:
 		if String(option["key"]) == option_key:
 			return option
 	return {}

@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `d5f9882`
-- Phase: CONCENT handoff / identity direction refresh
+- Current commit at task start: `e26289f`
+- Phase: QuarterviewMain Door candidate overlay
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -21,7 +21,7 @@
 ## Current Implementation State
 
 - Current Main / DAY1: implemented top-view golden path; protected until explicit replacement approval.
-- QuarterviewMain: production candidate skeleton with temporary room background, candidate interaction panel, bed / desk / power / phone / food-kitchen candidate overlays, and status logging only.
+- QuarterviewMain: production candidate skeleton with temporary room background, candidate interaction panel, bed / desk / power / phone / food-kitchen / door candidate overlays, and status logging only.
 - QuarterviewRoom: candidate room shell using `RoomObjectDefinition` data, prompt / interaction signals, and debug overlay.
 - QuarterviewGameplaySandbox: sandbox-only flow for interaction, mock panels, local clock, local result, and local test mode.
 - Phone / Outlet / Result: still current Main-only production UI; not wired to QuarterviewMain.
@@ -37,6 +37,7 @@
 - QuarterviewMain footprint tuning: split visual body, click area, and blocker footprint candidates, and made path / collision blockers prefer floor-contact polygons over top-view rectangles.
 - QuarterviewMain footprint tuning mode: added object panel outside-click close, kept guessed footprints as debug/tuning candidates unless path-enabled, and added a debug-only F3 tuning mode for selected object footprint / approach / click area inspection.
 - QuarterviewMain Food / Kitchen candidate overlay: added no-op Fridge / Microwave food and cooking candidate actions while keeping hunger, inventory, SurvivalState, and DayResultPanel unwired.
+- QuarterviewMain Door candidate overlay: added no-op door / hallway / outing candidate actions while keeping scene transition, outside map, story flag, and save-load unwired.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -54,15 +55,16 @@
 
 ## Changed Files In Latest Work
 
-- `docs/CONCENT_PROJECT_IDENTITY.md`: updates current main room direction with compact lower-class room layout, simplified desk, hidden power cabinet, and removed clutter / obsolete device placement.
-- `docs/CONCENT_GPT_HANDOFF.md`: expands the new-session handoff with current QuarterviewMain overlays, movement / debug / tuning flow, asset paths, design direction, and next task candidates.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the handoff / identity refresh pass.
+- `godot/scripts/QuarterviewMain.gd`: adds the Door candidate overlay with hallway / corridor / outing no-op actions, room input lock, ESC / close button / backdrop close, and no scene transition / outside map / story flag / save-load wiring.
+- `docs/CONCENT_GPT_HANDOFF.md`: marks Door as an implemented current candidate overlay and removes it from the next-implementation list.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain Door candidate overlay pass.
 
 ## Validation Results
 
-- `git diff --check` passed for this documentation-only pass.
-- Godot headless execution is not required for this documentation-only pass.
-- Previous QuarterviewMain implementation validation passed: Godot project parse, QuarterviewMain headless startup, and full GUT 54 tests.
+- `git diff --check` passed.
+- Godot headless project parse passed.
+- `res://scenes/QuarterviewMain.tscn` headless startup passed.
+- Full GUT passed: 54 tests.
 
 ## Current Risks / Known Issues
 
@@ -72,13 +74,13 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI confirmation is still needed for Fridge / Microwave object approach, Food / Kitchen `사용하기` opening the new overlay, source-specific no-op option logs, overlay ESC / Close / backdrop close, room movement lock while the overlay is open, existing Bed / Desk / Power / Phone close-up behavior, candidate panel empty-area click close, `D` then `F3` footprint tuning mode, `[ / ]` object selection, `C` layout snippet output / clipboard behavior, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, debug failure reasons, and whether the latest compact room design direction should drive the next background art pass.
+- GUI confirmation is still needed for Door object approach, Door `사용하기` opening the new overlay, door no-op option logs, overlay ESC / Close / backdrop close, room movement lock while the overlay is open, existing Bed / Desk / Power / Phone / Food-Kitchen close-up behavior, candidate panel empty-area click close, `D` then `F3` footprint tuning mode, `[ / ]` object selection, `C` layout snippet output / clipboard behavior, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, debug failure reasons, and whether the latest compact room design direction should drive the next background art pass.
 
 ## Next Recommended Task
 
 1. QuarterviewMain GUI check:
    - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
-   - Complete when background, Bed / Phone / Power / Fridge / Microwave object approach, Bed / Phone / Power / Food-Kitchen close-up open/close, no-op item logs, candidate panel empty-area close, Desk close-up behavior, `D` / `F3` footprint tuning, `[ / ]` selection, `C` snippet output, debug ON visual rect / click area / footprint distinction, bed / desk / power / fridge / kitchen movement, debug ON object click, room input lock during close-up, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
+   - Complete when background, Door / Bed / Phone / Power / Fridge / Microwave object approach, Door / Bed / Phone / Power / Food-Kitchen close-up open/close, no-op item logs, candidate panel empty-area close, Desk close-up behavior, `D` / `F3` footprint tuning, `[ / ]` selection, `C` snippet output, debug ON visual rect / click area / footprint distinction, bed / desk / power / fridge / kitchen / door movement, debug ON object click, room input lock during close-up, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
 2. Main replacement gate review:
    - Start files: `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/MAIN_REPLACEMENT_WORK_PLAN.md`.
    - Complete when Go / No-Go items are reviewed before any production entry change.
