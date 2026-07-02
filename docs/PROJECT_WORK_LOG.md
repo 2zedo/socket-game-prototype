@@ -176,10 +176,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Phone object 접근, `사용하기`로 overlay 열기, item 선택 / 확인 / 설명 no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk / Power close-up 유지 여부를 수동 확인한다.
 
-### this commit - QuarterviewMain Bed rest candidate overlay
+### 1f2d13f - QuarterviewMain Bed rest candidate overlay
 
-- Commit: `this commit`
+- Commit: `1f2d13f`
 - Result: Bed object의 `사용하기`에서 no-op Bed rest candidate overlay를 열고, 잠깐 쉼 / 오늘 마무리 / 몸 상태 확인 후보 행동을 선택할 수 있게 했다. Room movement는 overlay 동안 잠기며, ESC / 닫기 / 빈 영역 클릭으로 닫는다.
 - Changed: QuarterviewMain bed rest candidate overlay / rest option no-op log, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Bed object 접근, `사용하기`로 overlay 열기, 잠깐 쉼 / 오늘 마무리 / 몸 상태 확인 선택 / no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk / Power / Phone close-up 유지 여부를 수동 확인한다.
+
+### this commit - QuarterviewMain Food / Kitchen candidate overlay
+
+- Commit: `this commit`
+- Result: Fridge / Microwave object의 `사용하기`에서 no-op Food / Kitchen candidate overlay를 열고, 보관 식량 확인 / 간단히 먹을 것 찾기 / 냉장고 상태 확인 / 합성 식품 데우기 / 조리 상태 확인 / 오늘 먹을 것 생각하기 후보 행동을 source별로 선택할 수 있게 했다. Room movement는 overlay 동안 잠기며, ESC / 닫기 / 빈 영역 클릭으로 닫는다.
+- Changed: QuarterviewMain food / kitchen candidate overlay / source-specific option no-op log, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: GUI에서 Fridge / Microwave object 접근, `사용하기`로 overlay 열기, source별 option 표시, 선택 / 설명 no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk / Power / Phone / Bed close-up 유지 여부를 수동 확인한다.

@@ -18,6 +18,9 @@ const PHONE_CLOSEUP_ENTRY_KEYS := ["phone"]
 const BED_CLOSEUP_SIZE := Vector2(590, 430)
 const BED_CLOSEUP_POSITION := Vector2(480, 116)
 const BED_CLOSEUP_ENTRY_KEYS := ["bed"]
+const KITCHEN_CLOSEUP_SIZE := Vector2(620, 456)
+const KITCHEN_CLOSEUP_POSITION := Vector2(460, 102)
+const KITCHEN_CLOSEUP_ENTRY_KEYS := ["fridge", "microwave"]
 const DESK_CLOSEUP_HOTSPOTS := [
 	{
 		"key": "laptop",
@@ -184,6 +187,62 @@ const BED_REST_OPTIONS := [
 		"value": "hunger / condition mock",
 	},
 ]
+const KITCHEN_CANDIDATE_OPTIONS := [
+	{
+		"key": "stored_food",
+		"sources": ["fridge"],
+		"display_name": "보관 식량 확인",
+		"role": "food_storage",
+		"description": "냉장고 안의 보관 식량 후보를 확인합니다. 실제 inventory나 허기 수치는 읽지 않습니다.",
+		"candidate_action": "check_stored_food_noop",
+		"value": "inventory not wired",
+	},
+	{
+		"key": "find_quick_food",
+		"sources": ["fridge"],
+		"display_name": "간단히 먹을 것 찾기",
+		"role": "food_search",
+		"description": "바로 먹을 수 있는 합성 식품 후보를 찾습니다. 실제 허기 회복은 없습니다.",
+		"candidate_action": "find_quick_food_noop",
+		"value": "hunger +0",
+	},
+	{
+		"key": "fridge_status",
+		"sources": ["fridge"],
+		"display_name": "냉장고 상태 확인",
+		"role": "appliance_status",
+		"description": "냉장고 전원과 보관 상태 후보를 확인합니다. 실제 전력 소비나 식량 리스크는 계산하지 않습니다.",
+		"candidate_action": "check_fridge_status_noop",
+		"value": "power state mock",
+	},
+	{
+		"key": "heat_synthetic_food",
+		"sources": ["microwave"],
+		"display_name": "합성 식품 데우기",
+		"role": "food_cooking",
+		"description": "합성 식품을 데우는 후보 행동입니다. 실제 조리 시간이나 전력 소비는 없습니다.",
+		"candidate_action": "heat_synthetic_food_noop",
+		"value": "power +0 / hunger +0",
+	},
+	{
+		"key": "cooking_status",
+		"sources": ["microwave"],
+		"display_name": "조리 상태 확인",
+		"role": "appliance_status",
+		"description": "전자레인지 상태 후보를 확인합니다. 실제 고장 / 발열 / 전력 계산과 연결하지 않았습니다.",
+		"candidate_action": "check_cooking_status_noop",
+		"value": "idle mock",
+	},
+	{
+		"key": "think_food_plan",
+		"sources": ["microwave"],
+		"display_name": "오늘 먹을 것 생각하기",
+		"role": "food_plan",
+		"description": "오늘 식사 계획 후보입니다. 실제 하루 루프나 결과 기록과 연결하지 않았습니다.",
+		"candidate_action": "think_food_plan_noop",
+		"value": "plan candidate",
+	},
+]
 
 @onready var camera: Camera2D = $Camera2D
 @onready var quarterview_room: Node2D = $QuarterviewRoom
@@ -201,10 +260,13 @@ var desk_closeup_open := false
 var power_closeup_open := false
 var phone_closeup_open := false
 var bed_closeup_open := false
+var kitchen_closeup_open := false
 var selected_desk_hotspot_key := "laptop"
 var selected_power_module_key := "battery_core"
 var selected_phone_item_key := "battery"
 var selected_bed_option_key := "short_rest"
+var selected_kitchen_option_key := "stored_food"
+var current_kitchen_source_key := "fridge"
 var interaction_panel: PanelContainer
 var interaction_title_label: Label
 var interaction_detail_label: Label
@@ -234,6 +296,14 @@ var bed_option_buttons := {}
 var bed_option_title_label: Label
 var bed_option_detail_label: Label
 var bed_option_debug_label: Label
+var kitchen_closeup_backdrop: ColorRect
+var kitchen_closeup_panel: PanelContainer
+var kitchen_option_buttons := {}
+var kitchen_title_label: Label
+var kitchen_description_label: Label
+var kitchen_option_title_label: Label
+var kitchen_option_detail_label: Label
+var kitchen_option_debug_label: Label
 
 
 func _ready() -> void:
@@ -256,10 +326,17 @@ func _ready() -> void:
 	_build_power_closeup_overlay()
 	_build_phone_closeup_overlay()
 	_build_bed_closeup_overlay()
+	_build_kitchen_closeup_overlay()
 	_update_status("QuarterviewMain candidate ready.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if kitchen_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_kitchen_closeup_content_point(event.position):
+			_hide_kitchen_closeup()
+		get_viewport().set_input_as_handled()
+		return
+
 	if bed_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _is_bed_closeup_content_point(event.position):
 			_hide_bed_closeup()
@@ -297,6 +374,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == CANCEL_KEY:
+			if kitchen_closeup_open:
+				_hide_kitchen_closeup()
+				get_viewport().set_input_as_handled()
+				return
 			if bed_closeup_open:
 				_hide_bed_closeup()
 				get_viewport().set_input_as_handled()
@@ -357,6 +438,8 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 		_refresh_phone_item_detail()
 	if bed_closeup_open:
 		_refresh_bed_option_detail()
+	if kitchen_closeup_open:
+		_refresh_kitchen_option_detail()
 	quarterview_room.global_transform = room_transform
 	camera.global_transform = camera_transform
 	camera.zoom = camera_zoom
@@ -455,6 +538,9 @@ func _hide_interaction_panel() -> void:
 
 
 func _on_use_pressed() -> void:
+	if _should_open_kitchen_closeup():
+		_open_kitchen_closeup(focused_object_key)
+		return
 	if _should_open_bed_closeup():
 		_open_bed_closeup(focused_object_key)
 		return
@@ -498,10 +584,12 @@ func _set_room_input_locked(locked: bool) -> void:
 
 
 func _has_closeup_open() -> bool:
-	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open
+	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open or kitchen_closeup_open
 
 
 func _get_modal_status_text(default_text: String) -> String:
+	if kitchen_closeup_open:
+		return "Food / kitchen candidate open / room input locked"
 	if bed_closeup_open:
 		return "Bed rest candidate open / room input locked"
 	if phone_closeup_open:
@@ -531,6 +619,10 @@ func _should_open_phone_closeup() -> bool:
 func _should_open_bed_closeup() -> bool:
 	var role := String(focused_payload.get("role", ""))
 	return focused_object_key in BED_CLOSEUP_ENTRY_KEYS or role == "manual_end_day"
+
+
+func _should_open_kitchen_closeup() -> bool:
+	return focused_object_key in KITCHEN_CLOSEUP_ENTRY_KEYS
 
 
 func _build_desk_closeup_overlay() -> void:
@@ -1415,6 +1507,265 @@ func _log_bed_option_action(action_key: String) -> void:
 
 func _get_bed_option(option_key: String) -> Dictionary:
 	for option in BED_REST_OPTIONS:
+		if String(option["key"]) == option_key:
+			return option
+	return {}
+
+
+func _build_kitchen_closeup_overlay() -> void:
+	kitchen_closeup_backdrop = ColorRect.new()
+	kitchen_closeup_backdrop.name = "KitchenCloseupBackdrop"
+	kitchen_closeup_backdrop.visible = false
+	kitchen_closeup_backdrop.color = Color(0.0, 0.0, 0.0, 0.31)
+	kitchen_closeup_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	kitchen_closeup_backdrop.z_index = 140
+	kitchen_closeup_backdrop.position = Vector2.ZERO
+	kitchen_closeup_backdrop.size = _get_viewport_ui_size()
+	kitchen_closeup_backdrop.gui_input.connect(_on_kitchen_closeup_backdrop_gui_input)
+	$UILayer.add_child(kitchen_closeup_backdrop)
+
+	kitchen_closeup_panel = PanelContainer.new()
+	kitchen_closeup_panel.name = "FoodKitchenCloseupCandidate"
+	kitchen_closeup_panel.visible = false
+	kitchen_closeup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	kitchen_closeup_panel.z_index = 141
+	kitchen_closeup_panel.position = KITCHEN_CLOSEUP_POSITION
+	kitchen_closeup_panel.custom_minimum_size = KITCHEN_CLOSEUP_SIZE
+	$UILayer.add_child(kitchen_closeup_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	kitchen_closeup_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+
+	kitchen_title_label = Label.new()
+	kitchen_title_label.add_theme_color_override("font_color", Color(0.93, 0.84, 0.66, 1.0))
+	kitchen_title_label.add_theme_font_size_override("font_size", 22)
+	vbox.add_child(kitchen_title_label)
+
+	kitchen_description_label = Label.new()
+	kitchen_description_label.add_theme_color_override("font_color", Color(0.78, 0.84, 0.78, 1.0))
+	kitchen_description_label.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(kitchen_description_label)
+
+	var option_column := VBoxContainer.new()
+	option_column.add_theme_constant_override("separation", 8)
+	vbox.add_child(option_column)
+
+	for option in KITCHEN_CANDIDATE_OPTIONS:
+		var key := String(option["key"])
+		var button := Button.new()
+		button.name = "%sKitchenOptionButton" % key.capitalize().replace("_", "")
+		button.custom_minimum_size = Vector2(548, 44)
+		button.tooltip_text = String(option["description"])
+		button.pressed.connect(_on_kitchen_option_pressed.bind(key))
+		option_column.add_child(button)
+		kitchen_option_buttons[key] = button
+
+	kitchen_option_title_label = Label.new()
+	kitchen_option_title_label.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72, 1.0))
+	kitchen_option_title_label.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(kitchen_option_title_label)
+
+	kitchen_option_detail_label = Label.new()
+	kitchen_option_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	kitchen_option_detail_label.add_theme_color_override("font_color", Color(0.76, 0.82, 0.80, 1.0))
+	kitchen_option_detail_label.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(kitchen_option_detail_label)
+
+	kitchen_option_debug_label = Label.new()
+	kitchen_option_debug_label.visible = false
+	kitchen_option_debug_label.add_theme_color_override("font_color", Color(0.50, 0.93, 0.96, 1.0))
+	kitchen_option_debug_label.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(kitchen_option_debug_label)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(button_row)
+
+	var use_button := Button.new()
+	use_button.text = "선택"
+	use_button.pressed.connect(_on_kitchen_use_pressed)
+	button_row.add_child(use_button)
+
+	var inspect_button := Button.new()
+	inspect_button.text = "설명"
+	inspect_button.pressed.connect(_on_kitchen_inspect_pressed)
+	button_row.add_child(inspect_button)
+
+	var close_button := Button.new()
+	close_button.text = "닫기"
+	close_button.pressed.connect(_hide_kitchen_closeup)
+	button_row.add_child(close_button)
+
+	var close_hint := Label.new()
+	close_hint.text = "ESC 닫기 / 허기, inventory, SurvivalState는 아직 연결하지 않음"
+	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
+	close_hint.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(close_hint)
+
+	_select_kitchen_option(selected_kitchen_option_key)
+
+
+func _open_kitchen_closeup(source_key: String) -> void:
+	current_kitchen_source_key = source_key if source_key in KITCHEN_CLOSEUP_ENTRY_KEYS else "fridge"
+	kitchen_closeup_open = true
+	_hide_interaction_panel()
+	_set_room_input_locked(true)
+	kitchen_closeup_backdrop.size = _get_viewport_ui_size()
+	kitchen_closeup_backdrop.visible = true
+	kitchen_closeup_panel.visible = true
+
+	var default_key := _get_default_kitchen_option_key(current_kitchen_source_key)
+	var selected_option := _get_kitchen_option(selected_kitchen_option_key)
+	if not _is_kitchen_option_available(selected_option, current_kitchen_source_key):
+		selected_kitchen_option_key = default_key
+	_refresh_kitchen_option_buttons()
+	_select_kitchen_option(selected_kitchen_option_key)
+
+	last_interaction = "%s food candidate / open" % _get_kitchen_source_display_name()
+	last_interaction_debug = "%s / role=%s / action=kitchen_candidate" % [
+		source_key,
+		String(focused_payload.get("role", "-")),
+	]
+	print("QuarterviewMain kitchen candidate opened from %s / no production wiring" % source_key)
+	_update_status("Food / kitchen candidate opened.")
+
+
+func _hide_kitchen_closeup() -> void:
+	if kitchen_closeup_backdrop != null:
+		kitchen_closeup_backdrop.visible = false
+	if kitchen_closeup_panel != null:
+		kitchen_closeup_panel.visible = false
+	kitchen_closeup_open = false
+	_set_room_input_locked(false)
+	_update_status("Food / kitchen candidate closed.")
+
+
+func _on_kitchen_closeup_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_hide_kitchen_closeup()
+		get_viewport().set_input_as_handled()
+
+
+func _is_kitchen_closeup_content_point(viewport_point: Vector2) -> bool:
+	if kitchen_closeup_panel == null or not kitchen_closeup_panel.visible:
+		return false
+	var panel_size := kitchen_closeup_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = KITCHEN_CLOSEUP_SIZE
+	return Rect2(kitchen_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _on_kitchen_option_pressed(option_key: String) -> void:
+	_select_kitchen_option(option_key)
+	_log_kitchen_option_action("focus")
+
+
+func _on_kitchen_use_pressed() -> void:
+	_log_kitchen_option_action("primary")
+
+
+func _on_kitchen_inspect_pressed() -> void:
+	_log_kitchen_option_action("inspect")
+
+
+func _select_kitchen_option(option_key: String) -> void:
+	var option := _get_kitchen_option(option_key)
+	if not _is_kitchen_option_available(option, current_kitchen_source_key):
+		return
+
+	selected_kitchen_option_key = option_key
+	_refresh_kitchen_option_buttons()
+	_refresh_kitchen_option_detail()
+
+
+func _refresh_kitchen_option_buttons() -> void:
+	for key in kitchen_option_buttons.keys():
+		var option := _get_kitchen_option(String(key))
+		var button: Button = kitchen_option_buttons[key]
+		var available := _is_kitchen_option_available(option, current_kitchen_source_key)
+		button.visible = available
+		button.disabled = not available
+		if available:
+			var prefix := "> " if String(key) == selected_kitchen_option_key else ""
+			button.text = "%s%s  -  %s" % [
+				prefix,
+				String(option.get("display_name", key)),
+				String(option.get("value", "")),
+			]
+
+
+func _refresh_kitchen_option_detail() -> void:
+	var option := _get_kitchen_option(selected_kitchen_option_key)
+	if not _is_kitchen_option_available(option, current_kitchen_source_key):
+		selected_kitchen_option_key = _get_default_kitchen_option_key(current_kitchen_source_key)
+		option = _get_kitchen_option(selected_kitchen_option_key)
+	if option.is_empty():
+		return
+
+	kitchen_title_label.text = "식량 / 조리 - %s" % _get_kitchen_source_display_name()
+	kitchen_description_label.text = "생활 장비 후보입니다. 실제 허기 / inventory / 전력 계산 연결 없음."
+	kitchen_option_title_label.text = String(option["display_name"])
+	kitchen_option_detail_label.text = "%s\n\nFood / kitchen candidate only. 실제 허기 수치, food inventory, DayResultPanel은 아직 연결되지 않았습니다." % String(option["description"])
+
+	kitchen_option_debug_label.visible = room_debug_enabled
+	if room_debug_enabled:
+		kitchen_option_debug_label.text = "source: %s\nkey: %s\nrole: %s\ncandidate action: %s\nvalue: %s\nno-op status: hunger / inventory / SurvivalState disabled" % [
+			current_kitchen_source_key,
+			String(option["key"]),
+			String(option["role"]),
+			String(option["candidate_action"]),
+			String(option["value"]),
+		]
+
+
+func _log_kitchen_option_action(action_key: String) -> void:
+	var option := _get_kitchen_option(selected_kitchen_option_key)
+	if option.is_empty():
+		return
+
+	var display_name := String(option["display_name"])
+	var role := String(option["role"])
+	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
+	last_interaction_debug = "kitchen_closeup:%s:%s / role=%s / action=%s / candidate=%s" % [
+		current_kitchen_source_key,
+		selected_kitchen_option_key,
+		role,
+		action_key,
+		String(option["candidate_action"]),
+	]
+	print("QuarterviewMain kitchen candidate: %s / no production wiring" % last_interaction_debug)
+	_update_status("%s: Food / kitchen candidate no-op." % display_name)
+
+
+func _get_default_kitchen_option_key(source_key: String) -> String:
+	if source_key == "microwave":
+		return "heat_synthetic_food"
+	return "stored_food"
+
+
+func _get_kitchen_source_display_name() -> String:
+	if current_kitchen_source_key == "microwave":
+		return "Microwave"
+	return "Fridge"
+
+
+func _is_kitchen_option_available(option: Dictionary, source_key: String) -> bool:
+	if option.is_empty():
+		return false
+	var sources = option.get("sources", [])
+	return source_key in sources
+
+
+func _get_kitchen_option(option_key: String) -> Dictionary:
+	for option in KITCHEN_CANDIDATE_OPTIONS:
 		if String(option["key"]) == option_key:
 			return option
 	return {}
