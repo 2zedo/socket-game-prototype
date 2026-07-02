@@ -248,10 +248,18 @@
 - Validation: `git diff --check`, PNG size / alpha / visible-green check, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 Yui scale, direction row, idle / walk frame readability를 확인한다.
 
-### this commit - QuarterviewMain Yui visual scale tuning
+### 9d6e7bf - QuarterviewMain Yui visual scale tuning
 
-- Commit: `this commit`
+- Commit: `9d6e7bf`
 - Result: `QuarterviewPlayer`의 temporary Yui sprite 표시 scale을 키우고 발 위치 offset을 조정했다. CollisionShape2D, pathfinding, interaction 판정은 변경하지 않았다.
 - Changed: `QuarterviewPlayer.gd`, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 Yui 가독성, 발 위치, click movement, overlay / debug / tuning 흐름을 수동 확인한다.
+
+### this commit - QuarterviewMain Yui visual / motion tuning
+
+- Commit: `this commit`
+- Result: temporary Yui sprite 기본 scale을 `1.8`로 올리고 발 위치 offset을 맞췄으며, idle / walk FPS와 click / keyboard movement speed를 낮췄다. CollisionShape2D, pathfinding, interaction 판정은 변경하지 않았다.
+- Changed: `QuarterviewPlayer.gd`, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: Godot GUI에서 Yui 크기, 발 위치, idle / walk 속도, 실제 click movement 속도, overlay / HUD / debug / tuning 흐름을 수동 확인한다.
