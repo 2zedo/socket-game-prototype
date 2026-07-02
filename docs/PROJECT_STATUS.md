@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `07d3fbd`
-- Phase: QuarterviewMain mock HUD state reactions
+- Current commit at task start: `0debe85`
+- Phase: QuarterviewMain GUI checklist
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -40,6 +40,7 @@
 - QuarterviewMain Door candidate overlay: added no-op door / hallway / outing candidate actions while keeping scene transition, outside map, story flag, and save-load unwired.
 - QuarterviewMain minimum day-loop candidate: added a QuarterviewMain-only mock HUD and Day Result candidate overlay from the Bed end-day option while keeping DayResultPanel, SurvivalState, save-load, and story flags unwired.
 - QuarterviewMain mock HUD state reactions: added local-only HUD changes for Bed rest, Food / Kitchen, Power, Phone, and made Day Result candidate summarize the current mock state while keeping SurvivalState, DayResultPanel, save-load, and story flags unwired.
+- QuarterviewMain GUI checklist: added a focused manual GUI checklist for background, HUD, click movement, candidate panel, all current overlays, mock HUD reactions, input lock, debug, tuning, restart, and stress-click checks.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -57,9 +58,8 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/QuarterviewMain.gd`: makes Bed rest, Food / Kitchen, Power, and Phone candidate actions update QuarterviewMain-only mock HUD state, and makes Day Result candidate summarize current mock power / hunger / condition / info / note values.
-- `docs/CONCENT_GPT_HANDOFF.md`: records mock HUD state reactions as current QuarterviewMain-only behavior.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain mock HUD state reaction pass.
+- `docs/QUARTERVIEW_GUI_CHECKLIST.md`: adds the manual GUI checklist for the current QuarterviewMain candidate flow.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the checklist pass.
 
 ## Validation Results
 
@@ -76,13 +76,13 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI confirmation is still needed for prototype HUD placement, Bed short rest mock condition / time update, Food / Kitchen mock hunger / power update, Power mock power state update, Phone mock memo / info update, Day Result candidate current-state summary, next-day mock DAY increment / reset, result overlay ESC / Close / backdrop close, room movement lock while the result overlay is open, Door object approach, existing Bed / Desk / Power / Phone / Food-Kitchen / Door close-up behavior, candidate panel empty-area click close, `D` then `F3` footprint tuning mode, `[ / ]` object selection, `C` layout snippet output / clipboard behavior, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, debug failure reasons, and whether the latest compact room design direction should drive the next background art pass.
+- GUI confirmation should use `docs/QUARTERVIEW_GUI_CHECKLIST.md` as the current checklist for prototype HUD placement, Bed / Food / Kitchen / Power / Phone mock reactions, Day Result summary, next-day mock DAY reset, overlay close behavior, room input lock, object approach, debug / tuning controls, repeated clicks, and protected Main / DAY1 non-wiring.
 
 ## Next Recommended Task
 
 1. QuarterviewMain GUI check:
-   - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
-   - Complete when background, prototype HUD, Bed short rest mock update, Food / Kitchen mock update, Power mock update, Phone mock update, Day Result current-state summary, next-day mock DAY increment / reset, Door / Bed / Phone / Power / Fridge / Microwave object approach, Door / Bed / Phone / Power / Food-Kitchen close-up open/close, no-op item logs, candidate panel empty-area close, Desk close-up behavior, `D` / `F3` footprint tuning, `[ / ]` selection, `C` snippet output, debug ON visual rect / click area / footprint distinction, bed / desk / power / fridge / kitchen / door movement, debug ON object click, room input lock during close-up, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
+   - Start files: `docs/QUARTERVIEW_GUI_CHECKLIST.md`, `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
+   - Complete when the checklist is run in Godot GUI and pass / needs-fix items are recorded.
 2. Main replacement gate review:
    - Start files: `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/MAIN_REPLACEMENT_WORK_PLAN.md`.
    - Complete when Go / No-Go items are reviewed before any production entry change.

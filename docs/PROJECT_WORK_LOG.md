@@ -216,10 +216,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 HUD 위치, Bed -> 오늘 마무리 -> Day Result candidate, 다음 날 후보 DAY 증가, ESC / 닫기 / 빈 영역 클릭 close, room movement 복구, 기존 Desk / Power / Phone / Bed / Food-Kitchen / Door overlay 유지 여부를 수동 확인한다.
 
-### this commit - QuarterviewMain mock HUD state reactions
+### 0debe85 - QuarterviewMain mock HUD state reactions
 
-- Commit: `this commit`
+- Commit: `0debe85`
 - Result: Bed rest, Food / Kitchen, Power, and Phone candidate actions now update QuarterviewMain-only mock HUD state. Day Result candidate summarizes the current mock power / hunger / condition / info / note values, and next-day candidate still only advances the local mock day.
 - Changed: QuarterviewMain mock HUD state helpers / candidate action reactions / Day Result summary, handoff / status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Bed short rest, Fridge / Microwave food actions, Power module check, Phone item selection, Day Result summary, next-day reset, and existing overlay close / input-lock behavior를 수동 확인한다.
+
+### this commit - QuarterviewMain GUI checklist
+
+- Commit: `this commit`
+- Result: QuarterviewMain GUI 통합 점검을 위한 클릭 순서 중심 체크리스트를 추가했다. 배경, HUD, click movement, candidate panel, Desk / Power / Phone / Bed / Food-Kitchen / Door overlay, Day Result, mock HUD 반응, input lock, debug / tuning, restart, 반복 클릭 안정성을 확인 대상으로 정리했다.
+- Changed: `docs/QUARTERVIEW_GUI_CHECKLIST.md`, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: Godot GUI에서 `docs/QUARTERVIEW_GUI_CHECKLIST.md`를 따라 pass / needs-fix 항목을 기록한다.
