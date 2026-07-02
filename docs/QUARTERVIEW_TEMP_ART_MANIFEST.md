@@ -72,9 +72,17 @@ Current atlas status:
 - Alpha component scan found 18 slice candidates. The rects below are candidate bounds, not final production mapping data.
 - Visible green check found only 10 `#00ff00` pixels with alpha `1`, treated as negligible matte fringe for now.
 - Region preview helper: `docs/reference/qv_work_devices_atlas_regions_preview.png`.
+- Godot preview scene: `res://scenes/prototypes/quarterview/WorkDevicesAtlasPreview.tscn`.
 - There is no atlas region mapping Resource yet.
 - There is no `AtlasTexture`, `SpriteFrames`, Theme, or scene wiring yet.
 - Existing QuarterviewRoom objects still use invisible interaction / collision data and current placeholder/background visuals.
+
+Preview scene status:
+
+- `WorkDevicesAtlasPreview.tscn` creates runtime `AtlasTexture` previews from the rects below.
+- It is a prototype/debug verification scene only.
+- It is not registered in `PrototypeHub` yet.
+- It does not change `QuarterviewMain`, room object visuals, collision, pathfinding, interaction, or production UI.
 
 Region candidate table:
 
