@@ -256,10 +256,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 Yui 가독성, 발 위치, click movement, overlay / debug / tuning 흐름을 수동 확인한다.
 
-### this commit - QuarterviewMain Yui visual / motion tuning
+### 22a58d7 - QuarterviewMain Yui visual / motion tuning
 
-- Commit: `this commit`
+- Commit: `22a58d7`
 - Result: temporary Yui sprite 기본 scale을 `1.8`로 올리고 발 위치 offset을 맞췄으며, idle / walk FPS와 click / keyboard movement speed를 낮췄다. CollisionShape2D, pathfinding, interaction 판정은 변경하지 않았다.
 - Changed: `QuarterviewPlayer.gd`, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 Yui 크기, 발 위치, idle / walk 속도, 실제 click movement 속도, overlay / HUD / debug / tuning 흐름을 수동 확인한다.
+
+### this commit - QuarterviewMain Yui idle stabilization / work devices atlas v1
+
+- Commit: `this commit`
+- Result: temporary Yui idle 기본값을 `0.8 fps` / 2-frame cycle로 낮춰 정지 중 움직임을 크게 줄였고, `qv_work_devices_atlas.png` 임시 work-device atlas 후보를 `2048x2048` 투명 PNG로 추가했다. Atlas mapping Resource와 scene wiring은 만들지 않았다.
+- Changed: `QuarterviewPlayer.gd`, `qv_work_devices_atlas.png`, temporary art manifest, status docs.
+- Validation: PNG size / alpha check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: Godot GUI에서 idle 안정감, walk 유지, click movement, overlay / HUD / debug / tuning 흐름을 확인하고, atlas region mapping / object visual 교체는 별도 작업으로 진행한다.

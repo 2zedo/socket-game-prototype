@@ -9,7 +9,8 @@ const TEMP_YUI_WALK_TEXTURE_PATH := "res://assets/art/quarterview/character/yui/
 const TEMP_YUI_FRAME_SIZE := Vector2i(128, 128)
 const TEMP_YUI_IDLE_FRAME_COUNT := 4
 const TEMP_YUI_WALK_FRAME_COUNT := 6
-const DEFAULT_TEMP_YUI_IDLE_FPS := 2.5
+const DEFAULT_TEMP_YUI_IDLE_FRAME_LIMIT := 2
+const DEFAULT_TEMP_YUI_IDLE_FPS := 0.8
 const DEFAULT_TEMP_YUI_WALK_FPS := 6.0
 const DEFAULT_TEMP_YUI_VISUAL_SCALE := 1.8
 const DEFAULT_TEMP_YUI_VISUAL_OFFSET := Vector2(0, -56)
@@ -17,6 +18,7 @@ const DEFAULT_TEMP_YUI_VISUAL_OFFSET := Vector2(0, -56)
 @export var move_speed := DEFAULT_MOVE_SPEED
 @export var temp_yui_visual_scale := DEFAULT_TEMP_YUI_VISUAL_SCALE
 @export var temp_yui_visual_offset := DEFAULT_TEMP_YUI_VISUAL_OFFSET
+@export var temp_yui_idle_frame_limit := DEFAULT_TEMP_YUI_IDLE_FRAME_LIMIT
 @export var temp_yui_idle_fps := DEFAULT_TEMP_YUI_IDLE_FPS
 @export var temp_yui_walk_fps := DEFAULT_TEMP_YUI_WALK_FPS
 var keyboard_input_enabled := false
@@ -150,7 +152,9 @@ func _update_temp_yui_sprite(delta: float) -> void:
 	else:
 		temp_yui_frame_time += delta
 
-	var frame_count := TEMP_YUI_WALK_FRAME_COUNT if is_walking else TEMP_YUI_IDLE_FRAME_COUNT
+	var frame_count := TEMP_YUI_WALK_FRAME_COUNT
+	if not is_walking:
+		frame_count = int(clamp(temp_yui_idle_frame_limit, 1, TEMP_YUI_IDLE_FRAME_COUNT))
 	var frame_rate: float = temp_yui_walk_fps if is_walking else temp_yui_idle_fps
 	frame_rate = max(frame_rate, 0.1)
 	temp_yui_frame_index = int(floor(temp_yui_frame_time * frame_rate)) % frame_count
