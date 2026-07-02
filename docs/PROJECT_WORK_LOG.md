@@ -272,10 +272,18 @@
 - Validation: PNG size / alpha check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 idle 안정감, walk 유지, click movement, overlay / HUD / debug / tuning 흐름을 확인하고, atlas region mapping / object visual 교체는 별도 작업으로 진행한다.
 
-### this commit - Quarterview work devices atlas region mapping candidate
+### dcb5139 - Quarterview work devices atlas region mapping candidate
 
-- Commit: `this commit`
+- Commit: `dcb5139`
 - Result: `qv_work_devices_atlas.png`를 alpha 기준으로 재검사하고 18개 region candidate rect를 `QUARTERVIEW_TEMP_ART_MANIFEST.md`에 정리했다. 검수용 preview image와 prototype-only Godot preview scene을 추가했으며, QuarterviewMain object visual wiring은 하지 않았다.
 - Changed: temporary art manifest, region preview image, `WorkDevicesAtlasPreview` scene / script, status docs.
 - Validation: PNG size / alpha / visible-green check, `git diff --check`, Godot project parse, WorkDevicesAtlasPreview headless startup, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: atlas region candidate를 GUI/이미지 기준으로 수동 확인한 뒤, 별도 작업에서 mapping Resource 또는 일부 object visual 후보 연결을 진행한다.
+
+### this commit - QuarterviewMain Phone screen candidate / Power drag prototype
+
+- Commit: `this commit`
+- Result: Phone object의 `사용하기`에서 tabbed Phone screen candidate를 열고 상태 / 메시지 / 의뢰 후보 화면을 볼 수 있게 했다. `ui_phone_atlas.png` 임시 Phone UI atlas를 추가하고, Power close-up에는 module drag / grid snap / invalid reset 후보 동작을 추가했다.
+- Changed: QuarterviewMain Phone screen candidate, Power board drag prototype, temporary Phone UI atlas, art manifest, status docs.
+- Validation: Phone UI atlas PNG size / alpha / visible-green check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: GUI에서 Phone status / message / job tab, Power module drag / snap / reset, overlay close / room input lock, 기존 Desk / Bed / Food-Kitchen / Door / HUD / debug / tuning 회귀 여부를 수동 확인한다.

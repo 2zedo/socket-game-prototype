@@ -39,6 +39,34 @@ Runtime tuning:
 - The corresponding Yui `.png.import` files are part of this temporary art pass.
 - Unrelated addon, `.uid`, audio `.import`, or license files remain outside the staging scope.
 
+## Quarterview Phone UI Atlas v1
+
+| File | Use | Canvas | Background | Notes |
+| --- | --- | --- | --- | --- |
+| `godot/assets/art/ui/atlases/ui_phone_atlas.png` | Temporary Phone screen candidate UI atlas | `1024x1024` | transparent alpha PNG | Temporary imagegen pass. Not final production UI. |
+
+Included region candidates:
+
+- `phone_frame`
+- `phone_screen_dark`
+- `phone_battery_icon`
+- `phone_signal_icon`
+- `phone_message_icon`
+- `phone_power_icon`
+- `phone_tab_status`
+- `phone_tab_message`
+- `phone_tab_job`
+- `phone_low_battery_overlay`
+
+Current atlas status:
+
+- Generated as a temporary imagegen UI sheet.
+- The atlas has transparent alpha and is normalized to `1024x1024`.
+- Alpha check found transparent corners and no visible green chroma-key pixels.
+- `QuarterviewMain` can load this PNG as an optional candidate preview inside the Phone screen overlay.
+- There is no phone atlas region mapping Resource yet.
+- There is no production `PhoneUI`, Theme, Control skin, `SurvivalState`, battery, message, or job wiring.
+
 ## Quarterview Work Devices Atlas v1
 
 | File | Use | Canvas | Background | Notes |
