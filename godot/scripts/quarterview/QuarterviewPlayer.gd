@@ -11,9 +11,11 @@ const TEMP_YUI_IDLE_FRAME_COUNT := 4
 const TEMP_YUI_WALK_FRAME_COUNT := 6
 const TEMP_YUI_IDLE_FRAME_RATE := 4.0
 const TEMP_YUI_WALK_FRAME_RATE := 8.0
-const TEMP_YUI_SPRITE_SCALE := 0.62
-const TEMP_YUI_SPRITE_OFFSET := Vector2(0, -18)
+const DEFAULT_TEMP_YUI_VISUAL_SCALE := 1.22
+const DEFAULT_TEMP_YUI_VISUAL_OFFSET := Vector2(0, -38)
 
+@export var temp_yui_visual_scale := DEFAULT_TEMP_YUI_VISUAL_SCALE
+@export var temp_yui_visual_offset := DEFAULT_TEMP_YUI_VISUAL_OFFSET
 var keyboard_input_enabled := false
 var path_points: PackedVector2Array = PackedVector2Array()
 var path_index := 0
@@ -123,8 +125,8 @@ func _setup_temp_yui_sprite() -> void:
 	temp_yui_sprite.name = "TempYuiSprite"
 	temp_yui_sprite.centered = true
 	temp_yui_sprite.region_enabled = true
-	temp_yui_sprite.position = TEMP_YUI_SPRITE_OFFSET
-	temp_yui_sprite.scale = Vector2.ONE * TEMP_YUI_SPRITE_SCALE
+	temp_yui_sprite.position = temp_yui_visual_offset
+	temp_yui_sprite.scale = Vector2.ONE * temp_yui_visual_scale
 	add_child(temp_yui_sprite)
 	temp_yui_sprite_loaded = true
 	_update_temp_yui_sprite(0.0)

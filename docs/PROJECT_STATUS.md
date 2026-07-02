@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `2ced4ad`
-- Phase: QuarterviewMain temporary Yui spritesheet verification
+- Current commit at task start: `0cb328d`
+- Phase: QuarterviewMain Yui visual scale tuning
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -43,6 +43,7 @@
 - QuarterviewMain GUI checklist: added a focused manual GUI checklist for background, HUD, click movement, candidate panel, all current overlays, mock HUD reactions, input lock, debug, tuning, restart, and stress-click checks.
 - QuarterviewMain temporary Yui spritesheet: generated idle / walk 4-direction PNG sheets and added an optional `QuarterviewPlayer` sprite loader while keeping the drawn placeholder as fallback.
 - QuarterviewMain temporary Yui spritesheet verification: confirmed transparent alpha, `128x128` frame rules, and tracked the corresponding Godot `.png.import` files.
+- QuarterviewMain Yui visual scale tuning: increased the temporary Yui sprite display scale and adjusted its visual offset while keeping collision / pathfinding / interaction sizing unchanged.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -60,9 +61,8 @@
 
 ## Changed Files In Latest Work
 
-- `godot/assets/art/quarterview/character/yui/yui_qv_idle_4dir.png.import`, `godot/assets/art/quarterview/character/yui/yui_qv_walk_4dir.png.import`: Godot import metadata for the temporary Yui sheets.
-- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`: records verified transparency, frame size, direction order, layout, and import scope.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the verification pass.
+- `godot/scripts/quarterview/QuarterviewPlayer.gd`: tunes temporary Yui visual scale / offset with placeholder fallback preserved.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the visual scale tuning pass.
 
 ## Validation Results
 

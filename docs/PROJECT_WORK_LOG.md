@@ -240,10 +240,18 @@
 - Validation: `git diff --check`, PNG size / alpha check, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 Yui sprite scale, frame direction, idle / walk readability, placeholder fallback safety를 수동 확인한다.
 
-### this commit - QuarterviewMain Yui spritesheet verification
+### 0cb328d - QuarterviewMain Yui spritesheet verification
 
-- Commit: `this commit`
+- Commit: `0cb328d`
 - Result: 실제 repo의 Yui idle / walk spritesheet가 투명 alpha, expected sheet size, `128x128` frame 규칙을 만족하는지 확인했고, direct Godot `.png.import` 파일을 추적 대상으로 정리했다.
 - Changed: Yui `.png.import` files, `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, status docs.
 - Validation: `git diff --check`, PNG size / alpha / visible-green check, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 Yui scale, direction row, idle / walk frame readability를 확인한다.
+
+### this commit - QuarterviewMain Yui visual scale tuning
+
+- Commit: `this commit`
+- Result: `QuarterviewPlayer`의 temporary Yui sprite 표시 scale을 키우고 발 위치 offset을 조정했다. CollisionShape2D, pathfinding, interaction 판정은 변경하지 않았다.
+- Changed: `QuarterviewPlayer.gd`, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: Godot GUI에서 Yui 가독성, 발 위치, click movement, overlay / debug / tuning 흐름을 수동 확인한다.
