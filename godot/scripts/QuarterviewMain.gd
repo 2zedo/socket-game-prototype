@@ -9,6 +9,9 @@ const STATUS_PANEL_AVOID_RECT := Rect2(Vector2(10, 10), Vector2(334, 160))
 const DESK_CLOSEUP_SIZE := Vector2(730, 520)
 const DESK_CLOSEUP_POSITION := Vector2(390, 74)
 const DESK_CLOSEUP_ENTRY_KEYS := ["desk", "laptop"]
+const POWER_CLOSEUP_SIZE := Vector2(690, 500)
+const POWER_CLOSEUP_POSITION := Vector2(430, 84)
+const POWER_CLOSEUP_ENTRY_KEYS := ["power"]
 const DESK_CLOSEUP_HOTSPOTS := [
 	{
 		"key": "laptop",
@@ -59,6 +62,62 @@ const DESK_CLOSEUP_HOTSPOTS := [
 		"rect": Rect2(Vector2(512, 230), Vector2(136, 68)),
 	},
 ]
+const POWER_CLOSEUP_MODULES := [
+	{
+		"key": "battery_core",
+		"display_name": "Battery Core",
+		"role": "power_module",
+		"description": "남는 전력을 임시 저장하는 후보 모듈입니다. 아직 실제 충전 / 방전 계산은 없습니다.",
+		"candidate_action": "inspect_battery_noop",
+		"rect": Rect2(Vector2(82, 82), Vector2(132, 70)),
+		"color": Color(0.16, 0.38, 0.48, 0.92),
+	},
+	{
+		"key": "socket_rail",
+		"display_name": "Socket Rail",
+		"role": "power_socket",
+		"description": "장치 연결 슬롯을 나타내는 후보 영역입니다. OutletMode와는 아직 연결하지 않았습니다.",
+		"candidate_action": "inspect_socket_noop",
+		"rect": Rect2(Vector2(246, 82), Vector2(210, 54)),
+		"color": Color(0.34, 0.28, 0.16, 0.94),
+	},
+	{
+		"key": "load_limiter",
+		"display_name": "Load Limiter",
+		"role": "power_safety",
+		"description": "과부하 제한 후보 모듈입니다. 실제 경고나 차단 로직은 없습니다.",
+		"candidate_action": "inspect_limiter_noop",
+		"rect": Rect2(Vector2(484, 80), Vector2(104, 86)),
+		"color": Color(0.48, 0.22, 0.14, 0.92),
+	},
+	{
+		"key": "adapter_bridge",
+		"display_name": "Adapter Bridge",
+		"role": "power_adapter",
+		"description": "다른 규격 장치를 임시로 연결하는 후보 부품입니다.",
+		"candidate_action": "inspect_adapter_noop",
+		"rect": Rect2(Vector2(126, 192), Vector2(94, 108)),
+		"color": Color(0.25, 0.24, 0.30, 0.94),
+	},
+	{
+		"key": "priority_bus",
+		"display_name": "Priority Bus",
+		"role": "power_routing",
+		"description": "어떤 장치에 전력을 우선 보낼지 정하는 후보 라인입니다.",
+		"candidate_action": "inspect_priority_noop",
+		"rect": Rect2(Vector2(260, 204), Vector2(176, 62)),
+		"color": Color(0.12, 0.36, 0.25, 0.94),
+	},
+	{
+		"key": "warning_meter",
+		"display_name": "Warning Meter",
+		"role": "power_warning",
+		"description": "소비량과 위험도를 보여줄 후보 계기입니다. 실제 SurvivalState와 연결하지 않았습니다.",
+		"candidate_action": "inspect_meter_noop",
+		"rect": Rect2(Vector2(474, 214), Vector2(126, 78)),
+		"color": Color(0.42, 0.34, 0.12, 0.94),
+	},
+]
 
 @onready var camera: Camera2D = $Camera2D
 @onready var quarterview_room: Node2D = $QuarterviewRoom
@@ -73,7 +132,9 @@ var focused_object_key := ""
 var focused_payload := {}
 var room_input_locked := false
 var desk_closeup_open := false
+var power_closeup_open := false
 var selected_desk_hotspot_key := "laptop"
+var selected_power_module_key := "battery_core"
 var interaction_panel: PanelContainer
 var interaction_title_label: Label
 var interaction_detail_label: Label
@@ -84,6 +145,13 @@ var desk_hotspot_title_label: Label
 var desk_hotspot_detail_label: Label
 var desk_hotspot_debug_label: Label
 var desk_hotspot_guides := {}
+var power_closeup_backdrop: ColorRect
+var power_closeup_panel: PanelContainer
+var power_module_buttons := {}
+var power_module_title_label: Label
+var power_module_detail_label: Label
+var power_module_debug_label: Label
+var power_module_guides := {}
 
 
 func _ready() -> void:
@@ -103,10 +171,17 @@ func _ready() -> void:
 
 	_build_interaction_panel()
 	_build_desk_closeup_overlay()
+	_build_power_closeup_overlay()
 	_update_status("QuarterviewMain candidate ready.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if power_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_power_closeup_content_point(event.position):
+			_hide_power_closeup()
+		get_viewport().set_input_as_handled()
+		return
+
 	if desk_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _is_desk_closeup_content_point(event.position):
 			_hide_desk_closeup()
@@ -126,6 +201,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == CANCEL_KEY:
+			if power_closeup_open:
+				_hide_power_closeup()
+				get_viewport().set_input_as_handled()
+				return
 			if desk_closeup_open:
 				_hide_desk_closeup()
 				get_viewport().set_input_as_handled()
@@ -138,7 +217,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_room_interaction_requested(object_key: String, action_key: String, payload: Dictionary) -> void:
-	if desk_closeup_open:
+	if _has_closeup_open():
 		return
 	var role := String(payload.get("role", "-"))
 	var display_name := String(payload.get("display_name", object_key))
@@ -168,6 +247,8 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 		_refresh_interaction_panel_detail(focused_object_key, focused_payload)
 	if desk_closeup_open:
 		_refresh_desk_hotspot_detail()
+	if power_closeup_open:
+		_refresh_power_module_detail()
 	quarterview_room.global_transform = room_transform
 	camera.global_transform = camera_transform
 	camera.zoom = camera_zoom
@@ -179,7 +260,7 @@ func _on_room_movement_path_failed(reason: String) -> void:
 
 func _update_status(message: String) -> void:
 	var debug_text := "Debug ON: arrow-key move enabled" if room_debug_enabled else "Normal: mouse click movement"
-	var modal_text := "Desk close-up open / room input locked" if desk_closeup_open else debug_text
+	var modal_text := _get_modal_status_text(debug_text)
 	status_label.text = "Candidate only / no production wiring\n%s\n%s" % [message, modal_text]
 	if room_debug_enabled:
 		var room_debug_summary := _get_room_debug_summary()
@@ -261,11 +342,14 @@ func _refresh_interaction_panel_detail(object_key: String, payload: Dictionary) 
 func _hide_interaction_panel() -> void:
 	if interaction_panel != null:
 		interaction_panel.visible = false
-	if not desk_closeup_open:
+	if not _has_closeup_open():
 		_set_room_input_locked(false)
 
 
 func _on_use_pressed() -> void:
+	if _should_open_power_closeup():
+		_open_power_closeup(focused_object_key)
+		return
 	if _should_open_desk_closeup():
 		_open_desk_closeup(focused_object_key)
 		return
@@ -299,9 +383,26 @@ func _set_room_input_locked(locked: bool) -> void:
 		quarterview_room.set_room_input_enabled(not room_input_locked)
 
 
+func _has_closeup_open() -> bool:
+	return desk_closeup_open or power_closeup_open
+
+
+func _get_modal_status_text(default_text: String) -> String:
+	if power_closeup_open:
+		return "Power equipment close-up open / room input locked"
+	if desk_closeup_open:
+		return "Desk close-up open / room input locked"
+	return default_text
+
+
 func _should_open_desk_closeup() -> bool:
 	var role := String(focused_payload.get("role", ""))
 	return focused_object_key in DESK_CLOSEUP_ENTRY_KEYS or role == "laptop_job"
+
+
+func _should_open_power_closeup() -> bool:
+	var role := String(focused_payload.get("role", ""))
+	return focused_object_key in POWER_CLOSEUP_ENTRY_KEYS or role == "power_management"
 
 
 func _build_desk_closeup_overlay() -> void:
@@ -479,6 +580,267 @@ func _is_desk_closeup_content_point(viewport_point: Vector2) -> bool:
 	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
 		panel_size = DESK_CLOSEUP_SIZE
 	return Rect2(desk_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _build_power_closeup_overlay() -> void:
+	power_closeup_backdrop = ColorRect.new()
+	power_closeup_backdrop.name = "PowerCloseupBackdrop"
+	power_closeup_backdrop.visible = false
+	power_closeup_backdrop.color = Color(0.0, 0.0, 0.0, 0.34)
+	power_closeup_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	power_closeup_backdrop.z_index = 110
+	power_closeup_backdrop.position = Vector2.ZERO
+	power_closeup_backdrop.size = _get_viewport_ui_size()
+	power_closeup_backdrop.gui_input.connect(_on_power_closeup_backdrop_gui_input)
+	$UILayer.add_child(power_closeup_backdrop)
+
+	power_closeup_panel = PanelContainer.new()
+	power_closeup_panel.name = "PowerEquipmentCloseupCandidate"
+	power_closeup_panel.visible = false
+	power_closeup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	power_closeup_panel.z_index = 111
+	power_closeup_panel.position = POWER_CLOSEUP_POSITION
+	power_closeup_panel.custom_minimum_size = POWER_CLOSEUP_SIZE
+	$UILayer.add_child(power_closeup_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	power_closeup_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "전력 장비"
+	title.add_theme_color_override("font_color", Color(0.96, 0.84, 0.56, 1.0))
+	title.add_theme_font_size_override("font_size", 22)
+	vbox.add_child(title)
+
+	var description := Label.new()
+	description.text = "제한된 전력을 모듈로 재배치하는 장치 후보입니다. OutletMode / SurvivalState 연결 없음."
+	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.78, 1.0))
+	description.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(description)
+
+	var board_surface := Control.new()
+	board_surface.name = "PowerBoardMock"
+	board_surface.custom_minimum_size = Vector2(632, 316)
+	vbox.add_child(board_surface)
+
+	var board_background := ColorRect.new()
+	board_background.color = Color(0.045, 0.052, 0.048, 0.96)
+	board_background.position = Vector2.ZERO
+	board_background.size = Vector2(632, 316)
+	board_surface.add_child(board_background)
+
+	_add_power_grid(board_surface, Vector2(42, 38), Vector2i(12, 6), Vector2(43, 36))
+
+	for module in POWER_CLOSEUP_MODULES:
+		var key := String(module["key"])
+		var rect: Rect2 = module["rect"]
+
+		var guide := ColorRect.new()
+		guide.name = "%sDebugRect" % key.capitalize().replace("_", "")
+		guide.color = Color(0.17, 0.82, 0.92, 0.18)
+		guide.position = rect.position
+		guide.size = rect.size
+		guide.visible = room_debug_enabled
+		guide.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		board_surface.add_child(guide)
+		power_module_guides[key] = guide
+
+		var button := Button.new()
+		button.name = "%sModuleButton" % key.capitalize().replace("_", "")
+		button.text = String(module["display_name"])
+		button.position = rect.position
+		button.size = rect.size
+		button.tooltip_text = String(module["description"])
+		button.modulate = module["color"]
+		button.pressed.connect(_on_power_module_pressed.bind(key))
+		board_surface.add_child(button)
+		power_module_buttons[key] = button
+
+	power_module_title_label = Label.new()
+	power_module_title_label.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72, 1.0))
+	power_module_title_label.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(power_module_title_label)
+
+	power_module_detail_label = Label.new()
+	power_module_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	power_module_detail_label.add_theme_color_override("font_color", Color(0.74, 0.82, 0.82, 1.0))
+	power_module_detail_label.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(power_module_detail_label)
+
+	power_module_debug_label = Label.new()
+	power_module_debug_label.visible = false
+	power_module_debug_label.add_theme_color_override("font_color", Color(0.50, 0.93, 0.96, 1.0))
+	power_module_debug_label.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(power_module_debug_label)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(button_row)
+
+	var inspect_button := Button.new()
+	inspect_button.text = "모듈 확인"
+	inspect_button.pressed.connect(_on_power_inspect_pressed)
+	button_row.add_child(inspect_button)
+
+	var explain_button := Button.new()
+	explain_button.text = "설명"
+	explain_button.pressed.connect(_on_power_explain_pressed)
+	button_row.add_child(explain_button)
+
+	var close_button := Button.new()
+	close_button.text = "닫기"
+	close_button.pressed.connect(_hide_power_closeup)
+	button_row.add_child(close_button)
+
+	var close_hint := Label.new()
+	close_hint.text = "ESC 닫기 / 전력 계산과 OutletMode는 아직 연결하지 않음"
+	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
+	close_hint.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(close_hint)
+
+	_select_power_module(selected_power_module_key)
+
+
+func _add_power_grid(parent: Control, origin: Vector2, cells: Vector2i, cell_size: Vector2) -> void:
+	for y in cells.y:
+		for x in cells.x:
+			var cell := ColorRect.new()
+			cell.name = "PowerGridCell_%d_%d" % [x, y]
+			cell.color = Color(0.09, 0.12, 0.11, 0.72) if (x + y) % 2 == 0 else Color(0.07, 0.09, 0.085, 0.72)
+			cell.position = origin + Vector2(x * cell_size.x, y * cell_size.y)
+			cell.size = cell_size - Vector2(3, 3)
+			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			parent.add_child(cell)
+
+
+func _open_power_closeup(source_key: String) -> void:
+	power_closeup_open = true
+	_hide_interaction_panel()
+	_set_room_input_locked(true)
+	power_closeup_backdrop.size = _get_viewport_ui_size()
+	power_closeup_backdrop.visible = true
+	power_closeup_panel.visible = true
+
+	if _get_power_module(selected_power_module_key).is_empty():
+		selected_power_module_key = "battery_core"
+	_select_power_module(selected_power_module_key)
+
+	last_interaction = "Power equipment / open"
+	last_interaction_debug = "%s / role=%s / action=power_closeup" % [
+		source_key,
+		String(focused_payload.get("role", "-")),
+	]
+	print("QuarterviewMain power close-up opened from %s / no production wiring" % source_key)
+	_update_status("Power equipment close-up candidate opened.")
+
+
+func _hide_power_closeup() -> void:
+	if power_closeup_backdrop != null:
+		power_closeup_backdrop.visible = false
+	if power_closeup_panel != null:
+		power_closeup_panel.visible = false
+	power_closeup_open = false
+	_set_room_input_locked(false)
+	_update_status("Power equipment close-up closed.")
+
+
+func _on_power_closeup_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_hide_power_closeup()
+		get_viewport().set_input_as_handled()
+
+
+func _is_power_closeup_content_point(viewport_point: Vector2) -> bool:
+	if power_closeup_panel == null or not power_closeup_panel.visible:
+		return false
+	var panel_size := power_closeup_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = POWER_CLOSEUP_SIZE
+	return Rect2(power_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _on_power_module_pressed(module_key: String) -> void:
+	_select_power_module(module_key)
+	_log_power_module_action("focus")
+
+
+func _on_power_inspect_pressed() -> void:
+	_log_power_module_action("primary")
+
+
+func _on_power_explain_pressed() -> void:
+	_log_power_module_action("inspect")
+
+
+func _select_power_module(module_key: String) -> void:
+	var module := _get_power_module(module_key)
+	if module.is_empty():
+		return
+
+	selected_power_module_key = module_key
+	for key in power_module_buttons.keys():
+		var button: Button = power_module_buttons[key]
+		var button_module := _get_power_module(String(key))
+		var prefix := "> " if String(key) == selected_power_module_key else ""
+		button.text = "%s%s" % [prefix, String(button_module.get("display_name", key))]
+	_refresh_power_module_detail()
+
+
+func _refresh_power_module_detail() -> void:
+	var module := _get_power_module(selected_power_module_key)
+	if module.is_empty():
+		return
+
+	power_module_title_label.text = String(module["display_name"])
+	power_module_detail_label.text = "%s\n\n전력 모듈 후보는 아직 연결되지 않았습니다." % String(module["description"])
+
+	var rect: Rect2 = module["rect"]
+	power_module_debug_label.visible = room_debug_enabled
+	if room_debug_enabled:
+		power_module_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nmodule rect: %s\nno-op status: OutletMode / SurvivalState disabled" % [
+			String(module["key"]),
+			String(module["role"]),
+			String(module["candidate_action"]),
+			_format_rect(rect),
+		]
+
+	for key in power_module_guides.keys():
+		var guide: ColorRect = power_module_guides[key]
+		guide.visible = room_debug_enabled
+		guide.color = Color(1.0, 0.78, 0.20, 0.24) if String(key) == selected_power_module_key else Color(0.17, 0.82, 0.92, 0.18)
+
+
+func _log_power_module_action(action_key: String) -> void:
+	var module := _get_power_module(selected_power_module_key)
+	if module.is_empty():
+		return
+
+	var display_name := String(module["display_name"])
+	var role := String(module["role"])
+	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
+	last_interaction_debug = "power_closeup:%s / role=%s / action=%s / candidate=%s" % [
+		selected_power_module_key,
+		role,
+		action_key,
+		String(module["candidate_action"]),
+	]
+	print("QuarterviewMain power close-up: %s / no production wiring" % last_interaction_debug)
+	_update_status("%s: 전력 모듈 후보는 아직 연결되지 않았습니다." % display_name)
+
+
+func _get_power_module(module_key: String) -> Dictionary:
+	for module in POWER_CLOSEUP_MODULES:
+		if String(module["key"]) == module_key:
+			return module
+	return {}
 
 
 func _is_interaction_panel_open() -> bool:

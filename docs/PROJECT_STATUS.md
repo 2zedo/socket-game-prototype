@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `511c606`
-- Phase: QuarterviewMain footprint tuning mode
+- Current commit at task start: `c2defec`
+- Phase: QuarterviewMain power equipment close-up candidate
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -36,6 +36,7 @@
 - Deprecated / scoped document notice pass: added targeted notices to legacy / conflict candidate docs, while leaving current source-of-truth docs unchanged.
 - QuarterviewMain footprint tuning: split visual body, click area, and blocker footprint candidates, and made path / collision blockers prefer floor-contact polygons over top-view rectangles.
 - QuarterviewMain footprint tuning mode: added object panel outside-click close, kept guessed footprints as debug/tuning candidates unless path-enabled, and added a debug-only F3 tuning mode for selected object footprint / approach / click area inspection.
+- QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
 - QuarterviewMain debug / close-up stabilization: fixed debug detail mixed-value text conversion, removed shadow warnings, and added empty-backdrop click close for the desk close-up candidate.
 - QuarterviewMain desk close-up candidate: added a no-op desk close-up overlay for desk / laptop use and locked room click movement while candidate UI is open.
 - QuarterviewMain interaction tuning: added object click priority, tuned approach points, clamped candidate panel placement, and reduced debug overlay text clutter.
@@ -49,9 +50,9 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/QuarterviewMain.gd`: adds candidate interaction panel outside-click close so empty clicks close the panel and never become room movement.
-- `godot/scripts/quarterview/QuarterviewRoom.gd`: marks existing footprint polygons as tuning candidates, separates debug-only footprints from path blockers, and adds F3 footprint tuning mode with `[ / ]` selection and `C` snippet output.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain footprint / close-up input pass.
+- `godot/scripts/QuarterviewMain.gd`: adds the Power equipment close-up candidate overlay with mock power modules, no-op status logging, room input lock, ESC / close button / backdrop close, and no OutletMode or SurvivalState wiring.
+- `godot/scripts/quarterview/QuarterviewRoom.gd`: unchanged in the latest work; Power object identity remains `key=power`, `role=power_management`.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the QuarterviewMain Power equipment close-up candidate pass.
 
 ## Validation Results
 
@@ -68,13 +69,13 @@
 - Main / QuarterviewMain production connection still requires a dedicated approved task.
 - Existing unrelated local changes were not staged.
 - Deprecated / scope notices do not rewrite old content; readers must still prioritize `docs/CONCENT_PROJECT_IDENTITY.md` when conflicts appear.
-- GUI confirmation is still needed for candidate panel empty-area click close, close-up empty-area click close, hotspot clicks keeping the overlay open, `D` then `F3` footprint tuning mode, `[ / ]` object selection, `C` layout snippet output / clipboard behavior, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, debug ON object click without errors, desk / laptop close-up entry, close-up ESC / Close behavior, room click lock while close-up is open, hotspot no-op status messages, tuned approach points, candidate panel clamp behavior, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
+- GUI confirmation is still needed for Power object approach, Power `사용하기` opening the new close-up, Power module no-op status logs, Power close-up ESC / Close / backdrop close, room movement lock while Power close-up is open, existing Desk close-up behavior, candidate panel empty-area click close, `D` then `F3` footprint tuning mode, `[ / ]` object selection, `C` layout snippet output / clipboard behavior, debug ON visual rect / click area / footprint readability, polygon footprint movement around bed / desk / power / fridge / kitchen objects, repeated `D` toggles without movement, player scale, path feel, obstacle avoidance, and debug failure reasons.
 
 ## Next Recommended Task
 
 1. QuarterviewMain GUI check:
    - Start files: `godot/scenes/QuarterviewMain.tscn`, `godot/scenes/quarterview/QuarterviewRoom.tscn`.
-   - Complete when background, candidate panel empty-area close, close-up empty-area close, hotspot clicks keeping overlay open, `D` / `F3` footprint tuning, `[ / ]` selection, `C` snippet output, debug ON visual rect / click area / footprint distinction, bed / desk / power / fridge / kitchen movement, debug ON object click, desk / laptop close-up entry, close-up ESC / Close, room input lock during close-up, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
+   - Complete when background, Power object approach, Power close-up open/close, Power module no-op logs, candidate panel empty-area close, Desk close-up behavior, `D` / `F3` footprint tuning, `[ / ]` selection, `C` snippet output, debug ON visual rect / click area / footprint distinction, bed / desk / power / fridge / kitchen movement, debug ON object click, room input lock during close-up, approach points, panel clamp, repeated `D` toggles without movement, normal/debug candidate panel split, player scale, obstacle-aware click movement, spam-click stability, `D` debug path overlay, and `R` restart are manually verified.
 2. Main replacement gate review:
    - Start files: `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`, `docs/MAIN_REPLACEMENT_WORK_PLAN.md`.
    - Complete when Go / No-Go items are reviewed before any production entry change.
