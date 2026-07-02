@@ -10,6 +10,12 @@
 | `godot/assets/art/quarterview/character/yui/yui_qv_idle_4dir.png` | Yui idle candidate | `128x128` | `4 rows x 4 columns` | `down_left`, `down_right`, `up_left`, `up_right` | Temporary imagegen pass. Transparent PNG. |
 | `godot/assets/art/quarterview/character/yui/yui_qv_walk_4dir.png` | Yui walk candidate | `128x128` | `4 rows x 6 columns` | `down_left`, `down_right`, `up_left`, `up_right` | Temporary imagegen pass. Transparent PNG. |
 
+Verification:
+
+- `yui_qv_idle_4dir.png` is `512x512`, has alpha, and contains no visible green chroma-key pixels.
+- `yui_qv_walk_4dir.png` is `768x512`, has alpha, and contains no visible green chroma-key pixels.
+- The border alpha is `0` for both files, so the background is transparent.
+
 ## Current Connection
 
 - `QuarterviewPlayer.gd` can load these sheets at runtime.
@@ -20,6 +26,6 @@
 ## Import Notes
 
 - The sheets are regular PNG files under `godot/assets/art/quarterview/character/yui/`.
-- Godot may create related `.import` files after project parse.
-- Only import files directly corresponding to these Yui PNG files are candidates for staging with this temporary art pass.
+- Godot creates `.png.import` files directly corresponding to these Yui PNG files.
+- The corresponding Yui `.png.import` files are part of this temporary art pass.
 - Unrelated addon, `.uid`, audio `.import`, or license files remain outside the staging scope.

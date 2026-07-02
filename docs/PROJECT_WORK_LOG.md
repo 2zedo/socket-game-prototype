@@ -232,10 +232,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 `docs/QUARTERVIEW_GUI_CHECKLIST.md`를 따라 pass / needs-fix 항목을 기록한다.
 
-### this commit - QuarterviewMain temporary Yui spritesheet
+### 2ced4ad - QuarterviewMain temporary Yui spritesheet
 
-- Commit: `this commit`
+- Commit: `2ced4ad`
 - Result: QuarterviewMain용 임시 Yui idle / walk 4방향 spritesheet v1을 추가하고, `QuarterviewPlayer`가 PNG를 optional로 로드하되 실패 시 기존 placeholder drawing을 유지하도록 했다.
 - Changed: Yui temporary PNG spritesheets, `QuarterviewPlayer.gd`, `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, status docs.
 - Validation: `git diff --check`, PNG size / alpha check, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 Yui sprite scale, frame direction, idle / walk readability, placeholder fallback safety를 수동 확인한다.
+
+### this commit - QuarterviewMain Yui spritesheet verification
+
+- Commit: `this commit`
+- Result: 실제 repo의 Yui idle / walk spritesheet가 투명 alpha, expected sheet size, `128x128` frame 규칙을 만족하는지 확인했고, direct Godot `.png.import` 파일을 추적 대상으로 정리했다.
+- Changed: Yui `.png.import` files, `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, status docs.
+- Validation: `git diff --check`, PNG size / alpha / visible-green check, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: Godot GUI에서 Yui scale, direction row, idle / walk frame readability를 확인한다.
