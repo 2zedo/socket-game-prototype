@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `22a58d7`
-- Phase: QuarterviewMain Yui idle stabilization and work devices atlas v1
+- Current commit at task start: `fb8f25e`
+- Phase: Quarterview work devices atlas region mapping candidate
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -47,6 +47,7 @@
 - QuarterviewMain Yui visual and motion tuning: set the temporary Yui sprite default scale to `1.8`, slowed idle / walk animation FPS, and reduced click / keyboard movement speed while keeping collision / pathfinding / interaction sizing unchanged.
 - QuarterviewMain Yui idle stabilization: reduced temporary idle animation to `0.8 fps` and limited idle cycling to 2 frames while keeping walk FPS, visual scale, movement speed, collision, pathfinding, and interaction sizing unchanged.
 - Quarterview temporary work devices atlas v1: generated `godot/assets/art/quarterview/atlases/qv_work_devices_atlas.png` as a transparent `2048x2048` imagegen atlas candidate; no region mapping Resource or scene wiring was added.
+- Quarterview work devices atlas region mapping candidate: inspected the atlas alpha, documented 18 candidate rects in the temporary art manifest, and added a docs-only region preview image. No QuarterviewMain scene wiring was added.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -64,9 +65,9 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/quarterview/QuarterviewPlayer.gd`: stabilizes temporary Yui idle animation with placeholder fallback preserved.
-- `godot/assets/art/quarterview/atlases/qv_work_devices_atlas.png`: adds a temporary transparent work-device atlas candidate.
-- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the idle tuning and atlas candidate pass.
+- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`: records work-device atlas region candidate rects and preview/debug status.
+- `docs/reference/qv_work_devices_atlas_regions_preview.png`: adds a docs-only preview image with candidate rect overlays.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the atlas mapping candidate pass.
 
 ## Validation Results
 

@@ -69,6 +69,32 @@ Current atlas status:
 
 - Generated as a temporary imagegen atlas / item sheet.
 - The atlas has transparent alpha and is normalized to `2048x2048`.
+- Alpha component scan found 18 slice candidates. The rects below are candidate bounds, not final production mapping data.
+- Visible green check found only 10 `#00ff00` pixels with alpha `1`, treated as negligible matte fringe for now.
+- Region preview helper: `docs/reference/qv_work_devices_atlas_regions_preview.png`.
 - There is no atlas region mapping Resource yet.
 - There is no `AtlasTexture`, `SpriteFrames`, Theme, or scene wiring yet.
 - Existing QuarterviewRoom objects still use invisible interaction / collision data and current placeholder/background visuals.
+
+Region candidate table:
+
+| Region | Rect `x,y,w,h` | Use | Notes |
+| --- | --- | --- | --- |
+| `laptop_off` | `165,40,415,385` | Desk / Laptop off visual candidate | Auto bbox from alpha component. |
+| `laptop_on` | `703,40,415,385` | Desk / Laptop on visual candidate | Auto bbox from alpha component. |
+| `laptop_active` | `1241,40,415,385` | Desk / Laptop active visual candidate | Auto bbox from alpha component. |
+| `phone_idle` | `168,511,267,190` | Phone idle visual candidate | Auto bbox from alpha component. |
+| `phone_charging` | `617,511,267,190` | Phone charging visual candidate | Auto bbox from alpha component. |
+| `charger` | `1128,514,204,174` | Charger / adapter visual candidate | Auto bbox from alpha component. |
+| `cable` | `1557,511,263,205` | Loose cable visual candidate | Auto bbox from alpha component. |
+| `power_strip_empty` | `400,770,373,215` | Power strip empty visual candidate | Auto bbox from alpha component. |
+| `power_strip_active` | `1077,770,374,215` | Power strip active visual candidate | Auto bbox from alpha component. |
+| `comm_off` | `460,1015,313,222` | Communication device off visual candidate | Auto bbox from alpha component. |
+| `comm_on` | `1146,1015,314,222` | Communication device on visual candidate | Auto bbox from alpha component. |
+| `node17_off` | `442,1270,264,199` | NODE-17 off visual candidate | Auto bbox from alpha component. |
+| `node17_on` | `1125,1270,264,199` | NODE-17 on visual candidate | Auto bbox from alpha component. |
+| `signal_booster_off` | `432,1472,243,219` | Signal booster off visual candidate | Auto bbox from alpha component. |
+| `signal_booster_on` | `1140,1472,244,219` | Signal booster on visual candidate | Auto bbox from alpha component. |
+| `speaker_off` | `294,1708,182,280` | Speaker / audio analyzer off visual candidate | Auto bbox from alpha component. |
+| `speaker_on` | `770,1708,181,280` | Speaker / audio analyzer on visual candidate | Auto bbox from alpha component. |
+| `ups_idle` | `1259,1709,283,292` | UPS / backup power visual candidate | Auto bbox from alpha component. |

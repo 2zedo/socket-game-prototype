@@ -264,10 +264,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 Yui 크기, 발 위치, idle / walk 속도, 실제 click movement 속도, overlay / HUD / debug / tuning 흐름을 수동 확인한다.
 
-### this commit - QuarterviewMain Yui idle stabilization / work devices atlas v1
+### fb8f25e - QuarterviewMain Yui idle stabilization / work devices atlas v1
 
-- Commit: `this commit`
+- Commit: `fb8f25e`
 - Result: temporary Yui idle 기본값을 `0.8 fps` / 2-frame cycle로 낮춰 정지 중 움직임을 크게 줄였고, `qv_work_devices_atlas.png` 임시 work-device atlas 후보를 `2048x2048` 투명 PNG로 추가했다. Atlas mapping Resource와 scene wiring은 만들지 않았다.
 - Changed: `QuarterviewPlayer.gd`, `qv_work_devices_atlas.png`, temporary art manifest, status docs.
 - Validation: PNG size / alpha check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: Godot GUI에서 idle 안정감, walk 유지, click movement, overlay / HUD / debug / tuning 흐름을 확인하고, atlas region mapping / object visual 교체는 별도 작업으로 진행한다.
+
+### this commit - Quarterview work devices atlas region mapping candidate
+
+- Commit: `this commit`
+- Result: `qv_work_devices_atlas.png`를 alpha 기준으로 재검사하고 18개 region candidate rect를 `QUARTERVIEW_TEMP_ART_MANIFEST.md`에 정리했다. 검수용 preview image를 `docs/reference/qv_work_devices_atlas_regions_preview.png`로 추가했으며, QuarterviewMain object visual wiring은 하지 않았다.
+- Changed: temporary art manifest, region preview image, status docs.
+- Validation: PNG size / alpha / visible-green check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: atlas region candidate를 GUI/이미지 기준으로 수동 확인한 뒤, 별도 작업에서 mapping Resource 또는 일부 object visual 후보 연결을 진행한다.
