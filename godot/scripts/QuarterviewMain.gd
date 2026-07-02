@@ -12,6 +12,9 @@ const DESK_CLOSEUP_ENTRY_KEYS := ["desk", "laptop"]
 const POWER_CLOSEUP_SIZE := Vector2(690, 500)
 const POWER_CLOSEUP_POSITION := Vector2(430, 84)
 const POWER_CLOSEUP_ENTRY_KEYS := ["power"]
+const PHONE_CLOSEUP_SIZE := Vector2(560, 440)
+const PHONE_CLOSEUP_POSITION := Vector2(510, 112)
+const PHONE_CLOSEUP_ENTRY_KEYS := ["phone"]
 const DESK_CLOSEUP_HOTSPOTS := [
 	{
 		"key": "laptop",
@@ -118,6 +121,40 @@ const POWER_CLOSEUP_MODULES := [
 		"color": Color(0.42, 0.34, 0.12, 0.94),
 	},
 ]
+const PHONE_CLOSEUP_ITEMS := [
+	{
+		"key": "battery",
+		"display_name": "Battery",
+		"role": "phone_battery",
+		"description": "전화기 배터리와 충전 후보 상태를 확인합니다. 실제 Phone battery 값은 아직 읽지 않습니다.",
+		"candidate_action": "check_battery_noop",
+		"value": "47% 후보",
+	},
+	{
+		"key": "signal",
+		"display_name": "Signal",
+		"role": "phone_signal",
+		"description": "THE GRID 내부망 신호 후보를 확인합니다. 실제 통신 이벤트와 연결하지 않았습니다.",
+		"candidate_action": "check_signal_noop",
+		"value": "weak / unstable",
+	},
+	{
+		"key": "messages",
+		"display_name": "Messages",
+		"role": "phone_messages",
+		"description": "미확인 연락 후보입니다. 실제 PhoneUI 메시지 목록은 열지 않습니다.",
+		"candidate_action": "open_messages_noop",
+		"value": "0 new",
+	},
+	{
+		"key": "charge_port",
+		"display_name": "Charge Port",
+		"role": "phone_charge",
+		"description": "충전 포트 후보입니다. SurvivalState 충전 계산과 연결하지 않았습니다.",
+		"candidate_action": "charge_noop",
+		"value": "not wired",
+	},
+]
 
 @onready var camera: Camera2D = $Camera2D
 @onready var quarterview_room: Node2D = $QuarterviewRoom
@@ -133,8 +170,10 @@ var focused_payload := {}
 var room_input_locked := false
 var desk_closeup_open := false
 var power_closeup_open := false
+var phone_closeup_open := false
 var selected_desk_hotspot_key := "laptop"
 var selected_power_module_key := "battery_core"
+var selected_phone_item_key := "battery"
 var interaction_panel: PanelContainer
 var interaction_title_label: Label
 var interaction_detail_label: Label
@@ -152,6 +191,12 @@ var power_module_title_label: Label
 var power_module_detail_label: Label
 var power_module_debug_label: Label
 var power_module_guides := {}
+var phone_closeup_backdrop: ColorRect
+var phone_closeup_panel: PanelContainer
+var phone_item_buttons := {}
+var phone_item_title_label: Label
+var phone_item_detail_label: Label
+var phone_item_debug_label: Label
 
 
 func _ready() -> void:
@@ -172,10 +217,17 @@ func _ready() -> void:
 	_build_interaction_panel()
 	_build_desk_closeup_overlay()
 	_build_power_closeup_overlay()
+	_build_phone_closeup_overlay()
 	_update_status("QuarterviewMain candidate ready.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if phone_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_phone_closeup_content_point(event.position):
+			_hide_phone_closeup()
+		get_viewport().set_input_as_handled()
+		return
+
 	if power_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _is_power_closeup_content_point(event.position):
 			_hide_power_closeup()
@@ -201,6 +253,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == CANCEL_KEY:
+			if phone_closeup_open:
+				_hide_phone_closeup()
+				get_viewport().set_input_as_handled()
+				return
 			if power_closeup_open:
 				_hide_power_closeup()
 				get_viewport().set_input_as_handled()
@@ -249,6 +305,8 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 		_refresh_desk_hotspot_detail()
 	if power_closeup_open:
 		_refresh_power_module_detail()
+	if phone_closeup_open:
+		_refresh_phone_item_detail()
 	quarterview_room.global_transform = room_transform
 	camera.global_transform = camera_transform
 	camera.zoom = camera_zoom
@@ -347,6 +405,9 @@ func _hide_interaction_panel() -> void:
 
 
 func _on_use_pressed() -> void:
+	if _should_open_phone_closeup():
+		_open_phone_closeup(focused_object_key)
+		return
 	if _should_open_power_closeup():
 		_open_power_closeup(focused_object_key)
 		return
@@ -384,10 +445,12 @@ func _set_room_input_locked(locked: bool) -> void:
 
 
 func _has_closeup_open() -> bool:
-	return desk_closeup_open or power_closeup_open
+	return desk_closeup_open or power_closeup_open or phone_closeup_open
 
 
 func _get_modal_status_text(default_text: String) -> String:
+	if phone_closeup_open:
+		return "Phone candidate open / room input locked"
 	if power_closeup_open:
 		return "Power equipment close-up open / room input locked"
 	if desk_closeup_open:
@@ -403,6 +466,11 @@ func _should_open_desk_closeup() -> bool:
 func _should_open_power_closeup() -> bool:
 	var role := String(focused_payload.get("role", ""))
 	return focused_object_key in POWER_CLOSEUP_ENTRY_KEYS or role == "power_management"
+
+
+func _should_open_phone_closeup() -> bool:
+	var role := String(focused_payload.get("role", ""))
+	return focused_object_key in PHONE_CLOSEUP_ENTRY_KEYS or role == "phone_status" or role == "phone_charge"
 
 
 func _build_desk_closeup_overlay() -> void:
@@ -840,6 +908,232 @@ func _get_power_module(module_key: String) -> Dictionary:
 	for module in POWER_CLOSEUP_MODULES:
 		if String(module["key"]) == module_key:
 			return module
+	return {}
+
+
+func _build_phone_closeup_overlay() -> void:
+	phone_closeup_backdrop = ColorRect.new()
+	phone_closeup_backdrop.name = "PhoneCloseupBackdrop"
+	phone_closeup_backdrop.visible = false
+	phone_closeup_backdrop.color = Color(0.0, 0.0, 0.0, 0.30)
+	phone_closeup_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	phone_closeup_backdrop.z_index = 120
+	phone_closeup_backdrop.position = Vector2.ZERO
+	phone_closeup_backdrop.size = _get_viewport_ui_size()
+	phone_closeup_backdrop.gui_input.connect(_on_phone_closeup_backdrop_gui_input)
+	$UILayer.add_child(phone_closeup_backdrop)
+
+	phone_closeup_panel = PanelContainer.new()
+	phone_closeup_panel.name = "PhoneStatusCloseupCandidate"
+	phone_closeup_panel.visible = false
+	phone_closeup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	phone_closeup_panel.z_index = 121
+	phone_closeup_panel.position = PHONE_CLOSEUP_POSITION
+	phone_closeup_panel.custom_minimum_size = PHONE_CLOSEUP_SIZE
+	$UILayer.add_child(phone_closeup_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	phone_closeup_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Phone Candidate"
+	title.add_theme_color_override("font_color", Color(0.78, 0.90, 0.96, 1.0))
+	title.add_theme_font_size_override("font_size", 22)
+	vbox.add_child(title)
+
+	var description := Label.new()
+	description.text = "연락 / 충전 상태 확인 후보입니다. PhoneUI / SurvivalState 연결 없음."
+	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.84, 1.0))
+	description.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(description)
+
+	var item_grid := GridContainer.new()
+	item_grid.name = "PhoneStatusGrid"
+	item_grid.columns = 2
+	item_grid.add_theme_constant_override("h_separation", 8)
+	item_grid.add_theme_constant_override("v_separation", 8)
+	vbox.add_child(item_grid)
+
+	for item in PHONE_CLOSEUP_ITEMS:
+		var key := String(item["key"])
+		var button := Button.new()
+		button.name = "%sPhoneItemButton" % key.capitalize().replace("_", "")
+		button.custom_minimum_size = Vector2(250, 74)
+		button.tooltip_text = String(item["description"])
+		button.pressed.connect(_on_phone_item_pressed.bind(key))
+		item_grid.add_child(button)
+		phone_item_buttons[key] = button
+
+	phone_item_title_label = Label.new()
+	phone_item_title_label.add_theme_color_override("font_color", Color(0.90, 0.88, 0.74, 1.0))
+	phone_item_title_label.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(phone_item_title_label)
+
+	phone_item_detail_label = Label.new()
+	phone_item_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	phone_item_detail_label.add_theme_color_override("font_color", Color(0.74, 0.82, 0.84, 1.0))
+	phone_item_detail_label.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(phone_item_detail_label)
+
+	phone_item_debug_label = Label.new()
+	phone_item_debug_label.visible = false
+	phone_item_debug_label.add_theme_color_override("font_color", Color(0.50, 0.93, 0.96, 1.0))
+	phone_item_debug_label.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(phone_item_debug_label)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(button_row)
+
+	var use_button := Button.new()
+	use_button.text = "확인"
+	use_button.pressed.connect(_on_phone_use_pressed)
+	button_row.add_child(use_button)
+
+	var inspect_button := Button.new()
+	inspect_button.text = "설명"
+	inspect_button.pressed.connect(_on_phone_inspect_pressed)
+	button_row.add_child(inspect_button)
+
+	var close_button := Button.new()
+	close_button.text = "닫기"
+	close_button.pressed.connect(_hide_phone_closeup)
+	button_row.add_child(close_button)
+
+	var close_hint := Label.new()
+	close_hint.text = "ESC 닫기 / PhoneUI와 실제 배터리 상태는 아직 연결하지 않음"
+	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.70, 0.92))
+	close_hint.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(close_hint)
+
+	_select_phone_item(selected_phone_item_key)
+
+
+func _open_phone_closeup(source_key: String) -> void:
+	phone_closeup_open = true
+	_hide_interaction_panel()
+	_set_room_input_locked(true)
+	phone_closeup_backdrop.size = _get_viewport_ui_size()
+	phone_closeup_backdrop.visible = true
+	phone_closeup_panel.visible = true
+
+	if _get_phone_item(selected_phone_item_key).is_empty():
+		selected_phone_item_key = "battery"
+	_select_phone_item(selected_phone_item_key)
+
+	last_interaction = "Phone candidate / open"
+	last_interaction_debug = "%s / role=%s / action=phone_closeup" % [
+		source_key,
+		String(focused_payload.get("role", "-")),
+	]
+	print("QuarterviewMain phone close-up opened from %s / no production wiring" % source_key)
+	_update_status("Phone candidate opened.")
+
+
+func _hide_phone_closeup() -> void:
+	if phone_closeup_backdrop != null:
+		phone_closeup_backdrop.visible = false
+	if phone_closeup_panel != null:
+		phone_closeup_panel.visible = false
+	phone_closeup_open = false
+	_set_room_input_locked(false)
+	_update_status("Phone candidate closed.")
+
+
+func _on_phone_closeup_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_hide_phone_closeup()
+		get_viewport().set_input_as_handled()
+
+
+func _is_phone_closeup_content_point(viewport_point: Vector2) -> bool:
+	if phone_closeup_panel == null or not phone_closeup_panel.visible:
+		return false
+	var panel_size := phone_closeup_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = PHONE_CLOSEUP_SIZE
+	return Rect2(phone_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _on_phone_item_pressed(item_key: String) -> void:
+	_select_phone_item(item_key)
+	_log_phone_item_action("focus")
+
+
+func _on_phone_use_pressed() -> void:
+	_log_phone_item_action("primary")
+
+
+func _on_phone_inspect_pressed() -> void:
+	_log_phone_item_action("inspect")
+
+
+func _select_phone_item(item_key: String) -> void:
+	var item := _get_phone_item(item_key)
+	if item.is_empty():
+		return
+
+	selected_phone_item_key = item_key
+	for key in phone_item_buttons.keys():
+		var button: Button = phone_item_buttons[key]
+		var button_item := _get_phone_item(String(key))
+		var prefix := "> " if String(key) == selected_phone_item_key else ""
+		button.text = "%s%s\n%s" % [
+			prefix,
+			String(button_item.get("display_name", key)),
+			String(button_item.get("value", "")),
+		]
+	_refresh_phone_item_detail()
+
+
+func _refresh_phone_item_detail() -> void:
+	var item := _get_phone_item(selected_phone_item_key)
+	if item.is_empty():
+		return
+
+	phone_item_title_label.text = String(item["display_name"])
+	phone_item_detail_label.text = "%s\n\nPhone candidate only. 실제 PhoneUI / SurvivalState 값은 아직 연결되지 않았습니다." % String(item["description"])
+
+	phone_item_debug_label.visible = room_debug_enabled
+	if room_debug_enabled:
+		phone_item_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nvalue: %s\nno-op status: PhoneUI / SurvivalState disabled" % [
+			String(item["key"]),
+			String(item["role"]),
+			String(item["candidate_action"]),
+			String(item["value"]),
+		]
+
+
+func _log_phone_item_action(action_key: String) -> void:
+	var item := _get_phone_item(selected_phone_item_key)
+	if item.is_empty():
+		return
+
+	var display_name := String(item["display_name"])
+	var role := String(item["role"])
+	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
+	last_interaction_debug = "phone_closeup:%s / role=%s / action=%s / candidate=%s" % [
+		selected_phone_item_key,
+		role,
+		action_key,
+		String(item["candidate_action"]),
+	]
+	print("QuarterviewMain phone close-up: %s / no production wiring" % last_interaction_debug)
+	_update_status("%s: Phone candidate no-op." % display_name)
+
+
+func _get_phone_item(item_key: String) -> Dictionary:
+	for item in PHONE_CLOSEUP_ITEMS:
+		if String(item["key"]) == item_key:
+			return item
 	return {}
 
 

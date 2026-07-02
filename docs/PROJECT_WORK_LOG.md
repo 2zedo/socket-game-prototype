@@ -160,10 +160,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, full GUT 54 tests passed.
 - Next: GUI에서 panel 빈 영역 닫기, close-up 빈 영역 닫기, `D` / `F3` tuning mode, `[ / ]` object selection, `C` snippet output / clipboard, selected footprint / click area / approach marker 가독성을 수동 확인한다.
 
-### this commit - QuarterviewMain Power equipment close-up candidate
+### 69ba1c4 - QuarterviewMain Power equipment close-up candidate
 
-- Commit: `this commit`
+- Commit: `69ba1c4`
 - Result: Power object의 `사용하기`에서 no-op Power equipment close-up candidate overlay를 열고, mock power-board grid와 placeholder modules를 선택할 수 있게 했다. Room movement는 close-up 동안 잠기며, ESC / 닫기 / 빈 영역 클릭으로 닫는다.
 - Changed: QuarterviewMain power close-up overlay / module no-op log, status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Power object 접근, `사용하기`로 close-up 열기, module 선택 / 모듈 확인 / 설명 no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk close-up 유지 여부를 수동 확인한다.
+
+### this commit - QuarterviewMain Phone candidate overlay
+
+- Commit: `this commit`
+- Result: Phone object의 `사용하기`에서 no-op Phone candidate overlay를 열고, Battery / Signal / Messages / Charge Port 후보 상태를 확인할 수 있게 했다. Room movement는 overlay 동안 잠기며, ESC / 닫기 / 빈 영역 클릭으로 닫는다.
+- Changed: QuarterviewMain phone candidate overlay / item no-op log, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: GUI에서 Phone object 접근, `사용하기`로 overlay 열기, item 선택 / 확인 / 설명 no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk / Power close-up 유지 여부를 수동 확인한다.
