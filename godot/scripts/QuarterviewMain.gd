@@ -15,6 +15,9 @@ const POWER_CLOSEUP_ENTRY_KEYS := ["power"]
 const PHONE_CLOSEUP_SIZE := Vector2(560, 440)
 const PHONE_CLOSEUP_POSITION := Vector2(510, 112)
 const PHONE_CLOSEUP_ENTRY_KEYS := ["phone"]
+const BED_CLOSEUP_SIZE := Vector2(590, 430)
+const BED_CLOSEUP_POSITION := Vector2(480, 116)
+const BED_CLOSEUP_ENTRY_KEYS := ["bed"]
 const DESK_CLOSEUP_HOTSPOTS := [
 	{
 		"key": "laptop",
@@ -155,6 +158,32 @@ const PHONE_CLOSEUP_ITEMS := [
 		"value": "not wired",
 	},
 ]
+const BED_REST_OPTIONS := [
+	{
+		"key": "short_rest",
+		"display_name": "잠깐 쉰다",
+		"role": "rest_candidate",
+		"description": "짧게 숨을 고르는 후보 행동입니다. 실제 시간 / 컨디션 변화는 아직 없습니다.",
+		"candidate_action": "short_rest_noop",
+		"value": "time +0 / condition +0",
+	},
+	{
+		"key": "end_day",
+		"display_name": "오늘을 마무리한다",
+		"role": "manual_end_day",
+		"description": "하루 종료 후보 행동입니다. DayResultPanel과 SurvivalState day advance는 아직 연결하지 않았습니다.",
+		"candidate_action": "end_day_candidate_noop",
+		"value": "result candidate only",
+	},
+	{
+		"key": "check_condition",
+		"display_name": "몸 상태를 확인한다",
+		"role": "condition_check",
+		"description": "허기 / 컨디션 / 피로 표시 후보입니다. 실제 production 상태값은 읽지 않습니다.",
+		"candidate_action": "check_condition_noop",
+		"value": "hunger / condition mock",
+	},
+]
 
 @onready var camera: Camera2D = $Camera2D
 @onready var quarterview_room: Node2D = $QuarterviewRoom
@@ -171,9 +200,11 @@ var room_input_locked := false
 var desk_closeup_open := false
 var power_closeup_open := false
 var phone_closeup_open := false
+var bed_closeup_open := false
 var selected_desk_hotspot_key := "laptop"
 var selected_power_module_key := "battery_core"
 var selected_phone_item_key := "battery"
+var selected_bed_option_key := "short_rest"
 var interaction_panel: PanelContainer
 var interaction_title_label: Label
 var interaction_detail_label: Label
@@ -197,6 +228,12 @@ var phone_item_buttons := {}
 var phone_item_title_label: Label
 var phone_item_detail_label: Label
 var phone_item_debug_label: Label
+var bed_closeup_backdrop: ColorRect
+var bed_closeup_panel: PanelContainer
+var bed_option_buttons := {}
+var bed_option_title_label: Label
+var bed_option_detail_label: Label
+var bed_option_debug_label: Label
 
 
 func _ready() -> void:
@@ -218,10 +255,17 @@ func _ready() -> void:
 	_build_desk_closeup_overlay()
 	_build_power_closeup_overlay()
 	_build_phone_closeup_overlay()
+	_build_bed_closeup_overlay()
 	_update_status("QuarterviewMain candidate ready.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if bed_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_bed_closeup_content_point(event.position):
+			_hide_bed_closeup()
+		get_viewport().set_input_as_handled()
+		return
+
 	if phone_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _is_phone_closeup_content_point(event.position):
 			_hide_phone_closeup()
@@ -253,6 +297,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == CANCEL_KEY:
+			if bed_closeup_open:
+				_hide_bed_closeup()
+				get_viewport().set_input_as_handled()
+				return
 			if phone_closeup_open:
 				_hide_phone_closeup()
 				get_viewport().set_input_as_handled()
@@ -307,6 +355,8 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 		_refresh_power_module_detail()
 	if phone_closeup_open:
 		_refresh_phone_item_detail()
+	if bed_closeup_open:
+		_refresh_bed_option_detail()
 	quarterview_room.global_transform = room_transform
 	camera.global_transform = camera_transform
 	camera.zoom = camera_zoom
@@ -405,6 +455,9 @@ func _hide_interaction_panel() -> void:
 
 
 func _on_use_pressed() -> void:
+	if _should_open_bed_closeup():
+		_open_bed_closeup(focused_object_key)
+		return
 	if _should_open_phone_closeup():
 		_open_phone_closeup(focused_object_key)
 		return
@@ -445,10 +498,12 @@ func _set_room_input_locked(locked: bool) -> void:
 
 
 func _has_closeup_open() -> bool:
-	return desk_closeup_open or power_closeup_open or phone_closeup_open
+	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open
 
 
 func _get_modal_status_text(default_text: String) -> String:
+	if bed_closeup_open:
+		return "Bed rest candidate open / room input locked"
 	if phone_closeup_open:
 		return "Phone candidate open / room input locked"
 	if power_closeup_open:
@@ -471,6 +526,11 @@ func _should_open_power_closeup() -> bool:
 func _should_open_phone_closeup() -> bool:
 	var role := String(focused_payload.get("role", ""))
 	return focused_object_key in PHONE_CLOSEUP_ENTRY_KEYS or role == "phone_status" or role == "phone_charge"
+
+
+func _should_open_bed_closeup() -> bool:
+	var role := String(focused_payload.get("role", ""))
+	return focused_object_key in BED_CLOSEUP_ENTRY_KEYS or role == "manual_end_day"
 
 
 func _build_desk_closeup_overlay() -> void:
@@ -1134,6 +1194,229 @@ func _get_phone_item(item_key: String) -> Dictionary:
 	for item in PHONE_CLOSEUP_ITEMS:
 		if String(item["key"]) == item_key:
 			return item
+	return {}
+
+
+func _build_bed_closeup_overlay() -> void:
+	bed_closeup_backdrop = ColorRect.new()
+	bed_closeup_backdrop.name = "BedCloseupBackdrop"
+	bed_closeup_backdrop.visible = false
+	bed_closeup_backdrop.color = Color(0.0, 0.0, 0.0, 0.31)
+	bed_closeup_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	bed_closeup_backdrop.z_index = 130
+	bed_closeup_backdrop.position = Vector2.ZERO
+	bed_closeup_backdrop.size = _get_viewport_ui_size()
+	bed_closeup_backdrop.gui_input.connect(_on_bed_closeup_backdrop_gui_input)
+	$UILayer.add_child(bed_closeup_backdrop)
+
+	bed_closeup_panel = PanelContainer.new()
+	bed_closeup_panel.name = "BedRestCloseupCandidate"
+	bed_closeup_panel.visible = false
+	bed_closeup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	bed_closeup_panel.z_index = 131
+	bed_closeup_panel.position = BED_CLOSEUP_POSITION
+	bed_closeup_panel.custom_minimum_size = BED_CLOSEUP_SIZE
+	$UILayer.add_child(bed_closeup_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 18)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_right", 18)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	bed_closeup_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Bed Rest Candidate"
+	title.add_theme_color_override("font_color", Color(0.94, 0.84, 0.68, 1.0))
+	title.add_theme_font_size_override("font_size", 22)
+	vbox.add_child(title)
+
+	var description := Label.new()
+	description.text = "휴식 / 하루 마무리 후보입니다. DayResultPanel / SurvivalState 연결 없음."
+	description.add_theme_color_override("font_color", Color(0.78, 0.82, 0.76, 1.0))
+	description.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(description)
+
+	var option_column := VBoxContainer.new()
+	option_column.add_theme_constant_override("separation", 8)
+	vbox.add_child(option_column)
+
+	for option in BED_REST_OPTIONS:
+		var key := String(option["key"])
+		var button := Button.new()
+		button.name = "%sBedOptionButton" % key.capitalize().replace("_", "")
+		button.custom_minimum_size = Vector2(520, 48)
+		button.tooltip_text = String(option["description"])
+		button.pressed.connect(_on_bed_option_pressed.bind(key))
+		option_column.add_child(button)
+		bed_option_buttons[key] = button
+
+	bed_option_title_label = Label.new()
+	bed_option_title_label.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72, 1.0))
+	bed_option_title_label.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(bed_option_title_label)
+
+	bed_option_detail_label = Label.new()
+	bed_option_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	bed_option_detail_label.add_theme_color_override("font_color", Color(0.76, 0.82, 0.80, 1.0))
+	bed_option_detail_label.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(bed_option_detail_label)
+
+	bed_option_debug_label = Label.new()
+	bed_option_debug_label.visible = false
+	bed_option_debug_label.add_theme_color_override("font_color", Color(0.50, 0.93, 0.96, 1.0))
+	bed_option_debug_label.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(bed_option_debug_label)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(button_row)
+
+	var use_button := Button.new()
+	use_button.text = "선택"
+	use_button.pressed.connect(_on_bed_use_pressed)
+	button_row.add_child(use_button)
+
+	var inspect_button := Button.new()
+	inspect_button.text = "설명"
+	inspect_button.pressed.connect(_on_bed_inspect_pressed)
+	button_row.add_child(inspect_button)
+
+	var close_button := Button.new()
+	close_button.text = "닫기"
+	close_button.pressed.connect(_hide_bed_closeup)
+	button_row.add_child(close_button)
+
+	var close_hint := Label.new()
+	close_hint.text = "ESC 닫기 / 실제 하루 종료와 Result는 아직 연결하지 않음"
+	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
+	close_hint.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(close_hint)
+
+	_select_bed_option(selected_bed_option_key)
+
+
+func _open_bed_closeup(source_key: String) -> void:
+	bed_closeup_open = true
+	_hide_interaction_panel()
+	_set_room_input_locked(true)
+	bed_closeup_backdrop.size = _get_viewport_ui_size()
+	bed_closeup_backdrop.visible = true
+	bed_closeup_panel.visible = true
+
+	if _get_bed_option(selected_bed_option_key).is_empty():
+		selected_bed_option_key = "short_rest"
+	_select_bed_option(selected_bed_option_key)
+
+	last_interaction = "Bed rest candidate / open"
+	last_interaction_debug = "%s / role=%s / action=bed_rest_candidate" % [
+		source_key,
+		String(focused_payload.get("role", "-")),
+	]
+	print("QuarterviewMain bed rest candidate opened from %s / no production wiring" % source_key)
+	_update_status("Bed rest candidate opened.")
+
+
+func _hide_bed_closeup() -> void:
+	if bed_closeup_backdrop != null:
+		bed_closeup_backdrop.visible = false
+	if bed_closeup_panel != null:
+		bed_closeup_panel.visible = false
+	bed_closeup_open = false
+	_set_room_input_locked(false)
+	_update_status("Bed rest candidate closed.")
+
+
+func _on_bed_closeup_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_hide_bed_closeup()
+		get_viewport().set_input_as_handled()
+
+
+func _is_bed_closeup_content_point(viewport_point: Vector2) -> bool:
+	if bed_closeup_panel == null or not bed_closeup_panel.visible:
+		return false
+	var panel_size := bed_closeup_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = BED_CLOSEUP_SIZE
+	return Rect2(bed_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _on_bed_option_pressed(option_key: String) -> void:
+	_select_bed_option(option_key)
+	_log_bed_option_action("focus")
+
+
+func _on_bed_use_pressed() -> void:
+	_log_bed_option_action("primary")
+
+
+func _on_bed_inspect_pressed() -> void:
+	_log_bed_option_action("inspect")
+
+
+func _select_bed_option(option_key: String) -> void:
+	var option := _get_bed_option(option_key)
+	if option.is_empty():
+		return
+
+	selected_bed_option_key = option_key
+	for key in bed_option_buttons.keys():
+		var button: Button = bed_option_buttons[key]
+		var button_option := _get_bed_option(String(key))
+		var prefix := "> " if String(key) == selected_bed_option_key else ""
+		button.text = "%s%s  -  %s" % [
+			prefix,
+			String(button_option.get("display_name", key)),
+			String(button_option.get("value", "")),
+		]
+	_refresh_bed_option_detail()
+
+
+func _refresh_bed_option_detail() -> void:
+	var option := _get_bed_option(selected_bed_option_key)
+	if option.is_empty():
+		return
+
+	bed_option_title_label.text = String(option["display_name"])
+	bed_option_detail_label.text = "%s\n\nBed candidate only. 실제 하루 종료 / 결과 계산은 아직 연결되지 않았습니다." % String(option["description"])
+
+	bed_option_debug_label.visible = room_debug_enabled
+	if room_debug_enabled:
+		bed_option_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nvalue: %s\nno-op status: DayResultPanel / SurvivalState disabled" % [
+			String(option["key"]),
+			String(option["role"]),
+			String(option["candidate_action"]),
+			String(option["value"]),
+		]
+
+
+func _log_bed_option_action(action_key: String) -> void:
+	var option := _get_bed_option(selected_bed_option_key)
+	if option.is_empty():
+		return
+
+	var display_name := String(option["display_name"])
+	var role := String(option["role"])
+	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
+	last_interaction_debug = "bed_closeup:%s / role=%s / action=%s / candidate=%s" % [
+		selected_bed_option_key,
+		role,
+		action_key,
+		String(option["candidate_action"]),
+	]
+	print("QuarterviewMain bed rest candidate: %s / no production wiring" % last_interaction_debug)
+	_update_status("%s: Bed rest candidate no-op." % display_name)
+
+
+func _get_bed_option(option_key: String) -> Dictionary:
+	for option in BED_REST_OPTIONS:
+		if String(option["key"]) == option_key:
+			return option
 	return {}
 
 
