@@ -24,6 +24,10 @@ const KITCHEN_CLOSEUP_ENTRY_KEYS := ["fridge", "microwave"]
 const DOOR_CLOSEUP_SIZE := Vector2(560, 408)
 const DOOR_CLOSEUP_POSITION := Vector2(500, 126)
 const DOOR_CLOSEUP_ENTRY_KEYS := ["door"]
+const DAY_RESULT_SIZE := Vector2(620, 430)
+const DAY_RESULT_POSITION := Vector2(460, 116)
+const PROTOTYPE_HUD_POSITION := Vector2(974, 18)
+const PROTOTYPE_HUD_SIZE := Vector2(288, 116)
 const DESK_CLOSEUP_HOTSPOTS := [
 	{
 		"key": "laptop",
@@ -285,12 +289,18 @@ var background_mode := "unknown"
 var focused_object_key := ""
 var focused_payload := {}
 var room_input_locked := false
+var mock_day := 1
+var mock_time := "20:30"
+var mock_power_percent := 62
+var mock_hunger := "보통"
+var mock_condition := "안정"
 var desk_closeup_open := false
 var power_closeup_open := false
 var phone_closeup_open := false
 var bed_closeup_open := false
 var kitchen_closeup_open := false
 var door_closeup_open := false
+var day_result_open := false
 var selected_desk_hotspot_key := "laptop"
 var selected_power_module_key := "battery_core"
 var selected_phone_item_key := "battery"
@@ -341,6 +351,12 @@ var door_option_buttons := {}
 var door_option_title_label: Label
 var door_option_detail_label: Label
 var door_option_debug_label: Label
+var prototype_hud_panel: PanelContainer
+var prototype_hud_label: Label
+var day_result_backdrop: ColorRect
+var day_result_panel: PanelContainer
+var day_result_summary_label: Label
+var day_result_detail_label: Label
 
 
 func _ready() -> void:
@@ -358,6 +374,7 @@ func _ready() -> void:
 	if quarterview_room.has_method("is_debug_overlay_enabled"):
 		room_debug_enabled = quarterview_room.is_debug_overlay_enabled()
 
+	_build_prototype_hud()
 	_build_interaction_panel()
 	_build_desk_closeup_overlay()
 	_build_power_closeup_overlay()
@@ -365,10 +382,17 @@ func _ready() -> void:
 	_build_bed_closeup_overlay()
 	_build_kitchen_closeup_overlay()
 	_build_door_closeup_overlay()
+	_build_day_result_candidate_overlay()
 	_update_status("QuarterviewMain candidate ready.")
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if day_result_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_day_result_content_point(event.position):
+			_hide_day_result_candidate()
+		get_viewport().set_input_as_handled()
+		return
+
 	if door_closeup_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _is_door_closeup_content_point(event.position):
 			_hide_door_closeup()
@@ -418,6 +442,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == CANCEL_KEY:
+			if day_result_open:
+				_hide_day_result_candidate()
+				get_viewport().set_input_as_handled()
+				return
 			if door_closeup_open:
 				_hide_door_closeup()
 				get_viewport().set_input_as_handled()
@@ -490,6 +518,8 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 		_refresh_kitchen_option_detail()
 	if door_closeup_open:
 		_refresh_door_option_detail()
+	if day_result_open:
+		_refresh_day_result_candidate()
 	quarterview_room.global_transform = room_transform
 	camera.global_transform = camera_transform
 	camera.zoom = camera_zoom
@@ -512,6 +542,40 @@ func _update_status(message: String) -> void:
 		]
 	else:
 		log_label.text = "Last: %s\nD: debug | R: restart" % [last_interaction]
+
+
+func _build_prototype_hud() -> void:
+	prototype_hud_panel = PanelContainer.new()
+	prototype_hud_panel.name = "PrototypeHudPanel"
+	prototype_hud_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	prototype_hud_panel.position = PROTOTYPE_HUD_POSITION
+	prototype_hud_panel.custom_minimum_size = PROTOTYPE_HUD_SIZE
+	$UILayer.add_child(prototype_hud_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	prototype_hud_panel.add_child(margin)
+
+	prototype_hud_label = Label.new()
+	prototype_hud_label.add_theme_color_override("font_color", Color(0.86, 0.84, 0.74, 1.0))
+	prototype_hud_label.add_theme_font_size_override("font_size", 13)
+	margin.add_child(prototype_hud_label)
+	_refresh_prototype_hud()
+
+
+func _refresh_prototype_hud() -> void:
+	if prototype_hud_label == null:
+		return
+	prototype_hud_label.text = "Quarterview HUD (mock)\nDAY %d | 시간 %s\n전력 %d%% | 허기 %s\n컨디션 %s" % [
+		mock_day,
+		mock_time,
+		mock_power_percent,
+		mock_hunger,
+		mock_condition,
+	]
 
 
 func _build_interaction_panel() -> void:
@@ -637,10 +701,12 @@ func _set_room_input_locked(locked: bool) -> void:
 
 
 func _has_closeup_open() -> bool:
-	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open or kitchen_closeup_open or door_closeup_open
+	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open or kitchen_closeup_open or door_closeup_open or day_result_open
 
 
 func _get_modal_status_text(default_text: String) -> String:
+	if day_result_open:
+		return "Day result candidate open / room input locked"
 	if door_closeup_open:
 		return "Door candidate open / room input locked"
 	if kitchen_closeup_open:
@@ -1503,6 +1569,9 @@ func _on_bed_option_pressed(option_key: String) -> void:
 
 
 func _on_bed_use_pressed() -> void:
+	if selected_bed_option_key == "end_day":
+		_open_day_result_candidate()
+		return
 	_log_bed_option_action("primary")
 
 
@@ -1569,6 +1638,151 @@ func _get_bed_option(option_key: String) -> Dictionary:
 		if String(option["key"]) == option_key:
 			return option
 	return {}
+
+
+func _build_day_result_candidate_overlay() -> void:
+	day_result_backdrop = ColorRect.new()
+	day_result_backdrop.name = "DayResultCandidateBackdrop"
+	day_result_backdrop.visible = false
+	day_result_backdrop.color = Color(0.0, 0.0, 0.0, 0.36)
+	day_result_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	day_result_backdrop.z_index = 160
+	day_result_backdrop.position = Vector2.ZERO
+	day_result_backdrop.size = _get_viewport_ui_size()
+	day_result_backdrop.gui_input.connect(_on_day_result_backdrop_gui_input)
+	$UILayer.add_child(day_result_backdrop)
+
+	day_result_panel = PanelContainer.new()
+	day_result_panel.name = "DayResultCandidate"
+	day_result_panel.visible = false
+	day_result_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	day_result_panel.z_index = 161
+	day_result_panel.position = DAY_RESULT_POSITION
+	day_result_panel.custom_minimum_size = DAY_RESULT_SIZE
+	$UILayer.add_child(day_result_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	day_result_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 12)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "오늘의 결과"
+	title.add_theme_color_override("font_color", Color(0.96, 0.86, 0.62, 1.0))
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	var description := Label.new()
+	description.text = "QuarterviewMain 전용 mock 결과 화면입니다. DayResultPanel / SurvivalState / save-load 연결 없음."
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.add_theme_color_override("font_color", Color(0.76, 0.84, 0.80, 1.0))
+	description.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(description)
+
+	day_result_summary_label = Label.new()
+	day_result_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	day_result_summary_label.add_theme_color_override("font_color", Color(0.88, 0.86, 0.76, 1.0))
+	day_result_summary_label.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(day_result_summary_label)
+
+	day_result_detail_label = Label.new()
+	day_result_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	day_result_detail_label.add_theme_color_override("font_color", Color(0.64, 0.74, 0.74, 1.0))
+	day_result_detail_label.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(day_result_detail_label)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(button_row)
+
+	var next_day_button := Button.new()
+	next_day_button.text = "다음 날 후보"
+	next_day_button.pressed.connect(_on_day_result_next_day_pressed)
+	button_row.add_child(next_day_button)
+
+	var close_button := Button.new()
+	close_button.text = "닫기"
+	close_button.pressed.connect(_hide_day_result_candidate)
+	button_row.add_child(close_button)
+
+	var close_hint := Label.new()
+	close_hint.text = "ESC 닫기 / 실제 하루 진행, 결과 저장, story flag는 아직 연결하지 않음"
+	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
+	close_hint.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(close_hint)
+
+	_refresh_day_result_candidate()
+
+
+func _open_day_result_candidate() -> void:
+	if bed_closeup_open:
+		_hide_bed_closeup()
+
+	day_result_open = true
+	_set_room_input_locked(true)
+	day_result_backdrop.size = _get_viewport_ui_size()
+	day_result_backdrop.visible = true
+	day_result_panel.visible = true
+	_refresh_day_result_candidate()
+
+	last_interaction = "오늘의 결과 / open"
+	last_interaction_debug = "day_result_candidate:day_%d / role=manual_end_day / action=open_result_candidate" % mock_day
+	print("QuarterviewMain day result candidate opened / no production wiring")
+	_update_status("Day result candidate opened.")
+
+
+func _hide_day_result_candidate(message := "Day result candidate closed.") -> void:
+	if day_result_backdrop != null:
+		day_result_backdrop.visible = false
+	if day_result_panel != null:
+		day_result_panel.visible = false
+	day_result_open = false
+	_set_room_input_locked(false)
+	_update_status(message)
+
+
+func _on_day_result_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_hide_day_result_candidate()
+		get_viewport().set_input_as_handled()
+
+
+func _is_day_result_content_point(viewport_point: Vector2) -> bool:
+	if day_result_panel == null or not day_result_panel.visible:
+		return false
+	var panel_size := day_result_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = DAY_RESULT_SIZE
+	return Rect2(day_result_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _on_day_result_next_day_pressed() -> void:
+	mock_day += 1
+	mock_time = "20:30"
+	mock_power_percent = 62
+	mock_hunger = "보통"
+	mock_condition = "안정"
+	_refresh_prototype_hud()
+	last_interaction = "DAY %d / next day candidate" % mock_day
+	last_interaction_debug = "day_result_candidate:day_%d / action=next_day_candidate / no SurvivalState" % mock_day
+	print("QuarterviewMain next day candidate selected / mock day=%d / no production wiring" % mock_day)
+	_hide_day_result_candidate("DAY %d candidate started." % mock_day)
+
+
+func _refresh_day_result_candidate() -> void:
+	if day_result_summary_label == null:
+		return
+	day_result_summary_label.text = "DAY %d 결과 후보\n전력 관리: 안정\n허기: %s\n정보 수집: 없음\n위험도: 낮음\n메모: 아직은 후보 화면입니다" % [
+		mock_day,
+		mock_hunger,
+	]
+	day_result_detail_label.text = "다음 날 후보를 누르면 QuarterviewMain 내부 mock DAY만 증가합니다. 실제 DayResultPanel, SurvivalState day advance, save-load, story flag는 호출하지 않습니다."
 
 
 func _build_kitchen_closeup_overlay() -> void:

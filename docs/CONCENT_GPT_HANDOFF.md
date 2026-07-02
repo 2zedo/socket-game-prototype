@@ -195,6 +195,7 @@ ups.tres
 - `[` / `]` selected object 변경
 - `C` selected layout snippet 출력
 - `R` restart
+- QuarterviewMain-only mock HUD: DAY / 시간 / 전력 / 허기 / 컨디션 후보 표시
 - object click -> 유이 이동 -> candidate interaction panel
 - candidate panel은 `사용하기 / 설명(살펴보기) / 취소`
 - normal panel에는 display name / 짧은 설명 중심
@@ -209,6 +210,7 @@ ups.tres
 - Bed 사용 시 `Bed rest/sleep candidate overlay`
 - Fridge / Microwave 사용 시 `Food / Kitchen candidate overlay`
 - Door 사용 시 `Door candidate overlay`
+- Bed의 `오늘을 마무리한다` 선택 시 `Day Result candidate overlay`
 
 각 overlay는 현재 no-op / status log만 남긴다. 실제 Hacking, PhoneUI, OutletMode, DayResultPanel, SurvivalState, Grid Credit, save/load와 연결하지 않는다.
 
@@ -242,7 +244,17 @@ Bed overlay:
 - 잠깐 쉰다
 - 오늘을 마무리한다
 - 몸 상태를 확인한다
+- `오늘을 마무리한다` 선택 시 QuarterviewMain-only Day Result candidate overlay를 연다
 - 실제 하루 종료, 시간 진행, DayResultPanel, SurvivalState 연결 없음
+
+Day Result candidate:
+
+- 전력 관리: 안정
+- 허기: 보통
+- 정보 수집: 없음
+- 위험도: 낮음
+- 다음 날 후보 버튼은 QuarterviewMain 내부 mock DAY만 +1 한다
+- 실제 DayResultPanel, SurvivalState day advance, save-load, story flag 연결 없음
 
 Food / Kitchen overlay:
 
@@ -442,6 +454,7 @@ WASD:
 
 1. QuarterviewMain GUI 확인
    - Door overlay
+   - Day Result candidate overlay
    - Fridge / Microwave Food-Kitchen overlay
    - Bed / Phone / Power overlay
    - Desk close-up
@@ -452,7 +465,7 @@ WASD:
    - 빠른 클릭 / object click 반복 / D / F3 / R 유지
 2. 최소 하루 루프 후보
    - QuarterviewMain 전용 HUD / status
-   - Bed rest/sleep candidate를 day result candidate overlay로 확장
+   - Day Result candidate를 이후 실제 production Result와 연결할지 여부는 별도 gate로 판단
    - 기존 DayResultPanel / SurvivalState production 연결은 별도 승인 전 금지
 3. Main replacement gate review
    - `docs/MAIN_REPLACEMENT_RISK_CHECKLIST.md`

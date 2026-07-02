@@ -200,10 +200,18 @@
 - Validation: `git diff --check` passed. Godot execution was not required for this documentation-only pass.
 - Next: GUI에서 최신 compact room 기준을 바탕으로 다음 background art / Door candidate / 최소 하루 루프 후보 중 하나를 진행한다.
 
-### this commit - QuarterviewMain Door candidate overlay
+### 2fe9978 - QuarterviewMain Door candidate overlay
 
-- Commit: `this commit`
+- Commit: `2fe9978`
 - Result: Door object의 `사용하기`에서 no-op Door candidate overlay를 열고, 문 밖 상황 확인 / 복도 소리 듣기 / 외출 준비 생각하기 후보 행동을 선택할 수 있게 했다. Room movement는 overlay 동안 잠기며, ESC / 닫기 / 빈 영역 클릭으로 닫는다.
 - Changed: QuarterviewMain door candidate overlay / door option no-op log, handoff / status docs.
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Door object 접근, `사용하기`로 overlay 열기, door option 선택 / 설명 no-op status, ESC / 닫기 / 빈 영역 클릭 close, 닫은 뒤 room movement 복구, 기존 Desk / Power / Phone / Bed / Food-Kitchen close-up 유지 여부를 수동 확인한다.
+
+### this commit - QuarterviewMain minimum day-loop candidate
+
+- Commit: `this commit`
+- Result: QuarterviewMain-only prototype HUD를 추가하고, Bed의 `오늘을 마무리한다` 선택에서 mock Day Result candidate overlay를 열 수 있게 했다. `다음 날 후보`는 내부 mock DAY만 증가시키고 room input을 복구한다.
+- Changed: QuarterviewMain prototype HUD / Day Result candidate overlay / Bed end-day routing, handoff / status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: GUI에서 HUD 위치, Bed -> 오늘 마무리 -> Day Result candidate, 다음 날 후보 DAY 증가, ESC / 닫기 / 빈 영역 클릭 close, room movement 복구, 기존 Desk / Power / Phone / Bed / Food-Kitchen / Door overlay 유지 여부를 수동 확인한다.
