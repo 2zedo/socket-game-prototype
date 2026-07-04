@@ -368,9 +368,9 @@
 - Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition + PowerBoardCandidate state GUT, and full GUT passed (67 tests).
 - Next: GUI에서 인접 배치 후 회전, 실제 overlap invalid, `보관함으로` 버튼, Delete / Backspace, inventory drop 반환, inventory scroll을 수동 확인한다.
 
-### this commit - Quarterview Power Board drag UX fix
+### fdc6cb1 - Quarterview Power Board drag UX fix
 
-- Commit: `this commit`
+- Commit: `fdc6cb1`
 - Result: Power board module 클릭과 드래그를 분리했다. 클릭은 선택만 하고, threshold를 넘긴 드래그에서만 별도 ghost가 움직인다. Inventory는 ScrollContainer 안의 row layout을 유지하고, 반환된 module은 `inventory_order` 맨 아래에 append된다. L-shape drop anchor는 마우스가 가리킨 grid cell에서 잡은 occupied shape cell을 빼서 계산한다.
 - Changed: `PowerBoardCandidate.gd`, `test_power_board_candidate_state.gd`, GUI checklist, temporary art manifest, status docs.
 - Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerBoardCandidate state GUT, and full GUT passed (70 tests).
