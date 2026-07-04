@@ -87,8 +87,9 @@ Region candidate table:
 
 - `PowerBoardCandidate.gd` owns the QuarterviewMain-only draggable power-board prototype inside the Power equipment close-up.
 - Current candidate modules are loaded from `PowerModuleDefinition` Resources under `godot/resources/rooms/quarterview/power_modules/`.
-- Current candidate module Resource files: `small_core.tres` (`1x1`), `laptop_adapter.tres` (`2x1`), `comm_module.tres` (`1x2`), and `odd_efficiency_module.tres` (`2x2`).
+- Current candidate module Resource files: `small_core.tres` (`1x1`), `laptop_adapter.tres` (`2x1`), `comm_module.tres` (`1x2`), and `odd_efficiency_module.tres` (`L-shape 3 cells`).
 - Drag preview uses valid / invalid colors while the cursor is over the grid.
+- Module inventory blocks, debug guides, and drag preview are drawn from `shape_cells`, so non-rectangular modules can be read before production power rules exist.
 - Occupied cells block overlapping module placement.
 - Invalid or out-of-grid drops return the module to the drag start position.
 - Successful drops only write no-op status/log text; they do not calculate power.
@@ -102,7 +103,7 @@ Region candidate table:
 | `godot/resources/rooms/quarterview/power_modules/small_core.tres` | `(0,0)` | `전력 안정`, `효율 낮음`, `기본 코어 후보` | `small_core` | 1x1 prototype module. |
 | `godot/resources/rooms/quarterview/power_modules/laptop_adapter.tres` | `(0,0)`, `(1,0)` | `노트북 우선 공급`, `발열 약간 증가`, `작업 장비 우선 후보` | `laptop_adapter` | 2x1 prototype module. |
 | `godot/resources/rooms/quarterview/power_modules/comm_module.tres` | `(0,0)`, `(0,1)` | `통신 유지`, `과부하 낮음`, `신호 보정 후보` | `comm_module` | 1x2 prototype module. |
-| `godot/resources/rooms/quarterview/power_modules/odd_efficiency_module.tres` | `(0,0)`, `(1,0)`, `(0,1)`, `(1,1)` | `효율 보정`, `배치 난도 높음`, `L-shape 전 단계 후보` | `odd_efficiency_module` | 2x2 placeholder; L-shape remains a later candidate. |
+| `godot/resources/rooms/quarterview/power_modules/odd_efficiency_module.tres` | `(0,0)`, `(1,0)`, `(0,1)` | `효율 보정`, `발열 관리 필요`, `비정형 배치 보너스 후보` | `odd_efficiency_module` | 3-cell L-shape prototype module. |
 
 Resource script:
 

@@ -69,7 +69,12 @@ func get_size_cells() -> Vector2i:
 
 func get_shape_label() -> String:
 	var size_cells := get_size_cells()
-	return "%dx%d" % [size_cells.x, size_cells.y]
+	var cells := get_shape_cells()
+	if cells.size() == size_cells.x * size_cells.y:
+		return "%dx%d" % [size_cells.x, size_cells.y]
+	if cells.size() == 3 and size_cells == Vector2i(2, 2):
+		return "L-shape 3 cells"
+	return "%d cells / bbox %dx%d" % [cells.size(), size_cells.x, size_cells.y]
 
 
 func get_candidate_action() -> String:

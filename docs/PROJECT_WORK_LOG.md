@@ -320,10 +320,18 @@
 - Validation: targeted `git diff --check` passed; full `git diff --check` is blocked by unrelated addon whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`; Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Power close-up의 영역 구분, module readability, drag valid / invalid highlight, room input lock / close 흐름, 기존 overlay 회귀 여부를 수동 확인한다.
 
-### this commit - Quarterview Power ModuleDefinition Resource split
+### 3fcbbe9 - Quarterview Power ModuleDefinition Resource split
 
-- Commit: `this commit`
+- Commit: `3fcbbe9`
 - Result: Power board module 후보 데이터를 `PowerModuleDefinition` Resource와 `.tres` 파일로 분리하고, `PowerBoardCandidate.gd`가 Resource에서 inventory / shape / description / atlas region 후보를 읽도록 바꿨다. Resource 로드 실패 시에는 기존 fallback module data를 유지한다.
 - Changed: `PowerModuleDefinition.gd`, `godot/resources/rooms/quarterview/power_modules/*.tres`, `PowerBoardCandidate.gd`, `test_power_module_definition.gd`, temporary art manifest, status docs.
 - Validation: targeted `PowerModuleDefinition` GUT passed; targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (58 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
 - Next: GUI에서 Power close-up inventory, drag / snap, overlap invalid, out-of-grid reset, selected module detail, existing overlay close flow를 수동 확인한다.
+
+### this commit - Quarterview L-shape power module visual pass
+
+- Commit: `this commit`
+- Result: `odd_efficiency_module`을 2x2 placeholder에서 3-cell L-shape 후보로 바꾸고, Power board inventory / debug guide / drag preview가 `shape_cells` 기준으로 보이게 했다. Overlap invalid와 out-of-grid reset은 Resource shape 기준을 유지한다.
+- Changed: `odd_efficiency_module.tres`, `PowerModuleDefinition.gd`, `PowerBoardCandidate.gd`, `test_power_module_definition.gd`, temporary art manifest, status docs.
+- Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (59 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
+- Next: GUI에서 L-shape inventory visual, valid / invalid shape preview, overlap invalid, out-of-grid reset, existing module behavior를 수동 확인한다.

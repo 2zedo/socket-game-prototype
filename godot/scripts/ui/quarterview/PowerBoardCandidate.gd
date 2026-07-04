@@ -76,12 +76,13 @@ const FALLBACK_MODULES := [
 		"key": "odd_efficiency_module",
 		"display_name": "Odd Efficiency",
 		"role": "power_efficiency",
-		"description": "효율은 좋아 보이지만 모양이 애매한 2x2 후보 모듈입니다. L-shape은 다음 단계 후보입니다.",
-		"effect": "효율 보정 / 배치 난도 높음",
+		"description": "크지만 효율이 좋아 보이는 3칸 L-shape 후보 모듈입니다. 배치가 까다롭지만 보드 퍼즐성을 확인하기 위한 임시 모듈입니다.",
+		"effect": "효율 보정 / 발열 관리 필요 / 비정형 배치 보너스 후보",
 		"candidate_action": "place_efficiency_module_noop",
 		"rect": Rect2(Vector2(18, 242), Vector2(98, 78)),
-		"shape_cells": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
+		"shape_cells": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)],
 		"size_cells": Vector2i(2, 2),
+		"shape_label": "L-shape 3 cells",
 		"atlas_region_name": "odd_efficiency_module",
 		"color": Color(0.25, 0.24, 0.30, 0.94),
 	},
@@ -101,7 +102,7 @@ var drag_origin_local := Vector2.ZERO
 var drag_origin_had_cell := false
 var drag_origin_cell := Vector2i.ZERO
 var board_surface: Control
-var drop_preview: ColorRect
+var drop_preview: Control
 var drop_preview_texture: TextureRect
 var module_title_label: Label
 var module_detail_label: Label
@@ -230,11 +231,10 @@ func _build() -> void:
 
 	_add_grid(board_surface)
 
-	drop_preview = ColorRect.new()
+	drop_preview = Control.new()
 	drop_preview.name = "PowerDropPreview"
 	drop_preview.visible = false
 	drop_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	drop_preview.color = Color(0.22, 0.88, 0.72, 0.24)
 	board_surface.add_child(drop_preview)
 
 	for module in modules:
@@ -332,29 +332,30 @@ func _add_module_button(module: Dictionary) -> void:
 	var rect: Rect2 = module["rect"]
 	var module_size := _get_module_pixel_size(module)
 
-	var guide := ColorRect.new()
+	var guide := Control.new()
 	guide.name = "%sDebugRect" % key.capitalize().replace("_", "")
-	guide.color = Color(0.17, 0.82, 0.92, 0.18)
 	guide.position = rect.position
 	guide.size = module_size
 	guide.visible = debug_enabled
 	guide.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_populate_shape_visual(guide, _get_module_shape_cells(module), Color(0.17, 0.82, 0.92, 0.18), Color(0.45, 0.95, 1.0, 0.22))
 	board_surface.add_child(guide)
 	module_guides[key] = guide
 
 	var button := Button.new()
 	button.name = "%sModuleButton" % key.capitalize().replace("_", "")
-	button.text = _get_module_size_text(module)
+	button.text = ""
 	button.position = rect.position
 	button.size = module_size
 	button.tooltip_text = String(module["description"])
+	button.flat = true
 	button.add_theme_font_size_override("font_size", 12)
-	if _has_module_atlas_region(key):
-		button.icon = _make_atlas_texture(_get_module_atlas_region(key))
-		button.expand_icon = true
-		button.modulate = Color(1.0, 1.0, 1.0, 1.0)
-	else:
-		button.modulate = module["color"]
+	_populate_shape_visual(
+		button,
+		_get_module_shape_cells(module),
+		module.get("color", Color.WHITE),
+		Color(0.82, 0.94, 0.92, 0.84)
+	)
 	button.gui_input.connect(_on_module_gui_input.bind(key))
 	board_surface.add_child(button)
 	module_buttons[key] = button
@@ -383,8 +384,15 @@ func _get_module_pixel_size(module: Dictionary) -> Vector2:
 
 
 func _get_module_size_text(module: Dictionary) -> String:
+	if module.has("shape_label"):
+		return String(module["shape_label"])
 	var size_cells := _get_module_size_cells(module)
-	return "%dx%d" % [size_cells.x, size_cells.y]
+	var shape_cells := _get_module_shape_cells(module)
+	if shape_cells.size() == size_cells.x * size_cells.y:
+		return "%dx%d" % [size_cells.x, size_cells.y]
+	if shape_cells.size() == 3 and size_cells == Vector2i(2, 2):
+		return "L-shape 3 cells"
+	return "%d cells / bbox %dx%d" % [shape_cells.size(), size_cells.x, size_cells.y]
 
 
 func _on_module_gui_input(event: InputEvent, module_key: String) -> void:
@@ -461,7 +469,7 @@ func _get_grid_global_rect() -> Rect2:
 
 
 func _sync_module_guide(module_key: String) -> void:
-	var guide: ColorRect = module_guides.get(module_key, null)
+	var guide: Control = module_guides.get(module_key, null)
 	var button: Button = module_buttons.get(module_key, null)
 	if guide == null or button == null:
 		return
@@ -483,26 +491,30 @@ func _get_drop_candidate(module_key: String) -> Dictionary:
 	var size_cells := _get_module_size_cells(module)
 	var local_top_left := button.global_position - grid_rect.position
 	var cell := Vector2i(
-		clampi(roundi(local_top_left.x / CELL_SIZE.x), 0, GRID_CELLS.x - size_cells.x),
-		clampi(roundi(local_top_left.y / CELL_SIZE.y), 0, GRID_CELLS.y - size_cells.y)
+		roundi(local_top_left.x / CELL_SIZE.x),
+		roundi(local_top_left.y / CELL_SIZE.y)
 	)
 	var shape_cells := _get_module_shape_cells(module)
 	var valid := _is_drop_cell_available(module_key, cell, shape_cells)
+	var reason := ""
+	if not valid:
+		reason = "보드 밖이라" if not _are_shape_cells_inside_grid(cell, shape_cells) else "다른 모듈과 겹쳐서"
 	return {
 		"inside": true,
 		"valid": valid,
 		"cell": cell,
 		"size_cells": size_cells,
 		"shape_cells": shape_cells,
-		"reason": "" if valid else "다른 모듈과 겹쳐서",
+		"reason": reason,
 	}
 
 
 func _is_drop_cell_available(module_key: String, cell: Vector2i, shape_cells: Array[Vector2i]) -> bool:
+	if not _are_shape_cells_inside_grid(cell, shape_cells):
+		return false
+
 	for offset in shape_cells:
 		var check_cell := cell + offset
-		if check_cell.x < 0 or check_cell.y < 0 or check_cell.x >= GRID_CELLS.x or check_cell.y >= GRID_CELLS.y:
-			return false
 		for other_key in module_grid_positions.keys():
 			if String(other_key) == module_key:
 				continue
@@ -513,6 +525,14 @@ func _is_drop_cell_available(module_key: String, cell: Vector2i, shape_cells: Ar
 			var other_shape_cells := _get_module_shape_cells(other_module)
 			if _is_cell_inside_module(check_cell, other_cell, other_shape_cells):
 				return false
+	return true
+
+
+func _are_shape_cells_inside_grid(cell: Vector2i, shape_cells: Array[Vector2i]) -> bool:
+	for offset in shape_cells:
+		var check_cell := cell + offset
+		if check_cell.x < 0 or check_cell.y < 0 or check_cell.x >= GRID_CELLS.x or check_cell.y >= GRID_CELLS.y:
+			return false
 	return true
 
 
@@ -535,10 +555,12 @@ func _update_drop_preview(module_key: String) -> void:
 
 	var cell: Vector2i = candidate["cell"]
 	var size_cells: Vector2i = candidate["size_cells"]
+	var shape_cells: Array[Vector2i] = candidate["shape_cells"]
+	var preview_color := Color(0.20, 0.90, 0.68, 0.30) if bool(candidate.get("valid", false)) else Color(0.96, 0.18, 0.14, 0.34)
 	drop_preview.visible = true
 	drop_preview.position = GRID_ORIGIN + Vector2(cell.x * CELL_SIZE.x, cell.y * CELL_SIZE.y)
-	drop_preview.size = Vector2(size_cells.x * CELL_SIZE.x - 3.0, size_cells.y * CELL_SIZE.y - 3.0)
-	drop_preview.color = Color(0.20, 0.90, 0.68, 0.28) if bool(candidate.get("valid", false)) else Color(0.96, 0.18, 0.14, 0.32)
+	drop_preview.size = Vector2(size_cells.x * CELL_SIZE.x, size_cells.y * CELL_SIZE.y)
+	_populate_shape_visual(drop_preview, shape_cells, preview_color, preview_color.lightened(0.25))
 
 
 func _request_module_action(action_key: String) -> void:
@@ -558,11 +580,11 @@ func _select_module(module_key: String, emit_signal := true) -> void:
 		var button: Button = module_buttons[key]
 		var button_module := _get_module(String(key))
 		var selected := String(key) == selected_module_key
-		button.text = _get_module_size_text(button_module)
+		button.text = ""
 		if selected:
 			button.modulate = Color(1.16, 1.08, 0.86, 1.0)
 		else:
-			button.modulate = Color(0.88, 0.93, 0.93, 1.0) if _has_module_atlas_region(String(key)) else button_module.get("color", Color.WHITE)
+			button.modulate = Color.WHITE
 
 		var label: Label = module_labels.get(String(key), null)
 		if label != null:
@@ -600,9 +622,11 @@ func _refresh_module_detail() -> void:
 		]
 
 	for key in module_guides.keys():
-		var guide: ColorRect = module_guides[key]
+		var guide: Control = module_guides[key]
 		guide.visible = debug_enabled
-		guide.color = Color(1.0, 0.78, 0.20, 0.24) if String(key) == selected_module_key else Color(0.17, 0.82, 0.92, 0.18)
+		var guide_module := _get_module(String(key))
+		var guide_color := Color(1.0, 0.78, 0.20, 0.24) if String(key) == selected_module_key else Color(0.17, 0.82, 0.92, 0.18)
+		_populate_shape_visual(guide, _get_module_shape_cells(guide_module), guide_color, guide_color.lightened(0.35))
 		_sync_module_guide(String(key))
 
 
@@ -661,6 +685,7 @@ func _module_definition_to_dictionary(definition: Resource) -> Dictionary:
 		),
 		"shape_cells": definition.get_shape_cells(),
 		"size_cells": size_cells,
+		"shape_label": definition.get_shape_label(),
 		"atlas_region_name": definition.atlas_region_name,
 		"color": definition.color,
 		"is_prototype": definition.is_prototype,
@@ -683,6 +708,29 @@ func _get_module_size_cells(module: Dictionary) -> Vector2i:
 		size_cells.x = maxi(size_cells.x, cell.x + 1)
 		size_cells.y = maxi(size_cells.y, cell.y + 1)
 	return size_cells
+
+
+func _populate_shape_visual(parent: Control, shape_cells: Array[Vector2i], fill_color: Color, edge_color: Color) -> void:
+	for child in parent.get_children():
+		parent.remove_child(child)
+		child.queue_free()
+
+	for offset in shape_cells:
+		var cell := ColorRect.new()
+		cell.name = "ShapeCell_%d_%d" % [offset.x, offset.y]
+		cell.position = Vector2(offset.x * CELL_SIZE.x, offset.y * CELL_SIZE.y)
+		cell.size = CELL_SIZE - Vector2(4, 4)
+		cell.color = edge_color
+		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		parent.add_child(cell)
+
+		var core := ColorRect.new()
+		core.name = "ShapeCellCore_%d_%d" % [offset.x, offset.y]
+		core.position = cell.position + Vector2(4, 4)
+		core.size = CELL_SIZE - Vector2(12, 12)
+		core.color = fill_color
+		core.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		parent.add_child(core)
 
 
 func _load_texture_from_png(path: String) -> Texture2D:

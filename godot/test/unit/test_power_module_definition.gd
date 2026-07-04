@@ -37,7 +37,7 @@ func test_shape_helpers_use_cell_bounds() -> void:
 	definition.shape_cells = shape_cells
 
 	assert_eq(definition.get_size_cells(), Vector2i(2, 2), "Shape bounds should produce a 2x2 size.")
-	assert_eq(definition.get_shape_label(), "2x2", "Shape label should use computed size cells.")
+	assert_eq(definition.get_shape_label(), "L-shape 3 cells", "Non-rectangular 2x2/3-cell shapes should read as L-shape.")
 
 
 func test_candidate_action_and_effect_label_have_fallbacks() -> void:
@@ -74,6 +74,16 @@ func test_power_module_resources_are_valid_and_unique() -> void:
 		assert_eq(definition.key, file_stem, "%s key should match its file name." % path)
 		assert_false(seen_keys.has(definition.key), "Duplicate power module key found: %s" % definition.key)
 		seen_keys[definition.key] = true
+
+
+func test_odd_efficiency_module_is_l_shape_candidate() -> void:
+	var definition = load("%s/odd_efficiency_module.tres" % POWER_MODULE_DIR)
+
+	assert_not_null(definition, "odd_efficiency_module should load.")
+	assert_eq(definition.get_shape_cells().size(), 3, "Odd efficiency module should use three occupied cells.")
+	assert_eq(definition.get_size_cells(), Vector2i(2, 2), "Odd efficiency module should occupy a 2x2 bounding area.")
+	assert_eq(definition.get_shape_label(), "L-shape 3 cells", "Odd efficiency module should be presented as an L-shape.")
+	assert_true(definition.description.contains("L-shape"), "Odd efficiency description should mention the L-shape candidate.")
 
 
 func _get_power_module_resource_paths() -> Array[String]:
