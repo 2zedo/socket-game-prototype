@@ -3,7 +3,10 @@ extends Node2D
 const PhoneScreenCandidateScript := preload("res://scripts/ui/quarterview/PhoneScreenCandidate.gd")
 const PowerBoardCandidateScript := preload("res://scripts/ui/quarterview/PowerBoardCandidate.gd")
 
-const RESTART_KEY := KEY_R
+const POWER_ROTATE_KEY := KEY_R
+const PHONE_OPEN_KEY := KEY_P
+const DEBUG_RESTART_KEY := KEY_R
+const PORTABLE_PHONE_SOURCE_KEY := "portable_phone"
 const CANCEL_KEY := KEY_ESCAPE
 const PANEL_VIEWPORT_MARGIN := 18.0
 const PANEL_OBJECT_OFFSET := Vector2(34, -118)
@@ -349,7 +352,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventKey and event.pressed and not event.echo:
-		if power_closeup_open and event.keycode == RESTART_KEY:
+		if power_closeup_open and event.keycode == POWER_ROTATE_KEY:
 			if power_closeup_panel != null and power_closeup_panel.has_method("rotate_active_module"):
 				power_closeup_panel.rotate_active_module()
 				get_viewport().set_input_as_handled()
@@ -359,10 +362,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				power_closeup_panel.return_selected_module_to_inventory()
 				get_viewport().set_input_as_handled()
 				return
-		if event.keycode == RESTART_KEY:
-			get_tree().reload_current_scene()
-			get_viewport().set_input_as_handled()
-			return
 		if event.keycode == CANCEL_KEY:
 			if day_result_open:
 				_hide_day_result_candidate()
@@ -397,6 +396,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				_update_status("Candidate panel closed.")
 				get_viewport().set_input_as_handled()
 				return
+		if event.keycode == PHONE_OPEN_KEY:
+			if _can_open_portable_phone():
+				_open_phone_closeup(PORTABLE_PHONE_SOURCE_KEY)
+				get_viewport().set_input_as_handled()
+			return
+		if event.keycode == DEBUG_RESTART_KEY and event.shift_pressed and room_debug_enabled:
+			get_tree().reload_current_scene()
+			get_viewport().set_input_as_handled()
+			return
 
 
 func _on_room_interaction_requested(object_key: String, action_key: String, payload: Dictionary) -> void:
@@ -457,13 +465,13 @@ func _update_status(message: String) -> void:
 	status_label.text = "Candidate only / no production wiring\n%s\n%s" % [message, modal_text]
 	if room_debug_enabled:
 		var room_debug_summary := _get_room_debug_summary()
-		log_label.text = "Last: %s\nD: debug | R: restart | BG: %s\n%s" % [
+		log_label.text = "Last: %s\nD: debug | P: Phone | Shift+R: restart | BG: %s\n%s" % [
 			last_interaction_debug,
 			background_mode,
 			room_debug_summary,
 		]
 	else:
-		log_label.text = "Last: %s\nD: debug | R: restart" % [last_interaction]
+		log_label.text = "Last: %s\nD: debug | P: Phone" % [last_interaction]
 
 
 func _build_prototype_hud() -> void:
@@ -674,6 +682,10 @@ func _set_room_input_locked(locked: bool) -> void:
 
 func _has_closeup_open() -> bool:
 	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open or kitchen_closeup_open or door_closeup_open or day_result_open
+
+
+func _can_open_portable_phone() -> bool:
+	return not _has_closeup_open() and not _is_interaction_panel_open()
 
 
 func _get_modal_status_text(default_text: String) -> String:
@@ -1084,10 +1096,11 @@ func _open_phone_closeup(source_key: String) -> void:
 	selected_phone_tab_key = String(selection.get("tab_key", "status"))
 	phone_closeup_panel.set_debug_enabled(room_debug_enabled)
 
-	last_interaction = "Phone candidate / open"
+	var source_role := "portable_equipment" if source_key == PORTABLE_PHONE_SOURCE_KEY else String(focused_payload.get("role", "-"))
+	last_interaction = "Phone candidate / portable open" if source_key == PORTABLE_PHONE_SOURCE_KEY else "Phone candidate / open"
 	last_interaction_debug = "%s / role=%s / action=phone_closeup" % [
 		source_key,
-		String(focused_payload.get("role", "-")),
+		source_role,
 	]
 	print("QuarterviewMain phone close-up opened from %s / no production wiring" % source_key)
 	_update_status("Phone candidate opened.")

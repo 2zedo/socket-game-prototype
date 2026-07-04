@@ -51,6 +51,8 @@ const STATE_DISABLED := "disabled"
 @export_category("상호작용")
 @export var blocks: bool = true
 @export var interactable: bool = true
+@export var room_interaction_enabled: bool = true
+@export var is_portable: bool = false
 @export var interaction_position: Vector2 = Vector2.ZERO
 @export var interaction_radius: float = 96.0
 @export var collision_size: Vector2 = Vector2.ZERO
@@ -91,13 +93,19 @@ func is_valid_definition() -> bool:
 	return not key.is_empty() and not display_name.is_empty() and not zone.is_empty() and not role.is_empty()
 
 
+func allows_room_interaction() -> bool:
+	return interactable and room_interaction_enabled
+
+
 func get_debug_summary() -> String:
-	return "%s / zone=%s / role=%s / future=%s / state=%s" % [
+	return "%s / zone=%s / role=%s / future=%s / state=%s / room=%s / portable=%s" % [
 		key,
 		zone,
 		role,
 		future_source,
 		visual_state,
+		str(room_interaction_enabled),
+		str(is_portable),
 	]
 
 

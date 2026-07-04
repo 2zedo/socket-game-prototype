@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `2b5ce07`
-- Phase: Quarterview job / objective candidate
+- Current commit at task start: `ed0f188`
+- Phase: Quarterview portable phone access / restart safety
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -21,8 +21,8 @@
 ## Current Implementation State
 
 - Current Main / DAY1: implemented top-view golden path; protected until explicit replacement approval.
-- QuarterviewMain: production candidate skeleton with temporary room background, candidate interaction panel, prototype HUD with local mock state reactions, bed / desk / power / phone / food-kitchen / door candidate overlays, Phone job candidate acceptance, Desk / Laptop active-job preparation hints, Day Result candidate overlay, and status logging only.
-- QuarterviewRoom: candidate room shell using `RoomObjectDefinition` data, prompt / interaction signals, hover affordance, and debug overlay.
+- QuarterviewMain: production candidate skeleton with temporary room background, candidate interaction panel, prototype HUD with local mock state reactions, bed / desk / power / food-kitchen / door candidate overlays, portable `P` Phone screen access, Phone job candidate acceptance, Desk / Laptop active-job preparation hints, Day Result candidate overlay, and status logging only.
+- QuarterviewRoom: candidate room shell using `RoomObjectDefinition` data, prompt / interaction signals, hover affordance, debug overlay, and portable-only object exclusion from room click / hover / nearest targeting.
 - QuarterviewGameplaySandbox: sandbox-only flow for interaction, mock panels, local clock, local result, and local test mode.
 - Phone / Outlet / Result: still current Main-only production UI; not wired to QuarterviewMain.
 - SurvivalState: production source of truth for day, time, power, connected / active devices, phone, and result data.
@@ -36,6 +36,7 @@
 - Deprecated / scoped document notice pass: added targeted notices to legacy / conflict candidate docs, while leaving current source-of-truth docs unchanged.
 - QuarterviewMain object hover affordance: added hover prompt / fallback outline support for click candidates and optional `RoomObjectDefinition` hover visual slots while keeping click movement and candidate overlays unchanged.
 - QuarterviewMain job / objective candidate: added a Resource-backed `maintenance_17_fragment` anonymous job candidate to the Phone job tab, local-only accept state in QuarterviewMain HUD / Day Result, and Desk / Laptop no-op NAVI preparation hints while keeping Hacking, Grid Credit, save-load, story flags, SurvivalState, and production PhoneUI unwired.
+- QuarterviewMain portable Phone access: moved Phone access to the `P` key as Yui's portable equipment, marked the room `phone` Resource portable-only so it is no longer a room click / hover / nearest target, and removed default `R` restart in favor of debug-only `Shift+R` while keeping Power board `R` rotation.
 - QuarterviewMain footprint tuning: split visual body, click area, and blocker footprint candidates, and made path / collision blockers prefer floor-contact polygons over top-view rectangles.
 - QuarterviewMain footprint tuning mode: added object panel outside-click close, kept guessed footprints as debug/tuning candidates unless path-enabled, and added a debug-only F3 tuning mode for selected object footprint / approach / click area inspection.
 - QuarterviewMain Food / Kitchen candidate overlay: added no-op Fridge / Microwave food and cooking candidate actions while keeping hunger, inventory, SurvivalState, and DayResultPanel unwired.
@@ -80,18 +81,18 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/resources/QuarterviewJobDefinition.gd`, `godot/resources/rooms/quarterview/jobs/maintenance_17_fragment.tres`: define the first QuarterviewMain-only anonymous job candidate.
-- `godot/scripts/ui/quarterview/PhoneScreenCandidate.gd`, `godot/scripts/QuarterviewMain.gd`: show / accept the job candidate and reflect it in local mock HUD, Day Result, and Desk / Laptop no-op preparation flow.
-- `godot/test/unit/test_quarterview_job_definition.gd`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: validate and record the job candidate Resource contract.
+- `godot/scripts/QuarterviewMain.gd`: opens portable Phone screen candidate with `P`, keeps Power board `R` rotation, and limits restart to debug-only `Shift+R`.
+- `godot/scripts/resources/RoomObjectDefinition.gd`, `godot/resources/rooms/quarterview/objects/phone.tres`, `godot/scripts/quarterview/QuarterviewRoom.gd`: add portable / room-interaction flags and exclude the Phone from room click / hover / nearest targeting.
+- `godot/test/unit/test_room_object_definition.gd`, `docs/QUARTERVIEW_GUI_CHECKLIST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: validate and record the portable Phone behavior.
 
 ## Validation Results
 
-- Targeted `QuarterviewJobDefinition` GUT passed: 4 tests.
+- Targeted `RoomObjectDefinition` GUT passed: 8 tests.
 - Full `git diff --check` is currently blocked by unrelated whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`.
 - Targeted task-file `git diff --check` passed.
 - Godot headless project parse passed.
 - `res://scenes/QuarterviewMain.tscn` headless startup passed.
-- Full GUT passed: 75 tests.
+- Full GUT passed: 76 tests.
 
 ## Current Risks / Known Issues
 

@@ -50,6 +50,18 @@ func test_hover_visual_fields_are_optional_by_default() -> void:
 	assert_eq(definition.hover_visual_mode, "fallback_outline", "Hover visual mode should default to fallback outline.")
 
 
+func test_room_interaction_fields_default_to_room_object_mode() -> void:
+	var definition = ROOM_OBJECT_DEFINITION_SCRIPT.new()
+
+	assert_true(definition.interactable, "Room objects should remain interactable by default.")
+	assert_true(definition.room_interaction_enabled, "Room interaction should stay enabled by default for backward compatibility.")
+	assert_false(definition.is_portable, "Room objects should not be portable by default.")
+	assert_true(definition.allows_room_interaction(), "Default interactable room objects should allow room interaction.")
+
+	definition.room_interaction_enabled = false
+	assert_false(definition.allows_room_interaction(), "Portable-only objects should be excluded from room interaction.")
+
+
 func test_debug_summary_includes_contract_fields() -> void:
 	var definition = ROOM_OBJECT_DEFINITION_SCRIPT.new()
 	definition.key = "node17"
@@ -65,6 +77,7 @@ func test_debug_summary_includes_contract_fields() -> void:
 	assert_true(summary.contains("role=mystery_device"), "Debug summary should include role.")
 	assert_true(summary.contains("future=future_node17"), "Debug summary should include future_source.")
 	assert_true(summary.contains("state=signal"), "Debug summary should include visual_state.")
+	assert_true(summary.contains("room=true"), "Debug summary should include room interaction state.")
 
 
 func test_primary_label_defaults_follow_role_contract() -> void:
@@ -114,6 +127,7 @@ func test_key_room_object_roles_match_contract() -> void:
 	var power = load("res://resources/rooms/quarterview/objects/power.tres")
 	var speaker = load("res://resources/rooms/quarterview/objects/speaker.tres")
 	var bathroom_door = load("res://resources/rooms/quarterview/objects/bathroom_door.tres")
+	var phone = load("res://resources/rooms/quarterview/objects/phone.tres")
 
 	assert_eq(bed.role, ROOM_OBJECT_DEFINITION_SCRIPT.ROLE_MANUAL_END_DAY, "Bed should remain the manual end-day object.")
 	assert_eq(laptop.role, ROOM_OBJECT_DEFINITION_SCRIPT.ROLE_LAPTOP_JOB, "Laptop should remain the work/job entry object.")
@@ -126,6 +140,9 @@ func test_key_room_object_roles_match_contract() -> void:
 		],
 		"Bathroom door should remain a background structure/life hint."
 	)
+	assert_true(phone.is_portable, "Phone should now be treated as Yui's portable equipment candidate.")
+	assert_false(phone.room_interaction_enabled, "Phone should no longer be a room hover/click/nearest target.")
+	assert_false(phone.allows_room_interaction(), "Phone should be excluded from QuarterviewRoom room interaction.")
 
 
 func _get_room_object_resource_paths() -> Array[String]:

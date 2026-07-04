@@ -9,7 +9,8 @@
 - [ ] 임시 room background가 보인다.
 - [ ] prototype HUD가 화면을 크게 가리지 않고 읽힌다.
 - [ ] HUD에 DAY / 시간 / 전력 / 허기 / 컨디션 / 메모가 보인다.
-- [ ] `R`을 누르면 QuarterviewMain이 재시작된다.
+- [ ] 기본 화면에서 `P`를 누르면 Phone screen candidate가 열린다.
+- [ ] 기본 화면에서 `R`을 눌러도 QuarterviewMain이 재시작되지 않는다.
 
 ## Room Movement
 
@@ -56,9 +57,11 @@
 
 ## Phone
 
-- [ ] Phone object를 클릭한다.
-- [ ] `사용하기`를 누르면 Phone overlay가 열린다.
+- [ ] 책상 위 Phone 위치에 마우스를 올려도 `[클릭] Phone` hover prompt가 뜨지 않는다.
+- [ ] Phone object를 직접 클릭해서 candidate panel이 열리지 않는다.
+- [ ] 기본 room 상태에서 `P`를 누르면 Phone screen candidate가 열린다.
 - [ ] Battery / Signal / Messages / Charge Port를 선택할 수 있다.
+- [ ] 의뢰 탭에서 `maintenance_17_fragment` 후보와 수락 상태를 확인할 수 있다.
 - [ ] 선택 / 확인 시 HUD 메모나 정보 수집 후보가 mock 값으로 갱신된다.
 - [ ] 실제 PhoneUI나 SurvivalState phone battery는 열리지 않는다.
 - [ ] ESC / 닫기 버튼 / 빈 영역 클릭으로 overlay가 닫힌다.
@@ -111,6 +114,7 @@
 - [ ] `F3`으로 footprint tuning mode가 켜진다.
 - [ ] `[` / `]`로 selected object가 바뀐다.
 - [ ] `C`를 누르면 layout snippet이 출력된다.
+- [ ] debug ON 상태에서만 `Shift+R`이 개발용 restart로 동작한다.
 - [ ] debug OFF로 돌아가면 기본 화면이 과하게 지저분하지 않다.
 
 ## Pass / Needs Fix

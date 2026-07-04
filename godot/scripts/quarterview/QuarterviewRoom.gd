@@ -1842,7 +1842,10 @@ func _clamp_walk_target(target: Vector2) -> Vector2:
 
 
 func _is_normal_interactable(definition: Resource) -> bool:
-	if not definition.interactable:
+	if definition.has_method("allows_room_interaction"):
+		if not definition.allows_room_interaction():
+			return false
+	elif not definition.interactable:
 		return false
 	return String(definition.key) != "small_table"
 

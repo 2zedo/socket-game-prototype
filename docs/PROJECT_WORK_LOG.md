@@ -391,3 +391,11 @@
 - Changed: `QuarterviewJobDefinition.gd`, `maintenance_17_fragment.tres`, `PhoneScreenCandidate.gd`, `QuarterviewMain.gd`, `test_quarterview_job_definition.gd`, status docs.
 - Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted QuarterviewJobDefinition GUT, and full GUT passed. Full `git diff --check` remains blocked by unrelated addon whitespace.
 - Next: GUI에서 Phone 의뢰 탭 선택 / 수락 후보 / HUD 의뢰 표시 / Desk-Laptop NAVI 준비 후보 / Day Result 의뢰 상태 표시를 수동 확인한다.
+
+### Quarterview portable Phone access / restart safety
+
+- Commit: see the commit containing this entry.
+- Result: Phone을 책상 위 room object가 아니라 `P`로 여는 휴대 장비 candidate로 바꿨다. `phone.tres`는 portable-only / room interaction disabled로 표시되어 QuarterviewRoom click / hover / nearest 대상에서 빠진다. 기본 `R` restart는 제거하고, 개발용 restart는 debug ON + `Shift+R`로 제한했다. Power board 안의 `R` module rotation은 유지된다.
+- Changed: `QuarterviewMain.gd`, `QuarterviewRoom.gd`, `RoomObjectDefinition.gd`, `phone.tres`, `test_room_object_definition.gd`, GUI checklist, status docs.
+- Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted RoomObjectDefinition GUT, and full GUT passed. Full `git diff --check` remains blocked by unrelated addon whitespace.
+- Next: GUI에서 `P` Phone open / close, Phone hover prompt 제거, Phone direct click 제거, 기본 `R` no-restart, debug `Shift+R` restart, Power board `R` rotation을 수동 확인한다.
