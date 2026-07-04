@@ -20,7 +20,7 @@
 - Desk / Laptop is the job and hacking-entry hub.
 - Power equipment is moving toward a modular power-board / power-tetris system.
 - Hacking direction is action infiltration + defense, not a puzzle-only mode.
-- Current room image direction is fixed `1920x1080` quarterview, slightly pulled-back camera, readable Yui scale, indoor wall finishes, varied warm/cool palette, logical two-room door connection, and real lived-in / professional equipment-room function.
+- Current room image direction is fixed `1920x1080` quarterview, slightly pulled-back camera, readable Yui scale, indoor wall finishes, varied warm/cool palette, logical two-room door connection, and Act 1 play-loop cues: power rationing, portable Phone / DM life, PIP-03 support spots, anonymous job traces, and NAVI LINK-centered work / power function.
 - Current mock HUD / overlays in QuarterviewMain are local candidate state, not production `SurvivalState`.
 
 ## 4. Current Implementation Snapshot

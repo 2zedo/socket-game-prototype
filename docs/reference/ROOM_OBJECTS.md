@@ -93,6 +93,29 @@ Production boundary:
 
 - Current production `PhoneUI` remains Main-only.
 
+Visual planning rule:
+
+- Living-space art may include a Phone charging/resting spot near bed or dining.
+- That spot is environmental storytelling only unless a future task creates a separate object/resource.
+- Phone itself remains portable and opened with `P`.
+
+## Act 1 Visual Cue Candidates
+
+These are current art / story planning cues, not implemented `RoomObjectDefinition` Resources unless listed elsewhere.
+
+| Candidate | Preferred Space | Purpose | Implementation Status |
+| --- | --- | --- | --- |
+| `power_ration_panel` | living wall | small power ration / outlet-limit cue | visual planning only |
+| `phone_charge_spot` | living bed/dining side | portable Phone life cue, Mika DM implication | visual planning only |
+| `pip03_charge_spot` | living entrance / utility corner | PIP-03 home support cue | visual planning only |
+| `job_notice_trace` | living small surface | anonymous job notification hint, not full work board | visual planning only |
+| `navi_link_station` | work + power room | primary hacking-entry visual | visual planning; Hacking Entry candidate is UI-only |
+| `navi_power_line` | work + power room | clean connection between NAVI LINK and power panel | visual planning only |
+| `pip03_service_port` | work + power room | PIP-03 diagnostic / power-check port | visual planning only |
+| `node17_slot` | work + power room | future NODE-17 / signal slot, inactive | visual planning only |
+
+Do not add these as production gameplay objects without a dedicated Resource / interaction task.
+
 ## Job Resources
 
 Resource script:

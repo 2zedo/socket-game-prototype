@@ -26,7 +26,7 @@ Room personality:
 Visual direction:
 
 - Current temporary quarterview sprite exists under `godot/assets/art/quarterview/character/yui/`.
-- In quarterview room images, Yui should be about `150-165px` high on a `1920x1080` canvas.
+- In quarterview room images, Yui should be about `118-132px` high on a `1920x1080` canvas.
 - Proportion target is about `2.5-3 heads`.
 - Avoid chubby / squat / short-stubby proportions.
 - The character is the scale anchor for the room and objects.
@@ -69,6 +69,20 @@ Current UI:
 Boundary:
 
 - No faction identity or branching story has been implemented.
+
+## Mika
+
+Mika is currently an offscreen Phone / DM contact cue for Act 1.
+
+Current role:
+
+- reinforces that Phone is part of Yui's everyday life, not a fixed room object
+- can be implied through Phone screen / charging spot / message notification direction
+- should not become wall text, a large room label, or a physical room object
+
+Boundary:
+
+- No Mika scene, dialogue system, friendship system, save-load state, or production PhoneUI integration is wired yet.
 
 ## Character Implementation Files
 

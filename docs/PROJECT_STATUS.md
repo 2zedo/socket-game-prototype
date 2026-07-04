@@ -28,9 +28,11 @@
 
 ## Latest Work
 
-- Recorded the current in-game room image direction in `docs/reference/ART_DIRECTION.md`.
-- Updated `docs/GAME_INFO.md` with the new art baseline summary.
-- The current art target is fixed `1920x1080`, slightly pulled-back quarterview, indoor wall finishes, no default wood floor, varied restrained colors, Yui scale `118-132px`, reduced living room footprint, and a logically connected smaller work / power room.
+- Recorded additional Act 1 room-design cues in `docs/reference/ART_DIRECTION.md`, `docs/reference/STORY.md`, `docs/reference/ROOM_OBJECTS.md`, and `docs/reference/CHARACTERS.md`.
+- Updated `docs/GAME_INFO.md` with the new high-level art/story room summary.
+- The current art target remains fixed `1920x1080`, slightly pulled-back quarterview, indoor wall finishes, no default wood floor, varied restrained colors, Yui scale `118-132px`, reduced living room footprint, and a logically connected smaller work / power room.
+- The room should now visibly support Act 1's loop: power rationing, portable Phone / Mika DM, anonymous job traces, PIP-03 support spots, NAVI LINK preparation, compact power routing, and later NODE / signal equipment.
+- Yui's room-image scale is aligned to the current `118-132px` target.
 - The work / power room direction centers on NAVI LINK, compact power control, and signal / NODE equipment rather than laptop-centered hacker-room imagery.
 - This remains documentation-only; no image generation, scene wiring, or asset application was done.
 

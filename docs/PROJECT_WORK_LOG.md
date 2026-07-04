@@ -18,8 +18,16 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ### Room image direction update
 
-- Commit: pending in this task.
+- Commit: `23d50c8`
 - Result: Recorded the latest in-game room image requirements in `docs/reference/ART_DIRECTION.md`, including fixed `1920x1080`, pulled-back quarterview camera, Yui scale, indoor wall/floor material rules, palette diversification, living-space footprint reduction, logical door placement, and NAVI LINK-centered work / power room direction.
 - Changed: documentation only.
 - Not changed: Godot code, scenes, resources, assets, image files, `project.godot`, Main/DAY1 production flow.
 - Next: Use the updated art reference as the baseline for future room image generation or review.
+
+### Act 1 room design cues
+
+- Commit: pending in this task.
+- Result: Added room-design cues for power rationing, portable Phone / Mika DM, anonymous job traces, PIP-03 support spots, NAVI LINK preparation, and NODE / signal equipment placement to current reference docs.
+- Changed: `docs/reference/ART_DIRECTION.md`, `docs/reference/STORY.md`, `docs/reference/ROOM_OBJECTS.md`, `docs/reference/CHARACTERS.md`, `docs/GAME_INFO.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`.
+- Not changed: Godot code, scenes, resources, assets, image files, `project.godot`, Main/DAY1 production flow.
+- Next: Use the living-space-only prompt direction first; do not generate both living and work rooms in one pass unless explicitly requested.

@@ -21,6 +21,7 @@ Use these rules for new in-game room sample images:
 - Object scale must be rebalanced around Yui's actual in-game readable size.
 - Spaces must feel like real living / working rooms, not decorative concept sets.
 - Doors, partitions, and living routes must connect logically.
+- The room image should reveal the Act 1 play loop at a glance: power rationing, portable Phone / DM access, anonymous job traces, PIP-03 support, NAVI LINK preparation, and constrained lower-grid living.
 
 ## Scale Anchor
 
@@ -144,6 +145,16 @@ The living room contains:
 4. dining zone
 5. internal connecting door to work room
 
+Act 1 visual cues allowed in living space:
+
+- a small power-ration notice panel or limited outlet indicator on one wall
+- a portable Phone charging/resting spot near the bed or dining table
+- a tiny Mika DM / message cue only as phone-screen implication, not wall text
+- small anonymous-job notification traces only, not a full work board
+- a small PIP-03 charging/resting spot near the entrance if it stays subtle
+
+Do not put NAVI LINK, NODE-17, power-board equipment, heavy communication hardware, or hacking rigs in the living space.
+
 ### Entrance Zone
 
 Position:
@@ -152,8 +163,9 @@ Position:
 
 Rules:
 
-- Avoid awkward East Asian genkan step if it reads wrong.
-- Prefer flat interior floor with only a small threshold / narrow entry zone.
+- Use a modest shoe-off entry threshold or shallow entry-tile zone.
+- If a raised genkan step reads awkward, reduce it to a small threshold and floor-material change.
+- The interior floor should still feel mostly flat and playable.
 - Entry should mark outside/inside boundary without a large split-level floor.
 
 Include:
@@ -163,6 +175,8 @@ Include:
 - small card reader
 - 2-3 pairs of shoes
 - small shoe cabinet
+- optional inside-side coat stand with olive raincoat, dusty blue bag, or muted scarf
+- optional small PIP-03 charging spot, if it reads as a home support-device corner
 
 Do not include:
 
@@ -171,6 +185,7 @@ Do not include:
 - partition full of books, drawers, or valuables in front of the door
 - open valuable storage at the entrance
 - coat rack outside the home boundary
+- black outerwear that visually duplicates Yui's silhouette
 
 Color:
 
@@ -245,6 +260,7 @@ Mood:
 
 - one-person home with coffee habit
 - not a decorated cafe
+- practical, small, and routinely used
 
 ### Dining Zone
 
@@ -301,6 +317,7 @@ Rules:
 - must not share the exact design language of entrance door
 - should read as an interior partition door
 - sliding door or light industrial internal door works
+- must visibly lead to the work + power room, not to a window or exterior view
 
 Colors:
 
@@ -342,6 +359,7 @@ This room is:
 - personal hacker equipment room + power control room
 - slightly data-center orderly
 - compact and professional
+- the visual home of NAVI LINK, power routing, anonymous job preparation, and later NODE / signal equipment
 
 It is not:
 
@@ -361,6 +379,15 @@ Primary read:
 1. NAVI LINK hacking entry device
 2. compact power control panel
 3. signal / NODE equipment set
+
+Act 1 visual cues:
+
+- job log / anonymous request memo panel near the equipment, kept compact
+- NAVI LINK power line or clean cable route to the power panel
+- PIP-03 diagnostic / charging port candidate, secondary to NAVI LINK
+- later NODE-17 slot candidate, not a fully activated story device
+
+Do not make a normal laptop / monitor desk the center. A small terminal can exist only as a support panel.
 
 ### NAVI LINK Device
 
@@ -403,6 +430,7 @@ Signal / NODE equipment:
 - one compact equipment set
 - compact communication device
 - small record panel or memo board
+- one future NODE-17 / signal slot candidate if it stays compact and inactive
 
 Avoid:
 
@@ -442,6 +470,9 @@ Interactive objects should be readable without looking like UI stickers.
 
 Living space emphasis:
 
+- small power-ration notice / outlet-limit panel
+- Phone charging/resting spot, while Phone remains portable
+- possible PIP-03 charging spot near entrance
 - refrigerator
 - microwave
 - sink
@@ -454,6 +485,8 @@ Work room emphasis:
 - NAVI LINK entry device
 - power control panel
 - signal / NODE equipment
+- compact anonymous job log / record panel
+- PIP-03 service / diagnostic port candidate
 - internal connecting door
 
 Use:
@@ -506,7 +539,7 @@ Current temporary generated assets include:
 Use this short baseline for future room image prompts:
 
 ```text
-1920x1080 fixed 16:9, 2D quarterview cutaway game room, camera slightly pulled back with comfortable margins and readable walkable floor. Interior walls are off-white / warm gray indoor panels, not exterior concrete. No wood floor; use clean light gray-white resin or composite tile floor. Use varied restrained colors: cream gray, light greige, dusty blue, sage, warm amber, muted teal, small coral, and soft city reflections. Yui scale anchor is 118-132px tall and slim. Living space is a warm modest real home, slightly smaller than prior sample, with flat entry threshold, low partition / mesh curtain sleep separation, bed in quiet inner corner, compact kitchen / coffee area, smaller dining table and chairs, and internal door on upper-right / right-back wall. Work + power space is smaller and professional, with door on lower/front side of left wall, no window, no living appliances, centered on NAVI LINK personal synchronization device, compact power panel, and signal / NODE equipment. Avoid dental chair, torture room, villain lab, factory power room, laptop-centered hacker desk, clutter piles, charcoal-gray-cyan monotony, luxury furniture, motel colors, and impossible door placement.
+1920x1080 fixed 16:9, 2D quarterview cutaway game room, camera slightly pulled back with comfortable margins and readable walkable floor. Interior walls are off-white / warm gray indoor panels, not exterior concrete. No wood floor; use clean light gray-white resin or composite tile floor. Use varied restrained colors: cream gray, light greige, dusty blue, sage, warm amber, muted teal, small coral, and soft city reflections. Yui scale anchor is 118-132px tall and slim. Living space is a warm modest real home, slightly smaller than prior sample, with a modest shoe-off entry threshold, low partition / mesh curtain sleep separation, bed in quiet inner corner, compact kitchen / coffee area, smaller dining table and chairs, small power-ration cue, portable Phone charging/resting cue, possible subtle PIP-03 charging spot, and internal door on upper-right / right-back wall. Work + power space is smaller and professional, with door on lower/front side of left wall, no window, no living appliances, centered on NAVI LINK personal synchronization device, compact power panel, signal / NODE equipment, anonymous job log cue, clean NAVI power line, and possible PIP-03 diagnostic port. Avoid dental chair, torture room, villain lab, factory power room, laptop-centered hacker desk, clutter piles, charcoal-gray-cyan monotony, luxury furniture, motel colors, and impossible door placement.
 ```
 
 ## Art Non-Goals
