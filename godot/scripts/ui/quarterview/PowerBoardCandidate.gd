@@ -6,16 +6,15 @@ signal module_action_requested(module_key: String, action_key: String, module: D
 signal module_dropped(module_key: String, cell: Vector2i, module: Dictionary)
 signal selection_changed(module_key: String, module: Dictionary)
 
-const PANEL_SIZE := Vector2(690, 500)
-const GRID_ORIGIN := Vector2(34, 44)
-const GRID_CELLS := Vector2i(7, 5)
-const CELL_SIZE := Vector2(46, 38)
+const PANEL_SIZE := Vector2(860, 520)
+const WORK_AREA_SIZE := Vector2(610, 334)
+const INVENTORY_RECT := Rect2(Vector2.ZERO, Vector2(230, 334))
+const BOARD_RECT := Rect2(Vector2(244, 0), Vector2(366, 334))
+const GRID_ORIGIN := Vector2(276, 84)
+const GRID_CELLS := Vector2i(6, 5)
+const CELL_SIZE := Vector2(50, 40)
 const UI_POWER_BOARD_ATLAS_PATH := "res://assets/art/ui/atlases/ui_power_board_atlas.png"
 const ATLAS_SOURCE_SIZE := Vector2(1254, 1254)
-const ATLAS_REGION_BOARD_FRAME := Rect2(Vector2(38, 40), Vector2(648, 626))
-const ATLAS_REGION_GRID_CELL_NORMAL := Rect2(Vector2(714, 42), Vector2(210, 210))
-const ATLAS_REGION_GRID_CELL_VALID := Rect2(Vector2(980, 44), Vector2(220, 210))
-const ATLAS_REGION_GRID_CELL_INVALID := Rect2(Vector2(980, 290), Vector2(220, 214))
 
 const MODULE_ATLAS_REGIONS := {
 	"small_core": Rect2(Vector2(715, 318), Vector2(106, 120)),
@@ -30,8 +29,9 @@ const MODULES := [
 		"display_name": "Small Core",
 		"role": "power_module",
 		"description": "작고 단순한 1x1 전력 코어 후보입니다. 배치해도 실제 전력 계산은 없습니다.",
+		"effect": "전력 안정 / 효율 낮음",
 		"candidate_action": "place_small_core_noop",
-		"rect": Rect2(Vector2(420, 56), Vector2(46, 38)),
+		"rect": Rect2(Vector2(18, 62), Vector2(48, 38)),
 		"size_cells": Vector2i(1, 1),
 		"color": Color(0.16, 0.38, 0.48, 0.92),
 	},
@@ -40,8 +40,9 @@ const MODULES := [
 		"display_name": "Laptop Adapter",
 		"role": "power_adapter",
 		"description": "노트북 전원을 우선 배분할 2x1 어댑터 후보입니다. OutletMode와는 아직 연결하지 않았습니다.",
+		"effect": "노트북 우선 공급 / 발열 약간 증가",
 		"candidate_action": "place_laptop_adapter_noop",
-		"rect": Rect2(Vector2(492, 56), Vector2(92, 38)),
+		"rect": Rect2(Vector2(18, 122), Vector2(98, 38)),
 		"size_cells": Vector2i(2, 1),
 		"color": Color(0.34, 0.28, 0.16, 0.94),
 	},
@@ -50,8 +51,9 @@ const MODULES := [
 		"display_name": "Comm Module",
 		"role": "power_routing",
 		"description": "통신 장비 전원을 세로로 잡아주는 1x2 후보 모듈입니다. 실제 장치 active 값은 바꾸지 않습니다.",
+		"effect": "통신 유지 / 신호 보정 후보",
 		"candidate_action": "place_comm_module_noop",
-		"rect": Rect2(Vector2(420, 124), Vector2(46, 76)),
+		"rect": Rect2(Vector2(18, 182), Vector2(48, 78)),
 		"size_cells": Vector2i(1, 2),
 		"color": Color(0.48, 0.22, 0.14, 0.92),
 	},
@@ -60,8 +62,9 @@ const MODULES := [
 		"display_name": "Odd Efficiency",
 		"role": "power_efficiency",
 		"description": "효율은 좋아 보이지만 모양이 애매한 2x2 후보 모듈입니다. L-shape은 다음 단계 후보입니다.",
+		"effect": "효율 보정 / 배치 난도 높음",
 		"candidate_action": "place_efficiency_module_noop",
-		"rect": Rect2(Vector2(492, 124), Vector2(92, 76)),
+		"rect": Rect2(Vector2(18, 242), Vector2(98, 78)),
 		"size_cells": Vector2i(2, 2),
 		"color": Color(0.25, 0.24, 0.30, 0.94),
 	},
@@ -71,6 +74,7 @@ var selected_module_key := "small_core"
 var debug_enabled := false
 var module_buttons := {}
 var module_guides := {}
+var module_labels := {}
 var module_home_positions := {}
 var module_grid_positions := {}
 var dragging_module_key := ""
@@ -143,7 +147,7 @@ func _build() -> void:
 	add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.add_theme_constant_override("separation", 8)
 	margin.add_child(vbox)
 
 	var title := Label.new()
@@ -153,31 +157,57 @@ func _build() -> void:
 	vbox.add_child(title)
 
 	var description := Label.new()
-	description.text = "제한된 전력을 모듈로 재배치하는 장치 후보입니다. OutletMode / SurvivalState 연결 없음."
+	description.text = "모듈을 보드에 드래그해 배치합니다. 겹치거나 보드 밖이면 배치할 수 없습니다."
 	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.78, 1.0))
 	description.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(description)
 
 	board_surface = Control.new()
-	board_surface.name = "PowerBoardMock"
-	board_surface.custom_minimum_size = Vector2(632, 316)
-	vbox.add_child(board_surface)
+	board_surface.name = "PowerBoardWorkbench"
+	board_surface.custom_minimum_size = WORK_AREA_SIZE
 
-	var board_background := ColorRect.new()
-	board_background.color = Color(0.045, 0.052, 0.048, 0.96)
-	board_background.position = Vector2.ZERO
-	board_background.size = Vector2(632, 316)
-	board_surface.add_child(board_background)
+	var body_row := HBoxContainer.new()
+	body_row.add_theme_constant_override("separation", 12)
+	vbox.add_child(body_row)
+	body_row.add_child(board_surface)
 
-	if atlas_texture != null:
-		_add_atlas_region(
-			board_surface,
-			"PowerBoardFrameRegion",
-			ATLAS_REGION_BOARD_FRAME,
-			Vector2(8, 18),
-			Vector2(378, 262),
-			Color(1.0, 1.0, 1.0, 0.92)
-		)
+	var inventory_bg := ColorRect.new()
+	inventory_bg.name = "ModuleInventoryBackground"
+	inventory_bg.color = Color(0.042, 0.050, 0.050, 0.98)
+	inventory_bg.position = INVENTORY_RECT.position
+	inventory_bg.size = INVENTORY_RECT.size
+	board_surface.add_child(inventory_bg)
+
+	var board_bg := ColorRect.new()
+	board_bg.name = "PowerGridBackground"
+	board_bg.color = Color(0.030, 0.036, 0.035, 0.98)
+	board_bg.position = BOARD_RECT.position
+	board_bg.size = BOARD_RECT.size
+	board_surface.add_child(board_bg)
+
+	var inventory_title := Label.new()
+	inventory_title.text = "Module Inventory"
+	inventory_title.position = INVENTORY_RECT.position + Vector2(16, 14)
+	inventory_title.size = Vector2(190, 24)
+	inventory_title.add_theme_color_override("font_color", Color(0.90, 0.84, 0.62, 1.0))
+	inventory_title.add_theme_font_size_override("font_size", 15)
+	board_surface.add_child(inventory_title)
+
+	var board_title := Label.new()
+	board_title.text = "Power Board Grid"
+	board_title.position = BOARD_RECT.position + Vector2(18, 14)
+	board_title.size = Vector2(210, 24)
+	board_title.add_theme_color_override("font_color", Color(0.90, 0.84, 0.62, 1.0))
+	board_title.add_theme_font_size_override("font_size", 15)
+	board_surface.add_child(board_title)
+
+	var board_hint := Label.new()
+	board_hint.text = "Drag modules here"
+	board_hint.position = BOARD_RECT.position + Vector2(18, 38)
+	board_hint.size = Vector2(250, 20)
+	board_hint.add_theme_color_override("font_color", Color(0.58, 0.68, 0.66, 0.92))
+	board_hint.add_theme_font_size_override("font_size", 12)
+	board_surface.add_child(board_hint)
 
 	_add_grid(board_surface)
 
@@ -188,33 +218,47 @@ func _build() -> void:
 	drop_preview.color = Color(0.22, 0.88, 0.72, 0.24)
 	board_surface.add_child(drop_preview)
 
-	if atlas_texture != null:
-		drop_preview_texture = TextureRect.new()
-		drop_preview_texture.name = "PowerDropPreviewTexture"
-		drop_preview_texture.visible = false
-		drop_preview_texture.stretch_mode = TextureRect.STRETCH_SCALE
-		drop_preview_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		board_surface.add_child(drop_preview_texture)
-
 	for module in MODULES:
 		_add_module_button(module)
+
+	var detail_panel := PanelContainer.new()
+	detail_panel.name = "PowerModuleDetailPanel"
+	detail_panel.custom_minimum_size = Vector2(198, 334)
+	body_row.add_child(detail_panel)
+
+	var detail_margin := MarginContainer.new()
+	detail_margin.add_theme_constant_override("margin_left", 12)
+	detail_margin.add_theme_constant_override("margin_top", 12)
+	detail_margin.add_theme_constant_override("margin_right", 12)
+	detail_margin.add_theme_constant_override("margin_bottom", 12)
+	detail_panel.add_child(detail_margin)
+
+	var detail_box := VBoxContainer.new()
+	detail_box.add_theme_constant_override("separation", 8)
+	detail_margin.add_child(detail_box)
+
+	var detail_title := Label.new()
+	detail_title.text = "선택 모듈"
+	detail_title.add_theme_color_override("font_color", Color(0.90, 0.84, 0.62, 1.0))
+	detail_title.add_theme_font_size_override("font_size", 15)
+	detail_box.add_child(detail_title)
 
 	module_title_label = Label.new()
 	module_title_label.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72, 1.0))
 	module_title_label.add_theme_font_size_override("font_size", 18)
-	vbox.add_child(module_title_label)
+	detail_box.add_child(module_title_label)
 
 	module_detail_label = Label.new()
 	module_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	module_detail_label.add_theme_color_override("font_color", Color(0.74, 0.82, 0.82, 1.0))
 	module_detail_label.add_theme_font_size_override("font_size", 13)
-	vbox.add_child(module_detail_label)
+	detail_box.add_child(module_detail_label)
 
 	module_debug_label = Label.new()
 	module_debug_label.visible = false
 	module_debug_label.add_theme_color_override("font_color", Color(0.50, 0.93, 0.96, 1.0))
 	module_debug_label.add_theme_font_size_override("font_size", 12)
-	vbox.add_child(module_debug_label)
+	detail_box.add_child(module_debug_label)
 
 	var button_row := HBoxContainer.new()
 	button_row.add_theme_constant_override("separation", 8)
@@ -236,7 +280,7 @@ func _build() -> void:
 	button_row.add_child(close_button)
 
 	var close_hint := Label.new()
-	close_hint.text = "ESC 닫기 / 전력 계산과 OutletMode는 아직 연결하지 않음"
+	close_hint.text = "ESC 닫기 / 배치는 no-op status만 남김 / 전력 계산과 OutletMode는 아직 연결하지 않음"
 	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
 	close_hint.add_theme_font_size_override("font_size", 12)
 	vbox.add_child(close_hint)
@@ -245,25 +289,21 @@ func _build() -> void:
 
 
 func _add_grid(parent: Control) -> void:
+	var grid_backplate := ColorRect.new()
+	grid_backplate.name = "PowerGridBackplate"
+	grid_backplate.color = Color(0.010, 0.014, 0.014, 0.96)
+	grid_backplate.position = GRID_ORIGIN - Vector2(6, 6)
+	grid_backplate.size = Vector2(GRID_CELLS.x * CELL_SIZE.x + 9.0, GRID_CELLS.y * CELL_SIZE.y + 9.0)
+	grid_backplate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(grid_backplate)
+
 	for y in GRID_CELLS.y:
 		for x in GRID_CELLS.x:
-			if atlas_texture != null:
-				var texture_cell := TextureRect.new()
-				texture_cell.name = "PowerGridCell_%d_%d" % [x, y]
-				texture_cell.texture = _make_atlas_texture(ATLAS_REGION_GRID_CELL_NORMAL)
-				texture_cell.position = GRID_ORIGIN + Vector2(x * CELL_SIZE.x, y * CELL_SIZE.y)
-				texture_cell.size = CELL_SIZE - Vector2(3, 3)
-				texture_cell.stretch_mode = TextureRect.STRETCH_SCALE
-				texture_cell.modulate = Color(0.84, 0.90, 0.88, 0.72) if (x + y) % 2 == 0 else Color(0.72, 0.80, 0.78, 0.68)
-				texture_cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				parent.add_child(texture_cell)
-				continue
-
 			var cell := ColorRect.new()
 			cell.name = "PowerGridCell_%d_%d" % [x, y]
-			cell.color = Color(0.09, 0.12, 0.11, 0.72) if (x + y) % 2 == 0 else Color(0.07, 0.09, 0.085, 0.72)
+			cell.color = Color(0.105, 0.135, 0.128, 0.98) if (x + y) % 2 == 0 else Color(0.075, 0.100, 0.096, 0.98)
 			cell.position = GRID_ORIGIN + Vector2(x * CELL_SIZE.x, y * CELL_SIZE.y)
-			cell.size = CELL_SIZE - Vector2(3, 3)
+			cell.size = CELL_SIZE - Vector2(4, 4)
 			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			parent.add_child(cell)
 
@@ -285,14 +325,14 @@ func _add_module_button(module: Dictionary) -> void:
 
 	var button := Button.new()
 	button.name = "%sModuleButton" % key.capitalize().replace("_", "")
-	button.text = String(module["display_name"])
+	button.text = _get_module_size_text(module)
 	button.position = rect.position
 	button.size = module_size
 	button.tooltip_text = String(module["description"])
+	button.add_theme_font_size_override("font_size", 12)
 	if _has_module_atlas_region(key):
 		button.icon = _make_atlas_texture(_get_module_atlas_region(key))
 		button.expand_icon = true
-		button.text = ""
 		button.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	else:
 		button.modulate = module["color"]
@@ -301,10 +341,31 @@ func _add_module_button(module: Dictionary) -> void:
 	module_buttons[key] = button
 	module_home_positions[key] = rect.position
 
+	var label := Label.new()
+	label.name = "%sModuleLabel" % key.capitalize().replace("_", "")
+	label.text = "%s\n%s / %s" % [
+		String(module["display_name"]),
+		_get_module_size_text(module),
+		String(module.get("role", "candidate")),
+	]
+	label.position = rect.position + Vector2(module_size.x + 10.0, -2.0)
+	label.size = Vector2(maxf(72.0, INVENTORY_RECT.size.x - label.position.x - 10.0), maxf(module_size.y + 8.0, 48.0))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_color_override("font_color", Color(0.70, 0.82, 0.78, 0.96))
+	label.add_theme_font_size_override("font_size", 11)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	board_surface.add_child(label)
+	module_labels[key] = label
+
 
 func _get_module_pixel_size(module: Dictionary) -> Vector2:
 	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
 	return Vector2(CELL_SIZE.x * size_cells.x - 2.0, CELL_SIZE.y * size_cells.y - 2.0)
+
+
+func _get_module_size_text(module: Dictionary) -> String:
+	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
+	return "%dx%d" % [size_cells.x, size_cells.y]
 
 
 func _on_module_gui_input(event: InputEvent, module_key: String) -> void:
@@ -460,14 +521,6 @@ func _update_drop_preview(module_key: String) -> void:
 	drop_preview.position = GRID_ORIGIN + Vector2(cell.x * CELL_SIZE.x, cell.y * CELL_SIZE.y)
 	drop_preview.size = Vector2(size_cells.x * CELL_SIZE.x - 3.0, size_cells.y * CELL_SIZE.y - 3.0)
 	drop_preview.color = Color(0.20, 0.90, 0.68, 0.28) if bool(candidate.get("valid", false)) else Color(0.96, 0.18, 0.14, 0.32)
-	if drop_preview_texture != null:
-		drop_preview_texture.visible = true
-		drop_preview_texture.position = drop_preview.position
-		drop_preview_texture.size = drop_preview.size
-		drop_preview_texture.texture = _make_atlas_texture(
-			ATLAS_REGION_GRID_CELL_VALID if bool(candidate.get("valid", false)) else ATLAS_REGION_GRID_CELL_INVALID
-		)
-		drop_preview_texture.modulate = Color(1.0, 1.0, 1.0, 0.78)
 
 
 func _request_module_action(action_key: String) -> void:
@@ -487,12 +540,18 @@ func _select_module(module_key: String, emit_signal := true) -> void:
 		var button: Button = module_buttons[key]
 		var button_module := _get_module(String(key))
 		var selected := String(key) == selected_module_key
-		if _has_module_atlas_region(String(key)):
-			button.text = ">" if selected else ""
-			button.modulate = Color(1.18, 1.12, 0.92, 1.0) if selected else Color(0.88, 0.93, 0.93, 1.0)
+		button.text = _get_module_size_text(button_module)
+		if selected:
+			button.modulate = Color(1.16, 1.08, 0.86, 1.0)
 		else:
-			var prefix := "> " if selected else ""
-			button.text = "%s%s" % [prefix, String(button_module.get("display_name", key))]
+			button.modulate = Color(0.88, 0.93, 0.93, 1.0) if _has_module_atlas_region(String(key)) else button_module.get("color", Color.WHITE)
+
+		var label: Label = module_labels.get(String(key), null)
+		if label != null:
+			label.add_theme_color_override(
+				"font_color",
+				Color(0.98, 0.86, 0.48, 1.0) if selected else Color(0.70, 0.82, 0.78, 0.96)
+			)
 	_refresh_module_detail()
 	if emit_signal:
 		selection_changed.emit(module_key, module.duplicate(true))
@@ -504,7 +563,11 @@ func _refresh_module_detail() -> void:
 		return
 
 	module_title_label.text = String(module["display_name"])
-	module_detail_label.text = "%s\n\n전력 모듈 후보는 아직 연결되지 않았습니다." % String(module["description"])
+	module_detail_label.text = "크기: %s\n후보 효과: %s\n\n%s\n\n아직 실제 전력 계산 없음." % [
+		_get_module_size_text(module),
+		String(module.get("effect", "효과 후보 없음")),
+		String(module["description"]),
+	]
 
 	var rect: Rect2 = module["rect"]
 	module_debug_label.visible = debug_enabled
@@ -560,19 +623,6 @@ func _scale_atlas_region(region: Rect2) -> Rect2:
 		Vector2(region.position.x * texture_size.x / ATLAS_SOURCE_SIZE.x, region.position.y * texture_size.y / ATLAS_SOURCE_SIZE.y),
 		Vector2(region.size.x * texture_size.x / ATLAS_SOURCE_SIZE.x, region.size.y * texture_size.y / ATLAS_SOURCE_SIZE.y)
 	)
-
-
-func _add_atlas_region(parent: Control, node_name: String, region: Rect2, position: Vector2, size: Vector2, region_modulate := Color.WHITE) -> TextureRect:
-	var texture_rect := TextureRect.new()
-	texture_rect.name = node_name
-	texture_rect.texture = _make_atlas_texture(region)
-	texture_rect.position = position
-	texture_rect.size = size
-	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	texture_rect.modulate = region_modulate
-	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(texture_rect)
-	return texture_rect
 
 
 func _get_module_atlas_region(module_key: String) -> Rect2:

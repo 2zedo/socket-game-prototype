@@ -304,10 +304,18 @@
 - Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Phone tab / item action, Power drag / overlap invalid / out-of-grid reset, ESC / backdrop close, room input lock 복구를 수동 확인한다.
 
-### this commit - Quarterview Power Board UI atlas visual pass
+### 19fd377 - Quarterview Power Board UI atlas visual pass
 
-- Commit: `this commit`
+- Commit: `19fd377`
 - Result: `ui_power_board_atlas.png` 임시 Power equipment close-up atlas를 추가하고, `PowerBoardCandidate.gd`가 board frame / grid cell / valid-invalid preview / module icon 후보를 optional atlas visual로 사용하도록 했다. Atlas 로드 실패 시 기존 ColorRect / Button 기반 fallback은 유지된다.
 - Changed: Power board temporary UI atlas, `PowerBoardCandidate.gd`, temporary art manifest, status docs.
 - Validation: PNG size / alpha / visible-green check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Power close-up 열기, module drag / snap / overlap invalid / out-of-grid reset, atlas visual readability, fallback safety, 기존 Phone / Desk / Bed / Food-Kitchen / Door overlay 회귀 여부를 수동 확인한다.
+
+### this commit - Quarterview Power Board readability pass
+
+- Commit: `this commit`
+- Result: Power equipment close-up을 Module Inventory / Power Board Grid / selected module detail 영역으로 나누고, atlas frame을 크게 깔던 구성을 줄여 단순하고 명확한 grid를 기본 보드로 보이게 했다. Module block은 이름 / 크기 / 역할을 읽을 수 있게 커졌고, 기존 drag / snap / overlap invalid / out-of-grid reset은 유지했다.
+- Changed: `PowerBoardCandidate.gd`, `QuarterviewMain.gd`, temporary art manifest, status docs.
+- Validation: targeted `git diff --check` passed; full `git diff --check` is blocked by unrelated addon whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`; Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: GUI에서 Power close-up의 영역 구분, module readability, drag valid / invalid highlight, room input lock / close 흐름, 기존 overlay 회귀 여부를 수동 확인한다.

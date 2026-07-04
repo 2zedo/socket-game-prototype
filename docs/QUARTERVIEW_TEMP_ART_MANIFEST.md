@@ -115,7 +115,8 @@ Current atlas status:
 
 - Generated as a temporary imagegen UI sheet.
 - The generated source was normalized to a transparent `2048x2048` PNG for Godot use.
-- `PowerBoardCandidate.gd` loads this PNG optionally and uses code-local `AtlasTexture` regions for board frame, grid cells, valid / invalid drop preview, and module button icons.
+- `PowerBoardCandidate.gd` loads this PNG optionally and uses code-local `AtlasTexture` regions for module button icons.
+- The current Power board screen uses a simple readable ColorRect grid as the primary play surface, so the board / cell atlas regions are kept as future candidates rather than the default normal view.
 - The original visual fallback remains: if the PNG fails to load, the existing ColorRect / Button based drag prototype remains usable.
 - Region coordinates below are code-local candidates based on the generated `1254x1254` source layout; the helper scales them to the runtime atlas size.
 - There is no power-board mapping Resource yet.
@@ -126,9 +127,9 @@ Region candidate table:
 | Region | Source Rect `x,y,w,h` | Current Use | Notes |
 | --- | --- | --- | --- |
 | `board_frame` | `38,40,648,626` | Power board background frame | Code-local rect, scaled to runtime atlas size. |
-| `grid_cell_normal` | `714,42,210,210` | Grid cell visual candidate | Code-local rect, scaled to runtime atlas size. |
-| `grid_cell_valid` | `980,44,220,210` | Valid drop preview visual | Code-local rect, scaled to runtime atlas size. |
-| `grid_cell_invalid` | `980,290,220,214` | Invalid drop preview visual | Code-local rect, scaled to runtime atlas size. |
+| `grid_cell_normal` | `714,42,210,210` | Future grid cell visual candidate | Not used in the default readable board view. |
+| `grid_cell_valid` | `980,44,220,210` | Future valid drop preview visual | Not used in the default readable board view. |
+| `grid_cell_invalid` | `980,290,220,214` | Future invalid drop preview visual | Not used in the default readable board view. |
 | `small_core` | `715,318,106,120` | `small_core` module icon | Code-local rect, scaled to runtime atlas size. |
 | `laptop_adapter` | `718,548,294,198` | `laptop_adapter` module icon | Code-local rect, scaled to runtime atlas size. |
 | `comm_module` | `1080,585,122,290` | `comm_module` module icon | Code-local rect, scaled to runtime atlas size. |
