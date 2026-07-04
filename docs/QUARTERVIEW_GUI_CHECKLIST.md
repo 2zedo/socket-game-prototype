@@ -35,6 +35,17 @@
 - [ ] Power object를 클릭한다.
 - [ ] `사용하기`를 누르면 Power close-up이 열린다.
 - [ ] module을 선택하고 `모듈 확인`을 누른다.
+- [ ] 모듈을 보드에 배치하면 왼쪽 Module Inventory에서 사라진다.
+- [ ] 남은 inventory 모듈은 위에서부터 빈칸 없이 다시 정렬된다.
+- [ ] inventory가 길어져도 panel 밖으로 튀어나오지 않고 스크롤로 확인할 수 있다.
+- [ ] 모듈 A와 B를 인접 배치한 뒤 A를 다시 선택한다.
+- [ ] A를 `R` 또는 우클릭으로 회전해도 자기 자신의 기존 cells와 충돌하지 않는다.
+- [ ] A의 회전 후 cells가 B와 실제로 겹치는 경우만 invalid 처리된다.
+- [ ] invalid rotation은 회전 전 상태로 복귀한다.
+- [ ] invalid drop은 drag 시작 전 위치 / 배치 상태 / 회전 / inventory 순서로 복구된다.
+- [ ] 오른쪽 detail panel의 `보관함으로` 버튼으로 selected placed module을 inventory로 되돌릴 수 있다.
+- [ ] Delete / Backspace로도 selected placed module을 inventory로 되돌릴 수 있다.
+- [ ] 배치된 모듈을 inventory panel 위로 드롭하면 inventory 맨 아래에 추가된다.
 - [ ] HUD의 전력 상태 / 메모가 mock 값으로 갱신된다.
 - [ ] 실제 OutletMode나 SurvivalState는 열리지 않는다.
 - [ ] ESC / 닫기 버튼 / 빈 영역 클릭으로 close-up이 닫힌다.
