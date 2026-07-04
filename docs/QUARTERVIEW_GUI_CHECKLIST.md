@@ -25,10 +25,23 @@
 ## Desk / Laptop
 
 - [ ] Desk 또는 Laptop을 클릭한다.
-- [ ] `사용하기`를 누르면 Desk close-up이 열린다.
+- [ ] Desk의 `사용하기`를 누르면 Desk close-up이 열린다.
+- [ ] 수락된 의뢰가 없는 상태에서 Laptop을 사용하면 Phone 의뢰 확인 안내만 남는다.
 - [ ] Laptop / Communication Device / NODE-17 / Signal Booster / Speaker / Job Memo를 선택할 수 있다.
 - [ ] 선택 / 사용 / 설명은 status log만 남긴다.
 - [ ] ESC / 닫기 버튼 / 빈 영역 클릭으로 close-up이 닫힌다.
+- [ ] 닫은 뒤 room movement와 object click이 복구된다.
+
+## Hacking Entry Candidate
+
+- [ ] `P`로 Phone을 열고 의뢰 탭에서 `maintenance_17_fragment`를 수락한다.
+- [ ] Laptop을 직접 사용하면 `NAVI 프록시 준비` overlay가 열린다.
+- [ ] Desk close-up에서 Laptop 또는 Job Memo를 선택하고 `사용하기`를 누르면 같은 overlay가 열린다.
+- [ ] overlay에 현재 의뢰 / 의뢰자 / 보수 / 위험도 / 침투 준비 후보 상태가 보인다.
+- [ ] `프록시 점검`은 HUD 메모와 status log만 갱신한다.
+- [ ] `침투 시작 후보`는 “해킹 씬은 아직 연결되지 않았습니다” status만 남긴다.
+- [ ] 실제 Hacking scene, Grid Credit, save-load, story flag는 호출되지 않는다.
+- [ ] ESC / 닫기 버튼 / 빈 영역 클릭으로 overlay가 닫힌다.
 - [ ] 닫은 뒤 room movement와 object click이 복구된다.
 
 ## Power

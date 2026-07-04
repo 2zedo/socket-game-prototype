@@ -15,6 +15,8 @@ const STATUS_PANEL_AVOID_RECT := Rect2(Vector2(10, 10), Vector2(334, 160))
 const DESK_CLOSEUP_SIZE := Vector2(730, 520)
 const DESK_CLOSEUP_POSITION := Vector2(390, 74)
 const DESK_CLOSEUP_ENTRY_KEYS := ["desk", "laptop"]
+const HACKING_ENTRY_SIZE := Vector2(650, 440)
+const HACKING_ENTRY_POSITION := Vector2(445, 110)
 const POWER_CLOSEUP_SIZE := Vector2(860, 520)
 const POWER_CLOSEUP_POSITION := Vector2(340, 74)
 const POWER_CLOSEUP_ENTRY_KEYS := ["power"]
@@ -223,6 +225,7 @@ var phone_closeup_open := false
 var bed_closeup_open := false
 var kitchen_closeup_open := false
 var door_closeup_open := false
+var hacking_entry_open := false
 var day_result_open := false
 var selected_desk_hotspot_key := "laptop"
 var selected_power_module_key := "small_core"
@@ -242,6 +245,10 @@ var desk_hotspot_title_label: Label
 var desk_hotspot_detail_label: Label
 var desk_hotspot_debug_label: Label
 var desk_hotspot_guides := {}
+var hacking_entry_backdrop: ColorRect
+var hacking_entry_panel: PanelContainer
+var hacking_entry_summary_label: Label
+var hacking_entry_detail_label: Label
 var power_closeup_backdrop: ColorRect
 var power_closeup_panel
 var phone_closeup_backdrop: ColorRect
@@ -292,6 +299,7 @@ func _ready() -> void:
 	_build_prototype_hud()
 	_build_interaction_panel()
 	_build_desk_closeup_overlay()
+	_build_hacking_entry_overlay()
 	_build_power_closeup_overlay()
 	_build_phone_closeup_overlay()
 	_build_bed_closeup_overlay()
@@ -302,6 +310,12 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if hacking_entry_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _is_hacking_entry_content_point(event.position):
+			_hide_hacking_entry_candidate()
+		get_viewport().set_input_as_handled()
+		return
+
 	if day_result_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _is_day_result_content_point(event.position):
 			_hide_day_result_candidate()
@@ -363,6 +377,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 		if event.keycode == CANCEL_KEY:
+			if hacking_entry_open:
+				_hide_hacking_entry_candidate()
+				get_viewport().set_input_as_handled()
+				return
 			if day_result_open:
 				_hide_day_result_candidate()
 				get_viewport().set_input_as_handled()
@@ -448,6 +466,8 @@ func _on_room_debug_overlay_toggled(enabled: bool) -> void:
 		_refresh_kitchen_option_detail()
 	if door_closeup_open:
 		_refresh_door_option_detail()
+	if hacking_entry_open:
+		_refresh_hacking_entry_candidate()
 	if day_result_open:
 		_refresh_day_result_candidate()
 	quarterview_room.global_transform = room_transform
@@ -514,6 +534,8 @@ func _refresh_prototype_hud() -> void:
 
 func _refresh_mock_state_views() -> void:
 	_refresh_prototype_hud()
+	if hacking_entry_open:
+		_refresh_hacking_entry_candidate()
 	if day_result_open:
 		_refresh_day_result_candidate()
 
@@ -632,6 +654,9 @@ func _hide_interaction_panel() -> void:
 
 
 func _on_use_pressed() -> void:
+	if _should_open_hacking_entry_from_room():
+		_try_open_hacking_entry_candidate(focused_object_key)
+		return
 	if _should_open_door_closeup():
 		_open_door_closeup(focused_object_key)
 		return
@@ -681,7 +706,7 @@ func _set_room_input_locked(locked: bool) -> void:
 
 
 func _has_closeup_open() -> bool:
-	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open or kitchen_closeup_open or door_closeup_open or day_result_open
+	return desk_closeup_open or power_closeup_open or phone_closeup_open or bed_closeup_open or kitchen_closeup_open or door_closeup_open or hacking_entry_open or day_result_open
 
 
 func _can_open_portable_phone() -> bool:
@@ -689,6 +714,8 @@ func _can_open_portable_phone() -> bool:
 
 
 func _get_modal_status_text(default_text: String) -> String:
+	if hacking_entry_open:
+		return "Hacking entry candidate open / room input locked"
 	if day_result_open:
 		return "Day result candidate open / room input locked"
 	if door_closeup_open:
@@ -709,6 +736,11 @@ func _get_modal_status_text(default_text: String) -> String:
 func _should_open_desk_closeup() -> bool:
 	var role := String(focused_payload.get("role", ""))
 	return focused_object_key in DESK_CLOSEUP_ENTRY_KEYS or role == "laptop_job"
+
+
+func _should_open_hacking_entry_from_room() -> bool:
+	var role := String(focused_payload.get("role", ""))
+	return focused_object_key == "laptop" or role == "laptop_job"
 
 
 func _should_open_power_closeup() -> bool:
@@ -909,6 +941,201 @@ func _is_desk_closeup_content_point(viewport_point: Vector2) -> bool:
 	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
 		panel_size = DESK_CLOSEUP_SIZE
 	return Rect2(desk_closeup_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _build_hacking_entry_overlay() -> void:
+	hacking_entry_backdrop = ColorRect.new()
+	hacking_entry_backdrop.name = "HackingEntryBackdrop"
+	hacking_entry_backdrop.visible = false
+	hacking_entry_backdrop.color = Color(0.0, 0.0, 0.0, 0.38)
+	hacking_entry_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	hacking_entry_backdrop.z_index = 170
+	hacking_entry_backdrop.position = Vector2.ZERO
+	hacking_entry_backdrop.size = _get_viewport_ui_size()
+	hacking_entry_backdrop.gui_input.connect(_on_hacking_entry_backdrop_gui_input)
+	$UILayer.add_child(hacking_entry_backdrop)
+
+	hacking_entry_panel = PanelContainer.new()
+	hacking_entry_panel.name = "HackingEntryCandidate"
+	hacking_entry_panel.visible = false
+	hacking_entry_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	hacking_entry_panel.z_index = 171
+	hacking_entry_panel.position = HACKING_ENTRY_POSITION
+	hacking_entry_panel.custom_minimum_size = HACKING_ENTRY_SIZE
+	$UILayer.add_child(hacking_entry_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	hacking_entry_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 12)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "NAVI 프록시 준비"
+	title.add_theme_color_override("font_color", Color(0.78, 0.94, 1.0, 1.0))
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	var description := Label.new()
+	description.text = "해킹 진입 직전 candidate입니다. 실제 Hacking scene / Grid Credit / save-load 연결 없음."
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.add_theme_color_override("font_color", Color(0.76, 0.84, 0.82, 1.0))
+	description.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(description)
+
+	hacking_entry_summary_label = Label.new()
+	hacking_entry_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hacking_entry_summary_label.add_theme_color_override("font_color", Color(0.90, 0.88, 0.74, 1.0))
+	hacking_entry_summary_label.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(hacking_entry_summary_label)
+
+	hacking_entry_detail_label = Label.new()
+	hacking_entry_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hacking_entry_detail_label.add_theme_color_override("font_color", Color(0.68, 0.78, 0.82, 1.0))
+	hacking_entry_detail_label.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(hacking_entry_detail_label)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(button_row)
+
+	var proxy_check_button := Button.new()
+	proxy_check_button.text = "프록시 점검"
+	proxy_check_button.pressed.connect(_on_hacking_proxy_check_pressed)
+	button_row.add_child(proxy_check_button)
+
+	var start_button := Button.new()
+	start_button.text = "침투 시작 후보"
+	start_button.pressed.connect(_on_hacking_start_candidate_pressed)
+	button_row.add_child(start_button)
+
+	var close_button := Button.new()
+	close_button.text = "닫기"
+	close_button.pressed.connect(_hide_hacking_entry_candidate)
+	button_row.add_child(close_button)
+
+	var close_hint := Label.new()
+	close_hint.text = "ESC 닫기 / 실제 해킹 씬 전환과 보상 지급은 아직 연결하지 않음"
+	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.70, 0.92))
+	close_hint.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(close_hint)
+
+	_refresh_hacking_entry_candidate()
+
+
+func _try_open_hacking_entry_candidate(source_key: String) -> void:
+	if active_job_key.is_empty():
+		_show_missing_active_job_status(source_key)
+		return
+	_open_hacking_entry_candidate(source_key)
+
+
+func _open_hacking_entry_candidate(source_key: String) -> void:
+	if desk_closeup_open:
+		_hide_desk_closeup()
+	if interaction_panel != null and interaction_panel.visible:
+		_hide_interaction_panel()
+
+	hacking_entry_open = true
+	_set_room_input_locked(true)
+	hacking_entry_backdrop.size = _get_viewport_ui_size()
+	hacking_entry_backdrop.visible = true
+	hacking_entry_panel.visible = true
+	_refresh_hacking_entry_candidate()
+
+	last_interaction = "%s / NAVI 준비" % _get_active_job_display_title()
+	last_interaction_debug = "hacking_entry:%s / source=%s / action=open_candidate / no Hacking" % [
+		active_job_key,
+		source_key,
+	]
+	print("QuarterviewMain hacking entry candidate opened: %s" % last_interaction_debug)
+	_update_status("NAVI 프록시 준비 candidate opened.")
+
+
+func _hide_hacking_entry_candidate(message := "Hacking entry candidate closed.") -> void:
+	if hacking_entry_backdrop != null:
+		hacking_entry_backdrop.visible = false
+	if hacking_entry_panel != null:
+		hacking_entry_panel.visible = false
+	hacking_entry_open = false
+	_set_room_input_locked(false)
+	_update_status(message)
+
+
+func _on_hacking_entry_backdrop_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_hide_hacking_entry_candidate()
+		get_viewport().set_input_as_handled()
+
+
+func _is_hacking_entry_content_point(viewport_point: Vector2) -> bool:
+	if hacking_entry_panel == null or not hacking_entry_panel.visible:
+		return false
+	var panel_size := hacking_entry_panel.size
+	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
+		panel_size = HACKING_ENTRY_SIZE
+	return Rect2(hacking_entry_panel.global_position, panel_size).has_point(viewport_point)
+
+
+func _refresh_hacking_entry_candidate() -> void:
+	if hacking_entry_summary_label == null:
+		return
+	var title := _get_active_job_display_title()
+	var sender := String(active_job_payload.get("sender_label", "익명 의뢰"))
+	var reward := String(active_job_payload.get("reward_label", "45 GC"))
+	var risk := String(active_job_payload.get("risk_label", "낮음"))
+	hacking_entry_summary_label.text = "현재 의뢰: %s\n의뢰자: %s\n보수: %s\n위험도: %s\n상태: 침투 준비 후보" % [
+		title,
+		sender,
+		reward,
+		risk,
+	]
+	hacking_entry_detail_label.text = "현실의 유이가 직접 들어가는 것이 아니라, NAVI 프록시 아바타로 폐쇄 유지보수 로그 조각에 접근하는 후보 흐름입니다.\n\n이 화면은 진입 전 확인만 담당합니다. 실제 HackingActionPrototype, Grid Credit 지급, story flag, save-load는 아직 호출하지 않습니다."
+
+
+func _on_hacking_proxy_check_pressed() -> void:
+	if active_job_key.is_empty():
+		_show_missing_active_job_status("proxy_check")
+		return
+	mock_info = "NAVI 프록시 점검 완료 후보"
+	_set_mock_status_note("NAVI 프록시 점검 완료 후보")
+	last_interaction = "%s / 프록시 점검" % _get_active_job_display_title()
+	last_interaction_debug = "hacking_entry:%s / action=proxy_check_noop / no Hacking" % active_job_key
+	print("QuarterviewMain hacking proxy check candidate: %s" % last_interaction_debug)
+	_update_status("NAVI 프록시 점검 완료 후보.")
+
+
+func _on_hacking_start_candidate_pressed() -> void:
+	if active_job_key.is_empty():
+		_show_missing_active_job_status("start_candidate")
+		return
+	mock_info = "침투 준비함"
+	_set_mock_status_note("해킹 씬 미연결")
+	last_interaction = "%s / 침투 시작 후보" % _get_active_job_display_title()
+	last_interaction_debug = "hacking_entry:%s / action=start_infiltration_candidate / no scene transition" % active_job_key
+	print("QuarterviewMain hacking start candidate: %s" % last_interaction_debug)
+	_update_status("해킹 씬은 아직 연결되지 않았습니다.")
+
+
+func _show_missing_active_job_status(source_key: String) -> void:
+	last_interaction = "Hacking entry / 의뢰 없음"
+	last_interaction_debug = "hacking_entry:%s / action=blocked_no_active_job / no-op" % source_key
+	print("QuarterviewMain hacking entry blocked: %s" % last_interaction_debug)
+	_set_mock_status_note("Phone 의뢰 확인 필요")
+	_update_status("수락된 의뢰가 없습니다. P로 Phone 의뢰를 확인하세요.")
+
+
+func _get_active_job_display_title() -> String:
+	if not active_job_title.is_empty():
+		return active_job_title
+	if not active_job_key.is_empty():
+		return active_job_key
+	return "의뢰 없음"
 
 
 func _build_power_closeup_overlay() -> void:
@@ -2196,7 +2423,9 @@ func _refresh_desk_hotspot_detail() -> void:
 	desk_hotspot_title_label.text = String(hotspot["display_name"])
 	var detail_text := String(hotspot["description"])
 	if _desk_hotspot_can_prepare_active_job(selected_desk_hotspot_key):
-		detail_text += "\n\n현재 의뢰: %s\n침투 준비 후보: NAVI 프록시 준비 필요.\n해킹 모드는 아직 연결되지 않았습니다." % active_job_title
+		detail_text += "\n\n현재 의뢰: %s\n침투 준비 후보: NAVI 프록시 준비 화면으로 이동할 수 있습니다.\n해킹 모드는 아직 연결되지 않았습니다." % active_job_title
+	elif DESK_JOB_PREP_HOTSPOT_KEYS.has(selected_desk_hotspot_key):
+		detail_text += "\n\n수락된 의뢰가 없습니다. P로 Phone을 열어 의뢰 탭을 확인하세요."
 	desk_hotspot_detail_label.text = detail_text
 
 	var rect: Rect2 = hotspot["rect"]
@@ -2222,16 +2451,8 @@ func _log_desk_hotspot_action(action_key: String) -> void:
 
 	var display_name := String(hotspot["display_name"])
 	var role := String(hotspot["role"])
-	if action_key == "primary" and _desk_hotspot_can_prepare_active_job(selected_desk_hotspot_key):
-		mock_info = "NAVI 준비 후보"
-		_set_mock_status_note("침투 준비 후보")
-		last_interaction = "%s / 침투 준비 후보" % display_name
-		last_interaction_debug = "desk_closeup:%s / active_job=%s / action=prepare_navi_proxy_noop / no Hacking" % [
-			selected_desk_hotspot_key,
-			active_job_key,
-		]
-		print("QuarterviewMain desk job preparation candidate: %s" % last_interaction_debug)
-		_update_status("NAVI 프록시 준비 후보: %s / Hacking 미연결" % active_job_key)
+	if action_key == "primary" and DESK_JOB_PREP_HOTSPOT_KEYS.has(selected_desk_hotspot_key):
+		_try_open_hacking_entry_candidate("desk_closeup:%s" % selected_desk_hotspot_key)
 		return
 
 	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]

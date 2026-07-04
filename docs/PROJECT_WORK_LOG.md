@@ -399,3 +399,11 @@
 - Changed: `QuarterviewMain.gd`, `QuarterviewRoom.gd`, `RoomObjectDefinition.gd`, `phone.tres`, `test_room_object_definition.gd`, GUI checklist, status docs.
 - Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted RoomObjectDefinition GUT, and full GUT passed. Full `git diff --check` remains blocked by unrelated addon whitespace.
 - Next: GUI에서 `P` Phone open / close, Phone hover prompt 제거, Phone direct click 제거, 기본 `R` no-restart, debug `Shift+R` restart, Power board `R` rotation을 수동 확인한다.
+
+### Quarterview Hacking Entry candidate
+
+- Commit: see the commit containing this entry.
+- Result: Phone 의뢰 수락 후 Laptop 또는 Desk close-up의 Laptop / Job Memo에서 `NAVI 프록시 준비` candidate overlay를 열 수 있게 했다. 프록시 점검과 침투 시작 후보는 QuarterviewMain mock HUD / status만 갱신하며, 실제 Hacking scene, Grid Credit, save-load, story flag, SurvivalState는 연결하지 않았다.
+- Changed: `QuarterviewMain.gd`, GUI checklist, status docs.
+- Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (76 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
+- Next: GUI에서 Phone 의뢰 수락, Laptop direct use, Desk close-up Laptop / Job Memo entry, ESC / backdrop / close button close, room input lock restore를 수동 확인한다.
