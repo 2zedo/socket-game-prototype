@@ -5,9 +5,13 @@ signal close_requested
 signal item_action_requested(item_key: String, action_key: String, item: Dictionary)
 signal tab_action_requested(tab_key: String, action_key: String, tab: Dictionary)
 signal selection_changed(tab_key: String, item_key: String)
+signal job_candidate_accepted(job_key: String, payload: Dictionary)
 
 const PANEL_SIZE := Vector2(690, 520)
 const UI_ATLAS_PATH := "res://assets/art/ui/atlases/ui_phone_atlas.png"
+const JOB_RESOURCE_PATHS := [
+	"res://resources/rooms/quarterview/jobs/maintenance_17_fragment.tres",
+]
 const ATLAS_REGION_FRAME := Rect2(Vector2(46, 27), Vector2(381, 657))
 const ATLAS_REGION_SCREEN := Rect2(Vector2(453, 46), Vector2(336, 622))
 const ATLAS_REGION_BATTERY := Rect2(Vector2(849, 103), Vector2(139, 66))
@@ -79,28 +83,41 @@ var selected_tab_key := "status"
 var debug_enabled := false
 var item_buttons := {}
 var tab_buttons := {}
+var job_buttons := {}
 var item_grid: GridContainer
+var job_list: VBoxContainer
+var use_button: Button
 var item_title_label: Label
 var item_detail_label: Label
 var item_debug_label: Label
 var atlas_texture: Texture2D
+var job_definitions: Array = []
+var selected_job_key := ""
+var accepted_job_keys := {}
 
 
 func _init() -> void:
 	name = "PhoneStatusCloseupCandidate"
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = PANEL_SIZE
+	_load_job_definitions()
 	_build()
 
 
-func reset_selection(item_key: String = "battery", tab_key: String = "status") -> Dictionary:
+func reset_selection(item_key: String = "battery", tab_key: String = "status", job_key: String = "") -> Dictionary:
 	if _get_item(item_key).is_empty():
 		item_key = "battery"
 	if _get_tab(tab_key).is_empty():
 		tab_key = "status"
+	if not job_key.is_empty() and _get_job_definition(job_key) != null:
+		selected_job_key = job_key
 	selected_item_key = item_key
 	_select_tab(tab_key, false)
-	return {"item_key": selected_item_key, "tab_key": selected_tab_key}
+	return {
+		"item_key": selected_item_key,
+		"tab_key": selected_tab_key,
+		"job_key": selected_job_key,
+	}
 
 
 func set_debug_enabled(enabled: bool) -> void:
@@ -114,6 +131,21 @@ func get_selected_item_key() -> String:
 
 func get_selected_tab_key() -> String:
 	return selected_tab_key
+
+
+func get_selected_job_key() -> String:
+	return selected_job_key
+
+
+func set_accepted_job(job_key: String, accepted: bool) -> void:
+	if job_key.is_empty():
+		return
+	if accepted:
+		accepted_job_keys[job_key] = true
+	else:
+		accepted_job_keys.erase(job_key)
+	_refresh_job_buttons()
+	_refresh_detail()
 
 
 func get_item_data(item_key: String) -> Dictionary:
@@ -176,7 +208,7 @@ func _build() -> void:
 	button_row.add_theme_constant_override("separation", 8)
 	vbox.add_child(button_row)
 
-	var use_button := Button.new()
+	use_button = Button.new()
 	use_button.text = "확인"
 	use_button.pressed.connect(_on_use_pressed)
 	button_row.add_child(use_button)
@@ -280,6 +312,29 @@ func _build_screen_controls(parent: Control) -> void:
 		item_grid.add_child(button)
 		item_buttons[key] = button
 
+	job_list = VBoxContainer.new()
+	job_list.name = "PhoneJobList"
+	job_list.add_theme_constant_override("separation", 8)
+	job_list.visible = false
+	screen_box.add_child(job_list)
+
+	_build_job_buttons()
+
+
+func _build_job_buttons() -> void:
+	if job_list == null:
+		return
+
+	for definition in job_definitions:
+		var key := String(definition.key)
+		var button := Button.new()
+		button.name = "%sPhoneJobButton" % key.capitalize().replace("_", "")
+		button.custom_minimum_size = Vector2(448, 56)
+		button.tooltip_text = String(definition.get_summary_text())
+		button.pressed.connect(_on_job_pressed.bind(key))
+		job_list.add_child(button)
+		job_buttons[key] = button
+
 
 func _load_texture_from_png(path: String) -> Texture2D:
 	var image := Image.new()
@@ -318,9 +373,24 @@ func _on_item_pressed(item_key: String) -> void:
 	selection_changed.emit(selected_tab_key, selected_item_key)
 
 
+func _on_job_pressed(job_key: String) -> void:
+	_select_tab("job", false)
+	_select_job(job_key)
+	tab_action_requested.emit("job", "focus", _get_tab("job").duplicate(true))
+
+
 func _on_use_pressed() -> void:
 	if selected_tab_key == "status":
 		item_action_requested.emit(selected_item_key, "primary", _get_item(selected_item_key).duplicate(true))
+	elif selected_tab_key == "job":
+		var payload := _get_job_payload(selected_job_key)
+		if payload.is_empty():
+			tab_action_requested.emit(selected_tab_key, "primary", _get_tab(selected_tab_key).duplicate(true))
+			return
+		accepted_job_keys[selected_job_key] = true
+		_refresh_job_buttons()
+		_refresh_detail()
+		job_candidate_accepted.emit(selected_job_key, payload)
 	else:
 		tab_action_requested.emit(selected_tab_key, "primary", _get_tab(selected_tab_key).duplicate(true))
 
@@ -346,12 +416,22 @@ func _select_tab(tab_key: String, emit_signal := true) -> void:
 	_refresh_tab_buttons()
 	if item_grid != null:
 		item_grid.visible = selected_tab_key == "status"
+	if job_list != null:
+		job_list.visible = selected_tab_key == "job"
 	if selected_tab_key == "status":
 		_select_item(selected_item_key, false)
+	elif selected_tab_key == "job":
+		if selected_job_key.is_empty():
+			_select_first_job(false)
+		else:
+			_select_job(selected_job_key, false)
 	else:
 		_refresh_detail()
+	if use_button != null:
+		use_button.text = "수락 후보" if selected_tab_key == "job" else "확인"
 	if emit_signal:
-		selection_changed.emit(selected_tab_key, selected_item_key)
+		var selection_key := selected_job_key if selected_tab_key == "job" else selected_item_key
+		selection_changed.emit(selected_tab_key, selection_key)
 
 
 func _refresh_tab_buttons() -> void:
@@ -360,6 +440,41 @@ func _refresh_tab_buttons() -> void:
 		var tab := _get_tab(String(key))
 		var prefix := "> " if String(key) == selected_tab_key else ""
 		button.text = "%s%s" % [prefix, String(tab.get("display_name", key))]
+
+
+func _select_job(job_key: String, emit_signal := true) -> void:
+	if _get_job_definition(job_key) == null:
+		return
+
+	selected_job_key = job_key
+	_refresh_job_buttons()
+	_refresh_detail()
+	if emit_signal:
+		selection_changed.emit(selected_tab_key, selected_job_key)
+
+
+func _select_first_job(emit_signal := true) -> void:
+	if job_definitions.is_empty():
+		_refresh_detail()
+		return
+	_select_job(String(job_definitions[0].key), emit_signal)
+
+
+func _refresh_job_buttons() -> void:
+	for key in job_buttons.keys():
+		var button: Button = job_buttons[key]
+		var definition = _get_job_definition(String(key))
+		if definition == null:
+			continue
+		var prefix := "> " if String(key) == selected_job_key else ""
+		var status: String = definition.get_status_label(_is_job_accepted(String(key)))
+		button.text = "%s%s\n%s / 보수 %s / 위험 %s" % [
+			prefix,
+			String(definition.title),
+			status,
+			String(definition.reward_label),
+			String(definition.risk_label),
+		]
 
 
 func _select_item(item_key: String, emit_signal := true) -> void:
@@ -392,7 +507,8 @@ func _refresh_detail() -> void:
 			"message":
 				item_detail_label.text = "새 메시지는 아직 없습니다.\n\nMock feed:\n- GRID 내부망 알림 후보: 신호가 약합니다.\n- 익명 연락 후보: 아직 읽을 수 없습니다.\n\n실제 PhoneUI 메시지 목록은 열지 않습니다."
 			"job":
-				item_detail_label.text = "익명 의뢰 후보:\n- 낮은 위험도 데이터 확인 의뢰\n- 전력 배분 상태에 따라 열릴 장기 후보\n\nHacking, reward, Grid Credit, story flag는 아직 연결하지 않습니다."
+				_refresh_job_detail(tab)
+				return
 			_:
 				item_detail_label.text = "%s\n\nPhone screen candidate only." % String(tab["description"])
 		item_debug_label.visible = debug_enabled
@@ -421,6 +537,38 @@ func _refresh_detail() -> void:
 		]
 
 
+func _refresh_job_detail(tab: Dictionary) -> void:
+	var definition = _get_job_definition(selected_job_key)
+	if definition == null:
+		item_detail_label.text = "표시할 의뢰 후보가 없습니다.\n\nHacking / reward / story flag는 아직 연결하지 않습니다."
+		item_debug_label.visible = debug_enabled
+		if debug_enabled:
+			item_debug_label.text = "tab: %s\nrole: %s\nno job resources loaded" % [
+				String(tab["key"]),
+				String(tab["role"]),
+			]
+		return
+
+	var status: String = definition.get_status_label(_is_job_accepted(selected_job_key))
+	item_title_label.text = String(definition.title)
+	item_detail_label.text = "%s\n%s\n\n%s\n\n보수: %s / 위험도: %s / 상태: %s\n관련 장비: %s\n\n수락 후보를 눌러도 Hacking, Grid Credit, save-load, story flag는 연결하지 않습니다." % [
+		String(definition.sender_label),
+		String(definition.get_summary_text()),
+		String(definition.detail_text),
+		String(definition.reward_label),
+		String(definition.risk_label),
+		status,
+		String(definition.related_object_key),
+	]
+
+	item_debug_label.visible = debug_enabled
+	if debug_enabled:
+		item_debug_label.text = "job key: %s\n%s\ncandidate action: accept_job_candidate_noop\nno-op status: Hacking / reward / story flag disabled" % [
+			String(definition.key),
+			String(definition.get_debug_summary()),
+		]
+
+
 func _get_item(item_key: String) -> Dictionary:
 	for item in ITEMS:
 		if String(item["key"]) == item_key:
@@ -433,3 +581,50 @@ func _get_tab(tab_key: String) -> Dictionary:
 		if String(tab["key"]) == tab_key:
 			return tab
 	return {}
+
+
+func _load_job_definitions() -> void:
+	job_definitions.clear()
+	for path in JOB_RESOURCE_PATHS:
+		var definition = load(path)
+		if definition == null:
+			push_warning("PhoneScreenCandidate could not load job Resource: %s" % path)
+			continue
+		if definition.has_method("is_valid_definition") and not definition.is_valid_definition():
+			push_warning("PhoneScreenCandidate ignored invalid job Resource: %s" % path)
+			continue
+		job_definitions.append(definition)
+
+	if not job_definitions.is_empty():
+		selected_job_key = String(job_definitions[0].key)
+
+
+func _get_job_definition(job_key: String):
+	for definition in job_definitions:
+		if String(definition.key) == job_key:
+			return definition
+	return null
+
+
+func _get_job_payload(job_key: String) -> Dictionary:
+	var definition = _get_job_definition(job_key)
+	if definition == null:
+		return {}
+	if definition.has_method("to_candidate_payload"):
+		return definition.to_candidate_payload(true)
+	return {
+		"key": String(definition.key),
+		"title": String(definition.title),
+		"sender_label": String(definition.sender_label),
+		"summary": String(definition.summary),
+		"detail_text": String(definition.detail_text),
+		"reward_label": String(definition.reward_label),
+		"risk_label": String(definition.risk_label),
+		"status_label": "수락됨" if _is_job_accepted(job_key) else String(definition.status_label),
+		"related_object_key": String(definition.related_object_key),
+		"is_prototype": bool(definition.is_prototype),
+	}
+
+
+func _is_job_accepted(job_key: String) -> bool:
+	return accepted_job_keys.has(job_key)

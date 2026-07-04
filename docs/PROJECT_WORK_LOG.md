@@ -383,3 +383,11 @@
 - Changed: `QuarterviewRoom.gd`, `RoomObjectDefinition.gd`, `test_room_object_definition.gd`, status docs.
 - Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, and targeted RoomObjectDefinition GUT passed. Full GUT result is recorded in `PROJECT_STATUS.md`.
 - Next: GUI에서 mouse hover prompt / outline, 겹친 object priority, overlay open 중 hover disable, 기존 click movement / candidate panel flow를 수동 확인한다.
+
+### Quarterview job / objective candidate
+
+- Commit: see the commit containing this entry.
+- Result: Phone job tab에 `maintenance_17_fragment` 익명 의뢰 후보를 Resource 기반으로 표시하고, 수락 후보를 누르면 QuarterviewMain-only mock active job이 HUD / Day Result / Desk-Laptop preparation hint에 반영되도록 했다. Hacking, Grid Credit, save-load, story flag, SurvivalState, production PhoneUI는 연결하지 않았다.
+- Changed: `QuarterviewJobDefinition.gd`, `maintenance_17_fragment.tres`, `PhoneScreenCandidate.gd`, `QuarterviewMain.gd`, `test_quarterview_job_definition.gd`, status docs.
+- Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted QuarterviewJobDefinition GUT, and full GUT passed. Full `git diff --check` remains blocked by unrelated addon whitespace.
+- Next: GUI에서 Phone 의뢰 탭 선택 / 수락 후보 / HUD 의뢰 표시 / Desk-Laptop NAVI 준비 후보 / Day Result 의뢰 상태 표시를 수동 확인한다.

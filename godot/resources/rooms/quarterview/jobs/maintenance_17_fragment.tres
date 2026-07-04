@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="QuarterviewJobDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/QuarterviewJobDefinition.gd" id="1_job_definition"]
+
+[resource]
+script = ExtResource("1_job_definition")
+key = "maintenance_17_fragment"
+title = "maintenance_17_fragment 회수"
+sender_label = "익명 의뢰"
+summary = "폐쇄 유지보수 로그 조각 회수 후보."
+detail_text = "폐쇄 유지보수 로그 조각을 회수하십시오.\n공공망 업로드 금지.\nNAVI 프록시 준비 필요."
+reward_label = "45 GC"
+risk_label = "낮음"
+status_label = "미수락"
+related_object_key = "laptop"
+is_prototype = true

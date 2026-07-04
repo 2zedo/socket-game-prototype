@@ -81,6 +81,7 @@ const DESK_CLOSEUP_HOTSPOTS := [
 		"rect": Rect2(Vector2(512, 230), Vector2(136, 68)),
 	},
 ]
+const DESK_JOB_PREP_HOTSPOT_KEYS := ["laptop", "job_memo"]
 const BED_REST_OPTIONS := [
 	{
 		"key": "short_rest",
@@ -210,6 +211,9 @@ var mock_hunger := "보통"
 var mock_condition := "안정"
 var mock_info := "없음"
 var mock_status_note := "대기"
+var active_job_key := ""
+var active_job_title := ""
+var active_job_payload := {}
 var desk_closeup_open := false
 var power_closeup_open := false
 var phone_closeup_open := false
@@ -488,13 +492,14 @@ func _build_prototype_hud() -> void:
 func _refresh_prototype_hud() -> void:
 	if prototype_hud_label == null:
 		return
-	prototype_hud_label.text = "Quarterview HUD (mock)\nDAY %d | 시간 %s\n전력 %d%% (%s) | 허기 %s\n컨디션 %s | 메모 %s" % [
+	prototype_hud_label.text = "Quarterview HUD (mock)\nDAY %d | 시간 %s\n전력 %d%% (%s) | 허기 %s\n컨디션 %s | 의뢰 %s\n메모 %s" % [
 		mock_day,
 		mock_time,
 		mock_power_percent,
 		mock_power_state,
 		mock_hunger,
 		mock_condition,
+		_get_active_job_hud_label(),
 		mock_status_note,
 	]
 
@@ -531,6 +536,18 @@ func _set_mock_condition_state(condition: String, note: String, time_label := ""
 		mock_time = time_label
 	mock_status_note = note
 	_refresh_mock_state_views()
+
+
+func _get_active_job_hud_label() -> String:
+	if active_job_key.is_empty():
+		return "대기"
+	return active_job_key
+
+
+func _get_active_job_result_label() -> String:
+	if active_job_key.is_empty():
+		return "의뢰 대기"
+	return "수락됨 - %s" % active_job_key
 
 
 func _build_interaction_panel() -> void:
@@ -1050,6 +1067,7 @@ func _build_phone_closeup_overlay() -> void:
 	phone_closeup_panel.item_action_requested.connect(_on_phone_item_action_requested)
 	phone_closeup_panel.tab_action_requested.connect(_on_phone_tab_action_requested)
 	phone_closeup_panel.selection_changed.connect(_on_phone_selection_changed)
+	phone_closeup_panel.job_candidate_accepted.connect(_on_phone_job_candidate_accepted)
 	$UILayer.add_child(phone_closeup_panel)
 
 
@@ -1060,7 +1078,8 @@ func _open_phone_closeup(source_key: String) -> void:
 	phone_closeup_backdrop.size = _get_viewport_ui_size()
 	phone_closeup_backdrop.visible = true
 	phone_closeup_panel.visible = true
-	var selection: Dictionary = phone_closeup_panel.reset_selection(selected_phone_item_key, selected_phone_tab_key)
+	phone_closeup_panel.set_accepted_job(active_job_key, not active_job_key.is_empty())
+	var selection: Dictionary = phone_closeup_panel.reset_selection(selected_phone_item_key, selected_phone_tab_key, active_job_key)
 	selected_phone_item_key = String(selection.get("item_key", "battery"))
 	selected_phone_tab_key = String(selection.get("tab_key", "status"))
 	phone_closeup_panel.set_debug_enabled(room_debug_enabled)
@@ -1151,6 +1170,26 @@ func _on_phone_tab_action_requested(tab_key: String, action_key: String, tab: Di
 			_:
 				_set_mock_status_note("Phone 탭 확인")
 	_update_status("%s: Phone screen candidate no-op." % display_name)
+
+
+func _on_phone_job_candidate_accepted(job_key: String, payload: Dictionary) -> void:
+	active_job_key = job_key
+	active_job_title = String(payload.get("title", job_key))
+	active_job_payload = payload.duplicate(true)
+	selected_phone_tab_key = "job"
+	selected_phone_item_key = job_key
+	mock_info = "의뢰 수락 - %s" % job_key
+	_set_mock_status_note("의뢰 수락 후보")
+	if phone_closeup_panel != null:
+		phone_closeup_panel.set_accepted_job(job_key, true)
+
+	last_interaction = "%s / 수락 후보" % active_job_title
+	last_interaction_debug = "phone_job:%s / action=accept_candidate / reward=%s / no GridCredit" % [
+		job_key,
+		String(payload.get("reward_label", "-")),
+	]
+	print("QuarterviewMain job candidate accepted: %s / no Hacking, reward, save-load, story flag" % last_interaction_debug)
+	_update_status("의뢰 수락 후보: %s" % active_job_title)
 
 
 func _apply_phone_mock_effect(item_key: String, action_key: String) -> String:
@@ -1551,7 +1590,7 @@ func _on_day_result_next_day_pressed() -> void:
 	mock_power_state = "안정"
 	mock_hunger = "보통"
 	mock_condition = "안정"
-	mock_info = "없음"
+	mock_info = "의뢰 진행 중" if not active_job_key.is_empty() else "없음"
 	mock_status_note = "새 하루 후보 시작"
 	_refresh_mock_state_views()
 	last_interaction = "DAY %d / next day candidate" % mock_day
@@ -1564,13 +1603,14 @@ func _refresh_day_result_candidate() -> void:
 	if day_result_summary_label == null:
 		return
 	var risk_label := "낮음" if mock_power_percent >= 40 else "주의"
-	day_result_summary_label.text = "DAY %d 결과 후보\n전력 관리: %s (%d%%)\n허기: %s\n컨디션: %s\n정보 수집: %s\n위험도: %s\n메모: %s" % [
+	day_result_summary_label.text = "DAY %d 결과 후보\n전력 관리: %s (%d%%)\n허기: %s\n컨디션: %s\n정보 수집: %s\n의뢰 상태: %s\n위험도: %s\n메모: %s" % [
 		mock_day,
 		mock_power_state,
 		mock_power_percent,
 		mock_hunger,
 		mock_condition,
 		mock_info,
+		_get_active_job_result_label(),
 		risk_label,
 		mock_status_note,
 	]
@@ -2141,7 +2181,10 @@ func _refresh_desk_hotspot_detail() -> void:
 		return
 
 	desk_hotspot_title_label.text = String(hotspot["display_name"])
-	desk_hotspot_detail_label.text = String(hotspot["description"])
+	var detail_text := String(hotspot["description"])
+	if _desk_hotspot_can_prepare_active_job(selected_desk_hotspot_key):
+		detail_text += "\n\n현재 의뢰: %s\n침투 준비 후보: NAVI 프록시 준비 필요.\n해킹 모드는 아직 연결되지 않았습니다." % active_job_title
+	desk_hotspot_detail_label.text = detail_text
 
 	var rect: Rect2 = hotspot["rect"]
 	desk_hotspot_debug_label.visible = room_debug_enabled
@@ -2166,6 +2209,18 @@ func _log_desk_hotspot_action(action_key: String) -> void:
 
 	var display_name := String(hotspot["display_name"])
 	var role := String(hotspot["role"])
+	if action_key == "primary" and _desk_hotspot_can_prepare_active_job(selected_desk_hotspot_key):
+		mock_info = "NAVI 준비 후보"
+		_set_mock_status_note("침투 준비 후보")
+		last_interaction = "%s / 침투 준비 후보" % display_name
+		last_interaction_debug = "desk_closeup:%s / active_job=%s / action=prepare_navi_proxy_noop / no Hacking" % [
+			selected_desk_hotspot_key,
+			active_job_key,
+		]
+		print("QuarterviewMain desk job preparation candidate: %s" % last_interaction_debug)
+		_update_status("NAVI 프록시 준비 후보: %s / Hacking 미연결" % active_job_key)
+		return
+
 	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
 	last_interaction_debug = "desk_closeup:%s / role=%s / action=%s / candidate=%s" % [
 		selected_desk_hotspot_key,
@@ -2175,6 +2230,10 @@ func _log_desk_hotspot_action(action_key: String) -> void:
 	]
 	print("QuarterviewMain desk close-up: %s / no production wiring" % last_interaction_debug)
 	_update_status("%s: %s candidate no-op." % [display_name, _get_action_display_name(action_key)])
+
+
+func _desk_hotspot_can_prepare_active_job(hotspot_key: String) -> bool:
+	return not active_job_key.is_empty() and DESK_JOB_PREP_HOTSPOT_KEYS.has(hotspot_key)
 
 
 func _get_desk_hotspot(hotspot_key: String) -> Dictionary:
