@@ -63,8 +63,8 @@ Current atlas status:
 - Generated as a temporary imagegen UI sheet.
 - The atlas has transparent alpha and is normalized to `1024x1024`.
 - Alpha check found transparent corners and no visible green chroma-key pixels.
-- `QuarterviewMain` loads this PNG as optional candidate art inside the Phone screen overlay.
-- Current code-local region use: `phone_frame`, `phone_screen_dark`, `phone_battery_icon`, `phone_signal_icon`, `phone_message_icon`, and `phone_power_icon`.
+- `PhoneScreenCandidate.gd` loads this PNG as optional candidate art inside the QuarterviewMain Phone screen overlay.
+- Current helper-local region use: `phone_frame`, `phone_screen_dark`, `phone_battery_icon`, `phone_signal_icon`, `phone_message_icon`, and `phone_power_icon`.
 - There is no phone atlas region mapping Resource yet.
 - There is no production `PhoneUI`, Theme, Control skin, `SurvivalState`, battery, message, or job wiring.
 
@@ -85,7 +85,7 @@ Region candidate table:
 
 ## Quarterview Power Board Candidate Status
 
-- `QuarterviewMain` has a QuarterviewMain-only draggable power-board prototype inside the Power equipment close-up.
+- `PowerBoardCandidate.gd` owns the QuarterviewMain-only draggable power-board prototype inside the Power equipment close-up.
 - Current candidate modules: `small_core` (`1x1`), `laptop_adapter` (`2x1`), `comm_module` (`1x2`), and `odd_efficiency_module` (`2x2`).
 - Drag preview uses valid / invalid colors while the cursor is over the grid.
 - Occupied cells block overlapping module placement.

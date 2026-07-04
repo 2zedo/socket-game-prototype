@@ -1,5 +1,8 @@
 extends Node2D
 
+const PhoneScreenCandidateScript := preload("res://scripts/ui/quarterview/PhoneScreenCandidate.gd")
+const PowerBoardCandidateScript := preload("res://scripts/ui/quarterview/PowerBoardCandidate.gd")
+
 const RESTART_KEY := KEY_R
 const CANCEL_KEY := KEY_ESCAPE
 const PANEL_VIEWPORT_MARGIN := 18.0
@@ -12,19 +15,9 @@ const DESK_CLOSEUP_ENTRY_KEYS := ["desk", "laptop"]
 const POWER_CLOSEUP_SIZE := Vector2(690, 500)
 const POWER_CLOSEUP_POSITION := Vector2(430, 84)
 const POWER_CLOSEUP_ENTRY_KEYS := ["power"]
-const POWER_BOARD_GRID_ORIGIN := Vector2(34, 44)
-const POWER_BOARD_GRID_CELLS := Vector2i(7, 5)
-const POWER_BOARD_CELL_SIZE := Vector2(46, 38)
 const PHONE_CLOSEUP_SIZE := Vector2(690, 520)
 const PHONE_CLOSEUP_POSITION := Vector2(430, 84)
 const PHONE_CLOSEUP_ENTRY_KEYS := ["phone"]
-const PHONE_UI_ATLAS_PATH := "res://assets/art/ui/atlases/ui_phone_atlas.png"
-const PHONE_ATLAS_REGION_FRAME := Rect2(Vector2(46, 27), Vector2(381, 657))
-const PHONE_ATLAS_REGION_SCREEN := Rect2(Vector2(453, 46), Vector2(336, 622))
-const PHONE_ATLAS_REGION_BATTERY := Rect2(Vector2(849, 103), Vector2(139, 66))
-const PHONE_ATLAS_REGION_SIGNAL := Rect2(Vector2(858, 226), Vector2(109, 136))
-const PHONE_ATLAS_REGION_MESSAGE := Rect2(Vector2(853, 375), Vector2(117, 98))
-const PHONE_ATLAS_REGION_POWER := Rect2(Vector2(848, 523), Vector2(124, 126))
 const BED_CLOSEUP_SIZE := Vector2(590, 430)
 const BED_CLOSEUP_POSITION := Vector2(480, 116)
 const BED_CLOSEUP_ENTRY_KEYS := ["bed"]
@@ -86,105 +79,6 @@ const DESK_CLOSEUP_HOTSPOTS := [
 		"description": "오늘 할 일, 의뢰 단서, 위험 메모를 놓는 후보 영역입니다.",
 		"candidate_action": "read_memo_noop",
 		"rect": Rect2(Vector2(512, 230), Vector2(136, 68)),
-	},
-]
-const POWER_CLOSEUP_MODULES := [
-	{
-		"key": "small_core",
-		"display_name": "Small Core",
-		"role": "power_module",
-		"description": "작고 단순한 1x1 전력 코어 후보입니다. 배치해도 실제 전력 계산은 없습니다.",
-		"candidate_action": "place_small_core_noop",
-		"rect": Rect2(Vector2(420, 56), Vector2(46, 38)),
-		"size_cells": Vector2i(1, 1),
-		"color": Color(0.16, 0.38, 0.48, 0.92),
-	},
-	{
-		"key": "laptop_adapter",
-		"display_name": "Laptop Adapter",
-		"role": "power_adapter",
-		"description": "노트북 전원을 우선 배분할 2x1 어댑터 후보입니다. OutletMode와는 아직 연결하지 않았습니다.",
-		"candidate_action": "place_laptop_adapter_noop",
-		"rect": Rect2(Vector2(492, 56), Vector2(92, 38)),
-		"size_cells": Vector2i(2, 1),
-		"color": Color(0.34, 0.28, 0.16, 0.94),
-	},
-	{
-		"key": "comm_module",
-		"display_name": "Comm Module",
-		"role": "power_routing",
-		"description": "통신 장비 전원을 세로로 잡아주는 1x2 후보 모듈입니다. 실제 장치 active 값은 바꾸지 않습니다.",
-		"candidate_action": "place_comm_module_noop",
-		"rect": Rect2(Vector2(420, 124), Vector2(46, 76)),
-		"size_cells": Vector2i(1, 2),
-		"color": Color(0.48, 0.22, 0.14, 0.92),
-	},
-	{
-		"key": "odd_efficiency_module",
-		"display_name": "Odd Efficiency",
-		"role": "power_efficiency",
-		"description": "효율은 좋아 보이지만 모양이 애매한 2x2 후보 모듈입니다. L-shape은 다음 단계 후보입니다.",
-		"candidate_action": "place_efficiency_module_noop",
-		"rect": Rect2(Vector2(492, 124), Vector2(92, 76)),
-		"size_cells": Vector2i(2, 2),
-		"color": Color(0.25, 0.24, 0.30, 0.94),
-	},
-]
-const PHONE_SCREEN_TABS := [
-	{
-		"key": "status",
-		"display_name": "상태",
-		"role": "phone_status_tab",
-		"description": "배터리, 신호, 충전 포트 후보 상태를 봅니다.",
-		"candidate_action": "view_phone_status_noop",
-	},
-	{
-		"key": "message",
-		"display_name": "메시지",
-		"role": "phone_message_tab",
-		"description": "실제 메시지 목록이 아니라 mock message feed 후보를 봅니다.",
-		"candidate_action": "view_phone_messages_noop",
-	},
-	{
-		"key": "job",
-		"display_name": "의뢰",
-		"role": "phone_job_tab",
-		"description": "익명 의뢰 후보를 봅니다. Hacking / reward 연결은 없습니다.",
-		"candidate_action": "view_phone_jobs_noop",
-	},
-]
-const PHONE_CLOSEUP_ITEMS := [
-	{
-		"key": "battery",
-		"display_name": "Battery",
-		"role": "phone_battery",
-		"description": "전화기 배터리와 충전 후보 상태를 확인합니다. 실제 Phone battery 값은 아직 읽지 않습니다.",
-		"candidate_action": "check_battery_noop",
-		"value": "47% 후보",
-	},
-	{
-		"key": "signal",
-		"display_name": "Signal",
-		"role": "phone_signal",
-		"description": "THE GRID 내부망 신호 후보를 확인합니다. 실제 통신 이벤트와 연결하지 않았습니다.",
-		"candidate_action": "check_signal_noop",
-		"value": "weak / unstable",
-	},
-	{
-		"key": "messages",
-		"display_name": "Messages",
-		"role": "phone_messages",
-		"description": "미확인 연락 후보입니다. 실제 PhoneUI 메시지 목록은 열지 않습니다.",
-		"candidate_action": "open_messages_noop",
-		"value": "0 new",
-	},
-	{
-		"key": "charge_port",
-		"display_name": "Charge Port",
-		"role": "phone_charge",
-		"description": "충전 포트 후보입니다. SurvivalState 충전 계산과 연결하지 않았습니다.",
-		"candidate_action": "charge_noop",
-		"value": "not wired",
 	},
 ]
 const BED_REST_OPTIONS := [
@@ -331,14 +225,6 @@ var selected_bed_option_key := "short_rest"
 var selected_kitchen_option_key := "stored_food"
 var selected_door_option_key := "check_hallway"
 var current_kitchen_source_key := "fridge"
-var power_dragging_module_key := ""
-var power_drag_offset := Vector2.ZERO
-var power_drag_start_global := Vector2.ZERO
-var power_drag_origin_local := Vector2.ZERO
-var power_drag_origin_had_cell := false
-var power_drag_origin_cell := Vector2i.ZERO
-var power_module_home_positions := {}
-var power_module_grid_positions := {}
 var interaction_panel: PanelContainer
 var interaction_title_label: Label
 var interaction_detail_label: Label
@@ -350,23 +236,9 @@ var desk_hotspot_detail_label: Label
 var desk_hotspot_debug_label: Label
 var desk_hotspot_guides := {}
 var power_closeup_backdrop: ColorRect
-var power_closeup_panel: PanelContainer
-var power_module_buttons := {}
-var power_module_title_label: Label
-var power_module_detail_label: Label
-var power_module_debug_label: Label
-var power_module_guides := {}
-var power_board_surface: Control
-var power_drop_preview: ColorRect
+var power_closeup_panel
 var phone_closeup_backdrop: ColorRect
-var phone_closeup_panel: PanelContainer
-var phone_item_buttons := {}
-var phone_item_grid: GridContainer
-var phone_tab_buttons := {}
-var phone_item_title_label: Label
-var phone_item_detail_label: Label
-var phone_item_debug_label: Label
-var phone_atlas_texture: Texture2D
+var phone_closeup_panel
 var bed_closeup_backdrop: ColorRect
 var bed_closeup_panel: PanelContainer
 var bed_option_buttons := {}
@@ -1012,337 +884,16 @@ func _build_power_closeup_overlay() -> void:
 	power_closeup_backdrop.gui_input.connect(_on_power_closeup_backdrop_gui_input)
 	$UILayer.add_child(power_closeup_backdrop)
 
-	power_closeup_panel = PanelContainer.new()
-	power_closeup_panel.name = "PowerEquipmentCloseupCandidate"
+	power_closeup_panel = PowerBoardCandidateScript.new()
 	power_closeup_panel.visible = false
-	power_closeup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	power_closeup_panel.z_index = 111
 	power_closeup_panel.position = POWER_CLOSEUP_POSITION
 	power_closeup_panel.custom_minimum_size = POWER_CLOSEUP_SIZE
+	power_closeup_panel.close_requested.connect(_hide_power_closeup)
+	power_closeup_panel.module_action_requested.connect(_on_power_module_action_requested)
+	power_closeup_panel.module_dropped.connect(_on_power_module_dropped)
+	power_closeup_panel.selection_changed.connect(_on_power_module_selection_changed)
 	$UILayer.add_child(power_closeup_panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	power_closeup_panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
-	margin.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "전력 장비"
-	title.add_theme_color_override("font_color", Color(0.96, 0.84, 0.56, 1.0))
-	title.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(title)
-
-	var description := Label.new()
-	description.text = "제한된 전력을 모듈로 재배치하는 장치 후보입니다. OutletMode / SurvivalState 연결 없음."
-	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.78, 1.0))
-	description.add_theme_font_size_override("font_size", 13)
-	vbox.add_child(description)
-
-	power_board_surface = Control.new()
-	power_board_surface.name = "PowerBoardMock"
-	power_board_surface.custom_minimum_size = Vector2(632, 316)
-	vbox.add_child(power_board_surface)
-
-	var board_background := ColorRect.new()
-	board_background.color = Color(0.045, 0.052, 0.048, 0.96)
-	board_background.position = Vector2.ZERO
-	board_background.size = Vector2(632, 316)
-	power_board_surface.add_child(board_background)
-
-	_add_power_grid(power_board_surface, POWER_BOARD_GRID_ORIGIN, POWER_BOARD_GRID_CELLS, POWER_BOARD_CELL_SIZE)
-
-	power_drop_preview = ColorRect.new()
-	power_drop_preview.name = "PowerDropPreview"
-	power_drop_preview.visible = false
-	power_drop_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	power_drop_preview.color = Color(0.22, 0.88, 0.72, 0.24)
-	power_board_surface.add_child(power_drop_preview)
-
-	for module in POWER_CLOSEUP_MODULES:
-		var key := String(module["key"])
-		var rect: Rect2 = module["rect"]
-		var module_size := _get_power_module_pixel_size(module)
-
-		var guide := ColorRect.new()
-		guide.name = "%sDebugRect" % key.capitalize().replace("_", "")
-		guide.color = Color(0.17, 0.82, 0.92, 0.18)
-		guide.position = rect.position
-		guide.size = module_size
-		guide.visible = room_debug_enabled
-		guide.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		power_board_surface.add_child(guide)
-		power_module_guides[key] = guide
-
-		var button := Button.new()
-		button.name = "%sModuleButton" % key.capitalize().replace("_", "")
-		button.text = String(module["display_name"])
-		button.position = rect.position
-		button.size = module_size
-		button.tooltip_text = String(module["description"])
-		button.modulate = module["color"]
-		button.gui_input.connect(_on_power_module_gui_input.bind(key))
-		power_board_surface.add_child(button)
-		power_module_buttons[key] = button
-		power_module_home_positions[key] = rect.position
-
-	power_module_title_label = Label.new()
-	power_module_title_label.add_theme_color_override("font_color", Color(0.92, 0.86, 0.72, 1.0))
-	power_module_title_label.add_theme_font_size_override("font_size", 18)
-	vbox.add_child(power_module_title_label)
-
-	power_module_detail_label = Label.new()
-	power_module_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	power_module_detail_label.add_theme_color_override("font_color", Color(0.74, 0.82, 0.82, 1.0))
-	power_module_detail_label.add_theme_font_size_override("font_size", 13)
-	vbox.add_child(power_module_detail_label)
-
-	power_module_debug_label = Label.new()
-	power_module_debug_label.visible = false
-	power_module_debug_label.add_theme_color_override("font_color", Color(0.50, 0.93, 0.96, 1.0))
-	power_module_debug_label.add_theme_font_size_override("font_size", 12)
-	vbox.add_child(power_module_debug_label)
-
-	var button_row := HBoxContainer.new()
-	button_row.add_theme_constant_override("separation", 8)
-	vbox.add_child(button_row)
-
-	var inspect_button := Button.new()
-	inspect_button.text = "모듈 확인"
-	inspect_button.pressed.connect(_on_power_inspect_pressed)
-	button_row.add_child(inspect_button)
-
-	var explain_button := Button.new()
-	explain_button.text = "설명"
-	explain_button.pressed.connect(_on_power_explain_pressed)
-	button_row.add_child(explain_button)
-
-	var close_button := Button.new()
-	close_button.text = "닫기"
-	close_button.pressed.connect(_hide_power_closeup)
-	button_row.add_child(close_button)
-
-	var close_hint := Label.new()
-	close_hint.text = "ESC 닫기 / 전력 계산과 OutletMode는 아직 연결하지 않음"
-	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
-	close_hint.add_theme_font_size_override("font_size", 12)
-	vbox.add_child(close_hint)
-
-	_select_power_module(selected_power_module_key)
-
-
-func _add_power_grid(parent: Control, origin: Vector2, cells: Vector2i, cell_size: Vector2) -> void:
-	for y in cells.y:
-		for x in cells.x:
-			var cell := ColorRect.new()
-			cell.name = "PowerGridCell_%d_%d" % [x, y]
-			cell.color = Color(0.09, 0.12, 0.11, 0.72) if (x + y) % 2 == 0 else Color(0.07, 0.09, 0.085, 0.72)
-			cell.position = origin + Vector2(x * cell_size.x, y * cell_size.y)
-			cell.size = cell_size - Vector2(3, 3)
-			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			parent.add_child(cell)
-
-
-func _get_power_module_pixel_size(module: Dictionary) -> Vector2:
-	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
-	return Vector2(
-		POWER_BOARD_CELL_SIZE.x * size_cells.x - 2.0,
-		POWER_BOARD_CELL_SIZE.y * size_cells.y - 2.0
-	)
-
-
-func _on_power_module_gui_input(event: InputEvent, module_key: String) -> void:
-	var button: Button = power_module_buttons.get(module_key, null)
-	if button == null:
-		return
-
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			_select_power_module(module_key)
-			power_dragging_module_key = module_key
-			power_drag_offset = button.get_global_mouse_position() - button.global_position
-			power_drag_start_global = button.global_position
-			power_drag_origin_local = button.position
-			power_drag_origin_had_cell = power_module_grid_positions.has(module_key)
-			power_drag_origin_cell = power_module_grid_positions.get(module_key, Vector2i.ZERO)
-			button.z_index = 8
-			_update_power_drop_preview(module_key)
-			get_viewport().set_input_as_handled()
-		elif power_dragging_module_key == module_key:
-			_finish_power_module_drag(module_key)
-			get_viewport().set_input_as_handled()
-	elif event is InputEventMouseMotion and power_dragging_module_key == module_key:
-		button.global_position = button.get_global_mouse_position() - power_drag_offset
-		_sync_power_module_guide(module_key)
-		_update_power_drop_preview(module_key)
-		get_viewport().set_input_as_handled()
-
-
-func _finish_power_module_drag(module_key: String) -> void:
-	var button: Button = power_module_buttons.get(module_key, null)
-	var module := _get_power_module(module_key)
-	if button == null or module.is_empty():
-		_clear_power_drag_state()
-		return
-
-	button.z_index = 1
-	if button.global_position.distance_to(power_drag_start_global) < 4.0:
-		_sync_power_module_guide(module_key)
-		_clear_power_drag_state()
-		_log_power_module_action("focus")
-		return
-
-	var drop_candidate := _get_power_drop_candidate(module_key)
-	if bool(drop_candidate.get("valid", false)):
-		var cell: Vector2i = drop_candidate["cell"]
-		var grid_rect := _get_power_grid_global_rect()
-		button.global_position = grid_rect.position + Vector2(cell.x * POWER_BOARD_CELL_SIZE.x, cell.y * POWER_BOARD_CELL_SIZE.y)
-		power_module_grid_positions[module_key] = cell
-		_log_power_module_drop(module_key, cell)
-	else:
-		button.position = power_drag_origin_local
-		if power_drag_origin_had_cell:
-			power_module_grid_positions[module_key] = power_drag_origin_cell
-		else:
-			power_module_grid_positions.erase(module_key)
-		_update_status("%s: %s 원래 위치로 돌아갑니다." % [
-			String(module["display_name"]),
-			String(drop_candidate.get("reason", "invalid drop /")),
-		])
-
-	_sync_power_module_guide(module_key)
-	_clear_power_drag_state()
-	_refresh_power_module_detail()
-
-
-func _get_power_grid_global_rect() -> Rect2:
-	if power_board_surface == null:
-		return Rect2()
-	return Rect2(
-		power_board_surface.global_position + POWER_BOARD_GRID_ORIGIN,
-		Vector2(
-			POWER_BOARD_GRID_CELLS.x * POWER_BOARD_CELL_SIZE.x,
-			POWER_BOARD_GRID_CELLS.y * POWER_BOARD_CELL_SIZE.y
-		)
-	)
-
-
-func _sync_power_module_guide(module_key: String) -> void:
-	var guide: ColorRect = power_module_guides.get(module_key, null)
-	var button: Button = power_module_buttons.get(module_key, null)
-	if guide == null or button == null:
-		return
-	guide.position = button.position
-	guide.size = button.size
-
-
-func _get_power_drop_candidate(module_key: String) -> Dictionary:
-	var button: Button = power_module_buttons.get(module_key, null)
-	var module := _get_power_module(module_key)
-	if button == null or module.is_empty():
-		return {"inside": false, "valid": false, "reason": "module unavailable /"}
-
-	var grid_rect := _get_power_grid_global_rect()
-	var center := button.global_position + button.size * 0.5
-	if not grid_rect.has_point(center):
-		return {"inside": false, "valid": false, "reason": "grid 밖이라"}
-
-	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
-	var local_top_left := button.global_position - grid_rect.position
-	var cell := Vector2i(
-		clampi(roundi(local_top_left.x / POWER_BOARD_CELL_SIZE.x), 0, POWER_BOARD_GRID_CELLS.x - size_cells.x),
-		clampi(roundi(local_top_left.y / POWER_BOARD_CELL_SIZE.y), 0, POWER_BOARD_GRID_CELLS.y - size_cells.y)
-	)
-	var valid := _is_power_drop_cell_available(module_key, cell, size_cells)
-	return {
-		"inside": true,
-		"valid": valid,
-		"cell": cell,
-		"size_cells": size_cells,
-		"reason": "" if valid else "다른 모듈과 겹쳐서",
-	}
-
-
-func _is_power_drop_cell_available(module_key: String, cell: Vector2i, size_cells: Vector2i) -> bool:
-	for y in range(cell.y, cell.y + size_cells.y):
-		for x in range(cell.x, cell.x + size_cells.x):
-			if x < 0 or y < 0 or x >= POWER_BOARD_GRID_CELLS.x or y >= POWER_BOARD_GRID_CELLS.y:
-				return false
-			var check_cell := Vector2i(x, y)
-			for other_key in power_module_grid_positions.keys():
-				if String(other_key) == module_key:
-					continue
-				var other_module := _get_power_module(String(other_key))
-				if other_module.is_empty():
-					continue
-				var other_cell: Vector2i = power_module_grid_positions[other_key]
-				var other_size: Vector2i = other_module.get("size_cells", Vector2i(1, 1))
-				if _is_power_cell_inside_module(check_cell, other_cell, other_size):
-					return false
-	return true
-
-
-func _is_power_cell_inside_module(cell: Vector2i, module_cell: Vector2i, size_cells: Vector2i) -> bool:
-	return (
-		cell.x >= module_cell.x
-		and cell.y >= module_cell.y
-		and cell.x < module_cell.x + size_cells.x
-		and cell.y < module_cell.y + size_cells.y
-	)
-
-
-func _update_power_drop_preview(module_key: String) -> void:
-	if power_drop_preview == null:
-		return
-	var candidate := _get_power_drop_candidate(module_key)
-	if not bool(candidate.get("inside", false)):
-		power_drop_preview.visible = false
-		return
-
-	var cell: Vector2i = candidate["cell"]
-	var size_cells: Vector2i = candidate["size_cells"]
-	power_drop_preview.visible = true
-	power_drop_preview.position = POWER_BOARD_GRID_ORIGIN + Vector2(cell.x * POWER_BOARD_CELL_SIZE.x, cell.y * POWER_BOARD_CELL_SIZE.y)
-	power_drop_preview.size = Vector2(size_cells.x * POWER_BOARD_CELL_SIZE.x - 3.0, size_cells.y * POWER_BOARD_CELL_SIZE.y - 3.0)
-	power_drop_preview.color = (
-		Color(0.20, 0.90, 0.68, 0.28)
-		if bool(candidate.get("valid", false))
-		else Color(0.96, 0.18, 0.14, 0.32)
-	)
-
-
-func _clear_power_drag_state() -> void:
-	if not power_dragging_module_key.is_empty():
-		var button: Button = power_module_buttons.get(power_dragging_module_key, null)
-		if button != null:
-			button.z_index = 1
-	if power_drop_preview != null:
-		power_drop_preview.visible = false
-	power_dragging_module_key = ""
-	power_drag_offset = Vector2.ZERO
-	power_drag_start_global = Vector2.ZERO
-	power_drag_origin_local = Vector2.ZERO
-	power_drag_origin_had_cell = false
-	power_drag_origin_cell = Vector2i.ZERO
-
-
-func _log_power_module_drop(module_key: String, cell: Vector2i) -> void:
-	var module := _get_power_module(module_key)
-	if module.is_empty():
-		return
-	selected_power_module_key = module_key
-	last_interaction = "%s / grid snap" % String(module["display_name"])
-	last_interaction_debug = "power_board:%s / action=drag_snap / cell=%s / no OutletMode" % [module_key, str(cell)]
-	print("QuarterviewMain power board drag: %s / no production wiring" % last_interaction_debug)
-	_update_status("%s: grid %s에 배치 후보로 snap되었습니다. 실제 전력 계산 없음." % [
-		String(module["display_name"]),
-		str(cell),
-	])
 
 
 func _open_power_closeup(source_key: String) -> void:
@@ -1352,10 +903,8 @@ func _open_power_closeup(source_key: String) -> void:
 	power_closeup_backdrop.size = _get_viewport_ui_size()
 	power_closeup_backdrop.visible = true
 	power_closeup_panel.visible = true
-
-	if _get_power_module(selected_power_module_key).is_empty():
-		selected_power_module_key = "small_core"
-	_select_power_module(selected_power_module_key)
+	selected_power_module_key = power_closeup_panel.reset_selection(selected_power_module_key)
+	power_closeup_panel.set_debug_enabled(room_debug_enabled)
 
 	last_interaction = "Power equipment / open"
 	last_interaction_debug = "%s / role=%s / action=power_closeup" % [
@@ -1367,7 +916,8 @@ func _open_power_closeup(source_key: String) -> void:
 
 
 func _hide_power_closeup() -> void:
-	_clear_power_drag_state()
+	if power_closeup_panel != null:
+		power_closeup_panel.clear_drag_state()
 	if power_closeup_backdrop != null:
 		power_closeup_backdrop.visible = false
 	if power_closeup_panel != null:
@@ -1386,86 +936,56 @@ func _on_power_closeup_backdrop_gui_input(event: InputEvent) -> void:
 func _is_power_closeup_content_point(viewport_point: Vector2) -> bool:
 	if power_closeup_panel == null or not power_closeup_panel.visible:
 		return false
-	var panel_size := power_closeup_panel.size
+	var panel_size: Vector2 = power_closeup_panel.size
 	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
 		panel_size = POWER_CLOSEUP_SIZE
 	return Rect2(power_closeup_panel.global_position, panel_size).has_point(viewport_point)
 
 
-func _on_power_module_pressed(module_key: String) -> void:
-	_select_power_module(module_key)
-	_log_power_module_action("focus")
-
-
-func _on_power_inspect_pressed() -> void:
-	_log_power_module_action("primary")
-
-
-func _on_power_explain_pressed() -> void:
-	_log_power_module_action("inspect")
-
-
-func _select_power_module(module_key: String) -> void:
-	var module := _get_power_module(module_key)
-	if module.is_empty():
-		return
-
-	selected_power_module_key = module_key
-	for key in power_module_buttons.keys():
-		var button: Button = power_module_buttons[key]
-		var button_module := _get_power_module(String(key))
-		var prefix := "> " if String(key) == selected_power_module_key else ""
-		button.text = "%s%s" % [prefix, String(button_module.get("display_name", key))]
-	_refresh_power_module_detail()
-
-
 func _refresh_power_module_detail() -> void:
-	var module := _get_power_module(selected_power_module_key)
-	if module.is_empty():
+	if power_closeup_panel != null:
+		power_closeup_panel.set_debug_enabled(room_debug_enabled)
+
+
+func _on_power_module_selection_changed(module_key: String, _module: Dictionary) -> void:
+	selected_power_module_key = module_key
+
+
+func _on_power_module_action_requested(module_key: String, action_key: String, module: Dictionary) -> void:
+	selected_power_module_key = module_key
+	if action_key == "invalid_drop":
+		_update_status("%s: %s 원래 위치로 돌아갑니다." % [
+			String(module.get("display_name", module_key)),
+			String(module.get("drop_reason", "invalid drop /")),
+		])
 		return
 
-	power_module_title_label.text = String(module["display_name"])
-	power_module_detail_label.text = "%s\n\n전력 모듈 후보는 아직 연결되지 않았습니다." % String(module["description"])
-
-	var rect: Rect2 = module["rect"]
-	power_module_debug_label.visible = room_debug_enabled
-	if room_debug_enabled:
-		var grid_pos = power_module_grid_positions.get(selected_power_module_key, "palette")
-		power_module_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nmodule rect: %s\ngrid: %s\nno-op status: OutletMode / SurvivalState disabled" % [
-			String(module["key"]),
-			String(module["role"]),
-			String(module["candidate_action"]),
-			_format_rect(rect),
-			str(grid_pos),
-		]
-
-	for key in power_module_guides.keys():
-		var guide: ColorRect = power_module_guides[key]
-		guide.visible = room_debug_enabled
-		guide.color = Color(1.0, 0.78, 0.20, 0.24) if String(key) == selected_power_module_key else Color(0.17, 0.82, 0.92, 0.18)
-		_sync_power_module_guide(String(key))
-
-
-func _log_power_module_action(action_key: String) -> void:
-	var module := _get_power_module(selected_power_module_key)
-	if module.is_empty():
-		return
-
-	var display_name := String(module["display_name"])
-	var role := String(module["role"])
-	var mock_effect := _apply_power_mock_effect(selected_power_module_key, action_key)
+	var display_name := String(module.get("display_name", module_key))
+	var role := String(module.get("role", "-"))
+	var mock_effect := _apply_power_mock_effect(module_key, action_key)
 	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
 	last_interaction_debug = "power_closeup:%s / role=%s / action=%s / candidate=%s" % [
-		selected_power_module_key,
+		module_key,
 		role,
 		action_key,
-		String(module["candidate_action"]),
+		String(module.get("candidate_action", "-")),
 	]
 	print("QuarterviewMain power close-up: %s / no production wiring" % last_interaction_debug)
 	var status_text := "%s: 전력 모듈 후보는 아직 연결되지 않았습니다." % display_name
 	if not mock_effect.is_empty():
 		status_text = "%s: %s" % [display_name, mock_effect]
 	_update_status(status_text)
+
+
+func _on_power_module_dropped(module_key: String, cell: Vector2i, module: Dictionary) -> void:
+	selected_power_module_key = module_key
+	last_interaction = "%s / grid snap" % String(module.get("display_name", module_key))
+	last_interaction_debug = "power_board:%s / action=drag_snap / cell=%s / no OutletMode" % [module_key, str(cell)]
+	print("QuarterviewMain power board drag: %s / no production wiring" % last_interaction_debug)
+	_update_status("%s: grid %s에 배치 후보로 snap되었습니다. 실제 전력 계산 없음." % [
+		String(module.get("display_name", module_key)),
+		str(cell),
+	])
 
 
 func _apply_power_mock_effect(module_key: String, action_key: String) -> String:
@@ -1490,13 +1010,6 @@ func _apply_power_mock_effect(module_key: String, action_key: String) -> String:
 			return "mock 전력 상태를 확인했습니다."
 
 
-func _get_power_module(module_key: String) -> Dictionary:
-	for module in POWER_CLOSEUP_MODULES:
-		if String(module["key"]) == module_key:
-			return module
-	return {}
-
-
 func _build_phone_closeup_overlay() -> void:
 	phone_closeup_backdrop = ColorRect.new()
 	phone_closeup_backdrop.name = "PhoneCloseupBackdrop"
@@ -1509,162 +1022,16 @@ func _build_phone_closeup_overlay() -> void:
 	phone_closeup_backdrop.gui_input.connect(_on_phone_closeup_backdrop_gui_input)
 	$UILayer.add_child(phone_closeup_backdrop)
 
-	phone_closeup_panel = PanelContainer.new()
-	phone_closeup_panel.name = "PhoneStatusCloseupCandidate"
+	phone_closeup_panel = PhoneScreenCandidateScript.new()
 	phone_closeup_panel.visible = false
-	phone_closeup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	phone_closeup_panel.z_index = 121
 	phone_closeup_panel.position = PHONE_CLOSEUP_POSITION
 	phone_closeup_panel.custom_minimum_size = PHONE_CLOSEUP_SIZE
+	phone_closeup_panel.close_requested.connect(_hide_phone_closeup)
+	phone_closeup_panel.item_action_requested.connect(_on_phone_item_action_requested)
+	phone_closeup_panel.tab_action_requested.connect(_on_phone_tab_action_requested)
+	phone_closeup_panel.selection_changed.connect(_on_phone_selection_changed)
 	$UILayer.add_child(phone_closeup_panel)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	phone_closeup_panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
-	margin.add_child(vbox)
-
-	var title := Label.new()
-	title.text = "Phone Screen Candidate"
-	title.add_theme_color_override("font_color", Color(0.78, 0.90, 0.96, 1.0))
-	title.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(title)
-
-	var description := Label.new()
-	description.text = "전화기 화면을 보는 후보입니다. PhoneUI / SurvivalState 연결 없음."
-	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.84, 1.0))
-	description.add_theme_font_size_override("font_size", 13)
-	vbox.add_child(description)
-
-	var body_row := HBoxContainer.new()
-	body_row.add_theme_constant_override("separation", 12)
-	vbox.add_child(body_row)
-
-	var atlas_preview_panel := PanelContainer.new()
-	atlas_preview_panel.custom_minimum_size = Vector2(178, 286)
-	body_row.add_child(atlas_preview_panel)
-
-	var atlas_margin := MarginContainer.new()
-	atlas_margin.add_theme_constant_override("margin_left", 8)
-	atlas_margin.add_theme_constant_override("margin_top", 8)
-	atlas_margin.add_theme_constant_override("margin_right", 8)
-	atlas_margin.add_theme_constant_override("margin_bottom", 8)
-	atlas_preview_panel.add_child(atlas_margin)
-
-	var atlas_box := VBoxContainer.new()
-	atlas_box.add_theme_constant_override("separation", 6)
-	atlas_margin.add_child(atlas_box)
-
-	phone_atlas_texture = _load_texture_from_png(PHONE_UI_ATLAS_PATH)
-	if phone_atlas_texture != null:
-		var phone_visual := Control.new()
-		phone_visual.name = "PhoneAtlasCompositedPreview"
-		phone_visual.custom_minimum_size = Vector2(156, 236)
-		atlas_box.add_child(phone_visual)
-
-		_add_phone_atlas_region(phone_visual, "PhoneScreenRegion", PHONE_ATLAS_REGION_SCREEN, Vector2(42, 42), Vector2(82, 156))
-		_add_phone_atlas_region(phone_visual, "PhoneFrameRegion", PHONE_ATLAS_REGION_FRAME, Vector2(14, 0), Vector2(132, 228))
-		_add_phone_atlas_region(phone_visual, "PhoneBatteryRegion", PHONE_ATLAS_REGION_BATTERY, Vector2(54, 56), Vector2(42, 20))
-		_add_phone_atlas_region(phone_visual, "PhoneSignalRegion", PHONE_ATLAS_REGION_SIGNAL, Vector2(104, 58), Vector2(30, 38))
-		_add_phone_atlas_region(phone_visual, "PhoneMessageRegion", PHONE_ATLAS_REGION_MESSAGE, Vector2(62, 116), Vector2(36, 30))
-		_add_phone_atlas_region(phone_visual, "PhonePowerRegion", PHONE_ATLAS_REGION_POWER, Vector2(100, 116), Vector2(36, 36))
-	else:
-		var missing_atlas := ColorRect.new()
-		missing_atlas.name = "MissingPhoneAtlasPreview"
-		missing_atlas.color = Color(0.08, 0.10, 0.11, 0.94)
-		missing_atlas.custom_minimum_size = Vector2(156, 236)
-		atlas_box.add_child(missing_atlas)
-
-	var atlas_hint := Label.new()
-	atlas_hint.text = "phone atlas regions"
-	atlas_hint.add_theme_color_override("font_color", Color(0.54, 0.66, 0.68, 0.92))
-	atlas_hint.add_theme_font_size_override("font_size", 11)
-	atlas_box.add_child(atlas_hint)
-
-	var screen_box := VBoxContainer.new()
-	screen_box.add_theme_constant_override("separation", 8)
-	screen_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body_row.add_child(screen_box)
-
-	var tab_row := HBoxContainer.new()
-	tab_row.add_theme_constant_override("separation", 8)
-	screen_box.add_child(tab_row)
-
-	for tab in PHONE_SCREEN_TABS:
-		var key := String(tab["key"])
-		var button := Button.new()
-		button.name = "%sPhoneTabButton" % key.capitalize().replace("_", "")
-		button.text = String(tab["display_name"])
-		button.tooltip_text = String(tab["description"])
-		button.pressed.connect(_on_phone_tab_pressed.bind(key))
-		tab_row.add_child(button)
-		phone_tab_buttons[key] = button
-
-	phone_item_grid = GridContainer.new()
-	phone_item_grid.name = "PhoneStatusGrid"
-	phone_item_grid.columns = 2
-	phone_item_grid.add_theme_constant_override("h_separation", 8)
-	phone_item_grid.add_theme_constant_override("v_separation", 8)
-	screen_box.add_child(phone_item_grid)
-
-	for item in PHONE_CLOSEUP_ITEMS:
-		var key := String(item["key"])
-		var button := Button.new()
-		button.name = "%sPhoneItemButton" % key.capitalize().replace("_", "")
-		button.custom_minimum_size = Vector2(216, 62)
-		button.tooltip_text = String(item["description"])
-		button.pressed.connect(_on_phone_item_pressed.bind(key))
-		phone_item_grid.add_child(button)
-		phone_item_buttons[key] = button
-
-	phone_item_title_label = Label.new()
-	phone_item_title_label.add_theme_color_override("font_color", Color(0.90, 0.88, 0.74, 1.0))
-	phone_item_title_label.add_theme_font_size_override("font_size", 18)
-	vbox.add_child(phone_item_title_label)
-
-	phone_item_detail_label = Label.new()
-	phone_item_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	phone_item_detail_label.add_theme_color_override("font_color", Color(0.74, 0.82, 0.84, 1.0))
-	phone_item_detail_label.add_theme_font_size_override("font_size", 13)
-	vbox.add_child(phone_item_detail_label)
-
-	phone_item_debug_label = Label.new()
-	phone_item_debug_label.visible = false
-	phone_item_debug_label.add_theme_color_override("font_color", Color(0.50, 0.93, 0.96, 1.0))
-	phone_item_debug_label.add_theme_font_size_override("font_size", 12)
-	vbox.add_child(phone_item_debug_label)
-
-	var button_row := HBoxContainer.new()
-	button_row.add_theme_constant_override("separation", 8)
-	vbox.add_child(button_row)
-
-	var use_button := Button.new()
-	use_button.text = "확인"
-	use_button.pressed.connect(_on_phone_use_pressed)
-	button_row.add_child(use_button)
-
-	var inspect_button := Button.new()
-	inspect_button.text = "설명"
-	inspect_button.pressed.connect(_on_phone_inspect_pressed)
-	button_row.add_child(inspect_button)
-
-	var close_button := Button.new()
-	close_button.text = "닫기"
-	close_button.pressed.connect(_hide_phone_closeup)
-	button_row.add_child(close_button)
-
-	var close_hint := Label.new()
-	close_hint.text = "ESC 닫기 / PhoneUI와 실제 배터리 상태는 아직 연결하지 않음"
-	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.70, 0.92))
-	close_hint.add_theme_font_size_override("font_size", 12)
-	vbox.add_child(close_hint)
-
-	_select_phone_tab(selected_phone_tab_key)
 
 
 func _open_phone_closeup(source_key: String) -> void:
@@ -1674,12 +1041,10 @@ func _open_phone_closeup(source_key: String) -> void:
 	phone_closeup_backdrop.size = _get_viewport_ui_size()
 	phone_closeup_backdrop.visible = true
 	phone_closeup_panel.visible = true
-
-	if _get_phone_item(selected_phone_item_key).is_empty():
-		selected_phone_item_key = "battery"
-	if _get_phone_tab(selected_phone_tab_key).is_empty():
-		selected_phone_tab_key = "status"
-	_select_phone_tab(selected_phone_tab_key)
+	var selection: Dictionary = phone_closeup_panel.reset_selection(selected_phone_item_key, selected_phone_tab_key)
+	selected_phone_item_key = String(selection.get("item_key", "battery"))
+	selected_phone_tab_key = String(selection.get("tab_key", "status"))
+	phone_closeup_panel.set_debug_enabled(room_debug_enabled)
 
 	last_interaction = "Phone candidate / open"
 	last_interaction_debug = "%s / role=%s / action=phone_closeup" % [
@@ -1709,137 +1074,64 @@ func _on_phone_closeup_backdrop_gui_input(event: InputEvent) -> void:
 func _is_phone_closeup_content_point(viewport_point: Vector2) -> bool:
 	if phone_closeup_panel == null or not phone_closeup_panel.visible:
 		return false
-	var panel_size := phone_closeup_panel.size
+	var panel_size: Vector2 = phone_closeup_panel.size
 	if panel_size.x <= 1.0 or panel_size.y <= 1.0:
 		panel_size = PHONE_CLOSEUP_SIZE
 	return Rect2(phone_closeup_panel.global_position, panel_size).has_point(viewport_point)
 
 
-func _on_phone_item_pressed(item_key: String) -> void:
-	_select_phone_tab("status")
-	_select_phone_item(item_key)
-	_log_phone_item_action("focus")
-
-
-func _on_phone_use_pressed() -> void:
-	if selected_phone_tab_key == "status":
-		_log_phone_item_action("primary")
-	else:
-		_log_phone_tab_action("primary")
-
-
-func _on_phone_inspect_pressed() -> void:
-	if selected_phone_tab_key == "status":
-		_log_phone_item_action("inspect")
-	else:
-		_log_phone_tab_action("inspect")
-
-
-func _on_phone_tab_pressed(tab_key: String) -> void:
-	_select_phone_tab(tab_key)
-	_log_phone_tab_action("focus")
-
-
-func _select_phone_tab(tab_key: String) -> void:
-	var tab := _get_phone_tab(tab_key)
-	if tab.is_empty():
-		return
-
-	selected_phone_tab_key = tab_key
-	_refresh_phone_tab_buttons()
-	if phone_item_grid != null:
-		phone_item_grid.visible = selected_phone_tab_key == "status"
-	if selected_phone_tab_key == "status":
-		_select_phone_item(selected_phone_item_key)
-	else:
-		_refresh_phone_item_detail()
-
-
-func _refresh_phone_tab_buttons() -> void:
-	for key in phone_tab_buttons.keys():
-		var button: Button = phone_tab_buttons[key]
-		var tab := _get_phone_tab(String(key))
-		var prefix := "> " if String(key) == selected_phone_tab_key else ""
-		button.text = "%s%s" % [prefix, String(tab.get("display_name", key))]
-
-
-func _select_phone_item(item_key: String) -> void:
-	var item := _get_phone_item(item_key)
-	if item.is_empty():
-		return
-
-	selected_phone_item_key = item_key
-	for key in phone_item_buttons.keys():
-		var button: Button = phone_item_buttons[key]
-		var button_item := _get_phone_item(String(key))
-		var prefix := "> " if String(key) == selected_phone_item_key else ""
-		button.text = "%s%s\n%s" % [
-			prefix,
-			String(button_item.get("display_name", key)),
-			String(button_item.get("value", "")),
-		]
-	_refresh_phone_item_detail()
-
-
 func _refresh_phone_item_detail() -> void:
-	if selected_phone_tab_key != "status":
-		var tab := _get_phone_tab(selected_phone_tab_key)
-		if tab.is_empty():
-			return
-		phone_item_title_label.text = String(tab["display_name"])
-		match selected_phone_tab_key:
-			"message":
-				phone_item_detail_label.text = "새 메시지는 아직 없습니다.\n\nMock feed:\n- GRID 내부망 알림 후보: 신호가 약합니다.\n- 익명 연락 후보: 아직 읽을 수 없습니다.\n\n실제 PhoneUI 메시지 목록은 열지 않습니다."
-			"job":
-				phone_item_detail_label.text = "익명 의뢰 후보:\n- 낮은 위험도 데이터 확인 의뢰\n- 전력 배분 상태에 따라 열릴 장기 후보\n\nHacking, reward, Grid Credit, story flag는 아직 연결하지 않습니다."
-			_:
-				phone_item_detail_label.text = "%s\n\nPhone screen candidate only." % String(tab["description"])
-		phone_item_debug_label.visible = room_debug_enabled
-		if room_debug_enabled:
-			phone_item_debug_label.text = "tab: %s\nrole: %s\ncandidate action: %s\nno-op status: PhoneUI / Hacking / reward disabled" % [
-				String(tab["key"]),
-				String(tab["role"]),
-				String(tab["candidate_action"]),
-			]
-		return
-
-	var item := _get_phone_item(selected_phone_item_key)
-	if item.is_empty():
-		return
-
-	phone_item_title_label.text = String(item["display_name"])
-	phone_item_detail_label.text = "%s\n\nPhone candidate only. 실제 PhoneUI / SurvivalState 값은 아직 연결되지 않았습니다." % String(item["description"])
-
-	phone_item_debug_label.visible = room_debug_enabled
-	if room_debug_enabled:
-		phone_item_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nvalue: %s\nno-op status: PhoneUI / SurvivalState disabled" % [
-			String(item["key"]),
-			String(item["role"]),
-			String(item["candidate_action"]),
-			String(item["value"]),
-		]
+	if phone_closeup_panel != null:
+		phone_closeup_panel.set_debug_enabled(room_debug_enabled)
 
 
-func _log_phone_item_action(action_key: String) -> void:
-	var item := _get_phone_item(selected_phone_item_key)
-	if item.is_empty():
-		return
+func _on_phone_selection_changed(tab_key: String, item_key: String) -> void:
+	selected_phone_tab_key = tab_key
+	selected_phone_item_key = item_key
 
-	var display_name := String(item["display_name"])
-	var role := String(item["role"])
-	var mock_effect := _apply_phone_mock_effect(selected_phone_item_key, action_key)
+
+func _on_phone_item_action_requested(item_key: String, action_key: String, item: Dictionary) -> void:
+	selected_phone_tab_key = "status"
+	selected_phone_item_key = item_key
+	var display_name := String(item.get("display_name", item_key))
+	var role := String(item.get("role", "-"))
+	var mock_effect := _apply_phone_mock_effect(item_key, action_key)
 	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
 	last_interaction_debug = "phone_closeup:%s / role=%s / action=%s / candidate=%s" % [
-		selected_phone_item_key,
+		item_key,
 		role,
 		action_key,
-		String(item["candidate_action"]),
+		String(item.get("candidate_action", "-")),
 	]
 	print("QuarterviewMain phone close-up: %s / no production wiring" % last_interaction_debug)
 	var status_text := "%s: Phone candidate no-op." % display_name
 	if not mock_effect.is_empty():
 		status_text = "%s: %s" % [display_name, mock_effect]
 	_update_status(status_text)
+
+
+func _on_phone_tab_action_requested(tab_key: String, action_key: String, tab: Dictionary) -> void:
+	selected_phone_tab_key = tab_key
+	var display_name := String(tab.get("display_name", tab_key))
+	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
+	last_interaction_debug = "phone_screen:%s / role=%s / action=%s / candidate=%s" % [
+		tab_key,
+		String(tab.get("role", "-")),
+		action_key,
+		String(tab.get("candidate_action", "-")),
+	]
+	print("QuarterviewMain phone screen candidate: %s / no production wiring" % last_interaction_debug)
+	if action_key == "primary":
+		match tab_key:
+			"message":
+				mock_info = "Phone 메시지 후보 확인"
+				_set_mock_status_note("메시지 탭 확인")
+			"job":
+				mock_info = "익명 의뢰 후보 확인"
+				_set_mock_status_note("의뢰 탭 확인")
+			_:
+				_set_mock_status_note("Phone 탭 확인")
+	_update_status("%s: Phone screen candidate no-op." % display_name)
 
 
 func _apply_phone_mock_effect(item_key: String, action_key: String) -> String:
@@ -1864,47 +1156,6 @@ func _apply_phone_mock_effect(item_key: String, action_key: String) -> String:
 		_:
 			_set_mock_status_note("Phone 후보 확인")
 			return "mock HUD 메모가 갱신됩니다."
-
-
-func _log_phone_tab_action(action_key: String) -> void:
-	var tab := _get_phone_tab(selected_phone_tab_key)
-	if tab.is_empty():
-		return
-
-	var display_name := String(tab["display_name"])
-	last_interaction = "%s / %s" % [display_name, _get_action_display_name(action_key)]
-	last_interaction_debug = "phone_screen:%s / role=%s / action=%s / candidate=%s" % [
-		selected_phone_tab_key,
-		String(tab["role"]),
-		action_key,
-		String(tab["candidate_action"]),
-	]
-	print("QuarterviewMain phone screen candidate: %s / no production wiring" % last_interaction_debug)
-	if action_key == "primary":
-		match selected_phone_tab_key:
-			"message":
-				mock_info = "Phone 메시지 후보 확인"
-				_set_mock_status_note("메시지 탭 확인")
-			"job":
-				mock_info = "익명 의뢰 후보 확인"
-				_set_mock_status_note("의뢰 탭 확인")
-			_:
-				_set_mock_status_note("Phone 탭 확인")
-	_update_status("%s: Phone screen candidate no-op." % display_name)
-
-
-func _get_phone_item(item_key: String) -> Dictionary:
-	for item in PHONE_CLOSEUP_ITEMS:
-		if String(item["key"]) == item_key:
-			return item
-	return {}
-
-
-func _get_phone_tab(tab_key: String) -> Dictionary:
-	for tab in PHONE_SCREEN_TABS:
-		if String(tab["key"]) == tab_key:
-			return tab
-	return {}
 
 
 func _build_bed_closeup_overlay() -> void:
@@ -2836,36 +2087,6 @@ func _is_interaction_panel_content_point(viewport_point: Vector2) -> bool:
 func _get_viewport_ui_size() -> Vector2:
 	var viewport_size := get_viewport().get_visible_rect().size
 	return Vector2(max(viewport_size.x, 1280.0), max(viewport_size.y, 720.0))
-
-
-func _load_texture_from_png(path: String) -> Texture2D:
-	var image := Image.new()
-	var error := image.load(path)
-	if error != OK:
-		push_warning("QuarterviewMain could not load optional PNG: %s" % path)
-		return null
-	return ImageTexture.create_from_image(image)
-
-
-func _make_phone_atlas_texture(region: Rect2) -> Texture2D:
-	if phone_atlas_texture == null:
-		return null
-	var texture := AtlasTexture.new()
-	texture.atlas = phone_atlas_texture
-	texture.region = region
-	return texture
-
-
-func _add_phone_atlas_region(parent: Control, node_name: String, region: Rect2, position: Vector2, size: Vector2) -> TextureRect:
-	var texture_rect := TextureRect.new()
-	texture_rect.name = node_name
-	texture_rect.texture = _make_phone_atlas_texture(region)
-	texture_rect.position = position
-	texture_rect.size = size
-	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(texture_rect)
-	return texture_rect
 
 
 func _on_desk_hotspot_pressed(hotspot_key: String) -> void:

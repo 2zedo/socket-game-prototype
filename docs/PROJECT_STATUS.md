@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `64210c4`
-- Phase: Quarterview Phone visual / Power board prototype polish
+- Current commit at task start: `c5cd096`
+- Phase: Quarterview Phone / Power candidate helper split
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -51,6 +51,7 @@
 - Quarterview work devices atlas preview scene: added a prototype-only Godot scene that creates runtime `AtlasTexture` previews for the 18 documented region candidates. It is not connected to QuarterviewMain.
 - QuarterviewMain phone screen candidate / power drag prototype: added a temporary Phone UI atlas, expanded Phone use into a tabbed screen candidate, and added snap/reset module dragging to the Power equipment close-up while keeping PhoneUI, OutletMode, SurvivalState, save-load, and production power calculations unwired.
 - QuarterviewMain Phone visual / Power board polish: the Phone screen candidate now composes selected `ui_phone_atlas.png` regions for frame / screen / icons, and the Power board drag prototype now blocks overlapping modules and shows valid / invalid drop previews.
+- QuarterviewMain Phone / Power candidate helper split: moved Phone screen candidate UI / atlas-region composition and Power board drag / occupancy logic into dedicated Quarterview UI helper scripts while keeping QuarterviewMain as the overlay orchestration layer.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -68,13 +69,13 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/QuarterviewMain.gd`: composes Phone atlas regions in the screen candidate and adds Power board occupancy / valid-invalid preview logic.
-- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`: records Phone atlas region use and the current Power board prototype state.
-- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the Phone / Power polishing pass.
+- `godot/scripts/QuarterviewMain.gd`: now delegates Phone screen candidate and Power board UI details to helper controls and keeps open / close / mock status orchestration.
+- `godot/scripts/ui/quarterview/PhoneScreenCandidate.gd`: owns Phone tab UI, status item selection, and code-local phone atlas region preview composition.
+- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: owns Power board module UI, drag / snap / occupancy checks, and valid / invalid drop preview.
+- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the helper split.
 
 ## Validation Results
 
-- Phone UI atlas PNG size / alpha / visible-green check passed.
 - `git diff --check` passed.
 - Godot headless project parse passed.
 - `res://scenes/QuarterviewMain.tscn` headless startup passed.

@@ -288,10 +288,18 @@
 - Validation: Phone UI atlas PNG size / alpha / visible-green check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Phone status / message / job tab, Power module drag / snap / reset, overlay close / room input lock, 기존 Desk / Bed / Food-Kitchen / Door / HUD / debug / tuning 회귀 여부를 수동 확인한다.
 
-### this commit - QuarterviewMain Phone visual / Power board drag polish
+### c5cd096 - QuarterviewMain Phone visual / Power board drag polish
 
-- Commit: `this commit`
+- Commit: `c5cd096`
 - Result: Phone screen candidate가 `ui_phone_atlas.png`의 frame / screen / icon region 후보를 조합해 보여주도록 보강했다. Power board drag prototype에는 grid 점유 검사, 겹침 invalid 처리, valid / invalid drop preview를 추가했다.
 - Changed: QuarterviewMain Phone visual composition, Power board occupancy / preview logic, temporary art manifest, status docs.
 - Validation: Phone atlas size / alpha check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Power module overlap block, valid / invalid preview, out-of-grid reset, Phone screen visual readability, tab switching, overlay close / room input lock 회귀 여부를 수동 확인한다.
+
+### this commit - QuarterviewMain Phone / Power candidate helper split
+
+- Commit: `this commit`
+- Result: Phone screen candidate UI / atlas-region composition과 Power board drag / occupancy logic을 `QuarterviewMain.gd`에서 전용 helper Control script로 분리했다. QuarterviewMain은 overlay open / close, room input lock, mock HUD/status orchestration만 담당한다.
+- Changed: `QuarterviewMain.gd`, `PhoneScreenCandidate.gd`, `PowerBoardCandidate.gd`, temporary art manifest, status docs.
+- Validation: `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
+- Next: GUI에서 Phone tab / item action, Power drag / overlap invalid / out-of-grid reset, ESC / backdrop close, room input lock 복구를 수동 확인한다.
