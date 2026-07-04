@@ -77,6 +77,37 @@ func get_shape_label() -> String:
 	return "%d cells / bbox %dx%d" % [cells.size(), size_cells.x, size_cells.y]
 
 
+static func normalize_shape_cells(source_cells: Array[Vector2i]) -> Array[Vector2i]:
+	if source_cells.is_empty():
+		return [Vector2i.ZERO]
+
+	var min_x := source_cells[0].x
+	var min_y := source_cells[0].y
+	for cell in source_cells:
+		min_x = mini(min_x, cell.x)
+		min_y = mini(min_y, cell.y)
+
+	var normalized_cells: Array[Vector2i] = []
+	for cell in source_cells:
+		var normalized_cell := Vector2i(cell.x - min_x, cell.y - min_y)
+		if not normalized_cells.has(normalized_cell):
+			normalized_cells.append(normalized_cell)
+
+	normalized_cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		if a.y == b.y:
+			return a.x < b.x
+		return a.y < b.y
+	)
+	return normalized_cells
+
+
+static func rotate_shape_cells_clockwise(source_cells: Array[Vector2i]) -> Array[Vector2i]:
+	var rotated_cells: Array[Vector2i] = []
+	for cell in source_cells:
+		rotated_cells.append(Vector2i(cell.y, -cell.x))
+	return normalize_shape_cells(rotated_cells)
+
+
 func get_candidate_action() -> String:
 	if not candidate_action.is_empty():
 		return candidate_action

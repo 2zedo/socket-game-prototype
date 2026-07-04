@@ -328,10 +328,18 @@
 - Validation: targeted `PowerModuleDefinition` GUT passed; targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (58 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
 - Next: GUI에서 Power close-up inventory, drag / snap, overlap invalid, out-of-grid reset, selected module detail, existing overlay close flow를 수동 확인한다.
 
-### this commit - Quarterview L-shape power module visual pass
+### 4e46218 - Quarterview L-shape power module visual pass
 
-- Commit: `this commit`
+- Commit: `4e46218`
 - Result: `odd_efficiency_module`을 2x2 placeholder에서 3-cell L-shape 후보로 바꾸고, Power board inventory / debug guide / drag preview가 `shape_cells` 기준으로 보이게 했다. Overlap invalid와 out-of-grid reset은 Resource shape 기준을 유지한다.
 - Changed: `odd_efficiency_module.tres`, `PowerModuleDefinition.gd`, `PowerBoardCandidate.gd`, `test_power_module_definition.gd`, temporary art manifest, status docs.
 - Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (59 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
 - Next: GUI에서 L-shape inventory visual, valid / invalid shape preview, overlap invalid, out-of-grid reset, existing module behavior를 수동 확인한다.
+
+### this commit - Quarterview Power Board module rotation prototype
+
+- Commit: `this commit`
+- Result: Power board module 후보에 runtime-only 90도 회전을 추가했다. `R` 또는 우클릭으로 selected / dragged module을 회전하며, L-shape drag preview와 placed visual은 rotated `shape_cells` 기준으로 보인다. 회전 후 겹치거나 보드 밖이면 취소된다.
+- Changed: `PowerModuleDefinition.gd`, `PowerBoardCandidate.gd`, `QuarterviewMain.gd`, `test_power_module_definition.gd`, temporary art manifest, status docs.
+- Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (61 tests).
+- Next: GUI에서 `R` / 우클릭 회전, L-shape preview, placed module invalid rotation cancel, 기존 drag / snap / close 흐름을 수동 확인한다.

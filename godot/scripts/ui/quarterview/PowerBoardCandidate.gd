@@ -95,12 +95,14 @@ var module_guides := {}
 var module_labels := {}
 var module_home_positions := {}
 var module_grid_positions := {}
+var module_rotations := {}
 var dragging_module_key := ""
 var drag_offset := Vector2.ZERO
 var drag_start_global := Vector2.ZERO
 var drag_origin_local := Vector2.ZERO
 var drag_origin_had_cell := false
 var drag_origin_cell := Vector2i.ZERO
+var drag_origin_rotation := 0
 var board_surface: Control
 var drop_preview: Control
 var drop_preview_texture: TextureRect
@@ -115,6 +117,7 @@ func _init() -> void:
 	name = "PowerEquipmentCloseupCandidate"
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = PANEL_SIZE
+	set_process_unhandled_key_input(true)
 	modules = _load_modules()
 	_build()
 
@@ -139,6 +142,10 @@ func get_module_data(module_key: String) -> Dictionary:
 	return _get_module(module_key).duplicate(true)
 
 
+func rotate_active_module() -> void:
+	_rotate_active_module()
+
+
 func clear_drag_state() -> void:
 	if not dragging_module_key.is_empty():
 		var button: Button = module_buttons.get(dragging_module_key, null)
@@ -154,6 +161,15 @@ func clear_drag_state() -> void:
 	drag_origin_local = Vector2.ZERO
 	drag_origin_had_cell = false
 	drag_origin_cell = Vector2i.ZERO
+	drag_origin_rotation = 0
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R:
+		_rotate_active_module()
+		get_viewport().set_input_as_handled()
 
 
 func _build() -> void:
@@ -177,7 +193,7 @@ func _build() -> void:
 	vbox.add_child(title)
 
 	var description := Label.new()
-	description.text = "모듈을 보드에 드래그해 배치합니다. 겹치거나 보드 밖이면 배치할 수 없습니다."
+	description.text = "모듈을 보드에 드래그해 배치합니다. R: 모듈 회전 / 겹치거나 보드 밖이면 배치 불가."
 	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.78, 1.0))
 	description.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(description)
@@ -299,7 +315,7 @@ func _build() -> void:
 	button_row.add_child(close_button)
 
 	var close_hint := Label.new()
-	close_hint.text = "ESC 닫기 / 배치는 no-op status만 남김 / 전력 계산과 OutletMode는 아직 연결하지 않음"
+	close_hint.text = "ESC 닫기 / R 또는 우클릭 회전 / 배치는 no-op status만 남김 / 전력 계산과 OutletMode는 미연결"
 	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
 	close_hint.add_theme_font_size_override("font_size", 12)
 	vbox.add_child(close_hint)
@@ -331,6 +347,7 @@ func _add_module_button(module: Dictionary) -> void:
 	var key := String(module["key"])
 	var rect: Rect2 = module["rect"]
 	var module_size := _get_module_pixel_size(module)
+	module_rotations[key] = int(module_rotations.get(key, 0))
 
 	var guide := Control.new()
 	guide.name = "%sDebugRect" % key.capitalize().replace("_", "")
@@ -338,7 +355,7 @@ func _add_module_button(module: Dictionary) -> void:
 	guide.size = module_size
 	guide.visible = debug_enabled
 	guide.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_populate_shape_visual(guide, _get_module_shape_cells(module), Color(0.17, 0.82, 0.92, 0.18), Color(0.45, 0.95, 1.0, 0.22))
+	_populate_shape_visual(guide, _get_module_display_shape_cells(key), Color(0.17, 0.82, 0.92, 0.18), Color(0.45, 0.95, 1.0, 0.22))
 	board_surface.add_child(guide)
 	module_guides[key] = guide
 
@@ -352,7 +369,7 @@ func _add_module_button(module: Dictionary) -> void:
 	button.add_theme_font_size_override("font_size", 12)
 	_populate_shape_visual(
 		button,
-		_get_module_shape_cells(module),
+		_get_module_display_shape_cells(key),
 		module.get("color", Color.WHITE),
 		Color(0.82, 0.94, 0.92, 0.84)
 	)
@@ -388,11 +405,117 @@ func _get_module_size_text(module: Dictionary) -> String:
 		return String(module["shape_label"])
 	var size_cells := _get_module_size_cells(module)
 	var shape_cells := _get_module_shape_cells(module)
+	return _format_shape_text(shape_cells, size_cells)
+
+
+func _get_display_shape_text(module_key: String) -> String:
+	var shape_cells := _get_module_display_shape_cells(module_key)
+	return _format_shape_text(shape_cells, _get_shape_size_cells(shape_cells))
+
+
+func _format_shape_text(shape_cells: Array[Vector2i], size_cells: Vector2i) -> String:
 	if shape_cells.size() == size_cells.x * size_cells.y:
 		return "%dx%d" % [size_cells.x, size_cells.y]
 	if shape_cells.size() == 3 and size_cells == Vector2i(2, 2):
 		return "L-shape 3 cells"
 	return "%d cells / bbox %dx%d" % [shape_cells.size(), size_cells.x, size_cells.y]
+
+
+func _rotate_active_module() -> void:
+	var active_module_key := dragging_module_key if not dragging_module_key.is_empty() else selected_module_key
+	if active_module_key.is_empty():
+		return
+	_rotate_module(active_module_key)
+
+
+func _rotate_module(module_key: String) -> void:
+	var module := _get_module(module_key)
+	if module.is_empty():
+		return
+
+	var previous_rotation := _get_module_rotation(module_key)
+	var next_rotation := (previous_rotation + 1) % 4
+	module_rotations[module_key] = next_rotation
+
+	var was_placed := module_grid_positions.has(module_key)
+	var placed_cell: Vector2i = module_grid_positions.get(module_key, Vector2i.ZERO)
+	var shape_cells := _get_module_display_shape_cells(module_key)
+	if was_placed and dragging_module_key != module_key and not _is_drop_cell_available(module_key, placed_cell, shape_cells):
+		module_rotations[module_key] = previous_rotation
+		_refresh_module_visual(module_key)
+		_refresh_module_detail()
+		var invalid_payload := module.duplicate(true)
+		invalid_payload["drop_reason"] = "회전 후 겹치거나 보드 밖이라"
+		module_action_requested.emit(module_key, "invalid_rotate", invalid_payload)
+		return
+
+	_refresh_module_visual(module_key)
+	if dragging_module_key == module_key:
+		_update_drop_preview(module_key)
+	else:
+		_sync_module_guide(module_key)
+	_refresh_module_detail()
+
+	var payload := module.duplicate(true)
+	payload["rotation_degrees"] = _get_module_rotation_degrees(module_key)
+	module_action_requested.emit(module_key, "rotate_noop", payload)
+
+
+func _refresh_module_visual(module_key: String) -> void:
+	var module := _get_module(module_key)
+	var button: Button = module_buttons.get(module_key, null)
+	if module.is_empty() or button == null:
+		return
+
+	var shape_cells := _get_module_display_shape_cells(module_key)
+	var size_cells := _get_shape_size_cells(shape_cells)
+	var module_size := Vector2(CELL_SIZE.x * size_cells.x - 2.0, CELL_SIZE.y * size_cells.y - 2.0)
+	button.size = module_size
+	_populate_shape_visual(
+		button,
+		shape_cells,
+		module.get("color", Color.WHITE),
+		Color(0.82, 0.94, 0.92, 0.84)
+	)
+
+	if dragging_module_key != module_key:
+		if module_grid_positions.has(module_key):
+			var grid_rect := _get_grid_global_rect()
+			var cell: Vector2i = module_grid_positions[module_key]
+			button.global_position = grid_rect.position + Vector2(cell.x * CELL_SIZE.x, cell.y * CELL_SIZE.y)
+		else:
+			button.position = module_home_positions.get(module_key, Vector2.ZERO)
+
+	var guide: Control = module_guides.get(module_key, null)
+	if guide != null:
+		guide.size = module_size
+		var guide_color := Color(1.0, 0.78, 0.20, 0.24) if module_key == selected_module_key else Color(0.17, 0.82, 0.92, 0.18)
+		_populate_shape_visual(guide, shape_cells, guide_color, guide_color.lightened(0.35))
+		_sync_module_guide(module_key)
+
+	var label: Label = module_labels.get(module_key, null)
+	if label != null:
+		label.text = "%s\n%s / %s" % [
+			String(module["display_name"]),
+			_get_display_shape_text(module_key),
+			String(module.get("role", "candidate")),
+		]
+
+
+func _get_module_rotation(module_key: String) -> int:
+	return int(module_rotations.get(module_key, 0)) % 4
+
+
+func _get_module_rotation_degrees(module_key: String) -> int:
+	return _get_module_rotation(module_key) * 90
+
+
+func _get_module_display_shape_cells(module_key: String) -> Array[Vector2i]:
+	var module := _get_module(module_key)
+	var shape_cells := _get_module_shape_cells(module)
+	for _step in range(_get_module_rotation(module_key)):
+		shape_cells = POWER_MODULE_DEFINITION_SCRIPT.rotate_shape_cells_clockwise(shape_cells)
+	return shape_cells
 
 
 func _on_module_gui_input(event: InputEvent, module_key: String) -> void:
@@ -409,6 +532,7 @@ func _on_module_gui_input(event: InputEvent, module_key: String) -> void:
 			drag_origin_local = button.position
 			drag_origin_had_cell = module_grid_positions.has(module_key)
 			drag_origin_cell = module_grid_positions.get(module_key, Vector2i.ZERO)
+			drag_origin_rotation = _get_module_rotation(module_key)
 			button.z_index = 8
 			_update_drop_preview(module_key)
 			get_viewport().set_input_as_handled()
@@ -419,6 +543,10 @@ func _on_module_gui_input(event: InputEvent, module_key: String) -> void:
 		button.global_position = button.get_global_mouse_position() - drag_offset
 		_sync_module_guide(module_key)
 		_update_drop_preview(module_key)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+		_select_module(module_key)
+		_rotate_module(module_key)
 		get_viewport().set_input_as_handled()
 
 
@@ -445,6 +573,8 @@ func _finish_module_drag(module_key: String) -> void:
 		selected_module_key = module_key
 		module_dropped.emit(module_key, cell, module.duplicate(true))
 	else:
+		module_rotations[module_key] = drag_origin_rotation
+		_refresh_module_visual(module_key)
 		button.position = drag_origin_local
 		if drag_origin_had_cell:
 			module_grid_positions[module_key] = drag_origin_cell
@@ -488,13 +618,13 @@ func _get_drop_candidate(module_key: String) -> Dictionary:
 	if not grid_rect.has_point(center):
 		return {"inside": false, "valid": false, "reason": "grid 밖이라"}
 
-	var size_cells := _get_module_size_cells(module)
+	var shape_cells := _get_module_display_shape_cells(module_key)
+	var size_cells := _get_shape_size_cells(shape_cells)
 	var local_top_left := button.global_position - grid_rect.position
 	var cell := Vector2i(
 		roundi(local_top_left.x / CELL_SIZE.x),
 		roundi(local_top_left.y / CELL_SIZE.y)
 	)
-	var shape_cells := _get_module_shape_cells(module)
 	var valid := _is_drop_cell_available(module_key, cell, shape_cells)
 	var reason := ""
 	if not valid:
@@ -522,7 +652,7 @@ func _is_drop_cell_available(module_key: String, cell: Vector2i, shape_cells: Ar
 			if other_module.is_empty():
 				continue
 			var other_cell: Vector2i = module_grid_positions[other_key]
-			var other_shape_cells := _get_module_shape_cells(other_module)
+			var other_shape_cells := _get_module_display_shape_cells(String(other_key))
 			if _is_cell_inside_module(check_cell, other_cell, other_shape_cells):
 				return false
 	return true
@@ -603,8 +733,9 @@ func _refresh_module_detail() -> void:
 		return
 
 	module_title_label.text = String(module["display_name"])
-	module_detail_label.text = "크기: %s\n후보 효과: %s\n\n%s\n\n아직 실제 전력 계산 없음." % [
-		_get_module_size_text(module),
+	module_detail_label.text = "크기: %s\n회전: %d도\n후보 효과: %s\n\n%s\n\n아직 실제 전력 계산 없음." % [
+		_get_display_shape_text(selected_module_key),
+		_get_module_rotation_degrees(selected_module_key),
 		String(module.get("effect", "효과 후보 없음")),
 		String(module["description"]),
 	]
@@ -613,20 +744,20 @@ func _refresh_module_detail() -> void:
 	module_debug_label.visible = debug_enabled
 	if debug_enabled:
 		var grid_pos = module_grid_positions.get(selected_module_key, "palette")
-		module_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nmodule rect: %s\ngrid: %s\nno-op status: OutletMode / SurvivalState disabled" % [
+		module_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nmodule rect: %s\ngrid: %s\nrotation: %d\nno-op status: OutletMode / SurvivalState disabled" % [
 			String(module["key"]),
 			String(module["role"]),
 			String(module["candidate_action"]),
 			_format_rect(rect),
 			str(grid_pos),
+			_get_module_rotation_degrees(selected_module_key),
 		]
 
 	for key in module_guides.keys():
 		var guide: Control = module_guides[key]
 		guide.visible = debug_enabled
-		var guide_module := _get_module(String(key))
 		var guide_color := Color(1.0, 0.78, 0.20, 0.24) if String(key) == selected_module_key else Color(0.17, 0.82, 0.92, 0.18)
-		_populate_shape_visual(guide, _get_module_shape_cells(guide_module), guide_color, guide_color.lightened(0.35))
+		_populate_shape_visual(guide, _get_module_display_shape_cells(String(key)), guide_color, guide_color.lightened(0.35))
 		_sync_module_guide(String(key))
 
 
@@ -703,8 +834,12 @@ func _get_module_shape_cells(module: Dictionary) -> Array[Vector2i]:
 
 
 func _get_module_size_cells(module: Dictionary) -> Vector2i:
+	return _get_shape_size_cells(_get_module_shape_cells(module))
+
+
+func _get_shape_size_cells(shape_cells: Array[Vector2i]) -> Vector2i:
 	var size_cells := Vector2i.ONE
-	for cell in _get_module_shape_cells(module):
+	for cell in shape_cells:
 		size_cells.x = maxi(size_cells.x, cell.x + 1)
 		size_cells.y = maxi(size_cells.y, cell.y + 1)
 	return size_cells

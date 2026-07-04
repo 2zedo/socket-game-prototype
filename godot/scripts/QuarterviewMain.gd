@@ -345,6 +345,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventKey and event.pressed and not event.echo:
+		if power_closeup_open and event.keycode == RESTART_KEY:
+			if power_closeup_panel != null and power_closeup_panel.has_method("rotate_active_module"):
+				power_closeup_panel.rotate_active_module()
+				get_viewport().set_input_as_handled()
+				return
 		if event.keycode == RESTART_KEY:
 			get_tree().reload_current_scene()
 			get_viewport().set_input_as_handled()
@@ -957,6 +962,12 @@ func _on_power_module_action_requested(module_key: String, action_key: String, m
 		_update_status("%s: %s 원래 위치로 돌아갑니다." % [
 			String(module.get("display_name", module_key)),
 			String(module.get("drop_reason", "invalid drop /")),
+		])
+		return
+	if action_key == "invalid_rotate":
+		_update_status("%s: %s 회전을 취소했습니다." % [
+			String(module.get("display_name", module_key)),
+			String(module.get("drop_reason", "회전 불가 /")),
 		])
 		return
 
@@ -2209,6 +2220,8 @@ func _get_action_display_name(action_key: String) -> String:
 			return "취소"
 		"focus":
 			return "선택"
+		"rotate_noop":
+			return "회전"
 		_:
 			return action_key
 

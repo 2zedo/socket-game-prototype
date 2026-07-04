@@ -40,6 +40,28 @@ func test_shape_helpers_use_cell_bounds() -> void:
 	assert_eq(definition.get_shape_label(), "L-shape 3 cells", "Non-rectangular 2x2/3-cell shapes should read as L-shape.")
 
 
+func test_shape_rotation_normalizes_l_shape() -> void:
+	var shape_cells: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]
+	var rotated_cells := POWER_MODULE_DEFINITION_SCRIPT.rotate_shape_cells_clockwise(shape_cells)
+	var expected_rotated: Array[Vector2i] = [Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]
+
+	assert_eq(rotated_cells, expected_rotated, "A clockwise L-shape rotation should normalize to positive cells.")
+
+
+func test_shape_rotation_returns_to_original_after_four_turns() -> void:
+	var shape_cells: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]
+	var rotated_cells := POWER_MODULE_DEFINITION_SCRIPT.normalize_shape_cells(shape_cells)
+
+	for _index in range(4):
+		rotated_cells = POWER_MODULE_DEFINITION_SCRIPT.rotate_shape_cells_clockwise(rotated_cells)
+
+	assert_eq(
+		rotated_cells,
+		POWER_MODULE_DEFINITION_SCRIPT.normalize_shape_cells(shape_cells),
+		"Four normalized rotations should return to the original shape."
+	)
+
+
 func test_candidate_action_and_effect_label_have_fallbacks() -> void:
 	var definition = POWER_MODULE_DEFINITION_SCRIPT.new()
 	definition.key = "comm_module"
