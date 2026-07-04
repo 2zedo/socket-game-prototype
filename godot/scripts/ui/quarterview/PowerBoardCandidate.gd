@@ -10,6 +10,19 @@ const PANEL_SIZE := Vector2(690, 500)
 const GRID_ORIGIN := Vector2(34, 44)
 const GRID_CELLS := Vector2i(7, 5)
 const CELL_SIZE := Vector2(46, 38)
+const UI_POWER_BOARD_ATLAS_PATH := "res://assets/art/ui/atlases/ui_power_board_atlas.png"
+const ATLAS_SOURCE_SIZE := Vector2(1254, 1254)
+const ATLAS_REGION_BOARD_FRAME := Rect2(Vector2(38, 40), Vector2(648, 626))
+const ATLAS_REGION_GRID_CELL_NORMAL := Rect2(Vector2(714, 42), Vector2(210, 210))
+const ATLAS_REGION_GRID_CELL_VALID := Rect2(Vector2(980, 44), Vector2(220, 210))
+const ATLAS_REGION_GRID_CELL_INVALID := Rect2(Vector2(980, 290), Vector2(220, 214))
+
+const MODULE_ATLAS_REGIONS := {
+	"small_core": Rect2(Vector2(715, 318), Vector2(106, 120)),
+	"laptop_adapter": Rect2(Vector2(718, 548), Vector2(294, 198)),
+	"comm_module": Rect2(Vector2(1080, 585), Vector2(122, 290)),
+	"odd_efficiency_module": Rect2(Vector2(882, 876), Vector2(342, 330)),
+}
 
 const MODULES := [
 	{
@@ -68,9 +81,11 @@ var drag_origin_had_cell := false
 var drag_origin_cell := Vector2i.ZERO
 var board_surface: Control
 var drop_preview: ColorRect
+var drop_preview_texture: TextureRect
 var module_title_label: Label
 var module_detail_label: Label
 var module_debug_label: Label
+var atlas_texture: Texture2D
 
 
 func _init() -> void:
@@ -107,6 +122,8 @@ func clear_drag_state() -> void:
 			button.z_index = 1
 	if drop_preview != null:
 		drop_preview.visible = false
+	if drop_preview_texture != null:
+		drop_preview_texture.visible = false
 	dragging_module_key = ""
 	drag_offset = Vector2.ZERO
 	drag_start_global = Vector2.ZERO
@@ -116,6 +133,8 @@ func clear_drag_state() -> void:
 
 
 func _build() -> void:
+	atlas_texture = _load_texture_from_png(UI_POWER_BOARD_ATLAS_PATH)
+
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 18)
 	margin.add_theme_constant_override("margin_top", 16)
@@ -150,6 +169,16 @@ func _build() -> void:
 	board_background.size = Vector2(632, 316)
 	board_surface.add_child(board_background)
 
+	if atlas_texture != null:
+		_add_atlas_region(
+			board_surface,
+			"PowerBoardFrameRegion",
+			ATLAS_REGION_BOARD_FRAME,
+			Vector2(8, 18),
+			Vector2(378, 262),
+			Color(1.0, 1.0, 1.0, 0.92)
+		)
+
 	_add_grid(board_surface)
 
 	drop_preview = ColorRect.new()
@@ -158,6 +187,14 @@ func _build() -> void:
 	drop_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	drop_preview.color = Color(0.22, 0.88, 0.72, 0.24)
 	board_surface.add_child(drop_preview)
+
+	if atlas_texture != null:
+		drop_preview_texture = TextureRect.new()
+		drop_preview_texture.name = "PowerDropPreviewTexture"
+		drop_preview_texture.visible = false
+		drop_preview_texture.stretch_mode = TextureRect.STRETCH_SCALE
+		drop_preview_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		board_surface.add_child(drop_preview_texture)
 
 	for module in MODULES:
 		_add_module_button(module)
@@ -210,6 +247,18 @@ func _build() -> void:
 func _add_grid(parent: Control) -> void:
 	for y in GRID_CELLS.y:
 		for x in GRID_CELLS.x:
+			if atlas_texture != null:
+				var texture_cell := TextureRect.new()
+				texture_cell.name = "PowerGridCell_%d_%d" % [x, y]
+				texture_cell.texture = _make_atlas_texture(ATLAS_REGION_GRID_CELL_NORMAL)
+				texture_cell.position = GRID_ORIGIN + Vector2(x * CELL_SIZE.x, y * CELL_SIZE.y)
+				texture_cell.size = CELL_SIZE - Vector2(3, 3)
+				texture_cell.stretch_mode = TextureRect.STRETCH_SCALE
+				texture_cell.modulate = Color(0.84, 0.90, 0.88, 0.72) if (x + y) % 2 == 0 else Color(0.72, 0.80, 0.78, 0.68)
+				texture_cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				parent.add_child(texture_cell)
+				continue
+
 			var cell := ColorRect.new()
 			cell.name = "PowerGridCell_%d_%d" % [x, y]
 			cell.color = Color(0.09, 0.12, 0.11, 0.72) if (x + y) % 2 == 0 else Color(0.07, 0.09, 0.085, 0.72)
@@ -240,7 +289,13 @@ func _add_module_button(module: Dictionary) -> void:
 	button.position = rect.position
 	button.size = module_size
 	button.tooltip_text = String(module["description"])
-	button.modulate = module["color"]
+	if _has_module_atlas_region(key):
+		button.icon = _make_atlas_texture(_get_module_atlas_region(key))
+		button.expand_icon = true
+		button.text = ""
+		button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	else:
+		button.modulate = module["color"]
 	button.gui_input.connect(_on_module_gui_input.bind(key))
 	board_surface.add_child(button)
 	module_buttons[key] = button
@@ -395,6 +450,8 @@ func _update_drop_preview(module_key: String) -> void:
 	var candidate := _get_drop_candidate(module_key)
 	if not bool(candidate.get("inside", false)):
 		drop_preview.visible = false
+		if drop_preview_texture != null:
+			drop_preview_texture.visible = false
 		return
 
 	var cell: Vector2i = candidate["cell"]
@@ -403,6 +460,14 @@ func _update_drop_preview(module_key: String) -> void:
 	drop_preview.position = GRID_ORIGIN + Vector2(cell.x * CELL_SIZE.x, cell.y * CELL_SIZE.y)
 	drop_preview.size = Vector2(size_cells.x * CELL_SIZE.x - 3.0, size_cells.y * CELL_SIZE.y - 3.0)
 	drop_preview.color = Color(0.20, 0.90, 0.68, 0.28) if bool(candidate.get("valid", false)) else Color(0.96, 0.18, 0.14, 0.32)
+	if drop_preview_texture != null:
+		drop_preview_texture.visible = true
+		drop_preview_texture.position = drop_preview.position
+		drop_preview_texture.size = drop_preview.size
+		drop_preview_texture.texture = _make_atlas_texture(
+			ATLAS_REGION_GRID_CELL_VALID if bool(candidate.get("valid", false)) else ATLAS_REGION_GRID_CELL_INVALID
+		)
+		drop_preview_texture.modulate = Color(1.0, 1.0, 1.0, 0.78)
 
 
 func _request_module_action(action_key: String) -> void:
@@ -421,8 +486,13 @@ func _select_module(module_key: String, emit_signal := true) -> void:
 	for key in module_buttons.keys():
 		var button: Button = module_buttons[key]
 		var button_module := _get_module(String(key))
-		var prefix := "> " if String(key) == selected_module_key else ""
-		button.text = "%s%s" % [prefix, String(button_module.get("display_name", key))]
+		var selected := String(key) == selected_module_key
+		if _has_module_atlas_region(String(key)):
+			button.text = ">" if selected else ""
+			button.modulate = Color(1.18, 1.12, 0.92, 1.0) if selected else Color(0.88, 0.93, 0.93, 1.0)
+		else:
+			var prefix := "> " if selected else ""
+			button.text = "%s%s" % [prefix, String(button_module.get("display_name", key))]
 	_refresh_module_detail()
 	if emit_signal:
 		selection_changed.emit(module_key, module.duplicate(true))
@@ -460,6 +530,57 @@ func _get_module(module_key: String) -> Dictionary:
 		if String(module["key"]) == module_key:
 			return module
 	return {}
+
+
+func _load_texture_from_png(path: String) -> Texture2D:
+	var image := Image.new()
+	var error := image.load(path)
+	if error != OK:
+		push_warning("PowerBoardCandidate could not load optional PNG: %s" % path)
+		return null
+	return ImageTexture.create_from_image(image)
+
+
+func _make_atlas_texture(region: Rect2) -> Texture2D:
+	if atlas_texture == null:
+		return null
+	var texture := AtlasTexture.new()
+	texture.atlas = atlas_texture
+	texture.region = _scale_atlas_region(region)
+	return texture
+
+
+func _scale_atlas_region(region: Rect2) -> Rect2:
+	if atlas_texture == null:
+		return region
+	var texture_size := atlas_texture.get_size()
+	if texture_size == ATLAS_SOURCE_SIZE:
+		return region
+	return Rect2(
+		Vector2(region.position.x * texture_size.x / ATLAS_SOURCE_SIZE.x, region.position.y * texture_size.y / ATLAS_SOURCE_SIZE.y),
+		Vector2(region.size.x * texture_size.x / ATLAS_SOURCE_SIZE.x, region.size.y * texture_size.y / ATLAS_SOURCE_SIZE.y)
+	)
+
+
+func _add_atlas_region(parent: Control, node_name: String, region: Rect2, position: Vector2, size: Vector2, region_modulate := Color.WHITE) -> TextureRect:
+	var texture_rect := TextureRect.new()
+	texture_rect.name = node_name
+	texture_rect.texture = _make_atlas_texture(region)
+	texture_rect.position = position
+	texture_rect.size = size
+	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	texture_rect.modulate = region_modulate
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(texture_rect)
+	return texture_rect
+
+
+func _get_module_atlas_region(module_key: String) -> Rect2:
+	return MODULE_ATLAS_REGIONS.get(module_key, Rect2())
+
+
+func _has_module_atlas_region(module_key: String) -> bool:
+	return atlas_texture != null and MODULE_ATLAS_REGIONS.has(module_key)
 
 
 func _format_rect(rect: Rect2) -> String:

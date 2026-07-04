@@ -93,6 +93,47 @@ Region candidate table:
 - Successful drops only write no-op status/log text; they do not calculate power.
 - There is no production `OutletMode`, `SurvivalState`, connected / active device, save-load, or result wiring.
 
+## Quarterview Power Board UI Atlas v1
+
+| File | Use | Canvas | Background | Notes |
+| --- | --- | --- | --- | --- |
+| `godot/assets/art/ui/atlases/ui_power_board_atlas.png` | Temporary Power equipment close-up visual atlas | `2048x2048` | transparent alpha PNG | Temporary imagegen pass. Not final production UI. |
+
+Included region candidates:
+
+- `board_frame`
+- `grid_cell_normal`
+- `grid_cell_valid`
+- `grid_cell_invalid`
+- `small_core`
+- `laptop_adapter`
+- `comm_module`
+- `odd_efficiency_module`
+- connector / LED / warning icon candidates
+
+Current atlas status:
+
+- Generated as a temporary imagegen UI sheet.
+- The generated source was normalized to a transparent `2048x2048` PNG for Godot use.
+- `PowerBoardCandidate.gd` loads this PNG optionally and uses code-local `AtlasTexture` regions for board frame, grid cells, valid / invalid drop preview, and module button icons.
+- The original visual fallback remains: if the PNG fails to load, the existing ColorRect / Button based drag prototype remains usable.
+- Region coordinates below are code-local candidates based on the generated `1254x1254` source layout; the helper scales them to the runtime atlas size.
+- There is no power-board mapping Resource yet.
+- There is no production `OutletMode`, `SurvivalState`, connected / active device, save-load, or result wiring.
+
+Region candidate table:
+
+| Region | Source Rect `x,y,w,h` | Current Use | Notes |
+| --- | --- | --- | --- |
+| `board_frame` | `38,40,648,626` | Power board background frame | Code-local rect, scaled to runtime atlas size. |
+| `grid_cell_normal` | `714,42,210,210` | Grid cell visual candidate | Code-local rect, scaled to runtime atlas size. |
+| `grid_cell_valid` | `980,44,220,210` | Valid drop preview visual | Code-local rect, scaled to runtime atlas size. |
+| `grid_cell_invalid` | `980,290,220,214` | Invalid drop preview visual | Code-local rect, scaled to runtime atlas size. |
+| `small_core` | `715,318,106,120` | `small_core` module icon | Code-local rect, scaled to runtime atlas size. |
+| `laptop_adapter` | `718,548,294,198` | `laptop_adapter` module icon | Code-local rect, scaled to runtime atlas size. |
+| `comm_module` | `1080,585,122,290` | `comm_module` module icon | Code-local rect, scaled to runtime atlas size. |
+| `odd_efficiency_module` | `882,876,342,330` | `odd_efficiency_module` module icon | Code-local rect, scaled to runtime atlas size. |
+
 ## Quarterview Work Devices Atlas v1
 
 | File | Use | Canvas | Background | Notes |
