@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `6253ab8`
-- Phase: Quarterview Power Board state model UX hardening
+- Current commit at task start: `7bf43b7`
+- Phase: Quarterview Power Board drag UX fix
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -60,6 +60,7 @@
 - QuarterviewMain Power Board manipulation UX fix: tightened placed / dragged module state restore, made rotation checks explicitly ignore the module's own occupied cells, and added Delete / Backspace return-to-inventory behavior.
 - QuarterviewMain Power Board state-based inventory UX fix: made module state the source of truth, rebuilt inventory / board visuals from placement state, hid placed modules from inventory, collapsed remaining inventory modules upward, and added a visible `보관함으로` return button.
 - QuarterviewMain Power Board state model hardening: added explicit `inventory_order`, ScrollContainer-backed inventory, shared `can_place_module(...)` checks, two-phase rotation, snapshot-based invalid drop restore, and GUT coverage for the state model.
+- QuarterviewMain Power Board drag UX fix: separated click selection from threshold-based drag, kept inventory items inside ScrollContainer rows while dragging a separate ghost, and changed L-shape drop anchors to use the grabbed occupied cell.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -77,18 +78,18 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: uses runtime `module_states` plus explicit `inventory_order`, rebuilds inventory / board visuals from state, adds ScrollContainer-backed inventory, centralizes placement checks, and restores invalid drag snapshots.
-- `godot/test/unit/test_power_board_candidate_state.gd`: validates inventory removal / append, self-ignored placement checks, invalid rotation rollback, and invalid drop snapshot restore.
-- `docs/QUARTERVIEW_GUI_CHECKLIST.md`, `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the hardened Power board UX checks.
+- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: separates click selection from active drag, uses a drag ghost outside the inventory scroll, redraws inventory rows through a VBox-backed ScrollContainer, and anchors drops by grabbed shape cell.
+- `godot/test/unit/test_power_board_candidate_state.gd`: validates click-only selection, visible inventory row order, grabbed-cell anchor calculation, inventory append / removal, self-ignored placement checks, invalid rotation rollback, and invalid drop snapshot restore.
+- `docs/QUARTERVIEW_GUI_CHECKLIST.md`, `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the Power board drag UX fix.
 
 ## Validation Results
 
-- Targeted `PowerModuleDefinition` + `PowerBoardCandidate` state GUT passed: 13 tests.
+- Targeted `PowerBoardCandidate` state GUT passed: 7 tests.
 - Full `git diff --check` is currently blocked by unrelated whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`.
 - Targeted task-file `git diff --check` passed.
 - Godot headless project parse passed.
 - `res://scenes/QuarterviewMain.tscn` headless startup passed.
-- Full GUT passed: 67 tests.
+- Full GUT passed: 70 tests.
 
 ## Current Risks / Known Issues
 

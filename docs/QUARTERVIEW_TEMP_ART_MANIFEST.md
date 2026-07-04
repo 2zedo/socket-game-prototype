@@ -90,9 +90,12 @@ Region candidate table:
 - Current candidate module Resource files: `small_core.tres` (`1x1`), `laptop_adapter.tres` (`2x1`), `comm_module.tres` (`1x2`), and `odd_efficiency_module.tres` (`L-shape 3 cells`).
 - Module placement / inventory / rotation state is tracked in runtime `module_states`; UI node positions are not the source of truth.
 - Inventory order is tracked separately in `inventory_order`. Placing a module removes it from inventory order, and returning it appends it to the bottom.
-- Inventory is displayed through a `ScrollContainer`, so long module lists should stay clipped and scrollable instead of spilling outside the panel.
+- Inventory is displayed through a `ScrollContainer` with rebuilt row controls, so long module lists should stay clipped and scrollable instead of spilling outside the panel.
 - Board visuals show only placed modules based on `grid_anchor` and `rotation_index`.
+- Clicking a module only selects it. Active movement starts only after the cursor passes a drag threshold.
+- During drag, the inventory / placed module control stays in the layout and a separate drag ghost follows the cursor outside the ScrollContainer.
 - Drag preview uses valid / invalid colors while the cursor is over the grid.
+- Drop anchor is calculated from the hovered grid cell minus the grabbed occupied `shape_cells` cell, so L-shape modules can be placed by the part the player is actually holding.
 - Module inventory blocks, debug guides, and drag preview are drawn from `shape_cells`, so non-rectangular modules can be read before production power rules exist.
 - `R` and right-click rotate the active module candidate in 90-degree steps; rotation state is kept per runtime module instance and does not rewrite the `.tres` Resource shape.
 - Placed module rotation is allowed only when the rotated shape still fits the grid and does not overlap another module; invalid rotation is cancelled.

@@ -35,9 +35,13 @@
 - [ ] Power object를 클릭한다.
 - [ ] `사용하기`를 누르면 Power close-up이 열린다.
 - [ ] module을 선택하고 `모듈 확인`을 누른다.
+- [ ] module을 클릭만 하면 선택만 되고, board로 이동하거나 snap되지 않는다.
+- [ ] module을 일정 거리 이상 드래그해야 ghost가 나타나며 움직인다.
+- [ ] inventory module을 드래그할 때 ScrollContainer 안의 원래 항목이 버벅이거나 같이 끌려 나오지 않는다.
 - [ ] 모듈을 보드에 배치하면 왼쪽 Module Inventory에서 사라진다.
 - [ ] 남은 inventory 모듈은 위에서부터 빈칸 없이 다시 정렬된다.
 - [ ] inventory가 길어져도 panel 밖으로 튀어나오지 않고 스크롤로 확인할 수 있다.
+- [ ] L-shape module을 잡은 칸 기준으로 빈 공간에 예상대로 배치할 수 있다.
 - [ ] 모듈 A와 B를 인접 배치한 뒤 A를 다시 선택한다.
 - [ ] A를 `R` 또는 우클릭으로 회전해도 자기 자신의 기존 cells와 충돌하지 않는다.
 - [ ] A의 회전 후 cells가 B와 실제로 겹치는 경우만 invalid 처리된다.

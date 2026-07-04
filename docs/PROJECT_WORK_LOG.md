@@ -360,10 +360,18 @@
 - Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (63 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
 - Next: GUI에서 module 배치 후 inventory collapse, `보관함으로` 버튼 반환, placed module rotation / invalid rollback, drag-to-inventory 반환을 수동 확인한다.
 
-### this commit - Quarterview Power Board state model hardening
+### 7bf43b7 - Quarterview Power Board state model hardening
 
-- Commit: `this commit`
+- Commit: `7bf43b7`
 - Result: Power board module 조작을 다시 `module_states` + `inventory_order` 기준으로 정리했다. 배치된 모듈은 inventory에서 제거되고, 반환된 모듈은 inventory 맨 아래에 append된다. Inventory는 ScrollContainer 안에서 다시 그려지며, placed module 회전 / 배치 판정은 공통 `can_place_module(...)` 경로로 자기 자신만 제외한다. Invalid drop은 drag 시작 snapshot으로 placement / rotation / inventory order를 복구한다.
 - Changed: `PowerBoardCandidate.gd`, `test_power_board_candidate_state.gd`, GUI checklist, temporary art manifest, status docs.
 - Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition + PowerBoardCandidate state GUT, and full GUT passed (67 tests).
 - Next: GUI에서 인접 배치 후 회전, 실제 overlap invalid, `보관함으로` 버튼, Delete / Backspace, inventory drop 반환, inventory scroll을 수동 확인한다.
+
+### this commit - Quarterview Power Board drag UX fix
+
+- Commit: `this commit`
+- Result: Power board module 클릭과 드래그를 분리했다. 클릭은 선택만 하고, threshold를 넘긴 드래그에서만 별도 ghost가 움직인다. Inventory는 ScrollContainer 안의 row layout을 유지하고, 반환된 module은 `inventory_order` 맨 아래에 append된다. L-shape drop anchor는 마우스가 가리킨 grid cell에서 잡은 occupied shape cell을 빼서 계산한다.
+- Changed: `PowerBoardCandidate.gd`, `test_power_board_candidate_state.gd`, GUI checklist, temporary art manifest, status docs.
+- Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerBoardCandidate state GUT, and full GUT passed (70 tests).
+- Next: GUI에서 click-only selection, threshold drag ghost, inventory scroll 안정성, L-shape 빈칸 배치, invalid drop rollback을 수동 확인한다.

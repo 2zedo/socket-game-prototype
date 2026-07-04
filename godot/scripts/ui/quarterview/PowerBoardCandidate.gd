@@ -18,7 +18,7 @@ const CELL_SIZE := Vector2(50, 40)
 const INVALID_GRID_CELL := Vector2i(-1, -1)
 const INVENTORY_SCROLL_RECT := Rect2(Vector2(10, 44), Vector2(210, 280))
 const INVENTORY_SLOT_START := Vector2(8, 8)
-const INVENTORY_SLOT_GAP := 56.0
+const DRAG_START_THRESHOLD := 8.0
 const UI_POWER_BOARD_ATLAS_PATH := "res://assets/art/ui/atlases/ui_power_board_atlas.png"
 const ATLAS_SOURCE_SIZE := Vector2(1254, 1254)
 
@@ -97,15 +97,19 @@ var debug_enabled := false
 var module_buttons := {}
 var module_guides := {}
 var module_labels := {}
+var module_rows := {}
 var module_home_positions := {}
 var module_states := {}
 var inventory_order: Array[String] = []
+var pending_drag_module_key := ""
 var dragging_module_key := ""
 var drag_offset := Vector2.ZERO
 var drag_start_global := Vector2.ZERO
+var drag_grabbed_shape_cell := Vector2i.ZERO
+var drag_ghost: Control
 var board_surface: Control
 var inventory_scroll: ScrollContainer
-var inventory_content: Control
+var inventory_content: VBoxContainer
 var drop_preview: Control
 var drop_preview_texture: TextureRect
 var module_title_label: Label
@@ -224,18 +228,62 @@ func _normalize_inventory_order() -> void:
 	inventory_order = next_order
 
 
+func _get_visible_inventory_module_keys() -> Array[String]:
+	var keys: Array[String] = []
+	if inventory_content == null:
+		return keys
+	for child in inventory_content.get_children():
+		for key in module_rows.keys():
+			if module_rows[key] == child and child.visible:
+				keys.append(String(key))
+				break
+	return keys
+
+
 func clear_drag_state() -> void:
-	if not dragging_module_key.is_empty():
-		var button: Button = module_buttons.get(dragging_module_key, null)
+	var active_module_key := dragging_module_key if not dragging_module_key.is_empty() else pending_drag_module_key
+	if not active_module_key.is_empty():
+		var button: Button = module_buttons.get(active_module_key, null)
 		if button != null:
+			button.visible = true
 			button.z_index = 1
+		var row: Control = module_rows.get(active_module_key, null)
+		if row != null:
+			row.modulate = Color.WHITE
+	if drag_ghost != null:
+		drag_ghost.queue_free()
+		drag_ghost = null
 	if drop_preview != null:
 		drop_preview.visible = false
 	if drop_preview_texture != null:
 		drop_preview_texture.visible = false
+	pending_drag_module_key = ""
 	dragging_module_key = ""
 	drag_offset = Vector2.ZERO
 	drag_start_global = Vector2.ZERO
+	drag_grabbed_shape_cell = Vector2i.ZERO
+
+
+func _input(event: InputEvent) -> void:
+	if pending_drag_module_key.is_empty():
+		return
+
+	if event is InputEventMouseMotion:
+		var mouse_global := get_global_mouse_position()
+		if dragging_module_key.is_empty() and mouse_global.distance_to(drag_start_global) >= DRAG_START_THRESHOLD:
+			_start_module_drag(pending_drag_module_key)
+		if dragging_module_key == pending_drag_module_key:
+			_update_drag_ghost_position(mouse_global)
+			_sync_module_guide(pending_drag_module_key)
+			_update_drop_preview(pending_drag_module_key)
+			get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		var module_key := pending_drag_module_key
+		if dragging_module_key == module_key:
+			_finish_module_drag(module_key)
+		else:
+			_finish_pending_click(module_key)
+		get_viewport().set_input_as_handled()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -270,7 +318,7 @@ func _build() -> void:
 	vbox.add_child(title)
 
 	var description := Label.new()
-	description.text = "모듈을 보드에 드래그해 배치합니다. R/우클릭 회전, 보관함으로 되돌리기."
+	description.text = "클릭은 선택만 합니다. 모듈을 드래그해 보드에 배치하고, R/우클릭으로 회전합니다."
 	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.78, 1.0))
 	description.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(description)
@@ -325,9 +373,10 @@ func _build() -> void:
 	inventory_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	board_surface.add_child(inventory_scroll)
 
-	inventory_content = Control.new()
+	inventory_content = VBoxContainer.new()
 	inventory_content.name = "ModuleInventoryContent"
 	inventory_content.custom_minimum_size = INVENTORY_SCROLL_RECT.size
+	inventory_content.add_theme_constant_override("separation", 10)
 	inventory_scroll.add_child(inventory_content)
 
 	var board_title := Label.new()
@@ -455,6 +504,15 @@ func _add_module_button(module: Dictionary) -> void:
 	var rect: Rect2 = module["rect"]
 	var module_size := _get_module_pixel_size(module)
 
+	var row := Control.new()
+	row.name = "%sInventoryRow" % key.capitalize().replace("_", "")
+	row.custom_minimum_size = Vector2(INVENTORY_SCROLL_RECT.size.x, maxf(module_size.y + 12.0, 58.0))
+	row.size = row.custom_minimum_size
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.visible = false
+	inventory_content.add_child(row)
+	module_rows[key] = row
+
 	var guide := Control.new()
 	guide.name = "%sDebugRect" % key.capitalize().replace("_", "")
 	guide.position = rect.position
@@ -480,9 +538,9 @@ func _add_module_button(module: Dictionary) -> void:
 		Color(0.82, 0.94, 0.92, 0.84)
 	)
 	button.gui_input.connect(_on_module_gui_input.bind(key))
-	board_surface.add_child(button)
+	row.add_child(button)
 	module_buttons[key] = button
-	module_home_positions[key] = rect.position
+	module_home_positions[key] = INVENTORY_SLOT_START
 
 	var label := Label.new()
 	label.name = "%sModuleLabel" % key.capitalize().replace("_", "")
@@ -497,7 +555,7 @@ func _add_module_button(module: Dictionary) -> void:
 	label.add_theme_color_override("font_color", Color(0.70, 0.82, 0.78, 0.96))
 	label.add_theme_font_size_override("font_size", 11)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	board_surface.add_child(label)
+	row.add_child(label)
 	module_labels[key] = label
 
 
@@ -510,8 +568,12 @@ func _rebuild_module_views() -> void:
 		if button == null:
 			continue
 
+		var row: Control = module_rows.get(placed_key, null)
+		if row != null:
+			row.visible = false
+			row.modulate = Color.WHITE
 		_refresh_module_visual(placed_key)
-		button.visible = _is_module_placed(placed_key)
+		button.visible = _is_module_placed(placed_key) and dragging_module_key != placed_key
 
 		if _is_module_placed(placed_key):
 			_reparent_control(button, board_surface)
@@ -523,7 +585,6 @@ func _rebuild_module_views() -> void:
 			_sync_module_guide(placed_key)
 
 	var inventory_index := 0
-	var inventory_content_height := INVENTORY_SCROLL_RECT.size.y
 	for key in inventory_order:
 		var button: Button = module_buttons.get(key, null)
 		if button == null:
@@ -533,18 +594,27 @@ func _rebuild_module_views() -> void:
 		if module.is_empty() or _is_module_placed(key):
 			continue
 
+		var row: Control = module_rows.get(key, null)
+		if row == null:
+			continue
+
 		_refresh_module_visual(key)
-		button.visible = true
-		_reparent_control(button, inventory_content)
+		_reparent_control(row, inventory_content)
+		inventory_content.move_child(row, inventory_index)
+		row.visible = true
+		row.modulate = Color(1, 1, 1, 0.45) if dragging_module_key == key else Color.WHITE
+		row.custom_minimum_size = Vector2(INVENTORY_SCROLL_RECT.size.x, maxf(button.size.y + 12.0, 58.0))
+		row.size = row.custom_minimum_size
+		_reparent_control(button, row)
+		button.visible = dragging_module_key != key
 
 		var module_size := button.size
-		var slot_position := _get_inventory_slot_position(inventory_index, module_size)
+		var slot_position := INVENTORY_SLOT_START
 		module_home_positions[key] = slot_position
 		button.position = slot_position
-		inventory_content_height = maxf(inventory_content_height, slot_position.y + module_size.y + 16.0)
 		var label: Label = module_labels.get(key, null)
 		if label != null:
-			_reparent_control(label, inventory_content)
+			_reparent_control(label, row)
 			label.visible = true
 			label.text = "%s\n%s / %s" % [
 				String(module["display_name"]),
@@ -563,13 +633,8 @@ func _rebuild_module_views() -> void:
 	if empty_inventory_label != null:
 		empty_inventory_label.visible = inventory_index == 0
 	if inventory_content != null:
-		inventory_content.custom_minimum_size = Vector2(INVENTORY_SCROLL_RECT.size.x, inventory_content_height)
+		inventory_content.custom_minimum_size = INVENTORY_SCROLL_RECT.size
 	_refresh_module_detail()
-
-
-func _get_inventory_slot_position(inventory_index: int, module_size: Vector2) -> Vector2:
-	var y := INVENTORY_SLOT_START.y + float(inventory_index) * maxf(INVENTORY_SLOT_GAP, module_size.y + 16.0)
-	return Vector2(INVENTORY_SLOT_START.x, y)
 
 
 func _reparent_control(control: Control, new_parent: Node) -> void:
@@ -577,15 +642,22 @@ func _reparent_control(control: Control, new_parent: Node) -> void:
 		return
 
 	var global_pos := control.global_position
+	var preserve_global := not (new_parent is Container)
 	var old_parent := control.get_parent()
 	if old_parent != null:
 		old_parent.remove_child(control)
 	new_parent.add_child(control)
-	control.global_position = global_pos
+	if preserve_global:
+		control.global_position = global_pos
 
 
 func _get_module_pixel_size(module: Dictionary) -> Vector2:
 	var size_cells := _get_module_size_cells(module)
+	return Vector2(CELL_SIZE.x * size_cells.x - 2.0, CELL_SIZE.y * size_cells.y - 2.0)
+
+
+func _get_module_pixel_size_for_shape(shape_cells: Array[Vector2i]) -> Vector2:
+	var size_cells := _get_shape_size_cells(shape_cells)
 	return Vector2(CELL_SIZE.x * size_cells.x - 2.0, CELL_SIZE.y * size_cells.y - 2.0)
 
 
@@ -637,6 +709,9 @@ func _rotate_module(module_key: String) -> void:
 	_set_module_rotation(module_key, next_rotation)
 	_refresh_module_visual(module_key)
 	if dragging_module_key == module_key:
+		drag_grabbed_shape_cell = _coerce_grabbed_shape_cell(module_key, drag_grabbed_shape_cell)
+		_create_drag_ghost(module_key)
+		_update_drag_ghost_position(get_global_mouse_position())
 		_update_drop_preview(module_key)
 	else:
 		_rebuild_module_views()
@@ -747,43 +822,112 @@ func _on_module_gui_input(event: InputEvent, module_key: String) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_select_module(module_key)
-			_move_module_button_to_drag_layer(module_key)
-			dragging_module_key = module_key
-			drag_offset = button.get_global_mouse_position() - button.global_position
-			drag_start_global = button.global_position
-			_capture_drag_start_state(module_key)
-			button.z_index = 8
-			_update_drop_preview(module_key)
+			_begin_drag_candidate(module_key, button.get_global_mouse_position())
 			get_viewport().set_input_as_handled()
-		elif dragging_module_key == module_key:
-			_finish_module_drag(module_key)
-			get_viewport().set_input_as_handled()
-	elif event is InputEventMouseMotion and dragging_module_key == module_key:
-		button.global_position = button.get_global_mouse_position() - drag_offset
-		_sync_module_guide(module_key)
-		_update_drop_preview(module_key)
-		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		_select_module(module_key)
 		_rotate_module(module_key)
 		get_viewport().set_input_as_handled()
 
 
-func _finish_module_drag(module_key: String) -> void:
+func _begin_drag_candidate(module_key: String, mouse_global: Vector2) -> void:
+	clear_drag_state()
+	pending_drag_module_key = module_key
+	drag_start_global = mouse_global
+	drag_grabbed_shape_cell = _get_grabbed_shape_cell(module_key, mouse_global)
 	var button: Button = module_buttons.get(module_key, null)
+	if button != null:
+		drag_offset = mouse_global - button.global_position
+	_capture_drag_start_state(module_key)
+	_refresh_module_detail()
+
+
+func _start_module_drag(module_key: String) -> void:
+	if pending_drag_module_key != module_key or not dragging_module_key.is_empty():
+		return
+	dragging_module_key = module_key
+	_create_drag_ghost(module_key)
+	var button: Button = module_buttons.get(module_key, null)
+	if button != null:
+		button.visible = false
+	var row: Control = module_rows.get(module_key, null)
+	if row != null:
+		row.modulate = Color(1, 1, 1, 0.45)
+	_update_drag_ghost_position(get_global_mouse_position())
+	_update_drop_preview(module_key)
+
+
+func _finish_pending_click(module_key: String) -> void:
+	clear_drag_state()
+	_rebuild_module_views()
+	_select_module(module_key)
+
+
+func _create_drag_ghost(module_key: String) -> void:
+	if drag_ghost != null:
+		drag_ghost.queue_free()
+		drag_ghost = null
 	var module := _get_module(module_key)
-	if button == null or module.is_empty():
+	if module.is_empty():
+		return
+	drag_ghost = Control.new()
+	drag_ghost.name = "%sDragGhost" % module_key.capitalize().replace("_", "")
+	drag_ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	drag_ghost.z_index = 30
+	drag_ghost.size = _get_module_pixel_size_for_shape(_get_module_display_shape_cells(module_key))
+	_populate_shape_visual(
+		drag_ghost,
+		_get_module_display_shape_cells(module_key),
+		module.get("color", Color.WHITE).lightened(0.16),
+		Color(0.95, 1.0, 0.82, 0.78)
+	)
+	board_surface.add_child(drag_ghost)
+
+
+func _update_drag_ghost_position(mouse_global: Vector2) -> void:
+	if drag_ghost == null:
+		return
+	drag_ghost.global_position = mouse_global - drag_offset
+
+
+func _get_grabbed_shape_cell(module_key: String, mouse_global: Vector2) -> Vector2i:
+	var button: Button = module_buttons.get(module_key, null)
+	if button == null:
+		return Vector2i.ZERO
+	var local := mouse_global - button.global_position
+	var shape_cells := _get_module_display_shape_cells(module_key)
+	for cell in shape_cells:
+		var cell_rect := Rect2(Vector2(cell.x * CELL_SIZE.x, cell.y * CELL_SIZE.y), CELL_SIZE)
+		if cell_rect.has_point(local):
+			return cell
+
+	var closest_cell := Vector2i.ZERO
+	var closest_distance := 1.0e20
+	for cell in shape_cells:
+		var center := Vector2((float(cell.x) + 0.5) * CELL_SIZE.x, (float(cell.y) + 0.5) * CELL_SIZE.y)
+		var distance := local.distance_squared_to(center)
+		if distance < closest_distance:
+			closest_distance = distance
+			closest_cell = cell
+	return closest_cell
+
+
+func _coerce_grabbed_shape_cell(module_key: String, grabbed_cell: Vector2i) -> Vector2i:
+	var shape_cells := _get_module_display_shape_cells(module_key)
+	if shape_cells.has(grabbed_cell):
+		return grabbed_cell
+	if shape_cells.is_empty():
+		return Vector2i.ZERO
+	return shape_cells[0]
+
+
+func _finish_module_drag(module_key: String) -> void:
+	var module := _get_module(module_key)
+	if module.is_empty():
 		clear_drag_state()
 		return
 
-	button.z_index = 1
-	if button.global_position.distance_to(drag_start_global) < 4.0:
-		_restore_module_to_drag_origin(module_key)
-		clear_drag_state()
-		_request_module_action("focus")
-		return
-
-	if _drag_started_placed(module_key) and _is_button_over_inventory(button):
+	if _drag_started_placed(module_key) and _is_mouse_over_inventory(get_global_mouse_position()):
 		_return_module_to_inventory(module_key, true)
 		clear_drag_state()
 		return
@@ -813,6 +957,7 @@ func _capture_drag_start_state(module_key: String) -> void:
 		"grid_anchor": Vector2i(state.get("grid_anchor", INVALID_GRID_CELL)),
 		"rotation_index": int(state.get("rotation_index", 0)) % 4,
 		"inventory_order": inventory_order.duplicate(),
+		"grabbed_shape_cell": drag_grabbed_shape_cell,
 	}
 	_set_module_state(module_key, state)
 
@@ -846,17 +991,8 @@ func _restore_module_to_drag_origin(module_key: String) -> void:
 	inventory_order.clear()
 	for key in snapshot_inventory_order:
 		inventory_order.append(String(key))
+	drag_grabbed_shape_cell = Vector2i(snapshot.get("grabbed_shape_cell", Vector2i.ZERO))
 	_rebuild_module_views()
-
-
-func _move_module_button_to_drag_layer(module_key: String) -> void:
-	var button: Button = module_buttons.get(module_key, null)
-	if button == null:
-		return
-	_reparent_control(button, board_surface)
-	var label: Label = module_labels.get(module_key, null)
-	if label != null:
-		label.visible = false
 
 
 func _get_grid_global_rect() -> Rect2:
@@ -868,11 +1004,11 @@ func _get_grid_global_rect() -> Rect2:
 	)
 
 
-func _is_button_over_inventory(button: Control) -> bool:
-	if board_surface == null or button == null:
+func _is_mouse_over_inventory(mouse_global: Vector2) -> bool:
+	if board_surface == null:
 		return false
 	var inventory_rect := Rect2(board_surface.global_position + INVENTORY_RECT.position, INVENTORY_RECT.size)
-	return inventory_rect.has_point(button.global_position + button.size * 0.5)
+	return inventory_rect.has_point(mouse_global)
 
 
 func _sync_module_guide(module_key: String) -> void:
@@ -880,28 +1016,27 @@ func _sync_module_guide(module_key: String) -> void:
 	var button: Button = module_buttons.get(module_key, null)
 	if guide == null or button == null:
 		return
-	guide.global_position = button.global_position
-	guide.size = button.size
+	if dragging_module_key == module_key and drag_ghost != null:
+		guide.global_position = drag_ghost.global_position
+		guide.size = drag_ghost.size
+	else:
+		guide.global_position = button.global_position
+		guide.size = button.size
 
 
 func _get_drop_candidate(module_key: String) -> Dictionary:
-	var button: Button = module_buttons.get(module_key, null)
 	var module := _get_module(module_key)
-	if button == null or module.is_empty():
+	if module.is_empty():
 		return {"inside": false, "valid": false, "reason": "module unavailable /"}
 
 	var grid_rect := _get_grid_global_rect()
-	var center := button.global_position + button.size * 0.5
-	if not grid_rect.has_point(center):
+	var mouse_global := get_global_mouse_position()
+	if not grid_rect.has_point(mouse_global):
 		return {"inside": false, "valid": false, "reason": "grid 밖이라"}
 
 	var shape_cells := _get_module_display_shape_cells(module_key)
 	var size_cells := _get_shape_size_cells(shape_cells)
-	var local_top_left := button.global_position - grid_rect.position
-	var cell := Vector2i(
-		roundi(local_top_left.x / CELL_SIZE.x),
-		roundi(local_top_left.y / CELL_SIZE.y)
-	)
+	var cell := _get_drop_anchor_for_mouse(mouse_global)
 	var valid := can_place_module(module_key, cell, _get_module_rotation(module_key), module_key)
 	var reason := ""
 	if not valid:
@@ -914,6 +1049,16 @@ func _get_drop_candidate(module_key: String) -> Dictionary:
 		"shape_cells": shape_cells,
 		"reason": reason,
 	}
+
+
+func _get_drop_anchor_for_mouse(mouse_global: Vector2) -> Vector2i:
+	var grid_rect := _get_grid_global_rect()
+	var local_mouse := mouse_global - grid_rect.position
+	var hover_cell := Vector2i(
+		floori(local_mouse.x / CELL_SIZE.x),
+		floori(local_mouse.y / CELL_SIZE.y)
+	)
+	return hover_cell - drag_grabbed_shape_cell
 
 
 func can_place_module(module_key: String, cell: Vector2i, rotation_index: int, ignore_module_key := "") -> bool:
@@ -1016,7 +1161,7 @@ func _refresh_module_detail() -> void:
 		return
 
 	module_title_label.text = String(module["display_name"])
-	module_detail_label.text = "상태: %s\n크기: %s\n회전: %d도\n후보 효과: %s\n\n%s\n\nR/우클릭: 회전\n보관함으로: 배치 모듈 되돌리기\n아직 실제 전력 계산 없음." % [
+	module_detail_label.text = "상태: %s\n크기: %s\n회전: %d도\n후보 효과: %s\n\n%s\n\n클릭: 선택\n드래그: 배치\nR/우클릭: 회전\n보관함으로: 되돌리기\n아직 실제 전력 계산 없음." % [
 		"board 배치됨" if _is_module_placed(selected_module_key) else "inventory",
 		_get_display_shape_text(selected_module_key),
 		_get_module_rotation_degrees(selected_module_key),
