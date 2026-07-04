@@ -19,6 +19,12 @@ const PHONE_CLOSEUP_SIZE := Vector2(690, 520)
 const PHONE_CLOSEUP_POSITION := Vector2(430, 84)
 const PHONE_CLOSEUP_ENTRY_KEYS := ["phone"]
 const PHONE_UI_ATLAS_PATH := "res://assets/art/ui/atlases/ui_phone_atlas.png"
+const PHONE_ATLAS_REGION_FRAME := Rect2(Vector2(46, 27), Vector2(381, 657))
+const PHONE_ATLAS_REGION_SCREEN := Rect2(Vector2(453, 46), Vector2(336, 622))
+const PHONE_ATLAS_REGION_BATTERY := Rect2(Vector2(849, 103), Vector2(139, 66))
+const PHONE_ATLAS_REGION_SIGNAL := Rect2(Vector2(858, 226), Vector2(109, 136))
+const PHONE_ATLAS_REGION_MESSAGE := Rect2(Vector2(853, 375), Vector2(117, 98))
+const PHONE_ATLAS_REGION_POWER := Rect2(Vector2(848, 523), Vector2(124, 126))
 const BED_CLOSEUP_SIZE := Vector2(590, 430)
 const BED_CLOSEUP_POSITION := Vector2(480, 116)
 const BED_CLOSEUP_ENTRY_KEYS := ["bed"]
@@ -328,6 +334,9 @@ var current_kitchen_source_key := "fridge"
 var power_dragging_module_key := ""
 var power_drag_offset := Vector2.ZERO
 var power_drag_start_global := Vector2.ZERO
+var power_drag_origin_local := Vector2.ZERO
+var power_drag_origin_had_cell := false
+var power_drag_origin_cell := Vector2i.ZERO
 var power_module_home_positions := {}
 var power_module_grid_positions := {}
 var interaction_panel: PanelContainer
@@ -348,6 +357,7 @@ var power_module_detail_label: Label
 var power_module_debug_label: Label
 var power_module_guides := {}
 var power_board_surface: Control
+var power_drop_preview: ColorRect
 var phone_closeup_backdrop: ColorRect
 var phone_closeup_panel: PanelContainer
 var phone_item_buttons := {}
@@ -1047,6 +1057,13 @@ func _build_power_closeup_overlay() -> void:
 
 	_add_power_grid(power_board_surface, POWER_BOARD_GRID_ORIGIN, POWER_BOARD_GRID_CELLS, POWER_BOARD_CELL_SIZE)
 
+	power_drop_preview = ColorRect.new()
+	power_drop_preview.name = "PowerDropPreview"
+	power_drop_preview.visible = false
+	power_drop_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	power_drop_preview.color = Color(0.22, 0.88, 0.72, 0.24)
+	power_board_surface.add_child(power_drop_preview)
+
 	for module in POWER_CLOSEUP_MODULES:
 		var key := String(module["key"])
 		var rect: Rect2 = module["rect"]
@@ -1150,7 +1167,11 @@ func _on_power_module_gui_input(event: InputEvent, module_key: String) -> void:
 			power_dragging_module_key = module_key
 			power_drag_offset = button.get_global_mouse_position() - button.global_position
 			power_drag_start_global = button.global_position
+			power_drag_origin_local = button.position
+			power_drag_origin_had_cell = power_module_grid_positions.has(module_key)
+			power_drag_origin_cell = power_module_grid_positions.get(module_key, Vector2i.ZERO)
 			button.z_index = 8
+			_update_power_drop_preview(module_key)
 			get_viewport().set_input_as_handled()
 		elif power_dragging_module_key == module_key:
 			_finish_power_module_drag(module_key)
@@ -1158,6 +1179,7 @@ func _on_power_module_gui_input(event: InputEvent, module_key: String) -> void:
 	elif event is InputEventMouseMotion and power_dragging_module_key == module_key:
 		button.global_position = button.get_global_mouse_position() - power_drag_offset
 		_sync_power_module_guide(module_key)
+		_update_power_drop_preview(module_key)
 		get_viewport().set_input_as_handled()
 
 
@@ -1175,21 +1197,23 @@ func _finish_power_module_drag(module_key: String) -> void:
 		_log_power_module_action("focus")
 		return
 
-	var grid_rect := _get_power_grid_global_rect()
-	var local_top_left := button.global_position - grid_rect.position
-	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
-	if grid_rect.has_point(button.global_position + button.size * 0.5):
-		var cell := Vector2i(
-			clampi(roundi(local_top_left.x / POWER_BOARD_CELL_SIZE.x), 0, POWER_BOARD_GRID_CELLS.x - size_cells.x),
-			clampi(roundi(local_top_left.y / POWER_BOARD_CELL_SIZE.y), 0, POWER_BOARD_GRID_CELLS.y - size_cells.y)
-		)
+	var drop_candidate := _get_power_drop_candidate(module_key)
+	if bool(drop_candidate.get("valid", false)):
+		var cell: Vector2i = drop_candidate["cell"]
+		var grid_rect := _get_power_grid_global_rect()
 		button.global_position = grid_rect.position + Vector2(cell.x * POWER_BOARD_CELL_SIZE.x, cell.y * POWER_BOARD_CELL_SIZE.y)
 		power_module_grid_positions[module_key] = cell
 		_log_power_module_drop(module_key, cell)
 	else:
-		button.position = power_module_home_positions.get(module_key, button.position)
-		power_module_grid_positions.erase(module_key)
-		_update_status("%s: grid 밖이라 원래 위치로 돌아갑니다." % String(module["display_name"]))
+		button.position = power_drag_origin_local
+		if power_drag_origin_had_cell:
+			power_module_grid_positions[module_key] = power_drag_origin_cell
+		else:
+			power_module_grid_positions.erase(module_key)
+		_update_status("%s: %s 원래 위치로 돌아갑니다." % [
+			String(module["display_name"]),
+			String(drop_candidate.get("reason", "invalid drop /")),
+		])
 
 	_sync_power_module_guide(module_key)
 	_clear_power_drag_state()
@@ -1217,14 +1241,94 @@ func _sync_power_module_guide(module_key: String) -> void:
 	guide.size = button.size
 
 
+func _get_power_drop_candidate(module_key: String) -> Dictionary:
+	var button: Button = power_module_buttons.get(module_key, null)
+	var module := _get_power_module(module_key)
+	if button == null or module.is_empty():
+		return {"inside": false, "valid": false, "reason": "module unavailable /"}
+
+	var grid_rect := _get_power_grid_global_rect()
+	var center := button.global_position + button.size * 0.5
+	if not grid_rect.has_point(center):
+		return {"inside": false, "valid": false, "reason": "grid 밖이라"}
+
+	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
+	var local_top_left := button.global_position - grid_rect.position
+	var cell := Vector2i(
+		clampi(roundi(local_top_left.x / POWER_BOARD_CELL_SIZE.x), 0, POWER_BOARD_GRID_CELLS.x - size_cells.x),
+		clampi(roundi(local_top_left.y / POWER_BOARD_CELL_SIZE.y), 0, POWER_BOARD_GRID_CELLS.y - size_cells.y)
+	)
+	var valid := _is_power_drop_cell_available(module_key, cell, size_cells)
+	return {
+		"inside": true,
+		"valid": valid,
+		"cell": cell,
+		"size_cells": size_cells,
+		"reason": "" if valid else "다른 모듈과 겹쳐서",
+	}
+
+
+func _is_power_drop_cell_available(module_key: String, cell: Vector2i, size_cells: Vector2i) -> bool:
+	for y in range(cell.y, cell.y + size_cells.y):
+		for x in range(cell.x, cell.x + size_cells.x):
+			if x < 0 or y < 0 or x >= POWER_BOARD_GRID_CELLS.x or y >= POWER_BOARD_GRID_CELLS.y:
+				return false
+			var check_cell := Vector2i(x, y)
+			for other_key in power_module_grid_positions.keys():
+				if String(other_key) == module_key:
+					continue
+				var other_module := _get_power_module(String(other_key))
+				if other_module.is_empty():
+					continue
+				var other_cell: Vector2i = power_module_grid_positions[other_key]
+				var other_size: Vector2i = other_module.get("size_cells", Vector2i(1, 1))
+				if _is_power_cell_inside_module(check_cell, other_cell, other_size):
+					return false
+	return true
+
+
+func _is_power_cell_inside_module(cell: Vector2i, module_cell: Vector2i, size_cells: Vector2i) -> bool:
+	return (
+		cell.x >= module_cell.x
+		and cell.y >= module_cell.y
+		and cell.x < module_cell.x + size_cells.x
+		and cell.y < module_cell.y + size_cells.y
+	)
+
+
+func _update_power_drop_preview(module_key: String) -> void:
+	if power_drop_preview == null:
+		return
+	var candidate := _get_power_drop_candidate(module_key)
+	if not bool(candidate.get("inside", false)):
+		power_drop_preview.visible = false
+		return
+
+	var cell: Vector2i = candidate["cell"]
+	var size_cells: Vector2i = candidate["size_cells"]
+	power_drop_preview.visible = true
+	power_drop_preview.position = POWER_BOARD_GRID_ORIGIN + Vector2(cell.x * POWER_BOARD_CELL_SIZE.x, cell.y * POWER_BOARD_CELL_SIZE.y)
+	power_drop_preview.size = Vector2(size_cells.x * POWER_BOARD_CELL_SIZE.x - 3.0, size_cells.y * POWER_BOARD_CELL_SIZE.y - 3.0)
+	power_drop_preview.color = (
+		Color(0.20, 0.90, 0.68, 0.28)
+		if bool(candidate.get("valid", false))
+		else Color(0.96, 0.18, 0.14, 0.32)
+	)
+
+
 func _clear_power_drag_state() -> void:
 	if not power_dragging_module_key.is_empty():
 		var button: Button = power_module_buttons.get(power_dragging_module_key, null)
 		if button != null:
 			button.z_index = 1
+	if power_drop_preview != null:
+		power_drop_preview.visible = false
 	power_dragging_module_key = ""
 	power_drag_offset = Vector2.ZERO
 	power_drag_start_global = Vector2.ZERO
+	power_drag_origin_local = Vector2.ZERO
+	power_drag_origin_had_cell = false
+	power_drag_origin_cell = Vector2i.ZERO
 
 
 func _log_power_module_drop(module_key: String, cell: Vector2i) -> void:
@@ -1442,7 +1546,7 @@ func _build_phone_closeup_overlay() -> void:
 	vbox.add_child(body_row)
 
 	var atlas_preview_panel := PanelContainer.new()
-	atlas_preview_panel.custom_minimum_size = Vector2(178, 190)
+	atlas_preview_panel.custom_minimum_size = Vector2(178, 286)
 	body_row.add_child(atlas_preview_panel)
 
 	var atlas_margin := MarginContainer.new()
@@ -1458,21 +1562,26 @@ func _build_phone_closeup_overlay() -> void:
 
 	phone_atlas_texture = _load_texture_from_png(PHONE_UI_ATLAS_PATH)
 	if phone_atlas_texture != null:
-		var atlas_preview := TextureRect.new()
-		atlas_preview.name = "PhoneUiAtlasPreview"
-		atlas_preview.texture = phone_atlas_texture
-		atlas_preview.custom_minimum_size = Vector2(156, 156)
-		atlas_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		atlas_box.add_child(atlas_preview)
+		var phone_visual := Control.new()
+		phone_visual.name = "PhoneAtlasCompositedPreview"
+		phone_visual.custom_minimum_size = Vector2(156, 236)
+		atlas_box.add_child(phone_visual)
+
+		_add_phone_atlas_region(phone_visual, "PhoneScreenRegion", PHONE_ATLAS_REGION_SCREEN, Vector2(42, 42), Vector2(82, 156))
+		_add_phone_atlas_region(phone_visual, "PhoneFrameRegion", PHONE_ATLAS_REGION_FRAME, Vector2(14, 0), Vector2(132, 228))
+		_add_phone_atlas_region(phone_visual, "PhoneBatteryRegion", PHONE_ATLAS_REGION_BATTERY, Vector2(54, 56), Vector2(42, 20))
+		_add_phone_atlas_region(phone_visual, "PhoneSignalRegion", PHONE_ATLAS_REGION_SIGNAL, Vector2(104, 58), Vector2(30, 38))
+		_add_phone_atlas_region(phone_visual, "PhoneMessageRegion", PHONE_ATLAS_REGION_MESSAGE, Vector2(62, 116), Vector2(36, 30))
+		_add_phone_atlas_region(phone_visual, "PhonePowerRegion", PHONE_ATLAS_REGION_POWER, Vector2(100, 116), Vector2(36, 36))
 	else:
 		var missing_atlas := ColorRect.new()
 		missing_atlas.name = "MissingPhoneAtlasPreview"
 		missing_atlas.color = Color(0.08, 0.10, 0.11, 0.94)
-		missing_atlas.custom_minimum_size = Vector2(156, 156)
+		missing_atlas.custom_minimum_size = Vector2(156, 236)
 		atlas_box.add_child(missing_atlas)
 
 	var atlas_hint := Label.new()
-	atlas_hint.text = "temporary atlas preview"
+	atlas_hint.text = "phone atlas regions"
 	atlas_hint.add_theme_color_override("font_color", Color(0.54, 0.66, 0.68, 0.92))
 	atlas_hint.add_theme_font_size_override("font_size", 11)
 	atlas_box.add_child(atlas_hint)
@@ -2736,6 +2845,27 @@ func _load_texture_from_png(path: String) -> Texture2D:
 		push_warning("QuarterviewMain could not load optional PNG: %s" % path)
 		return null
 	return ImageTexture.create_from_image(image)
+
+
+func _make_phone_atlas_texture(region: Rect2) -> Texture2D:
+	if phone_atlas_texture == null:
+		return null
+	var texture := AtlasTexture.new()
+	texture.atlas = phone_atlas_texture
+	texture.region = region
+	return texture
+
+
+func _add_phone_atlas_region(parent: Control, node_name: String, region: Rect2, position: Vector2, size: Vector2) -> TextureRect:
+	var texture_rect := TextureRect.new()
+	texture_rect.name = node_name
+	texture_rect.texture = _make_phone_atlas_texture(region)
+	texture_rect.position = position
+	texture_rect.size = size
+	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(texture_rect)
+	return texture_rect
 
 
 func _on_desk_hotspot_pressed(hotspot_key: String) -> void:

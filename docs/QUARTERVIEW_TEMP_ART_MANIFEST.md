@@ -63,9 +63,35 @@ Current atlas status:
 - Generated as a temporary imagegen UI sheet.
 - The atlas has transparent alpha and is normalized to `1024x1024`.
 - Alpha check found transparent corners and no visible green chroma-key pixels.
-- `QuarterviewMain` can load this PNG as an optional candidate preview inside the Phone screen overlay.
+- `QuarterviewMain` loads this PNG as optional candidate art inside the Phone screen overlay.
+- Current code-local region use: `phone_frame`, `phone_screen_dark`, `phone_battery_icon`, `phone_signal_icon`, `phone_message_icon`, and `phone_power_icon`.
 - There is no phone atlas region mapping Resource yet.
 - There is no production `PhoneUI`, Theme, Control skin, `SurvivalState`, battery, message, or job wiring.
+
+Region candidate table:
+
+| Region | Rect `x,y,w,h` | Current Use | Notes |
+| --- | --- | --- | --- |
+| `phone_frame` | `46,27,381,657` | Phone screen candidate frame preview | Code-local rect only. |
+| `phone_screen_dark` | `453,46,336,622` | Phone screen candidate inner panel preview | Code-local rect only. |
+| `phone_battery_icon` | `849,103,139,66` | Phone screen candidate status icon | Code-local rect only. |
+| `phone_signal_icon` | `858,226,109,136` | Phone screen candidate status icon | Code-local rect only. |
+| `phone_message_icon` | `853,375,117,98` | Phone screen candidate message icon | Code-local rect only. |
+| `phone_power_icon` | `848,523,124,126` | Phone screen candidate power icon | Code-local rect only. |
+| `phone_tab_status` | not mapped | Future tab skin candidate | Not used yet. |
+| `phone_tab_message` | not mapped | Future tab skin candidate | Not used yet. |
+| `phone_tab_job` | not mapped | Future tab skin candidate | Not used yet. |
+| `phone_low_battery_overlay` | not mapped | Future warning overlay candidate | Not used yet. |
+
+## Quarterview Power Board Candidate Status
+
+- `QuarterviewMain` has a QuarterviewMain-only draggable power-board prototype inside the Power equipment close-up.
+- Current candidate modules: `small_core` (`1x1`), `laptop_adapter` (`2x1`), `comm_module` (`1x2`), and `odd_efficiency_module` (`2x2`).
+- Drag preview uses valid / invalid colors while the cursor is over the grid.
+- Occupied cells block overlapping module placement.
+- Invalid or out-of-grid drops return the module to the drag start position.
+- Successful drops only write no-op status/log text; they do not calculate power.
+- There is no production `OutletMode`, `SurvivalState`, connected / active device, save-load, or result wiring.
 
 ## Quarterview Work Devices Atlas v1
 
