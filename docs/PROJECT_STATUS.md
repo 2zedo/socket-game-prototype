@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `5803ba3`
-- Phase: Quarterview hacking entry candidate
+- Current commit at task start: `6f23dcf`
+- Phase: Quarterview room image fixed spec documentation
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -17,6 +17,7 @@
 - Hacking direction focuses first on action infiltration and defense.
 - Existing `Main.tscn` / DAY1 still exists as the protected golden path.
 - `QuarterviewMain.tscn` is a production candidate skeleton, not the project start scene.
+- Future room image generation should use `docs/QUARTERVIEW_ROOM_IMAGE_FIXED_SPEC.md` for fixed `1920x1080`, character scale, two-room structure, door placement, palette, and NAVI LINK rules.
 
 ## Current Implementation State
 
@@ -38,6 +39,7 @@
 - QuarterviewMain job / objective candidate: added a Resource-backed `maintenance_17_fragment` anonymous job candidate to the Phone job tab, local-only accept state in QuarterviewMain HUD / Day Result, and Desk / Laptop no-op NAVI preparation hints while keeping Hacking, Grid Credit, save-load, story flags, SurvivalState, and production PhoneUI unwired.
 - QuarterviewMain portable Phone access: moved Phone access to the `P` key as Yui's portable equipment, marked the room `phone` Resource portable-only so it is no longer a room click / hover / nearest target, and removed default `R` restart in favor of debug-only `Shift+R` while keeping Power board `R` rotation.
 - QuarterviewMain Hacking Entry candidate: added a NAVI proxy preparation overlay from Laptop / Desk active-job preparation flow, with proxy check and infiltration-start candidate no-ops while keeping Hacking scenes, Grid Credit, save-load, story flags, SurvivalState, and production PhoneUI unwired.
+- Quarterview room image fixed spec: documented the next room image generation baseline with fixed output size, camera, character scale, living / work room split, door placement, object size targets, palette, window rules, NAVI LINK device direction, and hard bans. No image, scene, or asset wiring was added.
 - QuarterviewMain footprint tuning: split visual body, click area, and blocker footprint candidates, and made path / collision blockers prefer floor-contact polygons over top-view rectangles.
 - QuarterviewMain footprint tuning mode: added object panel outside-click close, kept guessed footprints as debug/tuning candidates unless path-enabled, and added a debug-only F3 tuning mode for selected object footprint / approach / click area inspection.
 - QuarterviewMain Food / Kitchen candidate overlay: added no-op Fridge / Microwave food and cooking candidate actions while keeping hunger, inventory, SurvivalState, and DayResultPanel unwired.
@@ -82,16 +84,17 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/QuarterviewMain.gd`: adds a QuarterviewMain-only Hacking Entry candidate overlay from active-job Desk / Laptop preparation.
-- `docs/QUARTERVIEW_GUI_CHECKLIST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the manual checks and current non-production scope.
+- `docs/QUARTERVIEW_ROOM_IMAGE_FIXED_SPEC.md`: new fixed baseline for future room image generation and review.
+- `docs/CONCENT_PROJECT_IDENTITY.md`, `docs/QUARTERVIEW_ROOM_DIRECTION.md`, `docs/QUARTERVIEW_ART_ASSET_PLAN.md`, `docs/DOCUMENT_INVENTORY.md`: link the new fixed spec from current direction / asset planning / navigation docs.
+- `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the documentation-only update.
 
 ## Validation Results
 
-- Targeted task-file `git diff --check` passed.
+- Targeted documentation `git diff --check` passed.
 - Full `git diff --check` is currently blocked by unrelated whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`.
-- Godot headless project parse passed.
-- `res://scenes/QuarterviewMain.tscn` headless startup passed.
-- Full GUT passed: 76 tests.
+- Godot headless project parse was not run for this documentation-only update.
+- `res://scenes/QuarterviewMain.tscn` headless startup was not run for this documentation-only update.
+- Full GUT was not run for this documentation-only update.
 
 ## Current Risks / Known Issues
 

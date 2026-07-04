@@ -407,3 +407,11 @@
 - Changed: `QuarterviewMain.gd`, GUI checklist, status docs.
 - Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (76 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
 - Next: GUI에서 Phone 의뢰 수락, Laptop direct use, Desk close-up Laptop / Job Memo entry, ESC / backdrop / close button close, room input lock restore를 수동 확인한다.
+
+### Quarterview room image fixed spec
+
+- Commit: see the commit containing this entry.
+- Result: 다음 room image generation 전에 카메라, `1920x1080` 출력, 캐릭터 `150-165px` 기준, 생활공간 + 작업/전력공간 2-room 구조, 연결문 위치, 오브젝트 크기, 팔레트, 창문, NAVI LINK 장치, 금지사항을 고정하는 문서를 추가했다. 실제 PNG, scene, Resource, import, gameplay wiring은 만들지 않았다.
+- Changed: `QUARTERVIEW_ROOM_IMAGE_FIXED_SPEC.md`, identity / room direction / art asset plan / document inventory / status docs.
+- Validation: documentation-only targeted `git diff --check` passed. Full `git diff --check` remains blocked by unrelated addon whitespace.
+- Next: 실제 이미지 생성 작업 전에 이 고정 spec을 기준으로 prompt를 작성하고, 생성된 이미지는 캐릭터 / 침대 / 냉장고 / 전자레인지 비율과 두 방 연결문 위치부터 검수한다.

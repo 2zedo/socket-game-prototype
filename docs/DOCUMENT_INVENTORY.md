@@ -22,6 +22,7 @@
 | --- | --- | --- | --- |
 | `docs/CONCENT_ROOM_POWER_HACKING_DESIGN_DIRECTION.md` | Current | 메인방, 책상 클로즈업, 전력 장비, 허기, 해킹 침투 / 방어 방향 | identity의 근거 문서 |
 | `docs/QUARTERVIEW_ROOM_DIRECTION.md` | Current | 쿼터뷰 방 콘티, 분위기, 공간 배치 기준 | identity와 충돌하면 identity 우선 |
+| `docs/QUARTERVIEW_ROOM_IMAGE_FIXED_SPEC.md` | Current | 새 room image generation용 고정 수치 / 2-room 구조 / 팔레트 / 금지사항 기준 | 실제 scene / asset 적용 아님 |
 | `docs/VIEWPOINT_AND_PROTOTYPE_TERMS.md` | Current | top-down, 3/4 top-down, quarterview, cutaway 용어 정리 | prototype 역할 구분 기준 |
 | `docs/PROJECT_DIRECTION_REVISED.md` | Superseded Notice Added | 구현 상태와 장기 방향 구분 | 최신 identity와 충돌하면 identity 우선 |
 | `docs/IMPLEMENTATION_ROADMAP_REVISED.md` | Superseded Notice Added | 추천 구현 순서와 prototype 우선 원칙 | 최신 QuarterviewMain / sandbox 상태와 충돌하면 identity 우선 |

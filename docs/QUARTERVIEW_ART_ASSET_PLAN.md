@@ -9,6 +9,7 @@
 ## 기본 원칙
 
 - 최종 게임용 쿼터뷰 방은 한 장짜리 배경 이미지로 끝내지 않는다.
+- 새 room image generation / concept pass 전에는 `docs/QUARTERVIEW_ROOM_IMAGE_FIXED_SPEC.md`의 `1920x1080`, 캐릭터 크기, 2-room 구조, 연결문, 팔레트 기준을 먼저 고정한다.
 - 방향성 확인용 콘티 이미지는 분위기 참고로만 사용하고, 실제 게임 적용은 분리 에셋 구조를 우선한다.
 - 방 구조, 가구, 장치, 캐릭터, FX를 분리해서 관리한다.
 - 오브젝트는 scene / node로 분리하고, 이미지는 가능한 atlas나 spritesheet로 묶는다.

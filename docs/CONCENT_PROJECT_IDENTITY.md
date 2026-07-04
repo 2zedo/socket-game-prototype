@@ -30,6 +30,8 @@
 
 메인 방은 작은 하층민 1인실과 해커 작업실이 섞인 공간이다. 넓은 연구실처럼 보이면 안 된다.
 
+새 room image generation / concept pass에서는 `docs/QUARTERVIEW_ROOM_IMAGE_FIXED_SPEC.md`를 우선 확인한다. 해당 문서는 `1920x1080`, 캐릭터 `150-165px`, 생활공간 + 작업/전력공간 2-room 구조, 연결문 위치, 팔레트, NAVI LINK 장치 기준을 고정한다. 이는 future room art generation baseline이며, 현재 `QuarterviewMain` 임시 배경이나 기존 Main / DAY1 구현을 즉시 바꾼다는 뜻은 아니다.
+
 공간 기준:
 
 - 작은 하층민 1인실이어야 한다. 넓은 해커 연구실처럼 보이면 안 된다.
