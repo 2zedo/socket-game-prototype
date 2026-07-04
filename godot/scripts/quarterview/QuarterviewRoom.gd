@@ -2,6 +2,7 @@ extends Node2D
 
 signal interaction_requested(object_key: String, action_key: String, payload: Dictionary)
 signal nearest_interactable_changed(object_key: String, display_name: String)
+signal hover_interactable_changed(object_key: String, display_name: String, payload: Dictionary)
 signal debug_overlay_toggled(enabled: bool)
 signal movement_path_failed(reason: String)
 
@@ -35,6 +36,11 @@ const DEBUG_FAILURE_LABEL_POSITION := Vector2(24, 616)
 const DEBUG_VISUAL_RECT_COLOR := Color(0.82, 0.82, 0.78, 0.34)
 const DEBUG_CLICK_AREA_COLOR := Color(0.35, 0.62, 1.0, 0.62)
 const DEBUG_FOOTPRINT_COLOR := Color(1.0, 0.42, 0.18, 0.72)
+const HOVER_OUTLINE_COLOR := Color(0.98, 0.82, 0.30, 0.92)
+const HOVER_FILL_COLOR := Color(0.98, 0.70, 0.22, 0.10)
+const HOVER_PROMPT_OFFSET := Vector2(18, -38)
+const HOVER_PROMPT_MARGIN := 18.0
+const HOVER_PROMPT_CLAMP_SIZE := Vector2(220, 34)
 const TUNING_TOGGLE_KEY := KEY_F3
 const TUNING_PRINT_KEY := KEY_C
 
@@ -364,9 +370,11 @@ var current_click_target := Vector2.ZERO
 var has_click_target := false
 var path_failure_reason := ""
 var selected_key := ""
+var hovered_key := ""
 var tuning_object_index := 0
 var tuning_status_message := ""
 var room_input_enabled := true
+var hover_affordance_enabled := true
 var debug_label_nodes := {}
 var debug_radius_nodes := {}
 var debug_approach_nodes := {}
@@ -375,6 +383,10 @@ var debug_click_area_nodes := {}
 var debug_footprint_nodes := {}
 var debug_blocker_guide_nodes: Array[Line2D] = []
 var prompt_label: Label
+var hover_prompt_label: Label
+var hover_highlight_polygon: Polygon2D
+var hover_outline_line: Line2D
+var hover_overlay_sprite: Sprite2D
 var reference_notice_label: Label
 var path_debug_line: Line2D
 var click_target_debug_line: Line2D
@@ -424,9 +436,11 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if room_input_enabled:
+		_update_hover_affordance()
 		_update_nearest_interactable()
 		_update_pending_focus()
 	elif prompt_label != null:
+		_clear_hover_target()
 		prompt_label.visible = false
 	_update_player_collision_debug()
 	_update_object_debug_visibility()
@@ -687,6 +701,35 @@ func _build_prompt() -> void:
 	prompt_label.add_theme_constant_override("outline_size", 4)
 	prompt_label.add_theme_font_size_override("font_size", 18)
 	prompt_layer.add_child(prompt_label)
+
+	hover_highlight_polygon = Polygon2D.new()
+	hover_highlight_polygon.name = "HoverHighlightFill"
+	hover_highlight_polygon.visible = false
+	hover_highlight_polygon.color = HOVER_FILL_COLOR
+	prompt_layer.add_child(hover_highlight_polygon)
+
+	hover_outline_line = Line2D.new()
+	hover_outline_line.name = "HoverHighlightOutline"
+	hover_outline_line.visible = false
+	hover_outline_line.closed = true
+	hover_outline_line.width = 3.0
+	hover_outline_line.default_color = HOVER_OUTLINE_COLOR
+	prompt_layer.add_child(hover_outline_line)
+
+	hover_overlay_sprite = Sprite2D.new()
+	hover_overlay_sprite.name = "HoverOverlaySprite"
+	hover_overlay_sprite.visible = false
+	hover_overlay_sprite.centered = true
+	prompt_layer.add_child(hover_overlay_sprite)
+
+	hover_prompt_label = Label.new()
+	hover_prompt_label.name = "HoverPromptLabel"
+	hover_prompt_label.visible = false
+	hover_prompt_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.54, 1.0))
+	hover_prompt_label.add_theme_color_override("font_outline_color", Color(0.02, 0.018, 0.012, 1.0))
+	hover_prompt_label.add_theme_constant_override("outline_size", 4)
+	hover_prompt_label.add_theme_font_size_override("font_size", 16)
+	prompt_layer.add_child(hover_prompt_label)
 
 
 func _build_reference_notice() -> void:
@@ -1027,6 +1070,8 @@ func _get_debug_focus_key() -> String:
 		return _get_tuning_object_key()
 	if not selected_key.is_empty():
 		return selected_key
+	if not hovered_key.is_empty():
+		return hovered_key
 	return nearest_key
 
 
@@ -1137,6 +1182,10 @@ func _print_tuning_layout_snippet() -> void:
 
 
 func _update_prompt() -> void:
+	if not hovered_key.is_empty() and hover_prompt_label != null and hover_prompt_label.visible:
+		prompt_label.visible = false
+		return
+
 	if nearest_key.is_empty():
 		prompt_label.visible = false
 		return
@@ -1149,6 +1198,122 @@ func _update_prompt() -> void:
 	prompt_label.text = "[E] %s" % definition.display_name
 	prompt_label.position = player.global_position + Vector2(-64, -100)
 	prompt_label.visible = true
+
+
+func _update_hover_affordance() -> void:
+	if not hover_affordance_enabled:
+		_clear_hover_target()
+		return
+
+	var mouse_position := get_global_mouse_position()
+	var definition := _get_hover_definition_at_position(mouse_position)
+	if definition == null:
+		_clear_hover_target()
+		return
+
+	var key := String(definition.key)
+	if key != hovered_key:
+		_set_hover_target(definition)
+	else:
+		_update_hover_prompt_position(mouse_position)
+
+
+func _set_hover_target(definition: Resource) -> void:
+	hovered_key = String(definition.key)
+	_update_hover_visual(definition)
+	hover_interactable_changed.emit(hovered_key, String(definition.display_name), _make_hover_payload(definition))
+	_update_prompt()
+	_update_object_debug_visibility()
+
+
+func _clear_hover_target() -> void:
+	if hovered_key.is_empty():
+		_hide_hover_visual()
+		return
+
+	hovered_key = ""
+	_hide_hover_visual()
+	hover_interactable_changed.emit("", "", {})
+	_update_prompt()
+	_update_object_debug_visibility()
+
+
+func _update_hover_visual(definition: Resource) -> void:
+	var hover_texture := _get_hover_overlay_texture(definition)
+	var mouse_position := get_global_mouse_position()
+
+	if hover_prompt_label != null:
+		hover_prompt_label.text = "[클릭] %s" % _get_object_hover_label(definition)
+		hover_prompt_label.visible = true
+		_update_hover_prompt_position(mouse_position)
+
+	if hover_texture != null:
+		if hover_overlay_sprite != null:
+			hover_overlay_sprite.texture = hover_texture
+			hover_overlay_sprite.position = _get_object_position(definition) + _get_object_hover_overlay_offset(definition)
+			hover_overlay_sprite.scale = _get_object_hover_overlay_scale(definition)
+			hover_overlay_sprite.z_index = _get_object_hover_overlay_z_index(definition)
+			hover_overlay_sprite.visible = true
+		if hover_highlight_polygon != null:
+			hover_highlight_polygon.visible = false
+		if hover_outline_line != null:
+			hover_outline_line.visible = false
+		return
+
+	var hover_rect := _get_object_click_rect(definition)
+	var hover_points := _rect_to_points(hover_rect)
+	if hover_highlight_polygon != null:
+		hover_highlight_polygon.polygon = hover_points
+		hover_highlight_polygon.visible = true
+	if hover_outline_line != null:
+		hover_outline_line.points = hover_points
+		hover_outline_line.visible = true
+	if hover_overlay_sprite != null:
+		hover_overlay_sprite.visible = false
+
+
+func _hide_hover_visual() -> void:
+	if hover_prompt_label != null:
+		hover_prompt_label.visible = false
+	if hover_highlight_polygon != null:
+		hover_highlight_polygon.visible = false
+	if hover_outline_line != null:
+		hover_outline_line.visible = false
+	if hover_overlay_sprite != null:
+		hover_overlay_sprite.visible = false
+
+
+func _update_hover_prompt_position(mouse_position: Vector2) -> void:
+	if hover_prompt_label == null or not hover_prompt_label.visible:
+		return
+
+	var prompt_position := mouse_position + HOVER_PROMPT_OFFSET
+	prompt_position.x = clampf(
+		prompt_position.x,
+		HOVER_PROMPT_MARGIN,
+		BACKGROUND_TARGET_SIZE.x - HOVER_PROMPT_MARGIN - HOVER_PROMPT_CLAMP_SIZE.x
+	)
+	prompt_position.y = clampf(
+		prompt_position.y,
+		HOVER_PROMPT_MARGIN,
+		BACKGROUND_TARGET_SIZE.y - HOVER_PROMPT_MARGIN - HOVER_PROMPT_CLAMP_SIZE.y
+	)
+	hover_prompt_label.position = prompt_position
+
+
+func _make_hover_payload(definition: Resource) -> Dictionary:
+	return {
+		"key": definition.key,
+		"display_name": definition.display_name,
+		"hover_label": _get_object_hover_label(definition),
+		"role": definition.role,
+		"zone": definition.zone,
+		"future_source": definition.future_source,
+		"visual_state": definition.visual_state,
+		"hover_priority": _get_object_hover_priority(definition),
+		"click_area": _get_object_click_rect(definition),
+		"has_hover_overlay_texture": _get_hover_overlay_texture(definition) != null,
+	}
 
 
 func _request_nearest_interaction() -> void:
@@ -1232,6 +1397,7 @@ func set_room_input_enabled(enabled: bool) -> void:
 
 	pending_focus_key = ""
 	selected_key = ""
+	_clear_hover_target()
 	if player != null and player.has_method("clear_move_target"):
 		player.clear_move_target()
 	if prompt_label != null:
@@ -1242,6 +1408,16 @@ func set_room_input_enabled(enabled: bool) -> void:
 
 func is_room_input_enabled() -> bool:
 	return room_input_enabled
+
+
+func set_hover_affordance_enabled(enabled: bool) -> void:
+	hover_affordance_enabled = enabled
+	if not hover_affordance_enabled:
+		_clear_hover_target()
+
+
+func get_hovered_interactable_key() -> String:
+	return hovered_key
 
 
 func get_debug_focus_summary() -> String:
@@ -1606,6 +1782,33 @@ func _get_definition_at_position(click_position: Vector2) -> Resource:
 	return best_definition
 
 
+func _get_hover_definition_at_position(mouse_position: Vector2) -> Resource:
+	var best_definition: Resource = null
+	var best_distance := INF
+	var best_priority := -INF
+
+	for definition in object_definitions:
+		if not _is_click_candidate(definition):
+			continue
+
+		var distance := mouse_position.distance_to(_get_object_interaction_position(definition))
+		var object_rect := _get_object_click_rect(definition)
+		if distance > _get_object_interaction_radius(definition) and not object_rect.has_point(mouse_position):
+			continue
+
+		var priority := _get_object_hover_priority(definition)
+		var candidate_distance := mouse_position.distance_to(_get_object_position(definition))
+		if object_rect.has_point(mouse_position):
+			candidate_distance = min(candidate_distance, distance)
+
+		if priority > best_priority or (priority == best_priority and candidate_distance < best_distance):
+			best_definition = definition
+			best_distance = candidate_distance
+			best_priority = priority
+
+	return best_definition
+
+
 func _get_object_approach_position(definition: Resource) -> Vector2:
 	var layout := _get_object_layout(definition)
 	var value: Vector2 = layout.get("approach_position", _get_object_interaction_position(definition))
@@ -1653,6 +1856,40 @@ func _is_click_candidate(definition: Resource) -> bool:
 
 func _get_object_interaction_priority(definition: Resource) -> int:
 	return int(INTERACTION_PRIORITY_BY_KEY.get(String(definition.key), INTERACTION_PRIORITY_DEFAULT))
+
+
+func _get_object_hover_priority(definition: Resource) -> int:
+	var explicit_priority := int(definition.get("hover_priority"))
+	if explicit_priority != 0:
+		return explicit_priority
+	return int(round(_get_object_sort_y(definition)))
+
+
+func _get_object_hover_label(definition: Resource) -> String:
+	var label := String(definition.get("hover_label"))
+	if not label.is_empty():
+		return label
+	return String(definition.display_name)
+
+
+func _get_hover_overlay_texture(definition: Resource) -> Texture2D:
+	return definition.get("hover_overlay_texture") as Texture2D
+
+
+func _get_object_hover_overlay_offset(definition: Resource) -> Vector2:
+	var offset: Vector2 = definition.get("hover_overlay_offset")
+	return offset
+
+
+func _get_object_hover_overlay_scale(definition: Resource) -> Vector2:
+	var scale: Vector2 = definition.get("hover_overlay_scale")
+	if scale == Vector2.ZERO:
+		return Vector2.ONE
+	return scale
+
+
+func _get_object_hover_overlay_z_index(definition: Resource) -> int:
+	return int(definition.get("hover_overlay_z_index"))
 
 
 func _get_object_layout(definition: Resource) -> Dictionary:

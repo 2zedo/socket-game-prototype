@@ -37,6 +37,19 @@ func test_collision_size_uses_size_as_default() -> void:
 	assert_eq(definition.get_collision_size(), Vector2(32, 24), "Explicit collision_size should be used.")
 
 
+func test_hover_visual_fields_are_optional_by_default() -> void:
+	var definition = ROOM_OBJECT_DEFINITION_SCRIPT.new()
+
+	assert_eq(definition.hover_label, "", "Hover label should default to display_name fallback.")
+	assert_eq(definition.hover_priority, 0, "Hover priority should default to z/sort fallback.")
+	assert_null(definition.base_visual_texture, "Base visual texture should be optional.")
+	assert_null(definition.hover_overlay_texture, "Hover overlay texture should be optional.")
+	assert_eq(definition.hover_overlay_offset, Vector2.ZERO, "Hover overlay offset should be neutral by default.")
+	assert_eq(definition.hover_overlay_scale, Vector2.ONE, "Hover overlay scale should default to one.")
+	assert_eq(definition.hover_overlay_z_index, 0, "Hover overlay z-index should be neutral by default.")
+	assert_eq(definition.hover_visual_mode, "fallback_outline", "Hover visual mode should default to fallback outline.")
+
+
 func test_debug_summary_includes_contract_fields() -> void:
 	var definition = ROOM_OBJECT_DEFINITION_SCRIPT.new()
 	definition.key = "node17"

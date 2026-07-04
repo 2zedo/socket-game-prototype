@@ -60,6 +60,16 @@ const STATE_DISABLED := "disabled"
 @export var primary_action_label: String = ""
 @export var inspect_action_label: String = "Inspect"
 
+@export_category("Hover")
+@export var hover_label: String = ""
+@export var hover_priority: int = 0
+@export var base_visual_texture: Texture2D
+@export var hover_overlay_texture: Texture2D
+@export var hover_overlay_offset: Vector2 = Vector2.ZERO
+@export var hover_overlay_scale: Vector2 = Vector2.ONE
+@export var hover_overlay_z_index: int = 0
+@export var hover_visual_mode: String = "fallback_outline"
+
 
 func get_collision_size() -> Vector2:
 	if collision_size == Vector2.ZERO:

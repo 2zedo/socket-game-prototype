@@ -375,3 +375,11 @@
 - Changed: `PowerBoardCandidate.gd`, `test_power_board_candidate_state.gd`, GUI checklist, temporary art manifest, status docs.
 - Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerBoardCandidate state GUT, and full GUT passed (70 tests).
 - Next: GUI에서 click-only selection, threshold drag ghost, inventory scroll 안정성, L-shape 빈칸 배치, invalid drop rollback을 수동 확인한다.
+
+### Quarterview object hover affordance
+
+- Commit: see the commit containing this entry.
+- Result: QuarterviewRoom에 object hover target detection, `[클릭]` hover prompt, fallback outline / fill highlight, and optional `RoomObjectDefinition` hover visual slots를 추가했다. Hover는 click 전 미리보기만 담당하며 자동 이동 / 자동 panel open은 하지 않는다.
+- Changed: `QuarterviewRoom.gd`, `RoomObjectDefinition.gd`, `test_room_object_definition.gd`, status docs.
+- Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, and targeted RoomObjectDefinition GUT passed. Full GUT result is recorded in `PROJECT_STATUS.md`.
+- Next: GUI에서 mouse hover prompt / outline, 겹친 object priority, overlay open 중 hover disable, 기존 click movement / candidate panel flow를 수동 확인한다.
