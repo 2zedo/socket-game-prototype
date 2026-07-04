@@ -28,20 +28,20 @@
 
 ## Latest Work
 
-- Created `docs/GAME_INFO.md` as the single project information entrypoint.
-- Created consolidated current reference docs in `docs/reference/`.
-- Rotated the previous `PROJECT_STATUS.md` and `PROJECT_WORK_LOG.md` into `docs/old/`.
-- Moved previous root-level docs into `docs/old/`.
-- Updated `AGENTS.md` to use the new documentation structure.
+- Recorded the current in-game room image direction in `docs/reference/ART_DIRECTION.md`.
+- Updated `docs/GAME_INFO.md` with the new art baseline summary.
+- The current art target is fixed `1920x1080`, slightly pulled-back quarterview, indoor wall finishes, no default wood floor, varied restrained colors, Yui scale `118-132px`, reduced living room footprint, and a logically connected smaller work / power room.
+- The work / power room direction centers on NAVI LINK, compact power control, and signal / NODE equipment rather than laptop-centered hacker-room imagery.
+- This remains documentation-only; no image generation, scene wiring, or asset application was done.
 
 ## Validation Notes
 
-- This is a documentation-only restructuring task.
+- This is a documentation-only art direction update.
 - Godot scenes, scripts, resources, assets, and `project.godot` are not intentionally changed.
 - Full `git diff --check` may still report unrelated local whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`; targeted checks should be used for this docs-only change if that unrelated file remains dirty.
 
 ## Next Recommended Work
 
-1. Use `docs/GAME_INFO.md` and `docs/reference/TECHNICAL_MAP.md` as the first-read path for the next development task.
-2. GUI-check `QuarterviewMain` using the current candidate overlays and power-board interaction flow.
-3. Keep future docs updates in the active three-file root plus the relevant `docs/reference/*.md` file.
+1. Use `docs/reference/ART_DIRECTION.md` as the baseline for the next room image generation prompt.
+2. Generate or request one living-space / work-space sample only after confirming the spec is visually acceptable.
+3. Keep future art changes in `docs/reference/ART_DIRECTION.md` first, then mirror only high-level changes in `docs/GAME_INFO.md`.

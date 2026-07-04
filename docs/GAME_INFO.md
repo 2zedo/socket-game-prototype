@@ -20,6 +20,7 @@
 - Desk / Laptop is the job and hacking-entry hub.
 - Power equipment is moving toward a modular power-board / power-tetris system.
 - Hacking direction is action infiltration + defense, not a puzzle-only mode.
+- Current room image direction is fixed `1920x1080` quarterview, slightly pulled-back camera, readable Yui scale, indoor wall finishes, varied warm/cool palette, logical two-room door connection, and real lived-in / professional equipment-room function.
 - Current mock HUD / overlays in QuarterviewMain are local candidate state, not production `SurvivalState`.
 
 ## 4. Current Implementation Snapshot
@@ -34,7 +35,7 @@
 | Hacking Entry candidate | sandbox/candidate | NAVI proxy prep overlay from active job; no Hacking scene transition, Grid Credit, save-load, story flag. |
 | HackingActionPrototype | prototype-only | Action/state feedback prototype; not connected to Laptop / Job / Result. |
 | Grid Credit | skeleton | `GridCreditState` exists, but reward/economy is not production-wired. |
-| Asset / atlas | mixed | Some temporary generated PNGs exist; most atlas mapping plans are historical/reference only. |
+| Art / asset direction | reference-driven | Current room image spec lives in `docs/reference/ART_DIRECTION.md`; temporary generated PNGs exist, but most atlas mapping plans are historical/reference only. |
 
 ## 5. Source Documents
 
@@ -106,5 +107,5 @@ When `PROJECT_STATUS.md` or `PROJECT_WORK_LOG.md` grows past about 200 lines, ro
 ## 9. Current Next Work Candidates
 
 - GUI playtest QuarterviewMain after latest overlays and power-board drag fixes.
-- Convert current temporary room art direction into a stable generation prompt using `docs/reference/ART_DIRECTION.md`.
+- Use `docs/reference/ART_DIRECTION.md` as the stable room image prompt and review baseline.
 - Continue QuarterviewMain MVP candidate work without production-wiring PhoneUI, OutletMode, DayResultPanel, SurvivalState, Hacking, Grid Credit, save-load, or story flags.
