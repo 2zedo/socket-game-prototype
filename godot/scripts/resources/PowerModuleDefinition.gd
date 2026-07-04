@@ -108,6 +108,61 @@ static func rotate_shape_cells_clockwise(source_cells: Array[Vector2i]) -> Array
 	return normalize_shape_cells(rotated_cells)
 
 
+static func shape_cells_are_inside_grid(
+	anchor_cell: Vector2i,
+	source_cells: Array[Vector2i],
+	grid_size: Vector2i
+) -> bool:
+	for offset in source_cells:
+		var check_cell := anchor_cell + offset
+		if check_cell.x < 0 or check_cell.y < 0:
+			return false
+		if check_cell.x >= grid_size.x or check_cell.y >= grid_size.y:
+			return false
+	return true
+
+
+static func shape_cells_overlap(
+	first_anchor: Vector2i,
+	first_cells: Array[Vector2i],
+	second_anchor: Vector2i,
+	second_cells: Array[Vector2i]
+) -> bool:
+	for first_offset in first_cells:
+		var first_cell := first_anchor + first_offset
+		for second_offset in second_cells:
+			if first_cell == second_anchor + second_offset:
+				return true
+	return false
+
+
+static func shape_cells_overlap_any(
+	candidate_anchor: Vector2i,
+	candidate_cells: Array[Vector2i],
+	placed_entries: Array[Dictionary],
+	ignored_key: String = ""
+) -> bool:
+	for entry in placed_entries:
+		if not ignored_key.is_empty() and String(entry.get("key", "")) == ignored_key:
+			continue
+
+		var raw_cells: Array = entry.get("shape_cells", [])
+		var other_cells: Array[Vector2i] = []
+		for raw_cell in raw_cells:
+			other_cells.append(Vector2i(raw_cell))
+		if other_cells.is_empty():
+			other_cells.append(Vector2i.ZERO)
+
+		if shape_cells_overlap(
+			candidate_anchor,
+			candidate_cells,
+			Vector2i(entry.get("anchor", Vector2i.ZERO)),
+			other_cells
+		):
+			return true
+	return false
+
+
 func get_candidate_action() -> String:
 	if not candidate_action.is_empty():
 		return candidate_action

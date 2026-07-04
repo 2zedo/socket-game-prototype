@@ -62,6 +62,64 @@ func test_shape_rotation_returns_to_original_after_four_turns() -> void:
 	)
 
 
+func test_grid_and_overlap_helpers_use_shape_cells() -> void:
+	var l_shape: Array[Vector2i] = [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]
+	var single_cell: Array[Vector2i] = [Vector2i.ZERO]
+
+	assert_true(
+		POWER_MODULE_DEFINITION_SCRIPT.shape_cells_are_inside_grid(Vector2i(4, 3), l_shape, Vector2i(6, 5)),
+		"A 3-cell L-shape at 4,3 should fit a 6x5 board."
+	)
+	assert_false(
+		POWER_MODULE_DEFINITION_SCRIPT.shape_cells_are_inside_grid(Vector2i(5, 4), l_shape, Vector2i(6, 5)),
+		"A 3-cell L-shape at 5,4 should be out of bounds."
+	)
+	assert_true(
+		POWER_MODULE_DEFINITION_SCRIPT.shape_cells_overlap(Vector2i(4, 3), l_shape, Vector2i(5, 3), single_cell),
+		"Shape overlap should detect occupied cells, not only bounding boxes."
+	)
+	assert_false(
+		POWER_MODULE_DEFINITION_SCRIPT.shape_cells_overlap(Vector2i(4, 3), l_shape, Vector2i(5, 4), single_cell),
+		"Shape overlap should ignore empty cells inside an L-shape bounding box."
+	)
+
+
+func test_shape_overlap_any_can_ignore_current_module_key() -> void:
+	var rotated_l_shape: Array[Vector2i] = [Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]
+	var placed_entries: Array[Dictionary] = [
+		{
+			"key": "odd_efficiency_module",
+			"anchor": Vector2i(4, 3),
+			"shape_cells": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)],
+		},
+	]
+
+	assert_false(
+		POWER_MODULE_DEFINITION_SCRIPT.shape_cells_overlap_any(
+			Vector2i(4, 3),
+			rotated_l_shape,
+			placed_entries,
+			"odd_efficiency_module"
+		),
+		"A module should be able to ignore its own previous occupied cells while rotating."
+	)
+
+	placed_entries.append({
+		"key": "small_core",
+		"anchor": Vector2i(4, 3),
+		"shape_cells": [Vector2i.ZERO],
+	})
+	assert_true(
+		POWER_MODULE_DEFINITION_SCRIPT.shape_cells_overlap_any(
+			Vector2i(4, 3),
+			rotated_l_shape,
+			placed_entries,
+			"odd_efficiency_module"
+		),
+		"The same rotation should still collide with a different placed module."
+	)
+
+
 func test_candidate_action_and_effect_label_have_fallbacks() -> void:
 	var definition = POWER_MODULE_DEFINITION_SCRIPT.new()
 	definition.key = "comm_module"

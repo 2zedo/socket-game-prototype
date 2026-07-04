@@ -350,6 +350,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				power_closeup_panel.rotate_active_module()
 				get_viewport().set_input_as_handled()
 				return
+		if power_closeup_open and (event.keycode == KEY_DELETE or event.keycode == KEY_BACKSPACE):
+			if power_closeup_panel != null and power_closeup_panel.has_method("return_selected_module_to_inventory"):
+				power_closeup_panel.return_selected_module_to_inventory()
+				get_viewport().set_input_as_handled()
+				return
 		if event.keycode == RESTART_KEY:
 			get_tree().reload_current_scene()
 			get_viewport().set_input_as_handled()
@@ -969,6 +974,9 @@ func _on_power_module_action_requested(module_key: String, action_key: String, m
 			String(module.get("display_name", module_key)),
 			String(module.get("drop_reason", "회전 불가 /")),
 		])
+		return
+	if action_key == "return_to_inventory":
+		_update_status("%s: 모듈을 보관함으로 되돌렸습니다. 실제 전력 상태는 변경하지 않았습니다." % String(module.get("display_name", module_key)))
 		return
 
 	var display_name := String(module.get("display_name", module_key))
@@ -2222,6 +2230,8 @@ func _get_action_display_name(action_key: String) -> String:
 			return "선택"
 		"rotate_noop":
 			return "회전"
+		"return_to_inventory":
+			return "보관함 복귀"
 		_:
 			return action_key
 

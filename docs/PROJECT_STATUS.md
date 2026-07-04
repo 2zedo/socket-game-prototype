@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `4e46218`
-- Phase: Quarterview Power Board module rotation prototype
+- Current commit at task start: `ec0d8da`
+- Phase: Quarterview Power Board manipulation UX fix
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -57,6 +57,7 @@
 - QuarterviewMain Power module Resource split: added `PowerModuleDefinition` and four prototype `.tres` module definitions, then made `PowerBoardCandidate.gd` load inventory / shape / description data from Resources with a local fallback.
 - QuarterviewMain L-shape power module pass: changed `odd_efficiency_module` to a 3-cell L-shape candidate and made module inventory blocks, debug guides, and drag previews render from `shape_cells`.
 - QuarterviewMain Power Board rotation prototype: added runtime-only module rotation for selected / dragged modules, with L-shape preview, overlap / out-of-grid cancellation, and no Resource mutation or production power wiring.
+- QuarterviewMain Power Board manipulation UX fix: tightened placed / dragged module state restore, made rotation checks explicitly ignore the module's own occupied cells, and added Delete / Backspace return-to-inventory behavior.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -74,20 +75,20 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: adds selected / dragged module rotation and applies rotated `shape_cells` to inventory, placed module visuals, drag preview, and occupancy checks.
-- `godot/scripts/resources/PowerModuleDefinition.gd`: adds shape normalization / rotation helpers for prototype module UI.
-- `godot/scripts/QuarterviewMain.gd`: routes `R` to module rotation while the Power close-up is open instead of restarting the scene.
-- `godot/test/unit/test_power_module_definition.gd`: validates normalized L-shape rotation.
-- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the rotation prototype pass.
+- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: clarifies module placement state restore, self-excluding occupancy checks, invalid rotation rollback, and return-to-inventory behavior.
+- `godot/scripts/resources/PowerModuleDefinition.gd`: adds pure grid / overlap shape helpers used by the Power board prototype.
+- `godot/scripts/QuarterviewMain.gd`: routes Delete / Backspace to selected module return while the Power close-up is open.
+- `godot/test/unit/test_power_module_definition.gd`: validates grid / overlap helpers, self-excluded rotation checks, and return-to-inventory state reset.
+- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the Power board UX fix.
 
 ## Validation Results
 
-- Targeted `PowerModuleDefinition` GUT passed: 7 tests.
+- Targeted `PowerModuleDefinition` GUT passed: 9 tests.
 - Full `git diff --check` is currently blocked by unrelated whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`.
 - Targeted task-file `git diff --check` passed.
 - Godot headless project parse passed.
 - `res://scenes/QuarterviewMain.tscn` headless startup passed.
-- Full GUT passed: 61 tests.
+- Full GUT passed: 63 tests.
 
 ## Current Risks / Known Issues
 

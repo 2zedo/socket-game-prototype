@@ -336,10 +336,18 @@
 - Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (59 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
 - Next: GUI에서 L-shape inventory visual, valid / invalid shape preview, overlap invalid, out-of-grid reset, existing module behavior를 수동 확인한다.
 
-### this commit - Quarterview Power Board module rotation prototype
+### ec0d8da - Quarterview Power Board module rotation prototype
 
-- Commit: `this commit`
+- Commit: `ec0d8da`
 - Result: Power board module 후보에 runtime-only 90도 회전을 추가했다. `R` 또는 우클릭으로 selected / dragged module을 회전하며, L-shape drag preview와 placed visual은 rotated `shape_cells` 기준으로 보인다. 회전 후 겹치거나 보드 밖이면 취소된다.
 - Changed: `PowerModuleDefinition.gd`, `PowerBoardCandidate.gd`, `QuarterviewMain.gd`, `test_power_module_definition.gd`, temporary art manifest, status docs.
 - Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (61 tests).
 - Next: GUI에서 `R` / 우클릭 회전, L-shape preview, placed module invalid rotation cancel, 기존 drag / snap / close 흐름을 수동 확인한다.
+
+### this commit - Quarterview Power Board manipulation UX fix
+
+- Commit: `this commit`
+- Result: Power board의 placed / dragging / inventory 상태 복구를 명확히 하고, placed module 회전 시 자기 자신의 기존 occupied cells를 overlap 판정에서 제외하도록 정리했다. Delete / Backspace로 selected placed module을 inventory로 되돌리는 후보 UX도 추가했다.
+- Changed: `PowerModuleDefinition.gd`, `PowerBoardCandidate.gd`, `QuarterviewMain.gd`, `test_power_module_definition.gd`, temporary art manifest, status docs.
+- Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (63 tests).
+- Next: GUI에서 placed module 회전 self-overlap 제거, invalid rotation rollback, invalid drop restore, Delete / Backspace inventory return을 확인한다.

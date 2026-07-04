@@ -146,6 +146,10 @@ func rotate_active_module() -> void:
 	_rotate_active_module()
 
 
+func return_selected_module_to_inventory() -> void:
+	_return_module_to_inventory(selected_module_key)
+
+
 func clear_drag_state() -> void:
 	if not dragging_module_key.is_empty():
 		var button: Button = module_buttons.get(dragging_module_key, null)
@@ -170,6 +174,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R:
 		_rotate_active_module()
 		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo and _is_return_to_inventory_key(event.keycode):
+		_return_module_to_inventory(selected_module_key)
+		get_viewport().set_input_as_handled()
 
 
 func _build() -> void:
@@ -193,7 +200,7 @@ func _build() -> void:
 	vbox.add_child(title)
 
 	var description := Label.new()
-	description.text = "모듈을 보드에 드래그해 배치합니다. R: 모듈 회전 / 겹치거나 보드 밖이면 배치 불가."
+	description.text = "모듈을 보드에 드래그해 배치합니다. R/우클릭: 회전, Delete/Backspace: 되돌리기."
 	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.78, 1.0))
 	description.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(description)
@@ -238,7 +245,7 @@ func _build() -> void:
 	board_surface.add_child(board_title)
 
 	var board_hint := Label.new()
-	board_hint.text = "Drag modules here"
+	board_hint.text = "겹치거나 보드 밖이면 배치할 수 없음"
 	board_hint.position = BOARD_RECT.position + Vector2(18, 38)
 	board_hint.size = Vector2(250, 20)
 	board_hint.add_theme_color_override("font_color", Color(0.58, 0.68, 0.66, 0.92))
@@ -315,7 +322,7 @@ func _build() -> void:
 	button_row.add_child(close_button)
 
 	var close_hint := Label.new()
-	close_hint.text = "ESC 닫기 / R 또는 우클릭 회전 / 배치는 no-op status만 남김 / 전력 계산과 OutletMode는 미연결"
+	close_hint.text = "ESC 닫기 / 배치는 no-op status만 남김 / 전력 계산과 OutletMode는 미연결"
 	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
 	close_hint.add_theme_font_size_override("font_size", 12)
 	vbox.add_child(close_hint)
@@ -461,6 +468,23 @@ func _rotate_module(module_key: String) -> void:
 	module_action_requested.emit(module_key, "rotate_noop", payload)
 
 
+func _return_module_to_inventory(module_key: String) -> void:
+	var module := _get_module(module_key)
+	if module.is_empty() or not module_grid_positions.has(module_key):
+		return
+
+	clear_drag_state()
+	module_grid_positions.erase(module_key)
+	# Returning to inventory resets rotation so the palette always starts from the Resource shape.
+	module_rotations[module_key] = 0
+	_refresh_module_visual(module_key)
+	_select_module(module_key)
+
+	var payload := module.duplicate(true)
+	payload["rotation_degrees"] = 0
+	module_action_requested.emit(module_key, "return_to_inventory", payload)
+
+
 func _refresh_module_visual(module_key: String) -> void:
 	var module := _get_module(module_key)
 	var button: Button = module_buttons.get(module_key, null)
@@ -508,6 +532,10 @@ func _get_module_rotation(module_key: String) -> int:
 
 func _get_module_rotation_degrees(module_key: String) -> int:
 	return _get_module_rotation(module_key) * 90
+
+
+func _is_return_to_inventory_key(keycode: Key) -> bool:
+	return keycode == KEY_DELETE or keycode == KEY_BACKSPACE
 
 
 func _get_module_display_shape_cells(module_key: String) -> Array[Vector2i]:
@@ -573,13 +601,7 @@ func _finish_module_drag(module_key: String) -> void:
 		selected_module_key = module_key
 		module_dropped.emit(module_key, cell, module.duplicate(true))
 	else:
-		module_rotations[module_key] = drag_origin_rotation
-		_refresh_module_visual(module_key)
-		button.position = drag_origin_local
-		if drag_origin_had_cell:
-			module_grid_positions[module_key] = drag_origin_cell
-		else:
-			module_grid_positions.erase(module_key)
+		_restore_module_to_drag_origin(module_key)
 		var invalid_payload := module.duplicate(true)
 		invalid_payload["drop_reason"] = String(drop_candidate.get("reason", "invalid drop /"))
 		module_action_requested.emit(module_key, "invalid_drop", invalid_payload)
@@ -587,6 +609,21 @@ func _finish_module_drag(module_key: String) -> void:
 	_sync_module_guide(module_key)
 	clear_drag_state()
 	_refresh_module_detail()
+
+
+func _restore_module_to_drag_origin(module_key: String) -> void:
+	var button: Button = module_buttons.get(module_key, null)
+	if button == null:
+		return
+
+	module_rotations[module_key] = drag_origin_rotation
+	if drag_origin_had_cell:
+		module_grid_positions[module_key] = drag_origin_cell
+	else:
+		module_grid_positions.erase(module_key)
+	_refresh_module_visual(module_key)
+	button.position = drag_origin_local
+	_sync_module_guide(module_key)
 
 
 func _get_grid_global_rect() -> Rect2:
@@ -643,27 +680,31 @@ func _is_drop_cell_available(module_key: String, cell: Vector2i, shape_cells: Ar
 	if not _are_shape_cells_inside_grid(cell, shape_cells):
 		return false
 
-	for offset in shape_cells:
-		var check_cell := cell + offset
-		for other_key in module_grid_positions.keys():
-			if String(other_key) == module_key:
-				continue
-			var other_module := _get_module(String(other_key))
-			if other_module.is_empty():
-				continue
-			var other_cell: Vector2i = module_grid_positions[other_key]
-			var other_shape_cells := _get_module_display_shape_cells(String(other_key))
-			if _is_cell_inside_module(check_cell, other_cell, other_shape_cells):
-				return false
-	return true
+	return not POWER_MODULE_DEFINITION_SCRIPT.shape_cells_overlap_any(
+		cell,
+		shape_cells,
+		_get_placed_module_entries(),
+		module_key
+	)
+
+
+func _get_placed_module_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	for other_key in module_grid_positions.keys():
+		var other_module_key := String(other_key)
+		var other_module := _get_module(other_module_key)
+		if other_module.is_empty():
+			continue
+		entries.append({
+			"key": other_module_key,
+			"anchor": module_grid_positions[other_key],
+			"shape_cells": _get_module_display_shape_cells(other_module_key),
+		})
+	return entries
 
 
 func _are_shape_cells_inside_grid(cell: Vector2i, shape_cells: Array[Vector2i]) -> bool:
-	for offset in shape_cells:
-		var check_cell := cell + offset
-		if check_cell.x < 0 or check_cell.y < 0 or check_cell.x >= GRID_CELLS.x or check_cell.y >= GRID_CELLS.y:
-			return false
-	return true
+	return POWER_MODULE_DEFINITION_SCRIPT.shape_cells_are_inside_grid(cell, shape_cells, GRID_CELLS)
 
 
 func _is_cell_inside_module(cell: Vector2i, module_cell: Vector2i, shape_cells: Array[Vector2i]) -> bool:
@@ -733,7 +774,8 @@ func _refresh_module_detail() -> void:
 		return
 
 	module_title_label.text = String(module["display_name"])
-	module_detail_label.text = "크기: %s\n회전: %d도\n후보 효과: %s\n\n%s\n\n아직 실제 전력 계산 없음." % [
+	module_detail_label.text = "상태: %s\n크기: %s\n회전: %d도\n후보 효과: %s\n\n%s\n\nR/우클릭: 회전\nDelete/Backspace: 보관함으로 되돌리기\n아직 실제 전력 계산 없음." % [
+		"board 배치됨" if module_grid_positions.has(selected_module_key) else "inventory",
 		_get_display_shape_text(selected_module_key),
 		_get_module_rotation_degrees(selected_module_key),
 		String(module.get("effect", "효과 후보 없음")),
