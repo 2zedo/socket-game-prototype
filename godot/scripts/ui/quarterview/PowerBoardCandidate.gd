@@ -1,6 +1,8 @@
 extends PanelContainer
 class_name PowerBoardCandidate
 
+const POWER_MODULE_DEFINITION_SCRIPT := preload("res://scripts/resources/PowerModuleDefinition.gd")
+
 signal close_requested
 signal module_action_requested(module_key: String, action_key: String, module: Dictionary)
 signal module_dropped(module_key: String, cell: Vector2i, module: Dictionary)
@@ -23,7 +25,14 @@ const MODULE_ATLAS_REGIONS := {
 	"odd_efficiency_module": Rect2(Vector2(882, 876), Vector2(342, 330)),
 }
 
-const MODULES := [
+const MODULE_RESOURCE_PATHS := [
+	"res://resources/rooms/quarterview/power_modules/small_core.tres",
+	"res://resources/rooms/quarterview/power_modules/laptop_adapter.tres",
+	"res://resources/rooms/quarterview/power_modules/comm_module.tres",
+	"res://resources/rooms/quarterview/power_modules/odd_efficiency_module.tres",
+]
+
+const FALLBACK_MODULES := [
 	{
 		"key": "small_core",
 		"display_name": "Small Core",
@@ -32,7 +41,9 @@ const MODULES := [
 		"effect": "전력 안정 / 효율 낮음",
 		"candidate_action": "place_small_core_noop",
 		"rect": Rect2(Vector2(18, 62), Vector2(48, 38)),
+		"shape_cells": [Vector2i(0, 0)],
 		"size_cells": Vector2i(1, 1),
+		"atlas_region_name": "small_core",
 		"color": Color(0.16, 0.38, 0.48, 0.92),
 	},
 	{
@@ -43,7 +54,9 @@ const MODULES := [
 		"effect": "노트북 우선 공급 / 발열 약간 증가",
 		"candidate_action": "place_laptop_adapter_noop",
 		"rect": Rect2(Vector2(18, 122), Vector2(98, 38)),
+		"shape_cells": [Vector2i(0, 0), Vector2i(1, 0)],
 		"size_cells": Vector2i(2, 1),
+		"atlas_region_name": "laptop_adapter",
 		"color": Color(0.34, 0.28, 0.16, 0.94),
 	},
 	{
@@ -54,7 +67,9 @@ const MODULES := [
 		"effect": "통신 유지 / 신호 보정 후보",
 		"candidate_action": "place_comm_module_noop",
 		"rect": Rect2(Vector2(18, 182), Vector2(48, 78)),
+		"shape_cells": [Vector2i(0, 0), Vector2i(0, 1)],
 		"size_cells": Vector2i(1, 2),
+		"atlas_region_name": "comm_module",
 		"color": Color(0.48, 0.22, 0.14, 0.92),
 	},
 	{
@@ -65,7 +80,9 @@ const MODULES := [
 		"effect": "효율 보정 / 배치 난도 높음",
 		"candidate_action": "place_efficiency_module_noop",
 		"rect": Rect2(Vector2(18, 242), Vector2(98, 78)),
+		"shape_cells": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
 		"size_cells": Vector2i(2, 2),
+		"atlas_region_name": "odd_efficiency_module",
 		"color": Color(0.25, 0.24, 0.30, 0.94),
 	},
 ]
@@ -90,12 +107,14 @@ var module_title_label: Label
 var module_detail_label: Label
 var module_debug_label: Label
 var atlas_texture: Texture2D
+var modules: Array[Dictionary] = []
 
 
 func _init() -> void:
 	name = "PowerEquipmentCloseupCandidate"
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = PANEL_SIZE
+	modules = _load_modules()
 	_build()
 
 
@@ -218,7 +237,7 @@ func _build() -> void:
 	drop_preview.color = Color(0.22, 0.88, 0.72, 0.24)
 	board_surface.add_child(drop_preview)
 
-	for module in MODULES:
+	for module in modules:
 		_add_module_button(module)
 
 	var detail_panel := PanelContainer.new()
@@ -359,12 +378,12 @@ func _add_module_button(module: Dictionary) -> void:
 
 
 func _get_module_pixel_size(module: Dictionary) -> Vector2:
-	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
+	var size_cells := _get_module_size_cells(module)
 	return Vector2(CELL_SIZE.x * size_cells.x - 2.0, CELL_SIZE.y * size_cells.y - 2.0)
 
 
 func _get_module_size_text(module: Dictionary) -> String:
-	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
+	var size_cells := _get_module_size_cells(module)
 	return "%dx%d" % [size_cells.x, size_cells.y]
 
 
@@ -461,48 +480,47 @@ func _get_drop_candidate(module_key: String) -> Dictionary:
 	if not grid_rect.has_point(center):
 		return {"inside": false, "valid": false, "reason": "grid 밖이라"}
 
-	var size_cells: Vector2i = module.get("size_cells", Vector2i(1, 1))
+	var size_cells := _get_module_size_cells(module)
 	var local_top_left := button.global_position - grid_rect.position
 	var cell := Vector2i(
 		clampi(roundi(local_top_left.x / CELL_SIZE.x), 0, GRID_CELLS.x - size_cells.x),
 		clampi(roundi(local_top_left.y / CELL_SIZE.y), 0, GRID_CELLS.y - size_cells.y)
 	)
-	var valid := _is_drop_cell_available(module_key, cell, size_cells)
+	var shape_cells := _get_module_shape_cells(module)
+	var valid := _is_drop_cell_available(module_key, cell, shape_cells)
 	return {
 		"inside": true,
 		"valid": valid,
 		"cell": cell,
 		"size_cells": size_cells,
+		"shape_cells": shape_cells,
 		"reason": "" if valid else "다른 모듈과 겹쳐서",
 	}
 
 
-func _is_drop_cell_available(module_key: String, cell: Vector2i, size_cells: Vector2i) -> bool:
-	for y in range(cell.y, cell.y + size_cells.y):
-		for x in range(cell.x, cell.x + size_cells.x):
-			if x < 0 or y < 0 or x >= GRID_CELLS.x or y >= GRID_CELLS.y:
+func _is_drop_cell_available(module_key: String, cell: Vector2i, shape_cells: Array[Vector2i]) -> bool:
+	for offset in shape_cells:
+		var check_cell := cell + offset
+		if check_cell.x < 0 or check_cell.y < 0 or check_cell.x >= GRID_CELLS.x or check_cell.y >= GRID_CELLS.y:
+			return false
+		for other_key in module_grid_positions.keys():
+			if String(other_key) == module_key:
+				continue
+			var other_module := _get_module(String(other_key))
+			if other_module.is_empty():
+				continue
+			var other_cell: Vector2i = module_grid_positions[other_key]
+			var other_shape_cells := _get_module_shape_cells(other_module)
+			if _is_cell_inside_module(check_cell, other_cell, other_shape_cells):
 				return false
-			var check_cell := Vector2i(x, y)
-			for other_key in module_grid_positions.keys():
-				if String(other_key) == module_key:
-					continue
-				var other_module := _get_module(String(other_key))
-				if other_module.is_empty():
-					continue
-				var other_cell: Vector2i = module_grid_positions[other_key]
-				var other_size: Vector2i = other_module.get("size_cells", Vector2i(1, 1))
-				if _is_cell_inside_module(check_cell, other_cell, other_size):
-					return false
 	return true
 
 
-func _is_cell_inside_module(cell: Vector2i, module_cell: Vector2i, size_cells: Vector2i) -> bool:
-	return (
-		cell.x >= module_cell.x
-		and cell.y >= module_cell.y
-		and cell.x < module_cell.x + size_cells.x
-		and cell.y < module_cell.y + size_cells.y
-	)
+func _is_cell_inside_module(cell: Vector2i, module_cell: Vector2i, shape_cells: Array[Vector2i]) -> bool:
+	for offset in shape_cells:
+		if cell == module_cell + offset:
+			return true
+	return false
 
 
 func _update_drop_preview(module_key: String) -> void:
@@ -589,10 +607,82 @@ func _refresh_module_detail() -> void:
 
 
 func _get_module(module_key: String) -> Dictionary:
-	for module in MODULES:
+	for module in modules:
 		if String(module["key"]) == module_key:
 			return module
 	return {}
+
+
+func _load_modules() -> Array[Dictionary]:
+	var loaded_modules: Array[Dictionary] = []
+	var seen_keys := {}
+
+	for path in MODULE_RESOURCE_PATHS:
+		var resource := load(path)
+		if resource == null:
+			push_warning("PowerBoardCandidate could not load power module Resource: %s" % path)
+			continue
+		if resource.get_script() != POWER_MODULE_DEFINITION_SCRIPT:
+			push_warning("PowerBoardCandidate skipped non-PowerModuleDefinition Resource: %s" % path)
+			continue
+		if not resource.is_valid_definition():
+			push_warning("PowerBoardCandidate skipped invalid PowerModuleDefinition: %s" % path)
+			continue
+
+		var module := _module_definition_to_dictionary(resource)
+		var key := String(module["key"])
+		if seen_keys.has(key):
+			push_warning("PowerBoardCandidate skipped duplicate power module key: %s" % key)
+			continue
+
+		loaded_modules.append(module)
+		seen_keys[key] = true
+
+	if loaded_modules.is_empty():
+		push_warning("PowerBoardCandidate using fallback module data because no Resource modules loaded.")
+		for module in FALLBACK_MODULES:
+			loaded_modules.append(module.duplicate(true))
+
+	return loaded_modules
+
+
+func _module_definition_to_dictionary(definition: Resource) -> Dictionary:
+	var size_cells: Vector2i = definition.get_size_cells()
+	return {
+		"key": definition.key,
+		"display_name": definition.display_name,
+		"role": definition.role,
+		"description": definition.description,
+		"effect": definition.get_effect_label(),
+		"candidate_action": definition.get_candidate_action(),
+		"rect": Rect2(
+			definition.inventory_position,
+			Vector2(CELL_SIZE.x * size_cells.x - 2.0, CELL_SIZE.y * size_cells.y - 2.0)
+		),
+		"shape_cells": definition.get_shape_cells(),
+		"size_cells": size_cells,
+		"atlas_region_name": definition.atlas_region_name,
+		"color": definition.color,
+		"is_prototype": definition.is_prototype,
+	}
+
+
+func _get_module_shape_cells(module: Dictionary) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var raw_cells: Array = module.get("shape_cells", [])
+	for raw_cell in raw_cells:
+		cells.append(Vector2i(raw_cell))
+	if cells.is_empty():
+		cells.append(Vector2i.ZERO)
+	return cells
+
+
+func _get_module_size_cells(module: Dictionary) -> Vector2i:
+	var size_cells := Vector2i.ONE
+	for cell in _get_module_shape_cells(module):
+		size_cells.x = maxi(size_cells.x, cell.x + 1)
+		size_cells.y = maxi(size_cells.y, cell.y + 1)
+	return size_cells
 
 
 func _load_texture_from_png(path: String) -> Texture2D:
@@ -626,11 +716,23 @@ func _scale_atlas_region(region: Rect2) -> Rect2:
 
 
 func _get_module_atlas_region(module_key: String) -> Rect2:
-	return MODULE_ATLAS_REGIONS.get(module_key, Rect2())
+	var region_name := _get_module_atlas_region_name(module_key)
+	return MODULE_ATLAS_REGIONS.get(region_name, Rect2())
 
 
 func _has_module_atlas_region(module_key: String) -> bool:
-	return atlas_texture != null and MODULE_ATLAS_REGIONS.has(module_key)
+	var region_name := _get_module_atlas_region_name(module_key)
+	return atlas_texture != null and MODULE_ATLAS_REGIONS.has(region_name)
+
+
+func _get_module_atlas_region_name(module_key: String) -> String:
+	var module := _get_module(module_key)
+	if module.is_empty():
+		return module_key
+	var atlas_region_name := String(module.get("atlas_region_name", ""))
+	if atlas_region_name.is_empty():
+		return module_key
+	return atlas_region_name
 
 
 func _format_rect(rect: Rect2) -> String:

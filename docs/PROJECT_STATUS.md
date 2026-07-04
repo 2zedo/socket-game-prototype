@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `19fd377`
-- Phase: Quarterview Power Board readability pass
+- Current commit at task start: `d4eb265`
+- Phase: Quarterview Power Module Resource split
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -54,6 +54,7 @@
 - QuarterviewMain Phone / Power candidate helper split: moved Phone screen candidate UI / atlas-region composition and Power board drag / occupancy logic into dedicated Quarterview UI helper scripts while keeping QuarterviewMain as the overlay orchestration layer.
 - QuarterviewMain Power Board UI atlas visual pass: added `ui_power_board_atlas.png` as a temporary transparent Power close-up atlas and made `PowerBoardCandidate.gd` optionally use atlas regions for board frame, cells, module icons, and drop preview while keeping the existing fallback shapes and no production power wiring.
 - QuarterviewMain Power Board readability pass: reorganized the Power equipment close-up into Module Inventory / Power Board Grid / selected module detail columns, made the grid simple and readable by default, enlarged module blocks, and kept drag / snap / overlap invalid behavior no-op and QuarterviewMain-only.
+- QuarterviewMain Power module Resource split: added `PowerModuleDefinition` and four prototype `.tres` module definitions, then made `PowerBoardCandidate.gd` load inventory / shape / description data from Resources with a local fallback.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -71,17 +72,19 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: lays out Module Inventory / Power Board Grid / selected module detail as separate areas and prioritizes a readable ColorRect grid while keeping optional atlas module icons and fallback behavior.
-- `godot/scripts/QuarterviewMain.gd`: widens and repositions the Power close-up panel for the clearer layout.
-- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the readability-first Power board UI state.
+- `godot/scripts/resources/PowerModuleDefinition.gd`: defines prototype power-module Resource fields and helpers.
+- `godot/resources/rooms/quarterview/power_modules/*.tres`: stores the four current Power board module candidates.
+- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: loads module inventory data from Resources and keeps a hardcoded fallback if Resource loading fails.
+- `godot/test/unit/test_power_module_definition.gd`: validates PowerModuleDefinition helpers and Resource files.
+- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the module Resource split.
 
 ## Validation Results
 
-- Targeted `git diff --check` for the latest QuarterviewMain / PowerBoard files passed.
+- Targeted `PowerModuleDefinition` GUT passed: 4 tests.
 - Full `git diff --check` is currently blocked by unrelated whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`.
 - Godot headless project parse passed.
 - `res://scenes/QuarterviewMain.tscn` headless startup passed.
-- Full GUT passed: 54 tests.
+- Full GUT passed: 58 tests.
 
 ## Current Risks / Known Issues
 

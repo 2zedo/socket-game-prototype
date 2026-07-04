@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="PowerModuleDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/PowerModuleDefinition.gd" id="1_power_module"]
+
+[resource]
+script = ExtResource("1_power_module")
+key = "comm_module"
+display_name = "Comm Module"
+role = "power_routing"
+description = "통신 장비 전원을 세로로 잡아주는 1x2 후보 모듈입니다. 실제 장치 active 값은 바꾸지 않습니다."
+shape_cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
+mock_power_label = "통신 유지"
+mock_heat_label = "과부하 낮음"
+bonus_label = "신호 보정 후보"
+candidate_action = "place_comm_module_noop"
+atlas_region_name = "comm_module"
+inventory_position = Vector2(18, 182)
+color = Color(0.48, 0.22, 0.14, 0.92)
+is_prototype = true

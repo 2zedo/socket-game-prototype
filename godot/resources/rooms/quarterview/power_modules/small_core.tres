@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="PowerModuleDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/PowerModuleDefinition.gd" id="1_power_module"]
+
+[resource]
+script = ExtResource("1_power_module")
+key = "small_core"
+display_name = "Small Core"
+role = "power_module"
+description = "작고 단순한 1x1 전력 코어 후보입니다. 배치해도 실제 전력 계산은 없습니다."
+shape_cells = Array[Vector2i]([Vector2i(0, 0)])
+mock_power_label = "전력 안정"
+mock_heat_label = "효율 낮음"
+bonus_label = "기본 코어 후보"
+candidate_action = "place_small_core_noop"
+atlas_region_name = "small_core"
+inventory_position = Vector2(18, 62)
+color = Color(0.16, 0.38, 0.48, 0.92)
+is_prototype = true

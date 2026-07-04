@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="PowerModuleDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/PowerModuleDefinition.gd" id="1_power_module"]
+
+[resource]
+script = ExtResource("1_power_module")
+key = "laptop_adapter"
+display_name = "Laptop Adapter"
+role = "power_adapter"
+description = "노트북 전원을 우선 배분할 2x1 어댑터 후보입니다. OutletMode와는 아직 연결하지 않았습니다."
+shape_cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)])
+mock_power_label = "노트북 우선 공급"
+mock_heat_label = "발열 약간 증가"
+bonus_label = "작업 장비 우선 후보"
+candidate_action = "place_laptop_adapter_noop"
+atlas_region_name = "laptop_adapter"
+inventory_position = Vector2(18, 122)
+color = Color(0.34, 0.28, 0.16, 0.94)
+is_prototype = true

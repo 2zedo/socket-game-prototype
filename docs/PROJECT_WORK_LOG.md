@@ -312,10 +312,18 @@
 - Validation: PNG size / alpha / visible-green check, `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Power close-up 열기, module drag / snap / overlap invalid / out-of-grid reset, atlas visual readability, fallback safety, 기존 Phone / Desk / Bed / Food-Kitchen / Door overlay 회귀 여부를 수동 확인한다.
 
-### this commit - Quarterview Power Board readability pass
+### d4eb265 - Quarterview Power Board readability pass
 
-- Commit: `this commit`
+- Commit: `d4eb265`
 - Result: Power equipment close-up을 Module Inventory / Power Board Grid / selected module detail 영역으로 나누고, atlas frame을 크게 깔던 구성을 줄여 단순하고 명확한 grid를 기본 보드로 보이게 했다. Module block은 이름 / 크기 / 역할을 읽을 수 있게 커졌고, 기존 drag / snap / overlap invalid / out-of-grid reset은 유지했다.
 - Changed: `PowerBoardCandidate.gd`, `QuarterviewMain.gd`, temporary art manifest, status docs.
 - Validation: targeted `git diff --check` passed; full `git diff --check` is blocked by unrelated addon whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`; Godot project parse, QuarterviewMain headless startup, and full GUT passed (54 tests).
 - Next: GUI에서 Power close-up의 영역 구분, module readability, drag valid / invalid highlight, room input lock / close 흐름, 기존 overlay 회귀 여부를 수동 확인한다.
+
+### this commit - Quarterview Power ModuleDefinition Resource split
+
+- Commit: `this commit`
+- Result: Power board module 후보 데이터를 `PowerModuleDefinition` Resource와 `.tres` 파일로 분리하고, `PowerBoardCandidate.gd`가 Resource에서 inventory / shape / description / atlas region 후보를 읽도록 바꿨다. Resource 로드 실패 시에는 기존 fallback module data를 유지한다.
+- Changed: `PowerModuleDefinition.gd`, `godot/resources/rooms/quarterview/power_modules/*.tres`, `PowerBoardCandidate.gd`, `test_power_module_definition.gd`, temporary art manifest, status docs.
+- Validation: targeted `PowerModuleDefinition` GUT passed; targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, and full GUT passed (58 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
+- Next: GUI에서 Power close-up inventory, drag / snap, overlap invalid, out-of-grid reset, selected module detail, existing overlay close flow를 수동 확인한다.
