@@ -28,12 +28,11 @@
 
 ## Latest Work
 
-- Recorded additional Act 1 room-design cues in `docs/reference/ART_DIRECTION.md`, `docs/reference/STORY.md`, `docs/reference/ROOM_OBJECTS.md`, and `docs/reference/CHARACTERS.md`.
-- Updated `docs/GAME_INFO.md` with the new high-level art/story room summary.
-- The current art target remains fixed `1920x1080`, slightly pulled-back quarterview, indoor wall finishes, no default wood floor, varied restrained colors, Yui scale `118-132px`, reduced living room footprint, and a logically connected smaller work / power room.
-- The room should now visibly support Act 1's loop: power rationing, portable Phone / Mika DM, anonymous job traces, PIP-03 support spots, NAVI LINK preparation, compact power routing, and later NODE / signal equipment.
-- Yui's room-image scale is aligned to the current `118-132px` target.
-- The work / power room direction centers on NAVI LINK, compact power control, and signal / NODE equipment rather than laptop-centered hacker-room imagery.
+- Recorded latest generated living-space sample feedback in `docs/reference/ART_DIRECTION.md`.
+- Updated `docs/GAME_INFO.md` with the new high-level sample-review summary.
+- The current living-space sample is now treated as a base direction, not a failed draft.
+- Next image revisions should preserve layout and Yui scale, reduce surrounding objects by about `8-15%`, adjust room footprint / wall height / door size / partition scale with the objects, pull the camera back slightly, and add a calm chill nighttime mood.
+- The work / power room may use the chill night mood more strongly, while staying visually consistent with the living room and remaining centered on NAVI LINK / compact power control.
 - This remains documentation-only; no image generation, scene wiring, or asset application was done.
 
 ## Validation Notes
@@ -44,6 +43,6 @@
 
 ## Next Recommended Work
 
-1. Use `docs/reference/ART_DIRECTION.md` as the baseline for the next room image generation prompt.
-2. Generate or request one living-space / work-space sample only after confirming the spec is visually acceptable.
-3. Keep future art changes in `docs/reference/ART_DIRECTION.md` first, then mirror only high-level changes in `docs/GAME_INFO.md`.
+1. For the next living-space image pass, reuse the accepted sample direction and request only scale / camera / mood tuning.
+2. Do not redesign the room layout unless the user explicitly asks.
+3. For work + power room generation, keep the same scale/camera system and lean slightly more into the chill cyber nighttime mood.

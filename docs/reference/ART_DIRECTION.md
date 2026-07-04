@@ -23,6 +23,42 @@ Use these rules for new in-game room sample images:
 - Doors, partitions, and living routes must connect logically.
 - The room image should reveal the Act 1 play loop at a glance: power rationing, portable Phone / DM access, anonymous job traces, PIP-03 support, NAVI LINK preparation, and constrained lower-grid living.
 
+## Latest Sample Review Policy
+
+The latest living-space sample is broadly accepted as a base direction.
+
+Preserve:
+
+- overall living-space layout and design direction
+- Yui's current character scale
+- the main living-space zones: bed, entrance, dining, kitchen, internal connecting door
+- the cleaner color/design direction compared to earlier drafts
+
+Next image revisions should be micro-adjustments, not a redesign.
+
+Primary fixes:
+
+- reduce most furniture / props by about `8-15%`
+- keep Yui scale unchanged and rebalance objects around her
+- pull the camera back one small step while preserving the same quarterview angle
+- make the room slightly more compact after object shrink, so it does not become empty
+- lower / shrink related architecture proportionally: floor footprint, wall height, door size, partition height / width, and spacing
+- add a slightly darker, chill night mood without losing the warm lived-in room identity
+
+Do not break the accepted layout while chasing a new mood.
+
+## Camera / Proportion Revision Rule
+
+When a generated sample feels close but oversized:
+
+1. Keep Yui size.
+2. Reduce large objects first.
+3. Reduce doors / partitions / wall height to match.
+4. Slightly reduce room footprint if the floor becomes too empty.
+5. Pull camera back by zooming out slightly, not by changing to a top-view angle.
+
+The desired result is a small real one-person living space that feels compact, usable, and readable, not a toy room and not a huge staged apartment.
+
 ## Scale Anchor
 
 Yui is the visual scale anchor.
@@ -117,6 +153,27 @@ Because Yui is visually dark, furniture and objects need enough mid-tone and lig
 
 ## Living Space
 
+### Current Living Sample Status
+
+The current living-space sample can be treated as a layout/design base.
+
+Keep:
+
+- bed zone, entrance zone, dining zone, kitchen zone, and internal connecting door separation
+- tidy lived-in direction
+- current Yui size
+- broad color plan and practical home feeling
+
+Adjust:
+
+- refrigerator, microwave, sink, dining table, chairs, bed, partition, doors, and small shelves should be slightly smaller
+- table should read as a small two-person dining table, not a heavy four-person table
+- microwave and kitchen appliances should feel reachable by Yui
+- partitions should separate zones but not feel oversized or bulky
+- room and wall proportions should shrink with the objects
+- camera should pull back slightly while keeping the same angle
+- lighting should become a calmer nighttime room mood
+
 ### Size
 
 The living space is still larger than the work room, but it should be smaller than the previous oversized sample.
@@ -134,6 +191,8 @@ Compared to the prior direction, reduce about:
 - depth `-80px`
 
 The room should be slightly rectangular, not square.
+
+If object scale is reduced, reduce the room footprint slightly too. Do not leave excessive empty floor just because furniture got smaller.
 
 ### Zones
 
@@ -274,6 +333,7 @@ Scale:
 - tabletop must be smaller than previous samples
 - chairs should be one step smaller
 - table must not dominate Yui
+- current accepted-sample revision target: reduce table and chairs slightly, not replace them
 
 Colors:
 
@@ -327,6 +387,28 @@ Colors:
 
 ## Work + Power Space
 
+### Work Sample Mood Direction
+
+The work + power room should share the same scale system as the accepted living-space sample.
+
+Use:
+
+- same Yui scale
+- same quarterview camera angle
+- similar wall thickness and material logic
+- similar margin / floor readability
+- slightly stronger chill night atmosphere than the living room
+
+The second reference mood can influence the work room more strongly:
+
+- darker but not unreadable
+- chill cyber night tone
+- low-key equipment glow
+- cyan / violet / blue status lights
+- amber maintenance lamp accents
+
+Do not copy a reference wholesale. The work room must still feel like the other room in the same home.
+
 ### Size
 
 The work + power room is smaller than the living room.
@@ -360,6 +442,7 @@ This room is:
 - slightly data-center orderly
 - compact and professional
 - the visual home of NAVI LINK, power routing, anonymous job preparation, and later NODE / signal equipment
+- darker and more technical than the living space, but still organized and usable
 
 It is not:
 
@@ -464,6 +547,16 @@ Accent:
 
 Avoid all-charcoal, all-gray, all-cyan, and overly gloomy shading.
 
+### Work Room Scale Revision
+
+If the first work-room sample inherits the living-space scale issue:
+
+- reduce equipment / furniture by about `8-15%`
+- keep Yui scale unchanged
+- reduce room footprint and wall height proportionally
+- pull the camera back one small step
+- make NAVI LINK readable as a compact professional personal device, not oversized medical furniture
+
 ## Interaction Emphasis
 
 Interactive objects should be readable without looking like UI stickers.
@@ -539,7 +632,7 @@ Current temporary generated assets include:
 Use this short baseline for future room image prompts:
 
 ```text
-1920x1080 fixed 16:9, 2D quarterview cutaway game room, camera slightly pulled back with comfortable margins and readable walkable floor. Interior walls are off-white / warm gray indoor panels, not exterior concrete. No wood floor; use clean light gray-white resin or composite tile floor. Use varied restrained colors: cream gray, light greige, dusty blue, sage, warm amber, muted teal, small coral, and soft city reflections. Yui scale anchor is 118-132px tall and slim. Living space is a warm modest real home, slightly smaller than prior sample, with a modest shoe-off entry threshold, low partition / mesh curtain sleep separation, bed in quiet inner corner, compact kitchen / coffee area, smaller dining table and chairs, small power-ration cue, portable Phone charging/resting cue, possible subtle PIP-03 charging spot, and internal door on upper-right / right-back wall. Work + power space is smaller and professional, with door on lower/front side of left wall, no window, no living appliances, centered on NAVI LINK personal synchronization device, compact power panel, signal / NODE equipment, anonymous job log cue, clean NAVI power line, and possible PIP-03 diagnostic port. Avoid dental chair, torture room, villain lab, factory power room, laptop-centered hacker desk, clutter piles, charcoal-gray-cyan monotony, luxury furniture, motel colors, and impossible door placement.
+1920x1080 fixed 16:9, 2D quarterview cutaway game room, camera slightly pulled back with comfortable margins and readable walkable floor. Interior walls are off-white / warm gray indoor panels, not exterior concrete. No wood floor; use clean light gray-white resin or composite tile floor. Use varied restrained colors: cream gray, light greige, dusty blue, sage, warm amber, muted teal, small coral, and soft city reflections. Yui scale anchor is 118-132px tall and slim. If revising the accepted living-space sample, keep Yui size and current layout, reduce surrounding objects by 8-15%, adjust room footprint / wall height / door size / partition height with the object scale, and pull the camera back one small step without changing the quarterview angle. Living space is a warm modest real home with a calm chill nighttime mood, modest shoe-off entry threshold, low partition / mesh curtain sleep separation, bed in quiet inner corner, compact kitchen / coffee area, smaller dining table and chairs, small power-ration cue, portable Phone charging/resting cue, possible subtle PIP-03 charging spot, and internal door on upper-right / right-back wall. Work + power space is smaller and professional, slightly darker and more cyber-chill than the living room, with door on lower/front side of left wall, no window, no living appliances, centered on NAVI LINK personal synchronization device, compact power panel, signal / NODE equipment, anonymous job log cue, clean NAVI power line, and possible PIP-03 diagnostic port. Avoid dental chair, torture room, villain lab, factory power room, laptop-centered hacker desk, clutter piles, charcoal-gray-cyan monotony, luxury furniture, motel colors, oversized props, and impossible door placement.
 ```
 
 ## Art Non-Goals

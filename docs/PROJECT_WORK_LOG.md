@@ -26,8 +26,16 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ### Act 1 room design cues
 
-- Commit: pending in this task.
+- Commit: `639b614`
 - Result: Added room-design cues for power rationing, portable Phone / Mika DM, anonymous job traces, PIP-03 support spots, NAVI LINK preparation, and NODE / signal equipment placement to current reference docs.
 - Changed: `docs/reference/ART_DIRECTION.md`, `docs/reference/STORY.md`, `docs/reference/ROOM_OBJECTS.md`, `docs/reference/CHARACTERS.md`, `docs/GAME_INFO.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`.
 - Not changed: Godot code, scenes, resources, assets, image files, `project.godot`, Main/DAY1 production flow.
 - Next: Use the living-space-only prompt direction first; do not generate both living and work rooms in one pass unless explicitly requested.
+
+### Living-space sample review
+
+- Commit: pending in this task.
+- Result: Recorded that the latest living-space image is a usable base direction. The next pass should preserve layout and Yui scale while shrinking surrounding objects, related room proportions, and pulling the camera back slightly, then add a calmer chill nighttime mood.
+- Changed: documentation only.
+- Not changed: Godot code, scenes, resources, assets, image files, `project.godot`, Main/DAY1 production flow.
+- Next: Revise the living-space image as a proportion/camera/mood tuning pass, not a full redesign.

@@ -21,6 +21,7 @@
 - Power equipment is moving toward a modular power-board / power-tetris system.
 - Hacking direction is action infiltration + defense, not a puzzle-only mode.
 - Current room image direction is fixed `1920x1080` quarterview, slightly pulled-back camera, readable Yui scale, indoor wall finishes, varied warm/cool palette, logical two-room door connection, and Act 1 play-loop cues: power rationing, portable Phone / DM life, PIP-03 support spots, anonymous job traces, and NAVI LINK-centered work / power function.
+- Latest living-space image feedback treats the current sample as a base direction: preserve layout and Yui scale, then tune object scale, room proportions, camera distance, and chill nighttime mood.
 - Current mock HUD / overlays in QuarterviewMain are local candidate state, not production `SurvivalState`.
 
 ## 4. Current Implementation Snapshot
