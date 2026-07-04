@@ -4,8 +4,8 @@
 
 - Project: `CONCENT / 전력 부족의 시대`
 - Branch: `main`
-- Current commit at task start: `ec0d8da`
-- Phase: Quarterview Power Board manipulation UX fix
+- Current commit at task start: `8b1b73c`
+- Phase: Quarterview Power Board state-based inventory UX fix
 - Main target: Godot project under `godot/`
 - Current source of truth: `AGENTS.md`, then `docs/CONCENT_PROJECT_IDENTITY.md`
 
@@ -58,6 +58,7 @@
 - QuarterviewMain L-shape power module pass: changed `odd_efficiency_module` to a 3-cell L-shape candidate and made module inventory blocks, debug guides, and drag previews render from `shape_cells`.
 - QuarterviewMain Power Board rotation prototype: added runtime-only module rotation for selected / dragged modules, with L-shape preview, overlap / out-of-grid cancellation, and no Resource mutation or production power wiring.
 - QuarterviewMain Power Board manipulation UX fix: tightened placed / dragged module state restore, made rotation checks explicitly ignore the module's own occupied cells, and added Delete / Backspace return-to-inventory behavior.
+- QuarterviewMain Power Board state-based inventory UX fix: made module state the source of truth, rebuilt inventory / board visuals from placement state, hid placed modules from inventory, collapsed remaining inventory modules upward, and added a visible `보관함으로` return button.
 - QuarterviewMain Bed rest candidate overlay: added a no-op rest / end-day candidate overlay from the Bed object candidate panel while keeping DayResultPanel, SurvivalState day advance, and production result flow unwired.
 - QuarterviewMain Phone candidate overlay: added a no-op Phone status / charge overlay from the Phone object candidate panel while keeping PhoneUI, SurvivalState, and production battery state unwired.
 - QuarterviewMain power equipment close-up candidate: added a no-op power-board style overlay from the Power object candidate panel while keeping OutletMode, SurvivalState, and production power calculation unwired.
@@ -75,11 +76,8 @@
 
 ## Changed Files In Latest Work
 
-- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: clarifies module placement state restore, self-excluding occupancy checks, invalid rotation rollback, and return-to-inventory behavior.
-- `godot/scripts/resources/PowerModuleDefinition.gd`: adds pure grid / overlap shape helpers used by the Power board prototype.
-- `godot/scripts/QuarterviewMain.gd`: routes Delete / Backspace to selected module return while the Power close-up is open.
-- `godot/test/unit/test_power_module_definition.gd`: validates grid / overlap helpers, self-excluded rotation checks, and return-to-inventory state reset.
-- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the Power board UX fix.
+- `godot/scripts/ui/quarterview/PowerBoardCandidate.gd`: uses runtime `module_states` as the source of truth, rebuilds inventory / board visuals from state, adds the visible `보관함으로` return button, and keeps self-excluding occupancy checks.
+- `docs/QUARTERVIEW_TEMP_ART_MANIFEST.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`: record the state-based Power board UX fix.
 
 ## Validation Results
 

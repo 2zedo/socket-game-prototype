@@ -15,6 +15,9 @@ const BOARD_RECT := Rect2(Vector2(244, 0), Vector2(366, 334))
 const GRID_ORIGIN := Vector2(276, 84)
 const GRID_CELLS := Vector2i(6, 5)
 const CELL_SIZE := Vector2(50, 40)
+const INVALID_GRID_CELL := Vector2i(-1, -1)
+const INVENTORY_SLOT_START := Vector2(18, 52)
+const INVENTORY_SLOT_GAP := 56.0
 const UI_POWER_BOARD_ATLAS_PATH := "res://assets/art/ui/atlases/ui_power_board_atlas.png"
 const ATLAS_SOURCE_SIZE := Vector2(1254, 1254)
 
@@ -94,21 +97,19 @@ var module_buttons := {}
 var module_guides := {}
 var module_labels := {}
 var module_home_positions := {}
-var module_grid_positions := {}
-var module_rotations := {}
+var module_states := {}
 var dragging_module_key := ""
 var drag_offset := Vector2.ZERO
 var drag_start_global := Vector2.ZERO
 var drag_origin_local := Vector2.ZERO
-var drag_origin_had_cell := false
-var drag_origin_cell := Vector2i.ZERO
-var drag_origin_rotation := 0
 var board_surface: Control
 var drop_preview: Control
 var drop_preview_texture: TextureRect
 var module_title_label: Label
 var module_detail_label: Label
 var module_debug_label: Label
+var empty_inventory_label: Label
+var return_to_inventory_button: Button
 var atlas_texture: Texture2D
 var modules: Array[Dictionary] = []
 
@@ -119,6 +120,7 @@ func _init() -> void:
 	custom_minimum_size = PANEL_SIZE
 	set_process_unhandled_key_input(true)
 	modules = _load_modules()
+	_initialize_module_states()
 	_build()
 
 
@@ -150,6 +152,43 @@ func return_selected_module_to_inventory() -> void:
 	_return_module_to_inventory(selected_module_key)
 
 
+func _initialize_module_states() -> void:
+	module_states.clear()
+	for module in modules:
+		var key := String(module["key"])
+		module_states[key] = _make_module_state(key)
+
+
+func _make_module_state(module_key: String) -> Dictionary:
+	return {
+		"key": module_key,
+		"is_placed": false,
+		"grid_anchor": INVALID_GRID_CELL,
+		"rotation_index": 0,
+		"drag_start_is_placed": false,
+		"drag_start_grid_anchor": INVALID_GRID_CELL,
+		"drag_start_rotation_index": 0,
+	}
+
+
+func _get_module_state(module_key: String) -> Dictionary:
+	if not module_states.has(module_key):
+		module_states[module_key] = _make_module_state(module_key)
+	return module_states[module_key]
+
+
+func _set_module_state(module_key: String, state: Dictionary) -> void:
+	module_states[module_key] = state
+
+
+func _is_module_placed(module_key: String) -> bool:
+	return bool(_get_module_state(module_key).get("is_placed", false))
+
+
+func _get_module_grid_anchor(module_key: String) -> Vector2i:
+	return Vector2i(_get_module_state(module_key).get("grid_anchor", INVALID_GRID_CELL))
+
+
 func clear_drag_state() -> void:
 	if not dragging_module_key.is_empty():
 		var button: Button = module_buttons.get(dragging_module_key, null)
@@ -163,9 +202,6 @@ func clear_drag_state() -> void:
 	drag_offset = Vector2.ZERO
 	drag_start_global = Vector2.ZERO
 	drag_origin_local = Vector2.ZERO
-	drag_origin_had_cell = false
-	drag_origin_cell = Vector2i.ZERO
-	drag_origin_rotation = 0
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -200,7 +236,7 @@ func _build() -> void:
 	vbox.add_child(title)
 
 	var description := Label.new()
-	description.text = "모듈을 보드에 드래그해 배치합니다. R/우클릭: 회전, Delete/Backspace: 되돌리기."
+	description.text = "모듈을 보드에 드래그해 배치합니다. R/우클릭 회전, 보관함으로 되돌리기."
 	description.add_theme_color_override("font_color", Color(0.74, 0.82, 0.78, 1.0))
 	description.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(description)
@@ -235,6 +271,16 @@ func _build() -> void:
 	inventory_title.add_theme_color_override("font_color", Color(0.90, 0.84, 0.62, 1.0))
 	inventory_title.add_theme_font_size_override("font_size", 15)
 	board_surface.add_child(inventory_title)
+
+	empty_inventory_label = Label.new()
+	empty_inventory_label.text = "모든 모듈 배치됨"
+	empty_inventory_label.position = INVENTORY_RECT.position + Vector2(18, 64)
+	empty_inventory_label.size = Vector2(180, 44)
+	empty_inventory_label.visible = false
+	empty_inventory_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	empty_inventory_label.add_theme_color_override("font_color", Color(0.58, 0.68, 0.66, 0.92))
+	empty_inventory_label.add_theme_font_size_override("font_size", 12)
+	board_surface.add_child(empty_inventory_label)
 
 	var board_title := Label.new()
 	board_title.text = "Power Board Grid"
@@ -302,6 +348,11 @@ func _build() -> void:
 	module_debug_label.add_theme_font_size_override("font_size", 12)
 	detail_box.add_child(module_debug_label)
 
+	return_to_inventory_button = Button.new()
+	return_to_inventory_button.text = "보관함으로"
+	return_to_inventory_button.pressed.connect(return_selected_module_to_inventory)
+	detail_box.add_child(return_to_inventory_button)
+
 	var button_row := HBoxContainer.new()
 	button_row.add_theme_constant_override("separation", 8)
 	vbox.add_child(button_row)
@@ -322,11 +373,12 @@ func _build() -> void:
 	button_row.add_child(close_button)
 
 	var close_hint := Label.new()
-	close_hint.text = "ESC 닫기 / 배치는 no-op status만 남김 / 전력 계산과 OutletMode는 미연결"
+	close_hint.text = "ESC 닫기 / Delete·Backspace도 선택 모듈 되돌리기 / 전력 계산과 OutletMode는 미연결"
 	close_hint.add_theme_color_override("font_color", Color(0.66, 0.70, 0.68, 0.92))
 	close_hint.add_theme_font_size_override("font_size", 12)
 	vbox.add_child(close_hint)
 
+	_rebuild_module_views()
 	_select_module(selected_module_key, false)
 
 
@@ -354,7 +406,6 @@ func _add_module_button(module: Dictionary) -> void:
 	var key := String(module["key"])
 	var rect: Rect2 = module["rect"]
 	var module_size := _get_module_pixel_size(module)
-	module_rotations[key] = int(module_rotations.get(key, 0))
 
 	var guide := Control.new()
 	guide.name = "%sDebugRect" % key.capitalize().replace("_", "")
@@ -402,6 +453,55 @@ func _add_module_button(module: Dictionary) -> void:
 	module_labels[key] = label
 
 
+func _rebuild_module_views() -> void:
+	var inventory_index := 0
+	for module in modules:
+		var key := String(module["key"])
+		var button: Button = module_buttons.get(key, null)
+		if button == null:
+			continue
+
+		_refresh_module_visual(key)
+		button.visible = true
+
+		if _is_module_placed(key):
+			var anchor := _get_module_grid_anchor(key)
+			button.position = GRID_ORIGIN + Vector2(anchor.x * CELL_SIZE.x, anchor.y * CELL_SIZE.y)
+			var label: Label = module_labels.get(key, null)
+			if label != null:
+				label.visible = false
+		else:
+			var module_size := button.size
+			var slot_position := _get_inventory_slot_position(inventory_index, module_size)
+			module_home_positions[key] = slot_position
+			button.position = slot_position
+			var label: Label = module_labels.get(key, null)
+			if label != null:
+				label.visible = true
+				label.text = "%s\n%s / %s" % [
+					String(module["display_name"]),
+					_get_display_shape_text(key),
+					String(module.get("role", "candidate")),
+				]
+				label.position = slot_position + Vector2(module_size.x + 10.0, -2.0)
+				label.size = Vector2(
+					maxf(72.0, INVENTORY_RECT.size.x - label.position.x - 10.0),
+					maxf(module_size.y + 8.0, 48.0)
+				)
+			inventory_index += 1
+
+		_sync_module_guide(key)
+
+	if empty_inventory_label != null:
+		empty_inventory_label.visible = inventory_index == 0
+	_refresh_module_detail()
+
+
+func _get_inventory_slot_position(inventory_index: int, module_size: Vector2) -> Vector2:
+	var y := INVENTORY_SLOT_START.y + float(inventory_index) * maxf(INVENTORY_SLOT_GAP, module_size.y + 16.0)
+	return Vector2(INVENTORY_SLOT_START.x, y)
+
+
 func _get_module_pixel_size(module: Dictionary) -> Vector2:
 	var size_cells := _get_module_size_cells(module)
 	return Vector2(CELL_SIZE.x * size_cells.x - 2.0, CELL_SIZE.y * size_cells.y - 2.0)
@@ -442,15 +542,14 @@ func _rotate_module(module_key: String) -> void:
 
 	var previous_rotation := _get_module_rotation(module_key)
 	var next_rotation := (previous_rotation + 1) % 4
-	module_rotations[module_key] = next_rotation
+	_set_module_rotation(module_key, next_rotation)
 
-	var was_placed := module_grid_positions.has(module_key)
-	var placed_cell: Vector2i = module_grid_positions.get(module_key, Vector2i.ZERO)
+	var was_placed := _is_module_placed(module_key)
+	var placed_cell := _get_module_grid_anchor(module_key)
 	var shape_cells := _get_module_display_shape_cells(module_key)
 	if was_placed and dragging_module_key != module_key and not _is_drop_cell_available(module_key, placed_cell, shape_cells):
-		module_rotations[module_key] = previous_rotation
-		_refresh_module_visual(module_key)
-		_refresh_module_detail()
+		_set_module_rotation(module_key, previous_rotation)
+		_rebuild_module_views()
 		var invalid_payload := module.duplicate(true)
 		invalid_payload["drop_reason"] = "회전 후 겹치거나 보드 밖이라"
 		module_action_requested.emit(module_key, "invalid_rotate", invalid_payload)
@@ -460,7 +559,7 @@ func _rotate_module(module_key: String) -> void:
 	if dragging_module_key == module_key:
 		_update_drop_preview(module_key)
 	else:
-		_sync_module_guide(module_key)
+		_rebuild_module_views()
 	_refresh_module_detail()
 
 	var payload := module.duplicate(true)
@@ -470,14 +569,17 @@ func _rotate_module(module_key: String) -> void:
 
 func _return_module_to_inventory(module_key: String) -> void:
 	var module := _get_module(module_key)
-	if module.is_empty() or not module_grid_positions.has(module_key):
+	if module.is_empty() or not _is_module_placed(module_key):
 		return
 
 	clear_drag_state()
-	module_grid_positions.erase(module_key)
+	var state := _get_module_state(module_key)
+	state["is_placed"] = false
+	state["grid_anchor"] = INVALID_GRID_CELL
 	# Returning to inventory resets rotation so the palette always starts from the Resource shape.
-	module_rotations[module_key] = 0
-	_refresh_module_visual(module_key)
+	state["rotation_index"] = 0
+	_set_module_state(module_key, state)
+	_rebuild_module_views()
 	_select_module(module_key)
 
 	var payload := module.duplicate(true)
@@ -503,10 +605,9 @@ func _refresh_module_visual(module_key: String) -> void:
 	)
 
 	if dragging_module_key != module_key:
-		if module_grid_positions.has(module_key):
-			var grid_rect := _get_grid_global_rect()
-			var cell: Vector2i = module_grid_positions[module_key]
-			button.global_position = grid_rect.position + Vector2(cell.x * CELL_SIZE.x, cell.y * CELL_SIZE.y)
+		if _is_module_placed(module_key):
+			var cell := _get_module_grid_anchor(module_key)
+			button.position = GRID_ORIGIN + Vector2(cell.x * CELL_SIZE.x, cell.y * CELL_SIZE.y)
 		else:
 			button.position = module_home_positions.get(module_key, Vector2.ZERO)
 
@@ -527,7 +628,13 @@ func _refresh_module_visual(module_key: String) -> void:
 
 
 func _get_module_rotation(module_key: String) -> int:
-	return int(module_rotations.get(module_key, 0)) % 4
+	return int(_get_module_state(module_key).get("rotation_index", 0)) % 4
+
+
+func _set_module_rotation(module_key: String, rotation_index: int) -> void:
+	var state := _get_module_state(module_key)
+	state["rotation_index"] = rotation_index % 4
+	_set_module_state(module_key, state)
 
 
 func _get_module_rotation_degrees(module_key: String) -> int:
@@ -558,9 +665,7 @@ func _on_module_gui_input(event: InputEvent, module_key: String) -> void:
 			drag_offset = button.get_global_mouse_position() - button.global_position
 			drag_start_global = button.global_position
 			drag_origin_local = button.position
-			drag_origin_had_cell = module_grid_positions.has(module_key)
-			drag_origin_cell = module_grid_positions.get(module_key, Vector2i.ZERO)
-			drag_origin_rotation = _get_module_rotation(module_key)
+			_capture_drag_start_state(module_key)
 			button.z_index = 8
 			_update_drop_preview(module_key)
 			get_viewport().set_input_as_handled()
@@ -592,13 +697,21 @@ func _finish_module_drag(module_key: String) -> void:
 		_request_module_action("focus")
 		return
 
+	if bool(_get_module_state(module_key).get("drag_start_is_placed", false)) and _is_button_over_inventory(button):
+		_return_module_to_inventory(module_key)
+		clear_drag_state()
+		return
+
 	var drop_candidate := _get_drop_candidate(module_key)
 	if bool(drop_candidate.get("valid", false)):
 		var cell: Vector2i = drop_candidate["cell"]
-		var grid_rect := _get_grid_global_rect()
-		button.global_position = grid_rect.position + Vector2(cell.x * CELL_SIZE.x, cell.y * CELL_SIZE.y)
-		module_grid_positions[module_key] = cell
+		var state := _get_module_state(module_key)
+		state["is_placed"] = true
+		state["grid_anchor"] = cell
+		state["rotation_index"] = _get_module_rotation(module_key)
+		_set_module_state(module_key, state)
 		selected_module_key = module_key
+		_rebuild_module_views()
 		module_dropped.emit(module_key, cell, module.duplicate(true))
 	else:
 		_restore_module_to_drag_origin(module_key)
@@ -611,19 +724,25 @@ func _finish_module_drag(module_key: String) -> void:
 	_refresh_module_detail()
 
 
+func _capture_drag_start_state(module_key: String) -> void:
+	var state := _get_module_state(module_key)
+	state["drag_start_is_placed"] = bool(state.get("is_placed", false))
+	state["drag_start_grid_anchor"] = Vector2i(state.get("grid_anchor", INVALID_GRID_CELL))
+	state["drag_start_rotation_index"] = int(state.get("rotation_index", 0)) % 4
+	_set_module_state(module_key, state)
+
+
 func _restore_module_to_drag_origin(module_key: String) -> void:
 	var button: Button = module_buttons.get(module_key, null)
 	if button == null:
 		return
 
-	module_rotations[module_key] = drag_origin_rotation
-	if drag_origin_had_cell:
-		module_grid_positions[module_key] = drag_origin_cell
-	else:
-		module_grid_positions.erase(module_key)
-	_refresh_module_visual(module_key)
-	button.position = drag_origin_local
-	_sync_module_guide(module_key)
+	var state := _get_module_state(module_key)
+	state["is_placed"] = bool(state.get("drag_start_is_placed", false))
+	state["grid_anchor"] = Vector2i(state.get("drag_start_grid_anchor", INVALID_GRID_CELL))
+	state["rotation_index"] = int(state.get("drag_start_rotation_index", 0)) % 4
+	_set_module_state(module_key, state)
+	_rebuild_module_views()
 
 
 func _get_grid_global_rect() -> Rect2:
@@ -633,6 +752,13 @@ func _get_grid_global_rect() -> Rect2:
 		board_surface.global_position + GRID_ORIGIN,
 		Vector2(GRID_CELLS.x * CELL_SIZE.x, GRID_CELLS.y * CELL_SIZE.y)
 	)
+
+
+func _is_button_over_inventory(button: Control) -> bool:
+	if board_surface == null or button == null:
+		return false
+	var inventory_rect := Rect2(board_surface.global_position + INVENTORY_RECT.position, INVENTORY_RECT.size)
+	return inventory_rect.has_point(button.global_position + button.size * 0.5)
 
 
 func _sync_module_guide(module_key: String) -> void:
@@ -690,14 +816,16 @@ func _is_drop_cell_available(module_key: String, cell: Vector2i, shape_cells: Ar
 
 func _get_placed_module_entries() -> Array[Dictionary]:
 	var entries: Array[Dictionary] = []
-	for other_key in module_grid_positions.keys():
-		var other_module_key := String(other_key)
+	for module in modules:
+		var other_module_key := String(module["key"])
+		if not _is_module_placed(other_module_key):
+			continue
 		var other_module := _get_module(other_module_key)
 		if other_module.is_empty():
 			continue
 		entries.append({
 			"key": other_module_key,
-			"anchor": module_grid_positions[other_key],
+			"anchor": _get_module_grid_anchor(other_module_key),
 			"shape_cells": _get_module_display_shape_cells(other_module_key),
 		})
 	return entries
@@ -749,7 +877,6 @@ func _select_module(module_key: String, emit_signal := true) -> void:
 	selected_module_key = module_key
 	for key in module_buttons.keys():
 		var button: Button = module_buttons[key]
-		var button_module := _get_module(String(key))
 		var selected := String(key) == selected_module_key
 		button.text = ""
 		if selected:
@@ -774,18 +901,21 @@ func _refresh_module_detail() -> void:
 		return
 
 	module_title_label.text = String(module["display_name"])
-	module_detail_label.text = "상태: %s\n크기: %s\n회전: %d도\n후보 효과: %s\n\n%s\n\nR/우클릭: 회전\nDelete/Backspace: 보관함으로 되돌리기\n아직 실제 전력 계산 없음." % [
-		"board 배치됨" if module_grid_positions.has(selected_module_key) else "inventory",
+	module_detail_label.text = "상태: %s\n크기: %s\n회전: %d도\n후보 효과: %s\n\n%s\n\nR/우클릭: 회전\n보관함으로: 배치 모듈 되돌리기\n아직 실제 전력 계산 없음." % [
+		"board 배치됨" if _is_module_placed(selected_module_key) else "inventory",
 		_get_display_shape_text(selected_module_key),
 		_get_module_rotation_degrees(selected_module_key),
 		String(module.get("effect", "효과 후보 없음")),
 		String(module["description"]),
 	]
 
+	if return_to_inventory_button != null:
+		return_to_inventory_button.disabled = not _is_module_placed(selected_module_key)
+
 	var rect: Rect2 = module["rect"]
 	module_debug_label.visible = debug_enabled
 	if debug_enabled:
-		var grid_pos = module_grid_positions.get(selected_module_key, "palette")
+		var grid_pos = _get_module_grid_anchor(selected_module_key) if _is_module_placed(selected_module_key) else "palette"
 		module_debug_label.text = "key: %s\nrole: %s\ncandidate action: %s\nmodule rect: %s\ngrid: %s\nrotation: %d\nno-op status: OutletMode / SurvivalState disabled" % [
 			String(module["key"]),
 			String(module["role"]),

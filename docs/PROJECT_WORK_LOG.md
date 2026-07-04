@@ -344,10 +344,18 @@
 - Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (61 tests).
 - Next: GUI에서 `R` / 우클릭 회전, L-shape preview, placed module invalid rotation cancel, 기존 drag / snap / close 흐름을 수동 확인한다.
 
-### this commit - Quarterview Power Board manipulation UX fix
+### 8b1b73c - Quarterview Power Board manipulation UX fix
 
-- Commit: `this commit`
+- Commit: `8b1b73c`
 - Result: Power board의 placed / dragging / inventory 상태 복구를 명확히 하고, placed module 회전 시 자기 자신의 기존 occupied cells를 overlap 판정에서 제외하도록 정리했다. Delete / Backspace로 selected placed module을 inventory로 되돌리는 후보 UX도 추가했다.
 - Changed: `PowerModuleDefinition.gd`, `PowerBoardCandidate.gd`, `QuarterviewMain.gd`, `test_power_module_definition.gd`, temporary art manifest, status docs.
 - Validation: targeted task-file `git diff --check` passed; full `git diff --check` remains blocked by unrelated addon whitespace; Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (63 tests).
 - Next: GUI에서 placed module 회전 self-overlap 제거, invalid rotation rollback, invalid drop restore, Delete / Backspace inventory return을 확인한다.
+
+### this commit - Quarterview Power Board state-based inventory UX fix
+
+- Commit: `this commit`
+- Result: Power board module 조작을 `module_states` 기준으로 다시 정리했다. Inventory는 unplaced module만 표시하고 남은 항목을 위로 재정렬하며, board는 placed module만 `grid_anchor` / `rotation_index` 기준으로 다시 그린다. 오른쪽 detail panel에 `보관함으로` 버튼을 추가해 selected placed module 반환 조작을 명확히 했다.
+- Changed: `PowerBoardCandidate.gd`, temporary art manifest, status docs.
+- Validation: targeted task-file `git diff --check`, Godot project parse, QuarterviewMain headless startup, targeted PowerModuleDefinition GUT, and full GUT passed (63 tests). Full `git diff --check` remains blocked by unrelated addon whitespace.
+- Next: GUI에서 module 배치 후 inventory collapse, `보관함으로` 버튼 반환, placed module rotation / invalid rollback, drag-to-inventory 반환을 수동 확인한다.

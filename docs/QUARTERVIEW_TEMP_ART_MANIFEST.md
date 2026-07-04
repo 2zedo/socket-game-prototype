@@ -88,12 +88,15 @@ Region candidate table:
 - `PowerBoardCandidate.gd` owns the QuarterviewMain-only draggable power-board prototype inside the Power equipment close-up.
 - Current candidate modules are loaded from `PowerModuleDefinition` Resources under `godot/resources/rooms/quarterview/power_modules/`.
 - Current candidate module Resource files: `small_core.tres` (`1x1`), `laptop_adapter.tres` (`2x1`), `comm_module.tres` (`1x2`), and `odd_efficiency_module.tres` (`L-shape 3 cells`).
+- Module placement / inventory / rotation state is tracked in runtime `module_states`; visual positions are rebuilt from that state instead of acting as source of truth.
+- Inventory shows only unplaced modules and is rebuilt from the Resource order, so remaining modules collapse upward after a module is placed.
+- Board visuals show only placed modules based on `grid_anchor` and `rotation_index`.
 - Drag preview uses valid / invalid colors while the cursor is over the grid.
 - Module inventory blocks, debug guides, and drag preview are drawn from `shape_cells`, so non-rectangular modules can be read before production power rules exist.
 - `R` and right-click rotate the active module candidate in 90-degree steps; rotation state is kept per runtime module instance and does not rewrite the `.tres` Resource shape.
 - Placed module rotation is allowed only when the rotated shape still fits the grid and does not overlap another module; invalid rotation is cancelled.
 - Placed / dragged modules exclude their own previous occupied cells from overlap checks, so rotation is judged against the board bounds and other placed modules only.
-- `Delete` / `Backspace` returns the selected placed module to inventory. The prototype resets rotation to the Resource orientation on return.
+- The detail panel has a `보관함으로` button for selected placed modules. `Delete` / `Backspace` also returns the selected placed module to inventory. The prototype resets rotation to the Resource orientation on return.
 - Occupied cells block overlapping module placement.
 - Invalid or out-of-grid drops return the module to the drag start position.
 - Successful drops only write no-op status/log text; they do not calculate power.
