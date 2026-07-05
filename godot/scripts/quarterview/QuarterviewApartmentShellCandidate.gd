@@ -14,6 +14,20 @@ enum MapRotation {
 	ROTATE_270,
 }
 
+enum WallAxis {
+	AXIS_A,
+	AXIS_B,
+}
+
+enum WallType {
+	NORMAL,
+	DOORWAY_EMPTY,
+	DOORWAY_FRAME,
+	CUTAWAY_STUB,
+	END,
+	CORNER,
+}
+
 const DEFAULT_TILE_WIDTH := 128.0
 const DEFAULT_TILE_HEIGHT := 64.0
 const DEFAULT_WALL_HEIGHT := 176.0
@@ -93,6 +107,17 @@ const COLOR_LABEL_SHADOW := Color(0.01, 0.012, 0.016, 0.88)
 @export var baseboard_height := DEFAULT_BASEBOARD_HEIGHT
 @export var cutaway_front_stub_height := DEFAULT_CUTAWAY_FRONT_STUB_HEIGHT
 
+@export_group("Shell Colors")
+@export var wall_color := COLOR_WALL
+@export var wall_side_color := COLOR_WALL_SIDE
+@export var wall_cap_color := COLOR_WALL_CAP
+@export var baseboard_color := COLOR_BASEBOARD
+@export var cutaway_stub_color := COLOR_FRONT_STUB
+@export var doorway_debug_color := COLOR_INNER_DOOR
+@export var inner_door_color := COLOR_INNER_DOOR
+@export var entrance_door_color := COLOR_ENTRANCE_DOOR
+@export var service_door_color := COLOR_SERVICE_DOOR
+
 @export_group("Layout Rects")
 @export var work_room_origin := DEFAULT_WORK_ROOM_ORIGIN
 @export var work_room_size := DEFAULT_WORK_ROOM_SIZE
@@ -129,6 +154,7 @@ const COLOR_LABEL_SHADOW := Color(0.01, 0.012, 0.016, 0.88)
 
 @export_group("Debug")
 @export var show_debug_labels := true
+@export var show_wall_ids := false
 
 @onready var camera_2d: Camera2D = $Camera2D
 
@@ -239,6 +265,13 @@ func _draw_floor_edges() -> void:
 
 
 func _draw_walls() -> void:
+	for segment in _wall_segments():
+		_draw_wall_segment_data(segment)
+
+
+# Wall segment data keeps shell structure edits near the layout settings instead of hiding them
+# inside drawing calls. start_cell and doorway_offset are in grid coordinates before map rotation.
+func _wall_segments() -> Array[Dictionary]:
 	var living_room := _living_room_rect()
 	var work_room := _work_room_rect()
 	var bathroom_room := _bathroom_room_rect()
@@ -252,36 +285,112 @@ func _draw_walls() -> void:
 	var work_top := float(work_room.position.y)
 	var work_bottom := float(work_room.position.y + work_room.size.y)
 
-	# Work room outer walls.
-	_draw_wall_axis_a(work_left, work_top, float(work_room.size.x), "WorkBackWall")
-	_draw_wall_axis_b(work_left, work_top, float(work_room.size.y), "WorkLeftWall")
-	_draw_wall_axis_b(work_right, work_top, float(work_room.size.y), "WorkRightWall")
+	return [
+		# Work room outer walls.
+		_wall_segment("work_back_wall", WallAxis.AXIS_A, Vector2(work_left, work_top), float(work_room.size.x)),
+		_wall_segment("work_left_wall", WallAxis.AXIS_B, Vector2(work_left, work_top), float(work_room.size.y)),
+		_wall_segment("work_right_wall", WallAxis.AXIS_B, Vector2(work_right, work_top), float(work_room.size.y)),
 
-	# Living room outer walls. The left wall has an entrance-door opening.
-	_draw_wall_axis_b(living_left, living_top, entrance_door_axis_b_start - living_top, "LivingLeftWallUpper")
-	_draw_wall_axis_b(living_left, entrance_door_axis_b_start + entrance_door_width, living_bottom - (entrance_door_axis_b_start + entrance_door_width), "LivingLeftWallLower")
-	_draw_wall_axis_b(living_right, living_top, float(living_room.size.y), "LivingRightWall")
-	_draw_wall_axis_a(living_left, living_bottom, float(living_room.size.x), "LivingFrontCutawayStub", cutaway_front_stub_height)
+		# Living room outer walls. The left wall has an entrance-door opening.
+		_wall_segment(
+			"entrance_wall",
+			WallAxis.AXIS_B,
+			Vector2(living_left, living_top),
+			float(living_room.size.y),
+			WallType.DOORWAY_FRAME,
+			entrance_door_axis_b_start - living_top,
+			entrance_door_width,
+			-1.0,
+			true,
+			entrance_door_color
+		),
+		_wall_segment("living_right_wall", WallAxis.AXIS_B, Vector2(living_right, living_top), float(living_room.size.y)),
+		_wall_segment(
+			"living_front_cutaway",
+			WallAxis.AXIS_A,
+			Vector2(living_left, living_bottom),
+			float(living_room.size.x),
+			WallType.CUTAWAY_STUB,
+			-1.0,
+			0.0,
+			cutaway_front_stub_height
+		),
 
-	# Shared wall between the two rooms. The doorway is the only gap.
-	_draw_wall_axis_a(living_left, work_bottom, connection_door_axis_a_start - living_left, "SharedWallLeft")
-	var right_start := connection_door_axis_a_start + connection_door_width
-	_draw_wall_axis_a(right_start, work_bottom, living_right - right_start, "SharedWallRight")
+		# Shared wall between the two rooms. The doorway is the only gap.
+		_wall_segment(
+			"work_front_shared_wall",
+			WallAxis.AXIS_A,
+			Vector2(living_left, work_bottom),
+			living_right - living_left,
+			WallType.DOORWAY_FRAME,
+			connection_door_axis_a_start - living_left,
+			connection_door_width,
+			-1.0,
+			true,
+			inner_door_color
+		),
 
-	# Bathroom / service partitions remain structural placeholders, not furniture.
-	_draw_wall_axis_a(float(bathroom_room.position.x), float(bathroom_room.position.y), float(bathroom_room.size.x), "BathroomUpperPartition")
-	_draw_wall_axis_a(float(service_room.position.x), float(service_room.position.y), float(service_room.size.x), "ServiceUpperPartition")
-	_draw_wall_axis_b(float(service_room.position.x + service_room.size.x), float(bathroom_room.position.y), float(service_room.position.y + service_room.size.y - bathroom_room.position.y), "ServiceRightPartition")
+		# Bathroom / service partitions remain structural placeholders, not furniture.
+		_wall_segment(
+			"bathroom_wall",
+			WallAxis.AXIS_A,
+			Vector2(float(bathroom_room.position.x), float(bathroom_room.position.y)),
+			float(bathroom_room.size.x),
+			WallType.DOORWAY_FRAME,
+			bathroom_door_axis_a_start - float(bathroom_room.position.x),
+			bathroom_door_width,
+			-1.0,
+			true,
+			service_door_color
+		),
+		_wall_segment(
+			"service_wall",
+			WallAxis.AXIS_A,
+			Vector2(float(service_room.position.x), float(service_room.position.y)),
+			float(service_room.size.x),
+			WallType.DOORWAY_FRAME,
+			service_door_axis_a_start - float(service_room.position.x),
+			service_door_width,
+			-1.0,
+			true,
+			service_door_color.darkened(0.08)
+		),
+		_wall_segment(
+			"service_right_wall",
+			WallAxis.AXIS_B,
+			Vector2(float(service_room.position.x + service_room.size.x), float(bathroom_room.position.y)),
+			float(service_room.position.y + service_room.size.y - bathroom_room.position.y)
+		),
+	]
+
+
+func _wall_segment(
+	id: String,
+	axis: WallAxis,
+	start_cell: Vector2,
+	length: float,
+	wall_type: WallType = WallType.NORMAL,
+	doorway_offset := -1.0,
+	doorway_width := 0.0,
+	height := -1.0,
+	visible := true,
+	doorway_color := Color.TRANSPARENT
+) -> Dictionary:
+	return {
+		"id": id,
+		"axis": axis,
+		"start_cell": start_cell,
+		"length": length,
+		"wall_type": wall_type,
+		"doorway_offset": doorway_offset,
+		"doorway_width": doorway_width,
+		"height": height,
+		"visible": visible,
+		"doorway_color": doorway_debug_color if doorway_color == Color.TRANSPARENT else doorway_color,
+	}
 
 
 func _draw_doors_and_window_placeholders() -> void:
-	var living_room := _living_room_rect()
-	var bathroom_room := _bathroom_room_rect()
-	var service_room := _service_room_rect()
-	_draw_doorway_axis_a(connection_door_axis_a_start, float(living_room.position.y), connection_door_width, "InternalConnectionDoor", COLOR_INNER_DOOR)
-	_draw_doorway_axis_b(float(living_room.position.x), entrance_door_axis_b_start, entrance_door_width, "EntranceDoor", COLOR_ENTRANCE_DOOR)
-	_draw_doorway_axis_a(bathroom_door_axis_a_start, float(bathroom_room.position.y), bathroom_door_width, "BathroomDoor", COLOR_SERVICE_DOOR)
-	_draw_doorway_axis_a(service_door_axis_a_start, float(service_room.position.y), service_door_width, "ServiceDoor", COLOR_SERVICE_DOOR.darkened(0.08))
 	_draw_window_axis_b(living_window_axis_a, living_window_axis_b_start, living_window_width, "LivingWindowPlaceholder")
 
 
@@ -309,17 +418,138 @@ func _draw_wall_axis_b(a: float, b_start: float, length: float, wall_name: Strin
 	_draw_wall_segment(_iso(a, b_start), _iso(a, b_start + length), wall_name, _resolve_wall_height(height))
 
 
+func _draw_wall_segment_data(segment: Dictionary) -> void:
+	if not bool(segment.get("visible", true)):
+		return
+
+	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
+	match wall_type:
+		WallType.CUTAWAY_STUB:
+			_draw_cutaway_stub_segment_data(segment)
+		WallType.DOORWAY_EMPTY:
+			_draw_wall_with_doorway(segment, false)
+		WallType.DOORWAY_FRAME:
+			_draw_wall_with_doorway(segment, true)
+		WallType.END:
+			_draw_solid_wall_segment(segment)
+			_draw_wall_end_marker(segment)
+		WallType.CORNER:
+			_draw_solid_wall_segment(segment)
+			_draw_wall_corner_marker(segment)
+		_:
+			_draw_solid_wall_segment(segment)
+
+	_add_wall_id_label(segment)
+
+
+func _draw_solid_wall_segment(segment: Dictionary) -> void:
+	var id := String(segment["id"])
+	var axis: WallAxis = segment["axis"]
+	var start_cell: Vector2 = segment["start_cell"]
+	var length := float(segment["length"])
+	var height := float(segment.get("height", -1.0))
+	_draw_wall_piece(axis, start_cell, length, id, height)
+
+
+func _draw_wall_with_doorway(segment: Dictionary, draw_frame: bool) -> void:
+	var id := String(segment["id"])
+	var axis: WallAxis = segment["axis"]
+	var start_cell: Vector2 = segment["start_cell"]
+	var length := float(segment["length"])
+	var height := float(segment.get("height", -1.0))
+	var doorway_offset := clampf(float(segment.get("doorway_offset", -1.0)), 0.0, length)
+	var doorway_width := clampf(float(segment.get("doorway_width", 0.0)), 0.0, length - doorway_offset)
+	var doorway_end := doorway_offset + doorway_width
+
+	if doorway_offset > 0.0:
+		_draw_wall_piece(axis, start_cell, doorway_offset, "%s_before" % id, height)
+	if doorway_end < length:
+		_draw_wall_piece(axis, _offset_cell(start_cell, axis, doorway_end), length - doorway_end, "%s_after" % id, height)
+	if draw_frame and doorway_width > 0.0:
+		_draw_doorway_segment(axis, _offset_cell(start_cell, axis, doorway_offset), doorway_width, id, segment.get("doorway_color", doorway_debug_color))
+
+
+func _draw_wall_piece(axis: WallAxis, start_cell: Vector2, length: float, wall_name: String, height := -1.0) -> void:
+	match axis:
+		WallAxis.AXIS_B:
+			_draw_wall_axis_b(start_cell.x, start_cell.y, length, wall_name, height)
+		_:
+			_draw_wall_axis_a(start_cell.x, start_cell.y, length, wall_name, height)
+
+
+func _draw_doorway_segment(axis: WallAxis, start_cell: Vector2, width: float, door_name: String, color: Color) -> void:
+	match axis:
+		WallAxis.AXIS_B:
+			_draw_doorway_axis_b(start_cell.x, start_cell.y, width, door_name, color)
+		_:
+			_draw_doorway_axis_a(start_cell.x, start_cell.y, width, door_name, color)
+
+
+func _draw_cutaway_stub_segment_data(segment: Dictionary) -> void:
+	var id := String(segment["id"])
+	var axis: WallAxis = segment["axis"]
+	var start_cell: Vector2 = segment["start_cell"]
+	var length := float(segment["length"])
+	var height := float(segment.get("height", -1.0))
+	match axis:
+		WallAxis.AXIS_B:
+			_draw_front_stub_axis_b(start_cell.x, start_cell.y, length, id, height)
+		_:
+			_draw_front_stub_axis_a(start_cell.x, start_cell.y, length, id, height)
+
+
+func _draw_wall_end_marker(segment: Dictionary) -> void:
+	var id := String(segment["id"])
+	var axis: WallAxis = segment["axis"]
+	var start_cell: Vector2 = segment["start_cell"]
+	var length := float(segment["length"])
+	var height := _resolve_wall_height(float(segment.get("height", -1.0)))
+	var end_point := _iso(_offset_cell(start_cell, axis, length).x, _offset_cell(start_cell, axis, length).y)
+	_add_line(_wall_layer, "%sEndMarker" % id, [end_point, end_point + Vector2(0.0, -height)], wall_cap_color, 3.0)
+
+
+func _draw_wall_corner_marker(segment: Dictionary) -> void:
+	var id := String(segment["id"])
+	var axis: WallAxis = segment["axis"]
+	var start_cell: Vector2 = segment["start_cell"]
+	var height := _resolve_wall_height(float(segment.get("height", -1.0)))
+	var point := _iso(start_cell.x, start_cell.y)
+	var side_point := _iso(_offset_cell(start_cell, axis, 0.25).x, _offset_cell(start_cell, axis, 0.25).y)
+	_add_line(_wall_layer, "%sCornerMarker" % id, [point, point + Vector2(0.0, -height), side_point + Vector2(0.0, -height)], wall_cap_color, 3.0)
+
+
+func _offset_cell(start_cell: Vector2, axis: WallAxis, offset: float) -> Vector2:
+	if axis == WallAxis.AXIS_B:
+		return Vector2(start_cell.x, start_cell.y + offset)
+	return Vector2(start_cell.x + offset, start_cell.y)
+
+
+func _add_wall_id_label(segment: Dictionary) -> void:
+	if not show_wall_ids:
+		return
+	var id := String(segment["id"])
+	var axis: WallAxis = segment["axis"]
+	var start_cell: Vector2 = segment["start_cell"]
+	var length := float(segment["length"])
+	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
+	var midpoint := _offset_cell(start_cell, axis, length * 0.5)
+	var label_offset := Vector2(-46.0, -_resolve_wall_height(float(segment.get("height", -1.0))) - 26.0)
+	if wall_type == WallType.CUTAWAY_STUB:
+		label_offset = Vector2(-46.0, 18.0)
+	_add_debug_label("wall_id_%s" % id, id, _iso(midpoint.x, midpoint.y) + label_offset, 11)
+
+
 func _draw_wall_segment(p0: Vector2, p1: Vector2, wall_name: String, height: float) -> void:
 	var up := Vector2(0.0, -height)
-	var wall_color := COLOR_WALL if p1.y <= p0.y else COLOR_WALL_SIDE
-	_add_polygon(_wall_layer, wall_name, [p0, p1, p1 + up, p0 + up], wall_color)
+	var segment_color := wall_color if p1.y <= p0.y else wall_side_color
+	_add_polygon(_wall_layer, wall_name, [p0, p1, p1 + up, p0 + up], segment_color)
 	_add_wall_cap(p0, p1, up, "%sCap" % wall_name)
 	_add_polygon(_wall_layer, "%sBaseboard" % wall_name, [
 		p0,
 		p1,
 		p1 + Vector2(0.0, -baseboard_height),
 		p0 + Vector2(0.0, -baseboard_height),
-	], COLOR_BASEBOARD)
+	], baseboard_color)
 
 
 func _add_wall_cap(p0: Vector2, p1: Vector2, up: Vector2, cap_name: String) -> void:
@@ -332,7 +562,7 @@ func _add_wall_cap(p0: Vector2, p1: Vector2, up: Vector2, cap_name: String) -> v
 		p1 + up,
 		p1 + up + cap_depth,
 		p0 + up + cap_depth,
-	], COLOR_WALL_CAP)
+	], wall_cap_color)
 
 
 func _draw_doorway_axis_a(a_start: float, b: float, width: float, door_name: String, color: Color) -> void:
@@ -370,26 +600,28 @@ func _draw_room_outline(room: Rect2i, outline_name: String, color: Color) -> voi
 	_add_line(_edge_layer, outline_name, points + [points[0]], color, 5.0)
 
 
-func _draw_front_stub_axis_a(a_start: float, b: float, length: float, stub_name: String) -> void:
+func _draw_front_stub_axis_a(a_start: float, b: float, length: float, stub_name: String, stub_height := -1.0) -> void:
 	var p0 := _iso(a_start, b)
 	var p1 := _iso(a_start + length, b)
+	var height := cutaway_front_stub_height if stub_height < 0.0 else stub_height
 	_add_polygon(_edge_layer, stub_name, [
 		p0,
 		p1,
-		p1 + Vector2(0.0, cutaway_front_stub_height),
-		p0 + Vector2(0.0, cutaway_front_stub_height),
-	], COLOR_FRONT_STUB)
+		p1 + Vector2(0.0, height),
+		p0 + Vector2(0.0, height),
+	], cutaway_stub_color)
 
 
-func _draw_front_stub_axis_b(a: float, b_start: float, length: float, stub_name: String) -> void:
+func _draw_front_stub_axis_b(a: float, b_start: float, length: float, stub_name: String, stub_height := -1.0) -> void:
 	var p0 := _iso(a, b_start)
 	var p1 := _iso(a, b_start + length)
+	var height := cutaway_front_stub_height if stub_height < 0.0 else stub_height
 	_add_polygon(_edge_layer, stub_name, [
 		p0,
 		p1,
-		p1 + Vector2(0.0, cutaway_front_stub_height),
-		p0 + Vector2(0.0, cutaway_front_stub_height),
-	], COLOR_FRONT_STUB.darkened(0.08))
+		p1 + Vector2(0.0, height),
+		p0 + Vector2(0.0, height),
+	], cutaway_stub_color.darkened(0.08))
 
 
 func _work_room_rect() -> Rect2i:
@@ -544,13 +776,13 @@ func _add_line(parent: Node, line_name: String, points: Array, color: Color, wid
 	return line
 
 
-func _add_debug_label(label_name: String, text: String, position: Vector2) -> Label:
+func _add_debug_label(label_name: String, text: String, position: Vector2, font_size := 15) -> Label:
 	var label := Label.new()
 	label.name = label_name
 	label.text = text
 	label.position = position
 	label.modulate = COLOR_LABEL
-	label.add_theme_font_size_override("font_size", 15)
+	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
