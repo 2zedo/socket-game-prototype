@@ -22,6 +22,7 @@
 - Hacking direction is action infiltration + defense, not a puzzle-only mode.
 - Current room image direction is fixed `1920x1080` quarterview, slightly pulled-back camera, readable Yui scale, indoor wall finishes, varied warm/cool palette, logical two-room door connection, and Act 1 play-loop cues: power rationing, portable Phone / DM life, PIP-03 support spots, anonymous job traces, and NAVI LINK-centered work / power function.
 - Latest living-space image feedback treats the current sample as a base direction: preserve layout and Yui scale, then tune object scale, room proportions, camera distance, and chill nighttime mood.
+- Apartment room structure now has a coordinate-based shell candidate for validating floor tiles, Axis A/B walls, shared door placement, and camera framing before final art.
 - Current mock HUD / overlays in QuarterviewMain are local candidate state, not production `SurvivalState`.
 
 ## 4. Current Implementation Snapshot
@@ -34,6 +35,7 @@
 | Phone candidate | sandbox/candidate | `P` opens `PhoneScreenCandidate`; job tab can accept `maintenance_17_fragment`; no production PhoneUI / battery wiring. |
 | Power board candidate | sandbox/candidate | Resource-backed modules, drag / snap / rotate / return UX; no OutletMode / SurvivalState power calculation. |
 | Hacking Entry candidate | sandbox/candidate | NAVI proxy prep overlay from active job; no Hacking scene transition, Grid Credit, save-load, story flag. |
+| Apartment shell candidate | candidate/prototype | `QuarterviewApartmentShellCandidate` validates the two-room shell with placeholder geometry only; no art assets or production wiring. |
 | HackingActionPrototype | prototype-only | Action/state feedback prototype; not connected to Laptop / Job / Result. |
 | Grid Credit | skeleton | `GridCreditState` exists, but reward/economy is not production-wired. |
 | Art / asset direction | reference-driven | Current room image spec lives in `docs/reference/ART_DIRECTION.md`; temporary generated PNGs exist, but most atlas mapping plans are historical/reference only. |

@@ -610,6 +610,26 @@ Rules:
 - no characters, UI, text, or labels
 - requested layer only
 
+## Coordinate Shell Candidate
+
+Before asking for another generated room image, use the Godot coordinate shell candidate to verify the apartment structure:
+
+- scene: `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn`
+- script: `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd`
+- purpose: validate the two-room apartment shell, shared wall, connection door, camera framing, and walkable floor before committing to final background art
+
+Coordinate basis:
+
+- floor tile: `128 x 64 px`
+- Axis A: screen lower-left to upper-right
+- Axis B: screen upper-left to lower-right
+- wall height: `176 px`
+- wall cap height: `16 px`
+- baseboard height: `18 px`
+- cutaway front wall stub: about `32-48 px`
+
+The shell candidate is placeholder geometry only. It should contain floors, axis-based walls, caps, baseboards, door/window placeholders, labels, and the foreground no-large-object zone. It must not contain furniture, NAVI LINK, power panels, props, image-generated assets, or production wiring.
+
 ## Atlas Policy
 
 Most atlas mapping docs are archived as historical planning. Current rule:

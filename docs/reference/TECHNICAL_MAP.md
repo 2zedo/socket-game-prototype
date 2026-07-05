@@ -61,6 +61,7 @@ Do not modify by default:
 | `godot/scenes/Apartment.tscn` | `godot/scripts/Apartment.gd` | protected top-view room |
 | `godot/scenes/QuarterviewMain.tscn` | `godot/scripts/QuarterviewMain.gd` | production candidate |
 | `godot/scenes/quarterview/QuarterviewRoom.tscn` | `godot/scripts/quarterview/QuarterviewRoom.gd` | candidate room |
+| `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn` | `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` | coordinate-based apartment shell candidate |
 | `godot/scenes/Player.tscn` | `godot/scripts/Player.gd` | protected current Main player |
 
 ## Candidate UI Scripts
@@ -125,6 +126,12 @@ QuarterviewMain startup:
 
 ```bash
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot res://scenes/QuarterviewMain.tscn --quit-after 2
+```
+
+Apartment shell candidate startup:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn --quit-after 2
 ```
 
 Full GUT:

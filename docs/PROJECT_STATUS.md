@@ -18,6 +18,7 @@
 - Previous root-level design and migration documents are archived under `docs/old/`.
 - `Main.tscn` / DAY1 remains protected and is not replaced by this documentation cleanup.
 - `QuarterviewMain` remains a production candidate scene, not the project start scene.
+- `QuarterviewApartmentShellCandidate` is an independent coordinate-based shell scene for validating the two-room apartment layout before final art.
 - QuarterviewMain candidate features are local/mock unless explicitly wired later:
   - click movement and hover affordance
   - portable Phone opened with `P`
@@ -28,21 +29,19 @@
 
 ## Latest Work
 
-- Recorded latest generated living-space sample feedback in `docs/reference/ART_DIRECTION.md`.
-- Updated `docs/GAME_INFO.md` with the new high-level sample-review summary.
-- The current living-space sample is now treated as a base direction, not a failed draft.
-- Next image revisions should preserve layout and Yui scale, reduce surrounding objects by about `8-15%`, adjust room footprint / wall height / door size / partition scale with the objects, pull the camera back slightly, and add a calm chill nighttime mood.
-- The work / power room may use the chill night mood more strongly, while staying visually consistent with the living room and remaining centered on NAVI LINK / compact power control.
-- This remains documentation-only; no image generation, scene wiring, or asset application was done.
+- Added `QuarterviewApartmentShellCandidate` as a coordinate-based Godot scene under `godot/scenes/quarterview/`.
+- The scene draws the apartment shell with placeholder floor tiles, Axis A/B walls, wall caps, baseboards, door/window placeholders, debug labels, camera presets, and a foreground no-large-object zone.
+- It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.
+- Documentation now records the shell candidate path, coordinate basis, and validation command.
 
 ## Validation Notes
 
-- This is a documentation-only art direction update.
-- Godot scenes, scripts, resources, assets, and `project.godot` are not intentionally changed.
-- Full `git diff --check` may still report unrelated local whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`; targeted checks should be used for this docs-only change if that unrelated file remains dirty.
+- This change intentionally adds one candidate scene and one candidate script, plus documentation.
+- It uses generated geometry only; no image assets, imports, atlas resources, or production start scene wiring are added.
+- Full `git diff --check` may still report unrelated local whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`; targeted checks should be used for current-task files if that unrelated file remains dirty.
 
 ## Next Recommended Work
 
-1. For the next living-space image pass, reuse the accepted sample direction and request only scale / camera / mood tuning.
-2. Do not redesign the room layout unless the user explicitly asks.
-3. For work + power room generation, keep the same scale/camera system and lean slightly more into the chill cyber nighttime mood.
+1. Open `QuarterviewApartmentShellCandidate.tscn` in Godot and check whether the shared wall, internal door, foreground no-large-object zone, and camera presets match the intended floor plan.
+2. Adjust only the shell coordinates until the two-room structure is stable.
+3. After the shell is accepted, use it as the basis for floor/wall/door atlas replacement or final room art passes.

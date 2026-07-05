@@ -39,3 +39,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: documentation only.
 - Not changed: Godot code, scenes, resources, assets, image files, `project.godot`, Main/DAY1 production flow.
 - Next: Revise the living-space image as a proportion/camera/mood tuning pass, not a full redesign.
+
+### Apartment shell candidate
+
+- Commit: pending in this task.
+- Result: Added an independent coordinate-based shell scene for validating the CONCENT two-room apartment structure in Godot before final art or atlas replacement.
+- Changed: `QuarterviewApartmentShellCandidate.tscn`, `QuarterviewApartmentShellCandidate.gd`, and current project docs.
+- Not changed: generated image assets, furniture / prop placement, QuarterviewMain wiring, production Main/DAY1, `SurvivalState`, production UI, save-load, Grid Credit, `project.godot`.
+- Next: Manually inspect the shell in Godot and tune only coordinates until the living/work room connection, camera angle, and no-large-object foreground zone are accepted.
