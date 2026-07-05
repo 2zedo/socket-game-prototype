@@ -7,6 +7,13 @@ enum ViewOrientation {
 	BACK_LEFT,
 }
 
+enum MapRotation {
+	ROTATE_0,
+	ROTATE_90,
+	ROTATE_180,
+	ROTATE_270,
+}
+
 const DEFAULT_TILE_WIDTH := 128.0
 const DEFAULT_TILE_HEIGHT := 64.0
 const DEFAULT_WALL_HEIGHT := 176.0
@@ -14,6 +21,7 @@ const DEFAULT_WALL_CAP_HEIGHT := 16.0
 const DEFAULT_BASEBOARD_HEIGHT := 18.0
 const DEFAULT_CUTAWAY_FRONT_STUB_HEIGHT := 42.0
 const DEFAULT_MAP_ORIGIN := Vector2(420.0, 270.0)
+const DEFAULT_MAP_ROTATION_PIVOT := Vector2(5.5, 5.0)
 
 const DEFAULT_WORK_ROOM_ORIGIN := Vector2i(1, 0)
 const DEFAULT_WORK_ROOM_SIZE := Vector2i(8, 4)
@@ -38,7 +46,7 @@ const DEFAULT_LIVING_WINDOW_AXIS_A := 11.0
 const DEFAULT_LIVING_WINDOW_B_START := 5.2
 const DEFAULT_LIVING_WINDOW_WIDTH := 1.65
 
-const DEFAULT_FULL_MAP_CAMERA_POSITION := Vector2(770.0, 380.0)
+const DEFAULT_FULL_MAP_CAMERA_CENTER_OFFSET := Vector2(-24.0, 72.0)
 const DEFAULT_FULL_MAP_CAMERA_ZOOM := Vector2(0.58, 0.58)
 const DEFAULT_LIVING_CAMERA_CENTER_OFFSET := Vector2(70.0, -16.0)
 const DEFAULT_LIVING_CAMERA_ZOOM := Vector2(0.92, 0.92)
@@ -68,8 +76,14 @@ const COLOR_LABEL := Color(0.96, 0.91, 0.75, 1.0)
 const COLOR_LABEL_SHADOW := Color(0.01, 0.012, 0.016, 0.88)
 
 @export_group("View Orientation")
+# view_orientation controls the isometric projection basis / mirroring only.
 @export var view_orientation: ViewOrientation = ViewOrientation.FRONT_RIGHT
 @export var map_origin := DEFAULT_MAP_ORIGIN
+
+@export_group("Map Rotation")
+# map_rotation rotates the floor-plan layout before the isometric projection is applied.
+@export var map_rotation: MapRotation = MapRotation.ROTATE_90
+@export var map_rotation_pivot := DEFAULT_MAP_ROTATION_PIVOT
 
 @export_group("Shell Dimensions")
 @export var tile_width := DEFAULT_TILE_WIDTH
@@ -105,7 +119,7 @@ const COLOR_LABEL_SHADOW := Color(0.01, 0.012, 0.016, 0.88)
 @export var living_window_width := DEFAULT_LIVING_WINDOW_WIDTH
 
 @export_group("Camera Presets")
-@export var full_map_camera_position := DEFAULT_FULL_MAP_CAMERA_POSITION
+@export var full_map_camera_center_offset := DEFAULT_FULL_MAP_CAMERA_CENTER_OFFSET
 @export var full_map_camera_zoom := DEFAULT_FULL_MAP_CAMERA_ZOOM
 @export var living_camera_center_offset := DEFAULT_LIVING_CAMERA_CENTER_OFFSET
 @export var living_camera_zoom := DEFAULT_LIVING_CAMERA_ZOOM
@@ -399,25 +413,16 @@ func _no_large_object_zone_rect() -> Rect2i:
 
 
 func _tile_points(a: float, b: float) -> Array[Vector2]:
-	return [
-		_iso(a, b),
-		_iso(a + 1.0, b),
-		_iso(a + 1.0, b + 1.0),
-		_iso(a, b + 1.0),
-	]
+	return _grid_points_to_screen([
+		_transform_grid_point(Vector2(a, b)),
+		_transform_grid_point(Vector2(a + 1.0, b)),
+		_transform_grid_point(Vector2(a + 1.0, b + 1.0)),
+		_transform_grid_point(Vector2(a, b + 1.0)),
+	])
 
 
 func _rect_points(room: Rect2i) -> Array[Vector2]:
-	var a := float(room.position.x)
-	var b := float(room.position.y)
-	var w := float(room.size.x)
-	var h := float(room.size.y)
-	return [
-		_iso(a, b),
-		_iso(a + w, b),
-		_iso(a + w, b + h),
-		_iso(a, b + h),
-	]
+	return _grid_points_to_screen(_rotate_grid_rect(room))
 
 
 func _room_center(room: Rect2i) -> Vector2:
@@ -434,7 +439,51 @@ func _resolve_wall_height(override_height: float) -> float:
 
 
 func _iso(a: float, b: float) -> Vector2:
-	return map_origin + _axis_a() * a + _axis_b() * b
+	return _grid_to_screen_point(_transform_grid_point(Vector2(a, b)))
+
+
+func _grid_points_to_screen(points: Array[Vector2]) -> Array[Vector2]:
+	var screen_points: Array[Vector2] = []
+	for point in points:
+		screen_points.append(_grid_to_screen_point(point))
+	return screen_points
+
+
+func _grid_to_screen_point(point: Vector2) -> Vector2:
+	return map_origin + _axis_a() * point.x + _axis_b() * point.y
+
+
+func _transform_grid_point(point: Vector2) -> Vector2:
+	return _rotate_grid_point(point)
+
+
+# ROTATE_90 maps the original upper work-room side toward the right side around the pivot.
+func _rotate_grid_point(point: Vector2) -> Vector2:
+	var delta := point - map_rotation_pivot
+	var rotated := delta
+	match map_rotation:
+		MapRotation.ROTATE_90:
+			rotated = Vector2(-delta.y, delta.x)
+		MapRotation.ROTATE_180:
+			rotated = -delta
+		MapRotation.ROTATE_270:
+			rotated = Vector2(delta.y, -delta.x)
+		_:
+			rotated = delta
+	return map_rotation_pivot + rotated
+
+
+func _rotate_grid_rect(room: Rect2i) -> Array[Vector2]:
+	var a := float(room.position.x)
+	var b := float(room.position.y)
+	var w := float(room.size.x)
+	var h := float(room.size.y)
+	return [
+		_transform_grid_point(Vector2(a, b)),
+		_transform_grid_point(Vector2(a + w, b)),
+		_transform_grid_point(Vector2(a + w, b + h)),
+		_transform_grid_point(Vector2(a, b + h)),
+	]
 
 
 # View orientation changes the room projection by swapping the grid basis vectors,
@@ -528,5 +577,5 @@ func _apply_camera_preset(preset: String) -> void:
 			camera_2d.position = _room_center(_work_room_rect()) + work_camera_center_offset
 			camera_2d.zoom = work_camera_zoom
 		_:
-			camera_2d.position = full_map_camera_position
+			camera_2d.position = _grid_to_screen_point(_transform_grid_point(map_rotation_pivot)) + full_map_camera_center_offset
 			camera_2d.zoom = full_map_camera_zoom
