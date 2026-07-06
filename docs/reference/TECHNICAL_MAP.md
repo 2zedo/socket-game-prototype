@@ -64,6 +64,24 @@ Do not modify by default:
 | `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn` | `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` | coordinate-based apartment shell candidate |
 | `godot/scenes/Player.tscn` | `godot/scripts/Player.gd` | protected current Main player |
 
+## Apartment Shell Candidate Editing
+
+`QuarterviewApartmentShellCandidate` is a coordinate-based validation scene, not production wiring.
+
+| Need | Where |
+| --- | --- |
+| Move or resize a default wall | Edit `_default_wall_segment_configs()` in `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` |
+| Hide a default wall | Set that segment's `enabled=false` |
+| Test custom wall layout in Inspector | Add `ApartmentWallSegmentConfig` items to `custom_wall_segments` |
+| Move a wall | Change `start_cell` |
+| Change wall direction | Change `axis` |
+| Change wall length | Change `length` |
+| Move the shared room door | Change `work_front_shared_wall` `doorway_offset` / `doorway_width` |
+| Show wall IDs / start-end markers | Press `W` in the shell scene |
+| Print wall inventory | Press `I` in the shell scene |
+
+Wall inventory columns: `id`, `enabled`, `source`, `axis`, `start_cell`, `end_cell`, `length`, `wall_type`, `doorway_offset`, `doorway_width`, `height_mode`, and `edit_hint`.
+
 ## Candidate UI Scripts
 
 | Feature | File |

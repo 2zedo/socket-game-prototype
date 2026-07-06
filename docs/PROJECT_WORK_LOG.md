@@ -47,3 +47,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.tscn`, `QuarterviewApartmentShellCandidate.gd`, and current project docs.
 - Not changed: generated image assets, furniture / prop placement, QuarterviewMain wiring, production Main/DAY1, `SurvivalState`, production UI, save-load, Grid Credit, `project.godot`.
 - Next: Manually inspect the shell in Godot and tune only coordinates until the living/work room connection, camera angle, and no-large-object foreground zone are accepted.
+
+### Apartment wall segment inventory
+
+- Commit: pending in this task.
+- Result: Added wall segment inventory output to `QuarterviewApartmentShellCandidate`; `I` prints id/source/start/end/edit hints, and `W` shows wall IDs with start/end markers independently from general debug labels.
+- Changed: `QuarterviewApartmentShellCandidate.gd`, `ApartmentWallSegmentConfig.gd`, and technical/status docs.
+- Not changed: shell wall positions, room size, furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Use the inventory table to identify which segment to move/hide before changing the shell layout itself.

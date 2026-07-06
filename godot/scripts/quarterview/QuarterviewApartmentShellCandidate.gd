@@ -90,6 +90,8 @@ const COLOR_WINDOW := Color(0.42, 0.72, 0.92, 0.9)
 const COLOR_NO_OBJECT_ZONE := Color(1.0, 0.66, 0.20, 0.22)
 const COLOR_LABEL := Color(0.96, 0.91, 0.75, 1.0)
 const COLOR_LABEL_SHADOW := Color(0.01, 0.012, 0.016, 0.88)
+const COLOR_WALL_START_MARKER := Color(0.18, 0.95, 0.68, 0.95)
+const COLOR_WALL_END_MARKER := Color(1.0, 0.42, 0.32, 0.95)
 
 @export_group("View Orientation")
 # view_orientation controls the isometric projection basis / mirroring only.
@@ -164,6 +166,8 @@ var _edge_layer: Node2D
 var _wall_layer: Node2D
 var _door_layer: Node2D
 var _label_layer: Node2D
+var _wall_id_layer: Node2D
+var _debug_overlay_layer: CanvasLayer
 
 
 func _ready() -> void:
@@ -178,6 +182,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_L:
 			show_debug_labels = not show_debug_labels
 			_update_label_visibility()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_W:
+			show_wall_ids = not show_wall_ids
+			_update_label_visibility()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_I:
+			print_wall_segment_inventory()
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_1:
@@ -206,6 +219,10 @@ func _create_layers() -> void:
 	_wall_layer = _add_layer("WallLayer", 0)
 	_door_layer = _add_layer("DoorAndWindowLayer", 10)
 	_label_layer = _add_layer("DebugLabelLayer", 40)
+	_wall_id_layer = _add_layer("WallIdLayer", 45)
+	_debug_overlay_layer = CanvasLayer.new()
+	_debug_overlay_layer.name = "DebugOverlayLayer"
+	add_child(_debug_overlay_layer)
 
 
 func _build_shell() -> void:
@@ -219,6 +236,7 @@ func _build_shell() -> void:
 	_draw_walls()
 	_draw_doors_and_window_placeholders()
 	_draw_debug_labels()
+	_draw_control_hint()
 
 
 func _draw_background() -> void:
@@ -272,10 +290,11 @@ func _draw_walls() -> void:
 # inside drawing calls. start_cell and doorway_offset are in grid coordinates before map rotation.
 func _wall_segments() -> Array[Dictionary]:
 	var segments: Array[Dictionary] = []
-	for config in _active_wall_segment_configs():
+	for entry in _active_wall_segment_config_entries():
+		var config: Resource = entry.get("config")
 		if config == null:
 			continue
-		segments.append(_wall_segment_from_config(config))
+		segments.append(_wall_segment_from_config(config, String(entry.get("source", "default"))))
 	return segments
 
 
@@ -283,6 +302,22 @@ func _active_wall_segment_configs() -> Array[Resource]:
 	if not custom_wall_segments.is_empty():
 		return custom_wall_segments
 	return _default_wall_segment_configs()
+
+
+func _active_wall_segment_config_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	var source := "default"
+	var configs := _default_wall_segment_configs()
+	if not custom_wall_segments.is_empty():
+		source = "custom_wall_segments"
+		configs = custom_wall_segments
+
+	for config in configs:
+		entries.append({
+			"source": source,
+			"config": config,
+		})
+	return entries
 
 
 # Edit these default entries to move, hide, add, or delete shell walls in code. For Inspector tests,
@@ -378,16 +413,18 @@ func _default_wall_segment_configs() -> Array[Resource]:
 	]
 
 
-func _wall_segment_from_config(config: Resource) -> Dictionary:
+func _wall_segment_from_config(config: Resource, source: String = "default") -> Dictionary:
 	return {
 		"id": String(config.id),
 		"enabled": config.enabled,
+		"source": source,
 		"axis": config.axis,
 		"start_cell": config.start_cell,
 		"length": config.length,
 		"wall_type": config.wall_type,
 		"doorway_offset": config.doorway_offset,
 		"doorway_width": config.doorway_width,
+		"height_mode": config.height_mode,
 		"height": _wall_height_from_config(config),
 		"doorway_color": doorway_debug_color if config.doorway_color == Color.TRANSPARENT else config.doorway_color,
 	}
@@ -431,6 +468,64 @@ func _wall_height_from_config(config: Resource) -> float:
 			return -1.0
 
 
+# Prints an editor-friendly inventory so the user can identify which wall segment to edit.
+func print_wall_segment_inventory() -> void:
+	var rows := _wall_segment_inventory_rows()
+	print("")
+	print("=== Apartment Wall Segment Inventory ===")
+	print("id | enabled | source | axis | start_cell | end_cell | length | wall_type | doorway | height_mode | edit_hint")
+	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
+	for row in rows:
+		print("%s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s" % [
+			row["id"],
+			str(row["enabled"]),
+			row["source"],
+			row["axis"],
+			row["start_cell"],
+			row["end_cell"],
+			row["length"],
+			row["wall_type"],
+			row["doorway"],
+			row["height_mode"],
+			row["edit_hint"],
+		])
+	print("=== End Wall Segment Inventory ===")
+
+
+func _wall_segment_inventory_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for segment in _wall_segments():
+		var axis: WallAxis = segment["axis"]
+		var start_cell_i: Vector2i = segment.get("start_cell", Vector2i.ZERO)
+		var end_cell_i := _segment_end_cell_i(segment)
+		rows.append({
+			"id": String(segment["id"]),
+			"enabled": bool(segment.get("enabled", true)),
+			"source": String(segment.get("source", "default")),
+			"axis": _wall_axis_name(axis),
+			"start_cell": _format_cell(start_cell_i),
+			"end_cell": _format_cell(end_cell_i),
+			"length": int(segment.get("length", 0)),
+			"wall_type": _wall_type_name(segment.get("wall_type", WallType.NORMAL)),
+			"doorway": "offset=%d width=%d" % [
+				int(segment.get("doorway_offset", -1)),
+				int(segment.get("doorway_width", 0)),
+			],
+			"height_mode": _height_mode_name(segment.get("height_mode", ApartmentWallSegmentConfigScript.HeightMode.DEFAULT)),
+			"edit_hint": _wall_edit_hint(segment),
+		})
+	return rows
+
+
+func _wall_edit_hint(segment: Dictionary) -> String:
+	var id := String(segment["id"])
+	var source := String(segment.get("source", "default"))
+	var location := "edit _default_wall_segment_configs() entry id=\"%s\"" % id
+	if source == "custom_wall_segments":
+		location = "edit Inspector > custom_wall_segments entry id=\"%s\"" % id
+	return "%s; hide: enabled=false; move: start_cell; direction: axis; length: length; door: doorway_offset / doorway_width" % location
+
+
 func _draw_doors_and_window_placeholders() -> void:
 	_draw_window_axis_b(living_window_axis_a, living_window_axis_b_start, living_window_width, "LivingWindowPlaceholder")
 
@@ -444,7 +539,19 @@ func _draw_debug_labels() -> void:
 	_add_debug_label("connection_label", "연결문", _doorway_center(&"work_front_shared_wall") + Vector2(-32, -104))
 	_add_debug_label("entrance_label", "현관문", _doorway_center(&"entrance_wall") + Vector2(-72, -84))
 	_add_debug_label("no_object_zone_label", "camera foreground no-large-object zone", _room_center(_no_large_object_zone_rect()) + Vector2(-148, 20))
-	_add_debug_label("camera_help_label", "1 full_map / 2 living_area / 3 work_power_area / L labels", Vector2(250, 42))
+
+
+func _draw_control_hint() -> void:
+	var label := Label.new()
+	label.name = "ShellControlHint"
+	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  I: print wall inventory"
+	label.position = Vector2(24, 20)
+	label.modulate = COLOR_LABEL
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	_debug_overlay_layer.add_child(label)
 
 
 func _draw_wall_axis_a(a_start: float, b: float, length: float, wall_name: String, height := -1.0) -> void:
@@ -480,7 +587,7 @@ func _draw_wall_segment_data(segment: Dictionary) -> void:
 		_:
 			_draw_solid_wall_segment(segment)
 
-	_add_wall_id_label(segment)
+	_add_wall_id_debug(segment)
 
 
 func _draw_solid_wall_segment(segment: Dictionary) -> void:
@@ -572,6 +679,53 @@ func _segment_start_cell(segment: Dictionary) -> Vector2:
 	return Vector2(start_cell)
 
 
+func _segment_end_cell_i(segment: Dictionary) -> Vector2i:
+	var start_cell: Vector2i = segment.get("start_cell", Vector2i.ZERO)
+	var length := int(segment.get("length", 0))
+	var axis: WallAxis = segment.get("axis", WallAxis.AXIS_A)
+	if axis == WallAxis.AXIS_B:
+		return start_cell + Vector2i(0, length)
+	return start_cell + Vector2i(length, 0)
+
+
+func _wall_axis_name(axis: int) -> String:
+	match axis:
+		WallAxis.AXIS_B:
+			return "B"
+		_:
+			return "A"
+
+
+func _wall_type_name(wall_type: int) -> String:
+	match wall_type:
+		WallType.DOORWAY_EMPTY:
+			return "doorway_empty"
+		WallType.DOORWAY_FRAME:
+			return "doorway_frame"
+		WallType.CUTAWAY_STUB:
+			return "cutaway_stub"
+		WallType.END:
+			return "end"
+		WallType.CORNER:
+			return "corner"
+		_:
+			return "normal"
+
+
+func _height_mode_name(height_mode: int) -> String:
+	match height_mode:
+		ApartmentWallSegmentConfigScript.HeightMode.CUSTOM:
+			return "custom"
+		ApartmentWallSegmentConfigScript.HeightMode.CUTAWAY:
+			return "cutaway"
+		_:
+			return "default"
+
+
+func _format_cell(cell: Vector2i) -> String:
+	return "(%d,%d)" % [cell.x, cell.y]
+
+
 func _doorway_center(segment_id: StringName) -> Vector2:
 	for segment in _wall_segments():
 		if StringName(String(segment["id"])) != segment_id:
@@ -588,20 +742,36 @@ func _doorway_center(segment_id: StringName) -> Vector2:
 	return Vector2.ZERO
 
 
-func _add_wall_id_label(segment: Dictionary) -> void:
-	if not show_wall_ids:
+func _add_wall_id_debug(segment: Dictionary) -> void:
+	if _wall_id_layer == null:
 		return
 	var id := String(segment["id"])
 	var axis: WallAxis = segment["axis"]
 	var start_cell := _segment_start_cell(segment)
 	var start_cell_i: Vector2i = segment.get("start_cell", Vector2i.ZERO)
 	var length := float(segment["length"])
+	var length_i := int(segment["length"])
 	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
+	var end_cell_i := _segment_end_cell_i(segment)
 	var midpoint := _offset_cell(start_cell, axis, length * 0.5)
 	var label_offset := Vector2(-46.0, -_resolve_wall_height(float(segment.get("height", -1.0))) - 26.0)
 	if wall_type == WallType.CUTAWAY_STUB:
 		label_offset = Vector2(-46.0, 18.0)
-	_add_debug_label("wall_id_%s" % id, "%s (%d,%d)" % [id, start_cell_i.x, start_cell_i.y], _iso(midpoint.x, midpoint.y) + label_offset, 11)
+	_add_marker(_wall_id_layer, "wall_start_%s" % id, _iso(start_cell.x, start_cell.y), COLOR_WALL_START_MARKER)
+	_add_marker(_wall_id_layer, "wall_end_%s" % id, _iso(float(end_cell_i.x), float(end_cell_i.y)), COLOR_WALL_END_MARKER)
+	_add_label(
+		_wall_id_layer,
+		"wall_id_%s" % id,
+		"%s\nstart=(%d,%d) axis=%s len=%d" % [
+			id,
+			start_cell_i.x,
+			start_cell_i.y,
+			_wall_axis_name(axis),
+			length_i,
+		],
+		_iso(midpoint.x, midpoint.y) + label_offset,
+		11
+	)
 
 
 func _draw_wall_segment(p0: Vector2, p1: Vector2, wall_name: String, height: float) -> void:
@@ -841,7 +1011,25 @@ func _add_line(parent: Node, line_name: String, points: Array, color: Color, wid
 	return line
 
 
+func _add_marker(parent: Node, marker_name: String, position: Vector2, color: Color, radius := 7.0) -> Polygon2D:
+	var marker := Polygon2D.new()
+	marker.name = marker_name
+	marker.polygon = PackedVector2Array([
+		position + Vector2(0.0, -radius),
+		position + Vector2(radius, 0.0),
+		position + Vector2(0.0, radius),
+		position + Vector2(-radius, 0.0),
+	])
+	marker.color = color
+	parent.add_child(marker)
+	return marker
+
+
 func _add_debug_label(label_name: String, text: String, position: Vector2, font_size := 15) -> Label:
+	return _add_label(_label_layer, label_name, text, position, font_size)
+
+
+func _add_label(parent: Node, label_name: String, text: String, position: Vector2, font_size := 15) -> Label:
 	var label := Label.new()
 	label.name = label_name
 	label.text = text
@@ -851,15 +1039,15 @@ func _add_debug_label(label_name: String, text: String, position: Vector2, font_
 	label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
-	label.add_to_group("apartment_shell_debug_labels")
-	_label_layer.add_child(label)
+	parent.add_child(label)
 	return label
 
 
 func _update_label_visibility() -> void:
-	if _label_layer == null:
-		return
-	_label_layer.visible = show_debug_labels
+	if _label_layer != null:
+		_label_layer.visible = show_debug_labels
+	if _wall_id_layer != null:
+		_wall_id_layer.visible = show_wall_ids
 
 
 func _apply_camera_preset(preset: String) -> void:
