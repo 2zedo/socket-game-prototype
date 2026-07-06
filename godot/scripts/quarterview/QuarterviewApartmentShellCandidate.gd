@@ -1,5 +1,7 @@
 extends Node2D
 
+const ApartmentWallSegmentConfigScript := preload("res://scripts/quarterview/ApartmentWallSegmentConfig.gd")
+
 enum ViewOrientation {
 	FRONT_RIGHT,
 	FRONT_LEFT,
@@ -48,14 +50,14 @@ const DEFAULT_SERVICE_ROOM_SIZE := Vector2i(2, 1)
 const DEFAULT_NO_LARGE_OBJECT_ZONE_ORIGIN := Vector2i(2, 8)
 const DEFAULT_NO_LARGE_OBJECT_ZONE_SIZE := Vector2i(8, 2)
 
-const DEFAULT_CONNECTION_DOOR_A_START := 6.25
-const DEFAULT_CONNECTION_DOOR_WIDTH := 1.4
-const DEFAULT_ENTRANCE_DOOR_B_START := 5.2
-const DEFAULT_ENTRANCE_DOOR_WIDTH := 1.25
-const DEFAULT_BATHROOM_DOOR_A_START := 0.45
-const DEFAULT_BATHROOM_DOOR_WIDTH := 0.85
-const DEFAULT_SERVICE_DOOR_A_START := 0.45
-const DEFAULT_SERVICE_DOOR_WIDTH := 0.85
+const DEFAULT_CONNECTION_DOOR_OFFSET := 6
+const DEFAULT_CONNECTION_DOOR_WIDTH := 1
+const DEFAULT_ENTRANCE_DOOR_OFFSET := 5
+const DEFAULT_ENTRANCE_DOOR_WIDTH := 1
+const DEFAULT_BATHROOM_DOOR_OFFSET := 0
+const DEFAULT_BATHROOM_DOOR_WIDTH := 1
+const DEFAULT_SERVICE_DOOR_OFFSET := 0
+const DEFAULT_SERVICE_DOOR_WIDTH := 1
 const DEFAULT_LIVING_WINDOW_AXIS_A := 11.0
 const DEFAULT_LIVING_WINDOW_B_START := 5.2
 const DEFAULT_LIVING_WINDOW_WIDTH := 1.65
@@ -130,15 +132,12 @@ const COLOR_LABEL_SHADOW := Color(0.01, 0.012, 0.016, 0.88)
 @export var no_large_object_zone_origin := DEFAULT_NO_LARGE_OBJECT_ZONE_ORIGIN
 @export var no_large_object_zone_size := DEFAULT_NO_LARGE_OBJECT_ZONE_SIZE
 
-@export_group("Door And Window Layout")
-@export var connection_door_axis_a_start := DEFAULT_CONNECTION_DOOR_A_START
-@export var connection_door_width := DEFAULT_CONNECTION_DOOR_WIDTH
-@export var entrance_door_axis_b_start := DEFAULT_ENTRANCE_DOOR_B_START
-@export var entrance_door_width := DEFAULT_ENTRANCE_DOOR_WIDTH
-@export var bathroom_door_axis_a_start := DEFAULT_BATHROOM_DOOR_A_START
-@export var bathroom_door_width := DEFAULT_BATHROOM_DOOR_WIDTH
-@export var service_door_axis_a_start := DEFAULT_SERVICE_DOOR_A_START
-@export var service_door_width := DEFAULT_SERVICE_DOOR_WIDTH
+@export_group("Wall Segment Editing")
+# Leave this empty to use the named default shell walls below. Add Resource items here to test
+# wall movement, deletion, or extra walls without touching the renderer.
+@export var custom_wall_segments: Array[Resource] = []
+
+@export_group("Window Layout")
 @export var living_window_axis_a := DEFAULT_LIVING_WINDOW_AXIS_A
 @export var living_window_axis_b_start := DEFAULT_LIVING_WINDOW_B_START
 @export var living_window_width := DEFAULT_LIVING_WINDOW_WIDTH
@@ -272,122 +271,164 @@ func _draw_walls() -> void:
 # Wall segment data keeps shell structure edits near the layout settings instead of hiding them
 # inside drawing calls. start_cell and doorway_offset are in grid coordinates before map rotation.
 func _wall_segments() -> Array[Dictionary]:
+	var segments: Array[Dictionary] = []
+	for config in _active_wall_segment_configs():
+		if config == null:
+			continue
+		segments.append(_wall_segment_from_config(config))
+	return segments
+
+
+func _active_wall_segment_configs() -> Array[Resource]:
+	if not custom_wall_segments.is_empty():
+		return custom_wall_segments
+	return _default_wall_segment_configs()
+
+
+# Edit these default entries to move, hide, add, or delete shell walls in code. For Inspector tests,
+# copy this shape into custom_wall_segments; when that array is non-empty, it overrides this list.
+func _default_wall_segment_configs() -> Array[Resource]:
 	var living_room := _living_room_rect()
 	var work_room := _work_room_rect()
 	var bathroom_room := _bathroom_room_rect()
 	var service_room := _service_room_rect()
-	var living_left := float(living_room.position.x)
-	var living_right := float(living_room.position.x + living_room.size.x)
-	var living_top := float(living_room.position.y)
-	var living_bottom := float(living_room.position.y + living_room.size.y)
-	var work_left := float(work_room.position.x)
-	var work_right := float(work_room.position.x + work_room.size.x)
-	var work_top := float(work_room.position.y)
-	var work_bottom := float(work_room.position.y + work_room.size.y)
+	var living_left := living_room.position.x
+	var living_right := living_room.position.x + living_room.size.x
+	var living_bottom := living_room.position.y + living_room.size.y
+	var work_right := work_room.position.x + work_room.size.x
+	var work_bottom := work_room.position.y + work_room.size.y
+	var service_right := service_room.position.x + service_room.size.x
+	var service_wall_length := service_room.position.y + service_room.size.y - bathroom_room.position.y
 
 	return [
 		# Work room outer walls.
-		_wall_segment("work_back_wall", WallAxis.AXIS_A, Vector2(work_left, work_top), float(work_room.size.x)),
-		_wall_segment("work_left_wall", WallAxis.AXIS_B, Vector2(work_left, work_top), float(work_room.size.y)),
-		_wall_segment("work_right_wall", WallAxis.AXIS_B, Vector2(work_right, work_top), float(work_room.size.y)),
+		_make_wall_segment_config(&"work_back_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_A, work_room.position, work_room.size.x),
+		_make_wall_segment_config(&"work_left_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, work_room.position, work_room.size.y),
+		_make_wall_segment_config(&"work_right_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, Vector2i(work_right, work_room.position.y), work_room.size.y),
 
 		# Living room outer walls. The left wall has an entrance-door opening.
-		_wall_segment(
-			"entrance_wall",
-			WallAxis.AXIS_B,
-			Vector2(living_left, living_top),
-			float(living_room.size.y),
-			WallType.DOORWAY_FRAME,
-			entrance_door_axis_b_start - living_top,
-			entrance_door_width,
+		_make_wall_segment_config(
+			&"entrance_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
+			living_room.position,
+			living_room.size.y,
+			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
+			DEFAULT_ENTRANCE_DOOR_OFFSET,
+			DEFAULT_ENTRANCE_DOOR_WIDTH,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
 			true,
 			entrance_door_color
 		),
-		_wall_segment("living_right_wall", WallAxis.AXIS_B, Vector2(living_right, living_top), float(living_room.size.y)),
-		_wall_segment(
-			"living_front_cutaway",
-			WallAxis.AXIS_A,
-			Vector2(living_left, living_bottom),
-			float(living_room.size.x),
-			WallType.CUTAWAY_STUB,
+		_make_wall_segment_config(&"living_right_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, Vector2i(living_right, living_room.position.y), living_room.size.y),
+		_make_wall_segment_config(
+			&"living_front_cutaway",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
+			Vector2i(living_left, living_bottom),
+			living_room.size.x,
+			ApartmentWallSegmentConfigScript.WallType.CUTAWAY_STUB,
 			-1.0,
-			0.0,
-			cutaway_front_stub_height
+			0,
+			ApartmentWallSegmentConfigScript.HeightMode.CUTAWAY
 		),
 
-		# Shared wall between the two rooms. The doorway is the only gap.
-		_wall_segment(
-			"work_front_shared_wall",
-			WallAxis.AXIS_A,
-			Vector2(living_left, work_bottom),
+		# Shared wall between the two rooms. Change doorway_offset / doorway_width here to move it.
+		_make_wall_segment_config(
+			&"work_front_shared_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
+			Vector2i(living_left, work_bottom),
 			living_right - living_left,
-			WallType.DOORWAY_FRAME,
-			connection_door_axis_a_start - living_left,
-			connection_door_width,
+			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
+			DEFAULT_CONNECTION_DOOR_OFFSET,
+			DEFAULT_CONNECTION_DOOR_WIDTH,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
 			true,
 			inner_door_color
 		),
 
 		# Bathroom / service partitions remain structural placeholders, not furniture.
-		_wall_segment(
-			"bathroom_wall",
-			WallAxis.AXIS_A,
-			Vector2(float(bathroom_room.position.x), float(bathroom_room.position.y)),
-			float(bathroom_room.size.x),
-			WallType.DOORWAY_FRAME,
-			bathroom_door_axis_a_start - float(bathroom_room.position.x),
-			bathroom_door_width,
+		_make_wall_segment_config(
+			&"bathroom_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
+			bathroom_room.position,
+			bathroom_room.size.x,
+			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
+			DEFAULT_BATHROOM_DOOR_OFFSET,
+			DEFAULT_BATHROOM_DOOR_WIDTH,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
 			true,
 			service_door_color
 		),
-		_wall_segment(
-			"service_wall",
-			WallAxis.AXIS_A,
-			Vector2(float(service_room.position.x), float(service_room.position.y)),
-			float(service_room.size.x),
-			WallType.DOORWAY_FRAME,
-			service_door_axis_a_start - float(service_room.position.x),
-			service_door_width,
+		_make_wall_segment_config(
+			&"service_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
+			service_room.position,
+			service_room.size.x,
+			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
+			DEFAULT_SERVICE_DOOR_OFFSET,
+			DEFAULT_SERVICE_DOOR_WIDTH,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
 			true,
 			service_door_color.darkened(0.08)
 		),
-		_wall_segment(
-			"service_right_wall",
-			WallAxis.AXIS_B,
-			Vector2(float(service_room.position.x + service_room.size.x), float(bathroom_room.position.y)),
-			float(service_room.position.y + service_room.size.y - bathroom_room.position.y)
-		),
+		_make_wall_segment_config(&"service_right_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, Vector2i(service_right, bathroom_room.position.y), service_wall_length),
 	]
 
 
-func _wall_segment(
-	id: String,
-	axis: WallAxis,
-	start_cell: Vector2,
-	length: float,
-	wall_type: WallType = WallType.NORMAL,
-	doorway_offset := -1.0,
-	doorway_width := 0.0,
-	height := -1.0,
-	visible := true,
-	doorway_color := Color.TRANSPARENT
-) -> Dictionary:
+func _wall_segment_from_config(config: Resource) -> Dictionary:
 	return {
-		"id": id,
-		"axis": axis,
-		"start_cell": start_cell,
-		"length": length,
-		"wall_type": wall_type,
-		"doorway_offset": doorway_offset,
-		"doorway_width": doorway_width,
-		"height": height,
-		"visible": visible,
-		"doorway_color": doorway_debug_color if doorway_color == Color.TRANSPARENT else doorway_color,
+		"id": String(config.id),
+		"enabled": config.enabled,
+		"axis": config.axis,
+		"start_cell": config.start_cell,
+		"length": config.length,
+		"wall_type": config.wall_type,
+		"doorway_offset": config.doorway_offset,
+		"doorway_width": config.doorway_width,
+		"height": _wall_height_from_config(config),
+		"doorway_color": doorway_debug_color if config.doorway_color == Color.TRANSPARENT else config.doorway_color,
 	}
+
+
+func _make_wall_segment_config(
+	segment_id: StringName,
+	segment_axis: int,
+	segment_start_cell: Vector2i,
+	segment_length: int,
+	segment_type: int = 0,
+	segment_doorway_offset := -1,
+	segment_doorway_width := 0,
+	segment_height_mode: int = 0,
+	segment_custom_height := -1.0,
+	segment_enabled := true,
+	segment_doorway_color := Color.TRANSPARENT
+) -> Resource:
+	var config: Resource = ApartmentWallSegmentConfigScript.new()
+	config.id = segment_id
+	config.enabled = segment_enabled
+	config.axis = segment_axis
+	config.start_cell = segment_start_cell
+	config.length = segment_length
+	config.wall_type = segment_type
+	config.doorway_offset = segment_doorway_offset
+	config.doorway_width = segment_doorway_width
+	config.height_mode = segment_height_mode
+	config.custom_height = segment_custom_height
+	config.doorway_color = segment_doorway_color
+	return config
+
+
+func _wall_height_from_config(config: Resource) -> float:
+	match config.height_mode:
+		ApartmentWallSegmentConfigScript.HeightMode.CUSTOM:
+			return config.custom_height
+		ApartmentWallSegmentConfigScript.HeightMode.CUTAWAY:
+			return cutaway_front_stub_height
+		_:
+			return -1.0
 
 
 func _draw_doors_and_window_placeholders() -> void:
@@ -400,8 +441,8 @@ func _draw_debug_labels() -> void:
 	_add_debug_label("work_label", "작업공간+전력공간", _room_center(_work_room_rect()) + Vector2(-76, -8))
 	_add_debug_label("bath_label", "욕실", _room_center(_bathroom_room_rect()) + Vector2(-18, -8))
 	_add_debug_label("service_label", "서비스 구획", _room_center(_service_room_rect()) + Vector2(-42, 8))
-	_add_debug_label("connection_label", "연결문", _iso(connection_door_axis_a_start + connection_door_width * 0.5, float(living_room.position.y)) + Vector2(-32, -104))
-	_add_debug_label("entrance_label", "현관문", _iso(float(living_room.position.x), entrance_door_axis_b_start + entrance_door_width * 0.5) + Vector2(-72, -84))
+	_add_debug_label("connection_label", "연결문", _doorway_center(&"work_front_shared_wall") + Vector2(-32, -104))
+	_add_debug_label("entrance_label", "현관문", _doorway_center(&"entrance_wall") + Vector2(-72, -84))
 	_add_debug_label("no_object_zone_label", "camera foreground no-large-object zone", _room_center(_no_large_object_zone_rect()) + Vector2(-148, 20))
 	_add_debug_label("camera_help_label", "1 full_map / 2 living_area / 3 work_power_area / L labels", Vector2(250, 42))
 
@@ -419,7 +460,7 @@ func _draw_wall_axis_b(a: float, b_start: float, length: float, wall_name: Strin
 
 
 func _draw_wall_segment_data(segment: Dictionary) -> void:
-	if not bool(segment.get("visible", true)):
+	if not bool(segment.get("enabled", true)):
 		return
 
 	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
@@ -445,7 +486,7 @@ func _draw_wall_segment_data(segment: Dictionary) -> void:
 func _draw_solid_wall_segment(segment: Dictionary) -> void:
 	var id := String(segment["id"])
 	var axis: WallAxis = segment["axis"]
-	var start_cell: Vector2 = segment["start_cell"]
+	var start_cell := _segment_start_cell(segment)
 	var length := float(segment["length"])
 	var height := float(segment.get("height", -1.0))
 	_draw_wall_piece(axis, start_cell, length, id, height)
@@ -454,7 +495,7 @@ func _draw_solid_wall_segment(segment: Dictionary) -> void:
 func _draw_wall_with_doorway(segment: Dictionary, draw_frame: bool) -> void:
 	var id := String(segment["id"])
 	var axis: WallAxis = segment["axis"]
-	var start_cell: Vector2 = segment["start_cell"]
+	var start_cell := _segment_start_cell(segment)
 	var length := float(segment["length"])
 	var height := float(segment.get("height", -1.0))
 	var doorway_offset := clampf(float(segment.get("doorway_offset", -1.0)), 0.0, length)
@@ -488,7 +529,7 @@ func _draw_doorway_segment(axis: WallAxis, start_cell: Vector2, width: float, do
 func _draw_cutaway_stub_segment_data(segment: Dictionary) -> void:
 	var id := String(segment["id"])
 	var axis: WallAxis = segment["axis"]
-	var start_cell: Vector2 = segment["start_cell"]
+	var start_cell := _segment_start_cell(segment)
 	var length := float(segment["length"])
 	var height := float(segment.get("height", -1.0))
 	match axis:
@@ -501,20 +542,22 @@ func _draw_cutaway_stub_segment_data(segment: Dictionary) -> void:
 func _draw_wall_end_marker(segment: Dictionary) -> void:
 	var id := String(segment["id"])
 	var axis: WallAxis = segment["axis"]
-	var start_cell: Vector2 = segment["start_cell"]
+	var start_cell := _segment_start_cell(segment)
 	var length := float(segment["length"])
 	var height := _resolve_wall_height(float(segment.get("height", -1.0)))
-	var end_point := _iso(_offset_cell(start_cell, axis, length).x, _offset_cell(start_cell, axis, length).y)
+	var end_cell := _offset_cell(start_cell, axis, length)
+	var end_point := _iso(end_cell.x, end_cell.y)
 	_add_line(_wall_layer, "%sEndMarker" % id, [end_point, end_point + Vector2(0.0, -height)], wall_cap_color, 3.0)
 
 
 func _draw_wall_corner_marker(segment: Dictionary) -> void:
 	var id := String(segment["id"])
 	var axis: WallAxis = segment["axis"]
-	var start_cell: Vector2 = segment["start_cell"]
+	var start_cell := _segment_start_cell(segment)
 	var height := _resolve_wall_height(float(segment.get("height", -1.0)))
 	var point := _iso(start_cell.x, start_cell.y)
-	var side_point := _iso(_offset_cell(start_cell, axis, 0.25).x, _offset_cell(start_cell, axis, 0.25).y)
+	var side_cell := _offset_cell(start_cell, axis, 0.25)
+	var side_point := _iso(side_cell.x, side_cell.y)
 	_add_line(_wall_layer, "%sCornerMarker" % id, [point, point + Vector2(0.0, -height), side_point + Vector2(0.0, -height)], wall_cap_color, 3.0)
 
 
@@ -524,19 +567,41 @@ func _offset_cell(start_cell: Vector2, axis: WallAxis, offset: float) -> Vector2
 	return Vector2(start_cell.x + offset, start_cell.y)
 
 
+func _segment_start_cell(segment: Dictionary) -> Vector2:
+	var start_cell: Vector2i = segment.get("start_cell", Vector2i.ZERO)
+	return Vector2(start_cell)
+
+
+func _doorway_center(segment_id: StringName) -> Vector2:
+	for segment in _wall_segments():
+		if StringName(String(segment["id"])) != segment_id:
+			continue
+		var axis: WallAxis = segment["axis"]
+		var start_cell := _segment_start_cell(segment)
+		var offset := float(segment.get("doorway_offset", -1))
+		var width := float(segment.get("doorway_width", 0))
+		if offset < 0.0 or width <= 0.0:
+			var midpoint := _offset_cell(start_cell, axis, float(segment["length"]) * 0.5)
+			return _iso(midpoint.x, midpoint.y)
+		var doorway_cell := _offset_cell(start_cell, axis, offset + width * 0.5)
+		return _iso(doorway_cell.x, doorway_cell.y)
+	return Vector2.ZERO
+
+
 func _add_wall_id_label(segment: Dictionary) -> void:
 	if not show_wall_ids:
 		return
 	var id := String(segment["id"])
 	var axis: WallAxis = segment["axis"]
-	var start_cell: Vector2 = segment["start_cell"]
+	var start_cell := _segment_start_cell(segment)
+	var start_cell_i: Vector2i = segment.get("start_cell", Vector2i.ZERO)
 	var length := float(segment["length"])
 	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
 	var midpoint := _offset_cell(start_cell, axis, length * 0.5)
 	var label_offset := Vector2(-46.0, -_resolve_wall_height(float(segment.get("height", -1.0))) - 26.0)
 	if wall_type == WallType.CUTAWAY_STUB:
 		label_offset = Vector2(-46.0, 18.0)
-	_add_debug_label("wall_id_%s" % id, id, _iso(midpoint.x, midpoint.y) + label_offset, 11)
+	_add_debug_label("wall_id_%s" % id, "%s (%d,%d)" % [id, start_cell_i.x, start_cell_i.y], _iso(midpoint.x, midpoint.y) + label_offset, 11)
 
 
 func _draw_wall_segment(p0: Vector2, p1: Vector2, wall_name: String, height: float) -> void:
