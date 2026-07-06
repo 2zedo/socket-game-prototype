@@ -417,7 +417,22 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			true,
 			inner_door_color
 		),
-		_make_wall_segment_config(&"living_right_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, Vector2i(living_right, living_room.position.y), living_room.size.y),
+		_make_wall_segment_config(
+			&"living_right_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
+			Vector2i(living_right, living_room.position.y),
+			living_room.size.y,
+			ApartmentWallSegmentConfigScript.WallType.NORMAL,
+			-1,
+			0,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
+			-1.0,
+			true,
+			Color.TRANSPARENT,
+			ApartmentWallSegmentConfigScript.RenderMode.REVEALABLE,
+			&"living_area",
+			true
+		),
 		_make_wall_segment_config(
 			&"living_front_cutaway",
 			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
@@ -432,6 +447,7 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			Color.TRANSPARENT,
 			ApartmentWallSegmentConfigScript.RenderMode.CUTAWAY_STUB
 		),
+		# Legacy wrong-cell-coordinate occlusion walls are kept disabled for inventory reference.
 		_make_wall_segment_config(
 			&"living_occlusion_right_wall",
 			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
@@ -442,7 +458,7 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			0,
 			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
-			true,
+			false,
 			Color.TRANSPARENT,
 			ApartmentWallSegmentConfigScript.RenderMode.REVEALABLE,
 			&"living_area",
@@ -458,7 +474,7 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			0,
 			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
-			true,
+			false,
 			Color.TRANSPARENT,
 			ApartmentWallSegmentConfigScript.RenderMode.REVEALABLE,
 			&"living_area",
@@ -672,6 +688,11 @@ func _wall_edit_hint(segment: Dictionary) -> String:
 		if source == "custom_wall_segments":
 			service_location = "edit Inspector > custom_wall_segments legacy disabled entry id=\"%s\"" % id
 		return "%s; legacy disabled service segment; keep enabled=false unless testing old service layout; use G grid overlay to confirm coordinates" % service_location
+	if id == "living_occlusion_right_wall" or id == "living_occlusion_front_wall":
+		var occlusion_location := "edit _default_wall_segment_configs() legacy disabled entry id=\"%s\"" % id
+		if source == "custom_wall_segments":
+			occlusion_location = "edit Inspector > custom_wall_segments legacy disabled entry id=\"%s\"" % id
+		return "%s; legacy wrong-cell-coordinate segment; keep enabled=false; use living_right_wall / living_front_cutaway for outer grid-line occlusion walls" % occlusion_location
 	var location := "edit _default_wall_segment_configs() entry id=\"%s\"" % id
 	if source == "custom_wall_segments":
 		location = "edit Inspector > custom_wall_segments entry id=\"%s\"" % id
@@ -679,7 +700,21 @@ func _wall_edit_hint(segment: Dictionary) -> String:
 
 
 func _draw_doors_and_window_placeholders() -> void:
-	_draw_window_axis_b(living_window_axis_a, living_window_axis_b_start, living_window_width, "LivingWindowPlaceholder")
+	if _should_draw_living_window_placeholder():
+		_draw_window_axis_b(living_window_axis_a, living_window_axis_b_start, living_window_width, "LivingWindowPlaceholder")
+
+
+func _should_draw_living_window_placeholder() -> bool:
+	if preview_revealed_walls:
+		return true
+	for segment in _wall_segments():
+		if String(segment.get("id", "")) != "living_right_wall":
+			continue
+		if not bool(segment.get("enabled", true)):
+			return false
+		var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
+		return render_mode == WallRenderMode.FULL
+	return true
 
 
 func _draw_debug_labels() -> void:
@@ -896,16 +931,7 @@ func _draw_doorway_segment(axis: WallAxis, start_cell: Vector2, width: float, do
 
 
 func _draw_cutaway_stub_segment_data(segment: Dictionary) -> void:
-	var id := String(segment["id"])
-	var axis: WallAxis = segment["axis"]
-	var start_cell := _segment_start_cell(segment)
-	var length := float(segment["length"])
-	var height := float(segment.get("height", -1.0))
-	match axis:
-		WallAxis.AXIS_B:
-			_draw_front_stub_axis_b(start_cell.x, start_cell.y, length, id, height)
-		_:
-			_draw_front_stub_axis_a(start_cell.x, start_cell.y, length, id, height)
+	_draw_hidden_stub_segment_data(segment)
 
 
 func _draw_hidden_stub_segment_data(segment: Dictionary) -> void:

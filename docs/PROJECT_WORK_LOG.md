@@ -95,3 +95,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: wall coordinates, room scale, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character area reveal logic, `SurvivalState`, `project.godot`.
 - Next: Manually inspect the shell with `O` and `W` enabled before deciding whether any occlusion wall coordinates need movement.
+
+### Apartment occlusion wall outer-grid alignment
+
+- Commit: pending in this task.
+- Result: Moved occlusion responsibility to the actual living-room outer grid-line walls: `living_right_wall` is now revealable at `(11,4)->(11,10)`, `living_front_cutaway` remains the front cutaway at `(0,10)->(11,10)`, and the earlier one-cell-inward `living_occlusion_*` segments are disabled legacy references.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: room scale, bathroom/entrance coordinates, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character area reveal logic, `SurvivalState`, `project.godot`.
+- Next: Use `G`, `W`, and `I` to verify future wall requests against wall grid-line coordinates rather than interior floor cell coordinates.
