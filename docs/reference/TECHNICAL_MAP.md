@@ -81,14 +81,16 @@ Do not modify by default:
 | Show wall IDs / start-end markers | Press `W` in the shell scene |
 | Print wall inventory | Press `I` in the shell scene |
 | Show floor grid coordinates | Press `G` in the shell scene |
+| Highlight occlusion / revealable walls | Press `O` in the shell scene |
 | Identify a floor cell under the mouse | Enable `G`, then hover a floor tile; click to print the cell |
 | Emphasize one wall | Set `debug_focus_wall_id`, e.g. `bathroom_left_wall`, in the Inspector |
+| Preview revealable walls as full walls | Set `preview_revealed_walls=true` in the Inspector |
 
 Wall inventory columns: `id`, `enabled`, `source`, `axis`, `from_cell`, `to_cell`, `length`, `wall_type`, `render_mode`, `doorway`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 
 `from_cell -> to_cell` is the preferred way to read wall placement. The older `start_cell + axis + length` values still drive the data model, but the `G` floor-coordinate overlay is the quickest way to see which direction `+X` and `+Y` currently point after `map_rotation`.
 
-`render_mode` separates logical wall existence from the current shell display. `FULL` draws a full-height wall. `CUTAWAY_STUB`, `HIDDEN_STUB`, and `REVEALABLE` keep the wall enabled in inventory while showing only a low cutaway / stub in this camera view. `LOGICAL_ONLY` keeps the wall as data without drawing it.
+`render_mode` separates logical wall existence from the current shell display. `FULL` draws a full-height wall. `CUTAWAY_STUB`, `HIDDEN_STUB`, and `REVEALABLE` keep the wall enabled in inventory while showing only a low cutaway / stub in this camera view. `REVEALABLE` walls draw a visible low body, top cap line, and base shadow by default; `preview_revealed_walls=true` temporarily draws them as full walls for inspection. `LOGICAL_ONLY` keeps the wall as data without drawing it.
 
 Current bathroom shell wall IDs:
 

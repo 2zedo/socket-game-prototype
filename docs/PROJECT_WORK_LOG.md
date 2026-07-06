@@ -87,3 +87,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `ApartmentWallSegmentConfig.gd`, `QuarterviewApartmentShellCandidate.gd`, and current technical/status docs.
 - Not changed: production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character area reveal logic, `SurvivalState`, `project.godot`.
 - Next: Hook future room/character area state to `render_mode=REVEALABLE` walls when production camera occlusion rules are designed.
+
+### Apartment occlusion wall stub display
+
+- Commit: pending in this task.
+- Result: Improved `REVEALABLE` occlusion walls so the living front/right logical walls render as visible low stubs with body, cap, and base shadow; added `O` occlusion-wall debug highlighting and `preview_revealed_walls` for temporary full-wall inspection.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: wall coordinates, room scale, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character area reveal logic, `SurvivalState`, `project.godot`.
+- Next: Manually inspect the shell with `O` and `W` enabled before deciding whether any occlusion wall coordinates need movement.

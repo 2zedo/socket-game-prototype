@@ -105,6 +105,10 @@ const COLOR_GRID_COORD := Color(0.82, 0.93, 1.0, 0.96)
 const COLOR_GRID_ORIGIN := Color(1.0, 0.92, 0.22, 1.0)
 const COLOR_GRID_AXIS_X := Color(0.35, 0.78, 1.0, 0.95)
 const COLOR_GRID_AXIS_Y := Color(0.50, 1.0, 0.60, 0.95)
+const COLOR_OCCLUSION_STUB_BODY := Color(0.20, 0.22, 0.22, 0.58)
+const COLOR_OCCLUSION_STUB_CAP := Color(0.58, 0.61, 0.58, 0.90)
+const COLOR_OCCLUSION_STUB_SHADOW := Color(0.03, 0.035, 0.04, 0.58)
+const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 
 @export_group("View Orientation")
 # view_orientation controls the isometric projection basis / mirroring only.
@@ -170,6 +174,10 @@ const COLOR_GRID_AXIS_Y := Color(0.50, 1.0, 0.60, 0.95)
 @export var show_debug_labels := true
 @export var show_wall_ids := false
 @export var show_floor_grid_coords := false
+# Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
+@export var show_occlusion_wall_debug := false
+# Preview helper only: draw REVEALABLE walls at full height without adding character/area logic.
+@export var preview_revealed_walls := false
 @export var debug_focus_wall_id := ""
 
 @onready var camera_2d: Camera2D = $Camera2D
@@ -178,11 +186,13 @@ var _background_layer: Node2D
 var _floor_layer: Node2D
 var _zone_layer: Node2D
 var _edge_layer: Node2D
+var _occlusion_stub_layer: Node2D
 var _wall_layer: Node2D
 var _door_layer: Node2D
 var _label_layer: Node2D
 var _grid_coord_layer: Node2D
 var _wall_id_layer: Node2D
+var _occlusion_debug_layer: Node2D
 var _debug_overlay_layer: CanvasLayer
 var _hover_coord_label: Label
 var _hover_coord_background: ColorRect
@@ -211,6 +221,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			show_floor_grid_coords = not show_floor_grid_coords
 			_update_label_visibility()
 			_update_hover_cell()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_O:
+			show_occlusion_wall_debug = not show_occlusion_wall_debug
+			_update_label_visibility()
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_I:
@@ -249,11 +264,13 @@ func _create_layers() -> void:
 	_floor_layer = _add_layer("FloorTileLayer", -20)
 	_zone_layer = _add_layer("DebugZoneLayer", -15)
 	_edge_layer = _add_layer("FloorEdgeLayer", -10)
+	_occlusion_stub_layer = _add_layer("OcclusionStubLayer", -4)
 	_wall_layer = _add_layer("WallLayer", 0)
 	_door_layer = _add_layer("DoorAndWindowLayer", 10)
 	_label_layer = _add_layer("DebugLabelLayer", 40)
 	_grid_coord_layer = _add_layer("GridCoordinateLayer", 85)
 	_wall_id_layer = _add_layer("WallIdLayer", 90)
+	_occlusion_debug_layer = _add_layer("OcclusionWallDebugLayer", 95)
 	_debug_overlay_layer = CanvasLayer.new()
 	_debug_overlay_layer.name = "DebugOverlayLayer"
 	add_child(_debug_overlay_layer)
@@ -678,7 +695,7 @@ func _draw_debug_labels() -> void:
 func _draw_control_hint() -> void:
 	var label := Label.new()
 	label.name = "ShellControlHint"
-	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  I: print wall inventory"
+	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  O: occlusion walls  |  I: print wall inventory"
 	label.position = Vector2(24, 20)
 	label.modulate = COLOR_LABEL
 	label.add_theme_font_size_override("font_size", 14)
@@ -802,32 +819,37 @@ func _draw_wall_segment_data(segment: Dictionary) -> void:
 		return
 
 	var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
-	match render_mode:
-		WallRenderMode.CUTAWAY_STUB:
-			_draw_cutaway_stub_segment_data(segment)
-		WallRenderMode.HIDDEN_STUB, WallRenderMode.REVEALABLE:
-			_draw_hidden_stub_segment_data(segment)
-		WallRenderMode.LOGICAL_ONLY:
-			pass
-		_:
-			var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
-			match wall_type:
-				WallType.CUTAWAY_STUB:
-					_draw_cutaway_stub_segment_data(segment)
-				WallType.DOORWAY_EMPTY:
-					_draw_wall_with_doorway(segment, false)
-				WallType.DOORWAY_FRAME:
-					_draw_wall_with_doorway(segment, true)
-				WallType.END:
-					_draw_solid_wall_segment(segment)
-					_draw_wall_end_marker(segment)
-				WallType.CORNER:
-					_draw_solid_wall_segment(segment)
-					_draw_wall_corner_marker(segment)
-				_:
-					_draw_solid_wall_segment(segment)
+	if preview_revealed_walls and render_mode == WallRenderMode.REVEALABLE:
+		_draw_full_wall_segment_data(segment)
+	elif render_mode == WallRenderMode.CUTAWAY_STUB:
+		_draw_cutaway_stub_segment_data(segment)
+	elif render_mode == WallRenderMode.HIDDEN_STUB or render_mode == WallRenderMode.REVEALABLE:
+		_draw_hidden_stub_segment_data(segment)
+	elif render_mode == WallRenderMode.LOGICAL_ONLY:
+		pass
+	else:
+		_draw_full_wall_segment_data(segment)
 
 	_add_wall_id_debug(segment)
+
+
+func _draw_full_wall_segment_data(segment: Dictionary) -> void:
+	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
+	match wall_type:
+		WallType.CUTAWAY_STUB:
+			_draw_cutaway_stub_segment_data(segment)
+		WallType.DOORWAY_EMPTY:
+			_draw_wall_with_doorway(segment, false)
+		WallType.DOORWAY_FRAME:
+			_draw_wall_with_doorway(segment, true)
+		WallType.END:
+			_draw_solid_wall_segment(segment)
+			_draw_wall_end_marker(segment)
+		WallType.CORNER:
+			_draw_solid_wall_segment(segment)
+			_draw_wall_corner_marker(segment)
+		_:
+			_draw_solid_wall_segment(segment)
 
 
 func _draw_solid_wall_segment(segment: Dictionary) -> void:
@@ -893,20 +915,53 @@ func _draw_hidden_stub_segment_data(segment: Dictionary) -> void:
 	var end_cell := _offset_cell(start_cell, axis, float(segment["length"]))
 	var p0 := _iso(start_cell.x, start_cell.y)
 	var p1 := _iso(end_cell.x, end_cell.y)
-	var stub_height := minf(cutaway_front_stub_height, 28.0)
-	var stub_color := cutaway_stub_color
-	stub_color.a = 0.42
+	var stub_height := clampf(cutaway_front_stub_height * 0.82, 32.0, 40.0)
+	var stub_color := COLOR_OCCLUSION_STUB_BODY
 	if axis == WallAxis.AXIS_B:
 		stub_color = stub_color.darkened(0.08)
-	var line_color := wall_cap_color.lightened(0.12)
-	line_color.a = 0.72
-	_add_polygon(_edge_layer, "%sHiddenStub" % id, [
+	var cap_color := COLOR_OCCLUSION_STUB_CAP
+	if axis == WallAxis.AXIS_B:
+		cap_color = cap_color.darkened(0.05)
+	var shadow_color := COLOR_OCCLUSION_STUB_SHADOW
+	var layer := _occlusion_stub_layer if _occlusion_stub_layer != null else _edge_layer
+	_add_line(layer, "%sHiddenStubShadow" % id, [
+		p0 + Vector2(0.0, stub_height + 3.0),
+		p1 + Vector2(0.0, stub_height + 3.0),
+	], shadow_color, 8.0)
+	_add_polygon(layer, "%sHiddenStub" % id, [
 		p0,
 		p1,
 		p1 + Vector2(0.0, stub_height),
 		p0 + Vector2(0.0, stub_height),
 	], stub_color)
-	_add_line(_edge_layer, "%sHiddenStubTop" % id, [p0, p1], line_color, 3.0)
+	_add_line(layer, "%sHiddenStubCap" % id, [p0, p1], cap_color, 5.0)
+	_add_line(layer, "%sHiddenStubBase" % id, [
+		p0 + Vector2(0.0, stub_height),
+		p1 + Vector2(0.0, stub_height),
+	], shadow_color.lightened(0.18), 3.0)
+	_draw_occlusion_wall_debug(segment, p0, p1, stub_height)
+
+
+# Draws the edit-only overlay for walls that exist logically but are cut down for camera visibility.
+func _draw_occlusion_wall_debug(segment: Dictionary, p0: Vector2, p1: Vector2, stub_height: float) -> void:
+	if _occlusion_debug_layer == null:
+		return
+	var id := String(segment["id"])
+	var center := (p0 + p1) * 0.5 + Vector2(0.0, stub_height * 0.55)
+	_add_line(_occlusion_debug_layer, "%sOcclusionDebugLine" % id, [p0, p1], COLOR_OCCLUSION_STUB_DEBUG, 8.0)
+	_add_line(_occlusion_debug_layer, "%sOcclusionDebugBase" % id, [
+		p0 + Vector2(0.0, stub_height),
+		p1 + Vector2(0.0, stub_height),
+	], COLOR_OCCLUSION_STUB_DEBUG.darkened(0.24), 5.0)
+	_add_marker(_occlusion_debug_layer, "%sOcclusionDebugStart" % id, p0, COLOR_OCCLUSION_STUB_DEBUG, 13.0)
+	_add_marker(_occlusion_debug_layer, "%sOcclusionDebugEnd" % id, p1, COLOR_OCCLUSION_STUB_DEBUG.darkened(0.18), 13.0)
+	_add_label_with_background(
+		_occlusion_debug_layer,
+		"%sOcclusionDebugLabel" % id,
+		"%s\n%s" % [id, _render_mode_name(int(segment.get("render_mode", WallRenderMode.FULL)))],
+		center + Vector2(-76.0, 8.0),
+		14
+	)
 
 
 func _draw_wall_end_marker(segment: Dictionary) -> void:
@@ -1446,6 +1501,8 @@ func _update_label_visibility() -> void:
 		_wall_id_layer.visible = show_wall_ids
 	if _grid_coord_layer != null:
 		_grid_coord_layer.visible = show_floor_grid_coords
+	if _occlusion_debug_layer != null:
+		_occlusion_debug_layer.visible = show_occlusion_wall_debug
 	if _hover_coord_label != null:
 		_hover_coord_label.visible = show_floor_grid_coords
 	if _hover_coord_background != null:
