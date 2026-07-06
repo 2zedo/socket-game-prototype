@@ -107,6 +107,12 @@ const COLOR_GRID_AXIS_X := Color(0.35, 0.78, 1.0, 0.95)
 const COLOR_GRID_AXIS_Y := Color(0.50, 1.0, 0.60, 0.95)
 const COLOR_WALL_EDGE_COORD := Color(1.0, 0.84, 0.46, 0.98)
 const COLOR_WALL_EDGE_MARKER := Color(1.0, 0.54, 0.18, 0.92)
+const COLOR_NAV_WALKABLE := Color(0.22, 0.92, 0.66, 0.24)
+const COLOR_NAV_WALKABLE_MARKER := Color(0.44, 1.0, 0.78, 0.72)
+const COLOR_NAV_BLOCKED_EDGE := Color(1.0, 0.30, 0.18, 0.92)
+const COLOR_NAV_OCCLUSION_EDGE := Color(1.0, 0.56, 0.18, 0.95)
+const COLOR_NAV_PASSABLE_EDGE := Color(0.22, 0.86, 1.0, 0.96)
+const COLOR_NAV_PLAYER := Color(1.0, 0.92, 0.24, 0.96)
 const COLOR_OCCLUSION_STUB_BODY := Color(0.20, 0.22, 0.22, 0.58)
 const COLOR_OCCLUSION_STUB_CAP := Color(0.58, 0.61, 0.58, 0.90)
 const COLOR_OCCLUSION_STUB_SHADOW := Color(0.03, 0.035, 0.04, 0.58)
@@ -178,11 +184,14 @@ const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 @export var show_floor_grid_coords := false
 # Shows wall grid-line vertices / edges. Wall segments use these coordinates, not floor centers.
 @export var show_wall_edge_coords := false
+# Shows walkable cells, logical blocked edges, passable doorway edges, and the shell-only marker.
+@export var show_navigation_debug := false
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
 @export var show_occlusion_wall_debug := false
 # Preview helper only: draw REVEALABLE walls at full height without adding character/area logic.
 @export var preview_revealed_walls := false
 @export var debug_focus_wall_id := ""
+@export var player_debug_cell := Vector2i(1, 8)
 
 @onready var camera_2d: Camera2D = $Camera2D
 
@@ -194,6 +203,7 @@ var _occlusion_stub_layer: Node2D
 var _wall_layer: Node2D
 var _door_layer: Node2D
 var _label_layer: Node2D
+var _navigation_layer: Node2D
 var _grid_coord_layer: Node2D
 var _wall_edge_coord_layer: Node2D
 var _wall_id_layer: Node2D
@@ -203,6 +213,9 @@ var _hover_coord_label: Label
 var _hover_coord_background: ColorRect
 var _hover_edge_label: Label
 var _hover_edge_background: ColorRect
+var _player_debug_marker: Polygon2D
+var _player_debug_label: Label
+var _last_player_debug_area := ""
 
 
 func _ready() -> void:
@@ -236,6 +249,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_hover_cell()
 			get_viewport().set_input_as_handled()
 			return
+		if event.keycode == KEY_N:
+			show_navigation_debug = not show_navigation_debug
+			_update_label_visibility()
+			get_viewport().set_input_as_handled()
+			return
 		if event.keycode == KEY_O:
 			show_occlusion_wall_debug = not show_occlusion_wall_debug
 			_update_label_visibility()
@@ -257,6 +275,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			set_camera_preset("work_power_area")
 			get_viewport().set_input_as_handled()
 			return
+		if show_navigation_debug and _try_move_player_debug_marker(event.keycode):
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseMotion:
 		_update_hover_cell()
 		return
@@ -272,6 +293,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			if not edge_info.is_empty():
 				_print_clicked_wall_edge(edge_info)
 				printed_click = true
+		if show_navigation_debug and hover_cell != null:
+			_print_clicked_cell_navigation(hover_cell)
+			printed_click = true
 		if printed_click:
 			get_viewport().set_input_as_handled()
 
@@ -290,6 +314,7 @@ func _create_layers() -> void:
 	_wall_layer = _add_layer("WallLayer", 0)
 	_door_layer = _add_layer("DoorAndWindowLayer", 10)
 	_label_layer = _add_layer("DebugLabelLayer", 40)
+	_navigation_layer = _add_layer("NavigationDebugLayer", 70)
 	_grid_coord_layer = _add_layer("GridCoordinateLayer", 85)
 	_wall_edge_coord_layer = _add_layer("WallEdgeCoordinateLayer", 88)
 	_wall_id_layer = _add_layer("WallIdLayer", 90)
@@ -309,6 +334,7 @@ func _build_shell() -> void:
 	_draw_walls()
 	_draw_doors_and_window_placeholders()
 	_draw_debug_labels()
+	_draw_navigation_overlay()
 	_draw_floor_grid_overlay()
 	_draw_wall_edge_overlay()
 	_draw_control_hint()
@@ -674,6 +700,7 @@ func print_wall_segment_inventory() -> void:
 			row["edit_hint"],
 		])
 	print("=== End Wall Segment Inventory ===")
+	_print_navigation_summary()
 
 
 func _wall_segment_inventory_rows() -> Array[Dictionary]:
@@ -699,6 +726,22 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 			"edit_hint": _wall_edit_hint(segment),
 		})
 	return rows
+
+
+func _print_navigation_summary() -> void:
+	var edge_sets := _navigation_edge_sets()
+	var area_text := ""
+	for area_id in _navigation_area_ids():
+		if not area_text.is_empty():
+			area_text += ", "
+		area_text += area_id
+	print("=== Apartment Navigation Debug Summary ===")
+	print("walkable_cells=%d" % _walkable_floor_cells().size())
+	print("blocked_edges=%d" % edge_sets["blocked"].size())
+	print("passable_edges=%d" % edge_sets["passable"].size())
+	print("room_areas=%s" % area_text)
+	print("player_debug_cell=%s area=%s" % [_format_cell(player_debug_cell), _room_area_for_cell(player_debug_cell)])
+	print("=== End Navigation Debug Summary ===")
 
 
 func _wall_edit_hint(segment: Dictionary) -> String:
@@ -756,7 +799,7 @@ func _draw_debug_labels() -> void:
 func _draw_control_hint() -> void:
 	var label := Label.new()
 	label.name = "ShellControlHint"
-	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  E: wall edges  |  O: occlusion walls  |  I: print wall inventory"
+	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  E: wall edges  |  N: navigation  |  O: occlusion walls  |  I: print wall inventory"
 	label.position = Vector2(24, 20)
 	label.modulate = COLOR_LABEL
 	label.add_theme_font_size_override("font_size", 14)
@@ -792,6 +835,74 @@ func _draw_grid_axis_overlay() -> void:
 	_add_arrow_head(_grid_coord_layer, "grid_axis_y_head", origin, y_end, COLOR_GRID_AXIS_Y)
 	_add_label_with_background(_grid_coord_layer, "grid_axis_x_label", "+X", x_end + Vector2(12.0, -16.0), 15)
 	_add_label_with_background(_grid_coord_layer, "grid_axis_y_label", "+Y", y_end + Vector2(12.0, -16.0), 15)
+
+
+func _draw_navigation_overlay() -> void:
+	for area_id in _navigation_area_ids():
+		var cells := _navigation_room_cells(area_id)
+		for cell in cells:
+			_draw_navigation_cell(cell, area_id)
+		if not cells.is_empty():
+			_add_label_with_background(
+				_navigation_layer,
+				"nav_area_%s_label" % area_id,
+				_navigation_area_label(area_id),
+				_navigation_cells_center(cells) + Vector2(-52.0, -18.0),
+				13
+			)
+
+	var edge_sets := _navigation_edge_sets()
+	for edge_data in edge_sets["blocked"].values():
+		_draw_navigation_edge(edge_data, false)
+	for edge_data in edge_sets["passable"].values():
+		_draw_navigation_edge(edge_data, true)
+	_draw_player_debug_marker()
+
+
+func _draw_navigation_cell(cell: Vector2i, area_id: String) -> void:
+	var points := _tile_points(float(cell.x), float(cell.y))
+	_add_polygon(_navigation_layer, "nav_%s_cell_%d_%d" % [area_id, cell.x, cell.y], points, _navigation_area_color(area_id))
+	_add_marker(
+		_navigation_layer,
+		"nav_walkable_marker_%d_%d" % [cell.x, cell.y],
+		_iso(float(cell.x) + 0.5, float(cell.y) + 0.5),
+		COLOR_NAV_WALKABLE_MARKER,
+		5.0
+	)
+
+
+func _draw_navigation_edge(edge_data: Dictionary, is_passable: bool) -> void:
+	var from_cell: Vector2i = edge_data.get("from_cell", Vector2i.ZERO)
+	var to_cell: Vector2i = edge_data.get("to_cell", Vector2i.ZERO)
+	var segment_id := String(edge_data.get("segment_id", ""))
+	var color := COLOR_NAV_PASSABLE_EDGE if is_passable else COLOR_NAV_BLOCKED_EDGE
+	var width := 8.0 if is_passable else 6.0
+	if not is_passable and _is_navigation_occlusion_edge(edge_data):
+		color = COLOR_NAV_OCCLUSION_EDGE
+		width = 7.0
+	_add_line(
+		_navigation_layer,
+		"nav_%s_edge_%s" % ["passable" if is_passable else "blocked", _edge_key(from_cell, to_cell)],
+		[_iso(from_cell.x, from_cell.y), _iso(to_cell.x, to_cell.y)],
+		color,
+		width
+	)
+	var midpoint := (_iso(from_cell.x, from_cell.y) + _iso(to_cell.x, to_cell.y)) * 0.5
+	if is_passable:
+		_add_label_with_background(_navigation_layer, "nav_door_%s" % segment_id, "door %s" % segment_id, midpoint + Vector2(-38.0, -28.0), 11)
+
+
+func _draw_player_debug_marker() -> void:
+	var center := _cell_center(player_debug_cell)
+	_player_debug_marker = _add_marker(_navigation_layer, "PlayerDebugMarker", center, COLOR_NAV_PLAYER, 15.0)
+	_player_debug_label = _add_label(
+		_navigation_layer,
+		"PlayerDebugMarkerLabel",
+		_player_debug_text(),
+		center + Vector2(14.0, -42.0),
+		14
+	)
+	_update_player_debug_marker()
 
 
 func _draw_wall_edge_overlay() -> void:
@@ -846,6 +957,110 @@ func _append_floor_cells(cells_by_key: Dictionary, room: Rect2i) -> void:
 		for b in range(room.position.y, room.position.y + room.size.y):
 			var cell := Vector2i(a, b)
 			cells_by_key["%d,%d" % [cell.x, cell.y]] = cell
+
+
+func _navigation_area_ids() -> Array[String]:
+	return ["living_area", "work_power_area", "bathroom", "entrance_area"]
+
+
+func _navigation_room_cells(area_id: String) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for cell in _walkable_floor_cells():
+		if _room_area_for_cell(cell) == area_id:
+			cells.append(cell)
+	return cells
+
+
+func _walkable_floor_cells() -> Array[Vector2i]:
+	var cells_by_key: Dictionary = {}
+	for cell in _visible_floor_cells():
+		cells_by_key[_cell_key(cell)] = cell
+	for cell in _navigation_extra_walkable_cells():
+		cells_by_key[_cell_key(cell)] = cell
+	for cell in _navigation_unwalkable_cells():
+		cells_by_key.erase(_cell_key(cell))
+
+	var cells: Array[Vector2i] = []
+	for key in cells_by_key.keys():
+		cells.append(cells_by_key[key])
+	return cells
+
+
+# Keep these lists as the edit points for future navigation exceptions.
+func _navigation_extra_walkable_cells() -> Array[Vector2i]:
+	return []
+
+
+func _navigation_unwalkable_cells() -> Array[Vector2i]:
+	return []
+
+
+func _room_area_for_cell(cell: Vector2i) -> String:
+	if not _is_walkable_cell(cell):
+		return "none"
+	if _is_entrance_area_cell(cell):
+		return "entrance_area"
+	if _is_cell_in_rect(cell, _bathroom_room_rect()):
+		return "bathroom"
+	if _is_cell_in_rect(cell, _work_room_rect()):
+		return "work_power_area"
+	if _is_cell_in_rect(cell, _living_room_rect()):
+		return "living_area"
+	return "none"
+
+
+func _is_entrance_area_cell(cell: Vector2i) -> bool:
+	return cell.x >= 0 and cell.x < 2 and cell.y >= 8 and cell.y < 10
+
+
+func _is_walkable_cell(cell: Vector2i) -> bool:
+	for walkable_cell in _walkable_floor_cells():
+		if walkable_cell == cell:
+			return true
+	return false
+
+
+func _is_cell_in_rect(cell: Vector2i, room: Rect2i) -> bool:
+	return cell.x >= room.position.x and cell.x < room.position.x + room.size.x and cell.y >= room.position.y and cell.y < room.position.y + room.size.y
+
+
+func _navigation_area_label(area_id: String) -> String:
+	match area_id:
+		"work_power_area":
+			return "work_power_area"
+		"bathroom":
+			return "bathroom"
+		"entrance_area":
+			return "entrance_area"
+		_:
+			return "living_area"
+
+
+func _navigation_area_color(area_id: String) -> Color:
+	match area_id:
+		"work_power_area":
+			return Color(0.22, 0.56, 1.0, 0.22)
+		"bathroom":
+			return Color(0.36, 0.76, 0.94, 0.26)
+		"entrance_area":
+			return Color(0.90, 0.72, 0.28, 0.28)
+		_:
+			return COLOR_NAV_WALKABLE
+
+
+func _navigation_cells_center(cells: Array[Vector2i]) -> Vector2:
+	var total := Vector2.ZERO
+	for cell in cells:
+		total += _cell_center(cell)
+	return total / float(cells.size())
+
+
+func _cell_center(cell: Vector2i) -> Vector2:
+	return _iso(float(cell.x) + 0.5, float(cell.y) + 0.5)
+
+
+func _cell_key(cell: Vector2i) -> String:
+	return "%d,%d" % [cell.x, cell.y]
 
 
 func _create_hover_coord_overlay() -> void:
@@ -1028,6 +1243,182 @@ func _print_clicked_wall_edge(edge_info: Dictionary) -> void:
 	print("from=%s" % _format_cell(from_cell))
 	print("to=%s" % _format_cell(to_cell))
 	print("axis=%s" % _wall_axis_name(axis))
+
+
+func _navigation_edge_sets() -> Dictionary:
+	var blocked: Dictionary = {}
+	var passable: Dictionary = {}
+	for segment in _wall_segments():
+		if not bool(segment.get("enabled", true)):
+			continue
+		var length := int(segment.get("length", 0))
+		for offset in range(length):
+			var edge_data := _wall_segment_unit_edge(segment, offset)
+			var key := String(edge_data["key"])
+			if _is_wall_segment_doorway_unit(segment, offset):
+				passable[key] = edge_data
+				blocked.erase(key)
+			elif not passable.has(key):
+				blocked[key] = edge_data
+	return {
+		"blocked": blocked,
+		"passable": passable,
+	}
+
+
+func _wall_segment_unit_edge(segment: Dictionary, unit_offset: int) -> Dictionary:
+	var axis: WallAxis = segment.get("axis", WallAxis.AXIS_A)
+	var start_cell := _segment_start_cell(segment)
+	var from_cell := Vector2i(_offset_cell(start_cell, axis, float(unit_offset)))
+	var to_cell := Vector2i(_offset_cell(start_cell, axis, float(unit_offset + 1)))
+	return {
+		"key": _edge_key(from_cell, to_cell),
+		"segment_id": String(segment.get("id", "")),
+		"from_cell": from_cell,
+		"to_cell": to_cell,
+		"axis": axis,
+		"wall_type": int(segment.get("wall_type", WallType.NORMAL)),
+		"render_mode": int(segment.get("render_mode", WallRenderMode.FULL)),
+		"doorway": _is_wall_segment_doorway_unit(segment, unit_offset),
+	}
+
+
+func _is_wall_segment_doorway_unit(segment: Dictionary, unit_offset: int) -> bool:
+	var wall_type := int(segment.get("wall_type", WallType.NORMAL))
+	if wall_type != WallType.DOORWAY_FRAME and wall_type != WallType.DOORWAY_EMPTY:
+		return false
+	var doorway_offset := int(segment.get("doorway_offset", -1))
+	var doorway_width := int(segment.get("doorway_width", 0))
+	return doorway_width > 0 and unit_offset >= doorway_offset and unit_offset < doorway_offset + doorway_width
+
+
+func _edge_key(from_cell: Vector2i, to_cell: Vector2i) -> String:
+	var a := from_cell
+	var b := to_cell
+	if b.x < a.x or (b.x == a.x and b.y < a.y):
+		a = to_cell
+		b = from_cell
+	return "%d,%d>%d,%d" % [a.x, a.y, b.x, b.y]
+
+
+func _is_navigation_occlusion_edge(edge_data: Dictionary) -> bool:
+	var render_mode := int(edge_data.get("render_mode", WallRenderMode.FULL))
+	return render_mode == WallRenderMode.REVEALABLE or render_mode == WallRenderMode.HIDDEN_STUB or render_mode == WallRenderMode.CUTAWAY_STUB
+
+
+func _navigation_edge_status_for_cell(cell: Vector2i, edge_name: String) -> Dictionary:
+	var edge_info := _wall_edge_info_for_cell(cell, edge_name)
+	if edge_info.is_empty():
+		return {"status": "open", "segment_id": "", "edge": edge_name}
+	var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
+	var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
+	var edge_sets := _navigation_edge_sets()
+	var key := _edge_key(from_cell, to_cell)
+	if edge_sets["passable"].has(key):
+		var passable_data: Dictionary = edge_sets["passable"][key]
+		return {"status": "passable", "segment_id": String(passable_data.get("segment_id", "")), "edge": edge_name}
+	if edge_sets["blocked"].has(key):
+		var blocked_data: Dictionary = edge_sets["blocked"][key]
+		return {"status": "blocked", "segment_id": String(blocked_data.get("segment_id", "")), "edge": edge_name}
+	return {"status": "open", "segment_id": "", "edge": edge_name}
+
+
+func _neighbor_cell_for_edge(cell: Vector2i, edge_name: String) -> Vector2i:
+	match edge_name:
+		"top":
+			return cell + Vector2i(0, -1)
+		"right":
+			return cell + Vector2i(1, 0)
+		"bottom":
+			return cell + Vector2i(0, 1)
+		"left":
+			return cell + Vector2i(-1, 0)
+		_:
+			return cell
+
+
+func _print_clicked_cell_navigation(cell: Vector2i) -> void:
+	print("navigation cell:")
+	print("clicked cell: %s" % _format_cell(cell))
+	print("room_area: %s" % _room_area_for_cell(cell))
+	print("walkable: %s" % str(_is_walkable_cell(cell)))
+	print("neighbors: top=%s right=%s bottom=%s left=%s" % [
+		_format_cell(_neighbor_cell_for_edge(cell, "top")),
+		_format_cell(_neighbor_cell_for_edge(cell, "right")),
+		_format_cell(_neighbor_cell_for_edge(cell, "bottom")),
+		_format_cell(_neighbor_cell_for_edge(cell, "left")),
+	])
+	for edge_name in ["top", "right", "bottom", "left"]:
+		var edge_status := _navigation_edge_status_for_cell(cell, edge_name)
+		var status := String(edge_status.get("status", "open"))
+		var segment_id := String(edge_status.get("segment_id", ""))
+		if segment_id.is_empty():
+			print("%s edge: %s" % [edge_name, status])
+		else:
+			print("%s edge: %s by %s" % [edge_name, status, segment_id])
+
+
+func _try_move_player_debug_marker(keycode: Key) -> bool:
+	match keycode:
+		KEY_UP:
+			return _move_player_debug_marker("top")
+		KEY_RIGHT:
+			return _move_player_debug_marker("right")
+		KEY_DOWN:
+			return _move_player_debug_marker("bottom")
+		KEY_LEFT:
+			return _move_player_debug_marker("left")
+		_:
+			return false
+
+
+func _move_player_debug_marker(edge_name: String) -> bool:
+	var edge_status := _navigation_edge_status_for_cell(player_debug_cell, edge_name)
+	var status := String(edge_status.get("status", "open"))
+	var segment_id := String(edge_status.get("segment_id", ""))
+	var next_cell := _neighbor_cell_for_edge(player_debug_cell, edge_name)
+	if status == "blocked":
+		print("debug marker blocked: %s edge by %s at %s" % [edge_name, segment_id, _format_cell(player_debug_cell)])
+		return true
+	if not _is_walkable_cell(next_cell):
+		print("debug marker blocked: target %s is not walkable" % _format_cell(next_cell))
+		return true
+
+	player_debug_cell = next_cell
+	_update_player_debug_marker()
+	print("debug marker moved %s to %s via %s%s" % [
+		edge_name,
+		_format_cell(player_debug_cell),
+		status,
+		" %s" % segment_id if not segment_id.is_empty() else "",
+	])
+	return true
+
+
+func _update_player_debug_marker() -> void:
+	var center := _cell_center(player_debug_cell)
+	if _player_debug_marker != null:
+		var radius := 15.0
+		_player_debug_marker.polygon = PackedVector2Array([
+			center + Vector2(0.0, -radius),
+			center + Vector2(radius, 0.0),
+			center + Vector2(0.0, radius),
+			center + Vector2(-radius, 0.0),
+		])
+	if _player_debug_label != null:
+		_player_debug_label.text = _player_debug_text()
+		_player_debug_label.position = center + Vector2(14.0, -42.0)
+	var area_id := _room_area_for_cell(player_debug_cell)
+	if not _last_player_debug_area.is_empty() and _last_player_debug_area != area_id:
+		print("debug marker room_area changed: %s -> %s" % [_last_player_debug_area, area_id])
+	_last_player_debug_area = area_id
+
+
+func _player_debug_text() -> String:
+	return "debug marker\ncell=%s\narea=%s" % [
+		_format_cell(player_debug_cell),
+		_room_area_for_cell(player_debug_cell),
+	]
 
 
 func _is_visible_floor_cell(cell: Vector2i) -> bool:
@@ -1740,6 +2131,8 @@ func _add_label(parent: Node, label_name: String, text: String, position: Vector
 func _update_label_visibility() -> void:
 	if _label_layer != null:
 		_label_layer.visible = show_debug_labels
+	if _navigation_layer != null:
+		_navigation_layer.visible = show_navigation_debug
 	if _wall_id_layer != null:
 		_wall_id_layer.visible = show_wall_ids
 	if _grid_coord_layer != null:

@@ -119,3 +119,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: room scale, bathroom wall coordinates, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, `SurvivalState`, `project.godot`.
 - Next: Inspect with `W` wall IDs and `E` wall edge coordinates to confirm the new lower solid segment is visually in the intended place.
+
+### Apartment navigation debug overlay
+
+- Commit: pending in this task.
+- Result: Added `N` navigation / collision debug display to the apartment shell, including walkable cells, room areas, blocked wall edges, passable doorway edges, and a shell-only marker at `player_debug_cell`.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: wall coordinates, room scale, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character movement/pathfinding, `SurvivalState`, `project.godot`.
+- Next: Use `N` with `G`, `E`, `W`, and `I` to verify exact walkable cells and blocked/passable edge behavior before adding any production movement logic.
