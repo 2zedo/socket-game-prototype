@@ -93,6 +93,10 @@ const COLOR_LABEL_SHADOW := Color(0.01, 0.012, 0.016, 0.88)
 const COLOR_WALL_START_MARKER := Color(0.18, 0.95, 0.68, 0.95)
 const COLOR_WALL_END_MARKER := Color(1.0, 0.42, 0.32, 0.95)
 const COLOR_WALL_ID_BACKGROUND := Color(0.02, 0.025, 0.03, 0.82)
+const COLOR_GRID_COORD := Color(0.82, 0.93, 1.0, 0.96)
+const COLOR_GRID_ORIGIN := Color(1.0, 0.92, 0.22, 1.0)
+const COLOR_GRID_AXIS_X := Color(0.35, 0.78, 1.0, 0.95)
+const COLOR_GRID_AXIS_Y := Color(0.50, 1.0, 0.60, 0.95)
 
 @export_group("View Orientation")
 # view_orientation controls the isometric projection basis / mirroring only.
@@ -157,6 +161,8 @@ const COLOR_WALL_ID_BACKGROUND := Color(0.02, 0.025, 0.03, 0.82)
 @export_group("Debug")
 @export var show_debug_labels := true
 @export var show_wall_ids := false
+@export var show_floor_grid_coords := false
+@export var debug_focus_wall_id := ""
 
 @onready var camera_2d: Camera2D = $Camera2D
 
@@ -167,8 +173,11 @@ var _edge_layer: Node2D
 var _wall_layer: Node2D
 var _door_layer: Node2D
 var _label_layer: Node2D
+var _grid_coord_layer: Node2D
 var _wall_id_layer: Node2D
 var _debug_overlay_layer: CanvasLayer
+var _hover_coord_label: Label
+var _hover_coord_background: ColorRect
 
 
 func _ready() -> void:
@@ -190,6 +199,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_label_visibility()
 			get_viewport().set_input_as_handled()
 			return
+		if event.keycode == KEY_G:
+			show_floor_grid_coords = not show_floor_grid_coords
+			_update_label_visibility()
+			_update_hover_cell()
+			get_viewport().set_input_as_handled()
+			return
 		if event.keycode == KEY_I:
 			print_wall_segment_inventory()
 			get_viewport().set_input_as_handled()
@@ -205,6 +220,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_3:
 			set_camera_preset("work_power_area")
 			get_viewport().set_input_as_handled()
+			return
+	if event is InputEventMouseMotion:
+		_update_hover_cell()
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var hover_cell: Variant = _hover_floor_cell()
+		if hover_cell != null:
+			var clicked_cell: Vector2i = hover_cell
+			print("clicked floor cell: %s" % _format_cell(clicked_cell))
 
 
 func set_camera_preset(preset: String) -> void:
@@ -220,6 +244,7 @@ func _create_layers() -> void:
 	_wall_layer = _add_layer("WallLayer", 0)
 	_door_layer = _add_layer("DoorAndWindowLayer", 10)
 	_label_layer = _add_layer("DebugLabelLayer", 40)
+	_grid_coord_layer = _add_layer("GridCoordinateLayer", 85)
 	_wall_id_layer = _add_layer("WallIdLayer", 90)
 	_debug_overlay_layer = CanvasLayer.new()
 	_debug_overlay_layer.name = "DebugOverlayLayer"
@@ -236,6 +261,7 @@ func _build_shell() -> void:
 	_draw_walls()
 	_draw_doors_and_window_placeholders()
 	_draw_debug_labels()
+	_draw_floor_grid_overlay()
 	_draw_control_hint()
 
 
@@ -492,7 +518,7 @@ func print_wall_segment_inventory() -> void:
 	var rows := _wall_segment_inventory_rows()
 	print("")
 	print("=== Apartment Wall Segment Inventory ===")
-	print("id | enabled | source | axis | start_cell | end_cell | length | wall_type | doorway | height_mode | edit_hint")
+	print("id | enabled | source | axis | from_cell | to_cell | length | wall_type | doorway | height_mode | edit_hint")
 	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
 	for row in rows:
 		print("%s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s" % [
@@ -500,8 +526,8 @@ func print_wall_segment_inventory() -> void:
 			str(row["enabled"]),
 			row["source"],
 			row["axis"],
-			row["start_cell"],
-			row["end_cell"],
+			row["from_cell"],
+			row["to_cell"],
 			row["length"],
 			row["wall_type"],
 			row["doorway"],
@@ -522,8 +548,8 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 			"enabled": bool(segment.get("enabled", true)),
 			"source": String(segment.get("source", "default")),
 			"axis": _wall_axis_name(axis),
-			"start_cell": _format_cell(start_cell_i),
-			"end_cell": _format_cell(end_cell_i),
+			"from_cell": _format_cell(start_cell_i),
+			"to_cell": _format_cell(end_cell_i),
 			"length": int(segment.get("length", 0)),
 			"wall_type": _wall_type_name(segment.get("wall_type", WallType.NORMAL)),
 			"doorway": "offset=%d width=%d" % [
@@ -543,11 +569,11 @@ func _wall_edit_hint(segment: Dictionary) -> String:
 		var service_location := "edit _default_wall_segment_configs() legacy disabled entry id=\"%s\"" % id
 		if source == "custom_wall_segments":
 			service_location = "edit Inspector > custom_wall_segments legacy disabled entry id=\"%s\"" % id
-		return "%s; legacy disabled service segment; keep enabled=false unless testing old service layout" % service_location
+		return "%s; legacy disabled service segment; keep enabled=false unless testing old service layout; use G grid overlay to confirm coordinates" % service_location
 	var location := "edit _default_wall_segment_configs() entry id=\"%s\"" % id
 	if source == "custom_wall_segments":
 		location = "edit Inspector > custom_wall_segments entry id=\"%s\"" % id
-	return "%s; hide: enabled=false; move: start_cell; direction: axis; length: length; door: doorway_offset / doorway_width" % location
+	return "%s; hide: enabled=false; move: start_cell; direction: axis; length: length; door: doorway_offset / doorway_width; move right: increase x; move left: decrease x; move downward/forward: increase y; move upward/backward: decrease y; verify with G grid overlay because map_rotation changes screen direction" % location
 
 
 func _draw_doors_and_window_placeholders() -> void:
@@ -567,7 +593,7 @@ func _draw_debug_labels() -> void:
 func _draw_control_hint() -> void:
 	var label := Label.new()
 	label.name = "ShellControlHint"
-	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  I: print wall inventory"
+	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  I: print wall inventory"
 	label.position = Vector2(24, 20)
 	label.modulate = COLOR_LABEL
 	label.add_theme_font_size_override("font_size", 14)
@@ -575,6 +601,103 @@ func _draw_control_hint() -> void:
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
 	_debug_overlay_layer.add_child(label)
+	_create_hover_coord_overlay()
+
+
+func _draw_floor_grid_overlay() -> void:
+	for cell in _visible_floor_cells():
+		var coord_label := _add_label_with_background(
+			_grid_coord_layer,
+			"grid_coord_%d_%d" % [cell.x, cell.y],
+			_format_cell(cell),
+			_iso(float(cell.x) + 0.5, float(cell.y) + 0.5) + Vector2(-23.0, -12.0),
+			13
+		)
+		coord_label.modulate = COLOR_GRID_COORD
+	_draw_grid_axis_overlay()
+
+
+func _draw_grid_axis_overlay() -> void:
+	var origin := _iso(0.0, 0.0)
+	var x_end := _iso(1.45, 0.0)
+	var y_end := _iso(0.0, 1.45)
+	_add_marker(_grid_coord_layer, "grid_origin_marker", origin, COLOR_GRID_ORIGIN, 15.0)
+	_add_label_with_background(_grid_coord_layer, "grid_origin_label", "origin (0,0)", origin + Vector2(16.0, -36.0), 14)
+	_add_line(_grid_coord_layer, "grid_axis_x", [origin, x_end], COLOR_GRID_AXIS_X, 5.0)
+	_add_line(_grid_coord_layer, "grid_axis_y", [origin, y_end], COLOR_GRID_AXIS_Y, 5.0)
+	_add_arrow_head(_grid_coord_layer, "grid_axis_x_head", origin, x_end, COLOR_GRID_AXIS_X)
+	_add_arrow_head(_grid_coord_layer, "grid_axis_y_head", origin, y_end, COLOR_GRID_AXIS_Y)
+	_add_label_with_background(_grid_coord_layer, "grid_axis_x_label", "+X", x_end + Vector2(12.0, -16.0), 15)
+	_add_label_with_background(_grid_coord_layer, "grid_axis_y_label", "+Y", y_end + Vector2(12.0, -16.0), 15)
+
+
+func _visible_floor_cells() -> Array[Vector2i]:
+	var cells_by_key: Dictionary = {}
+	_append_floor_cells(cells_by_key, _living_room_rect())
+	_append_floor_cells(cells_by_key, _work_room_rect())
+	_append_floor_cells(cells_by_key, _bathroom_room_rect())
+	var cells: Array[Vector2i] = []
+	for key in cells_by_key.keys():
+		cells.append(cells_by_key[key])
+	return cells
+
+
+func _append_floor_cells(cells_by_key: Dictionary, room: Rect2i) -> void:
+	for a in range(room.position.x, room.position.x + room.size.x):
+		for b in range(room.position.y, room.position.y + room.size.y):
+			var cell := Vector2i(a, b)
+			cells_by_key["%d,%d" % [cell.x, cell.y]] = cell
+
+
+func _create_hover_coord_overlay() -> void:
+	_hover_coord_background = ColorRect.new()
+	_hover_coord_background.name = "HoverCellBackground"
+	_hover_coord_background.position = Vector2(24.0, 48.0)
+	_hover_coord_background.size = Vector2(210.0, 31.0)
+	_hover_coord_background.color = COLOR_WALL_ID_BACKGROUND
+	_debug_overlay_layer.add_child(_hover_coord_background)
+
+	_hover_coord_label = Label.new()
+	_hover_coord_label.name = "HoverCellLabel"
+	_hover_coord_label.text = "hover cell: -"
+	_hover_coord_label.position = Vector2(34.0, 52.0)
+	_hover_coord_label.modulate = COLOR_GRID_COORD
+	_hover_coord_label.add_theme_font_size_override("font_size", 15)
+	_hover_coord_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
+	_hover_coord_label.add_theme_constant_override("shadow_offset_x", 2)
+	_hover_coord_label.add_theme_constant_override("shadow_offset_y", 2)
+	_debug_overlay_layer.add_child(_hover_coord_label)
+	_update_hover_cell()
+
+
+func _update_hover_cell() -> void:
+	if _hover_coord_label == null or _hover_coord_background == null:
+		return
+	_hover_coord_label.visible = show_floor_grid_coords
+	_hover_coord_background.visible = show_floor_grid_coords
+	if not show_floor_grid_coords:
+		return
+	var hover_cell: Variant = _hover_floor_cell()
+	if hover_cell == null:
+		_hover_coord_label.text = "hover cell: -"
+		return
+	var hover_cell_i: Vector2i = hover_cell
+	_hover_coord_label.text = "hover cell: %s" % _format_cell(hover_cell_i)
+
+
+func _hover_floor_cell() -> Variant:
+	var grid_point := _screen_to_grid_point(get_global_mouse_position())
+	var cell := Vector2i(floori(grid_point.x), floori(grid_point.y))
+	if _is_visible_floor_cell(cell):
+		return cell
+	return null
+
+
+func _is_visible_floor_cell(cell: Vector2i) -> bool:
+	for room in [_living_room_rect(), _work_room_rect(), _bathroom_room_rect()]:
+		if cell.x >= room.position.x and cell.x < room.position.x + room.size.x and cell.y >= room.position.y and cell.y < room.position.y + room.size.y:
+			return true
+	return false
 
 
 func _draw_wall_axis_a(a_start: float, b: float, length: float, wall_name: String, height := -1.0) -> void:
@@ -749,6 +872,10 @@ func _format_cell(cell: Vector2i) -> String:
 	return "(%d,%d)" % [cell.x, cell.y]
 
 
+func _is_focus_wall(id: String) -> bool:
+	return not debug_focus_wall_id.strip_edges().is_empty() and id == debug_focus_wall_id.strip_edges()
+
+
 func _doorway_center(segment_id: StringName) -> Vector2:
 	for segment in _wall_segments():
 		if StringName(String(segment["id"])) != segment_id:
@@ -776,24 +903,44 @@ func _add_wall_id_debug(segment: Dictionary) -> void:
 	var length_i := int(segment["length"])
 	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
 	var end_cell_i := _segment_end_cell_i(segment)
+	var end_cell := Vector2(end_cell_i)
 	var midpoint := _offset_cell(start_cell, axis, length * 0.5)
+	var focused := _is_focus_wall(id)
+	var marker_radius := 16.0 if focused else 11.0
+	var label_font_size := 18 if focused else 15
 	var label_offset := Vector2(-72.0, -_resolve_wall_height(float(segment.get("height", -1.0))) - 40.0)
 	if wall_type == WallType.CUTAWAY_STUB:
 		label_offset = Vector2(-72.0, 24.0)
-	_add_marker(_wall_id_layer, "wall_start_%s" % id, _iso(start_cell.x, start_cell.y), COLOR_WALL_START_MARKER, 11.0)
-	_add_marker(_wall_id_layer, "wall_end_%s" % id, _iso(float(end_cell_i.x), float(end_cell_i.y)), COLOR_WALL_END_MARKER, 11.0)
+	if focused:
+		_add_line(_wall_id_layer, "wall_focus_%s" % id, [_iso(start_cell.x, start_cell.y), _iso(end_cell.x, end_cell.y)], Color(1.0, 0.90, 0.20, 0.95), 9.0)
+	_add_marker(_wall_id_layer, "wall_start_%s" % id, _iso(start_cell.x, start_cell.y), COLOR_WALL_START_MARKER, marker_radius)
+	_add_marker(_wall_id_layer, "wall_end_%s" % id, _iso(end_cell.x, end_cell.y), COLOR_WALL_END_MARKER, marker_radius)
+	_add_label_with_background(
+		_wall_id_layer,
+		"wall_start_label_%s" % id,
+		"start %s" % _format_cell(start_cell_i),
+		_iso(start_cell.x, start_cell.y) + Vector2(12.0, -8.0),
+		12
+	)
+	_add_label_with_background(
+		_wall_id_layer,
+		"wall_end_label_%s" % id,
+		"end %s" % _format_cell(end_cell_i),
+		_iso(end_cell.x, end_cell.y) + Vector2(12.0, 8.0),
+		12
+	)
 	_add_label_with_background(
 		_wall_id_layer,
 		"wall_id_%s" % id,
-		"%s\nstart=(%d,%d) axis=%s len=%d" % [
+		"%s\nfrom=%s to=%s\naxis=%s len=%d" % [
 			id,
-			start_cell_i.x,
-			start_cell_i.y,
+			_format_cell(start_cell_i),
+			_format_cell(end_cell_i),
 			_wall_axis_name(axis),
 			length_i,
 		],
 		_iso(midpoint.x, midpoint.y) + label_offset,
-		15
+		label_font_size
 	)
 
 
@@ -947,6 +1094,39 @@ func _transform_grid_point(point: Vector2) -> Vector2:
 	return _rotate_grid_point(point)
 
 
+func _screen_to_grid_point(screen_position: Vector2) -> Vector2:
+	return _inverse_rotate_grid_point(_screen_to_transformed_grid_point(screen_position))
+
+
+# Converts a world-space screen position back into the currently projected grid basis.
+func _screen_to_transformed_grid_point(screen_position: Vector2) -> Vector2:
+	var delta := screen_position - map_origin
+	var axis_a := _axis_a()
+	var axis_b := _axis_b()
+	var determinant := axis_a.x * axis_b.y - axis_a.y * axis_b.x
+	if absf(determinant) < 0.001:
+		return Vector2.ZERO
+	return Vector2(
+		(delta.x * axis_b.y - delta.y * axis_b.x) / determinant,
+		(axis_a.x * delta.y - axis_a.y * delta.x) / determinant
+	)
+
+
+func _inverse_rotate_grid_point(point: Vector2) -> Vector2:
+	var delta := point - map_rotation_pivot
+	var restored := delta
+	match map_rotation:
+		MapRotation.ROTATE_90:
+			restored = Vector2(delta.y, -delta.x)
+		MapRotation.ROTATE_180:
+			restored = -delta
+		MapRotation.ROTATE_270:
+			restored = Vector2(-delta.y, delta.x)
+		_:
+			restored = delta
+	return map_rotation_pivot + restored
+
+
 # ROTATE_90 maps the original upper work-room side toward the right side around the pivot.
 func _rotate_grid_point(point: Vector2) -> Vector2:
 	var delta := point - map_rotation_pivot
@@ -1034,6 +1214,17 @@ func _add_line(parent: Node, line_name: String, points: Array, color: Color, wid
 	return line
 
 
+func _add_arrow_head(parent: Node, arrow_name: String, start: Vector2, end: Vector2, color: Color) -> void:
+	var direction := end - start
+	if direction.length() < 0.001:
+		return
+	direction = direction.normalized()
+	var normal := Vector2(-direction.y, direction.x)
+	var back := end - direction * 18.0
+	_add_line(parent, "%s_left" % arrow_name, [end, back + normal * 7.0], color, 4.0)
+	_add_line(parent, "%s_right" % arrow_name, [end, back - normal * 7.0], color, 4.0)
+
+
 func _add_marker(parent: Node, marker_name: String, position: Vector2, color: Color, radius := 7.0) -> Polygon2D:
 	var marker := Polygon2D.new()
 	marker.name = marker_name
@@ -1087,6 +1278,13 @@ func _update_label_visibility() -> void:
 		_label_layer.visible = show_debug_labels
 	if _wall_id_layer != null:
 		_wall_id_layer.visible = show_wall_ids
+	if _grid_coord_layer != null:
+		_grid_coord_layer.visible = show_floor_grid_coords
+	if _hover_coord_label != null:
+		_hover_coord_label.visible = show_floor_grid_coords
+	if _hover_coord_background != null:
+		_hover_coord_background.visible = show_floor_grid_coords
+	_update_hover_cell()
 
 
 func _apply_camera_preset(preset: String) -> void:

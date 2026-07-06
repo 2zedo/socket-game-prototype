@@ -79,8 +79,13 @@ Do not modify by default:
 | Move the shared room door | Change `work_front_shared_wall` `doorway_offset` / `doorway_width` |
 | Show wall IDs / start-end markers | Press `W` in the shell scene |
 | Print wall inventory | Press `I` in the shell scene |
+| Show floor grid coordinates | Press `G` in the shell scene |
+| Identify a floor cell under the mouse | Enable `G`, then hover a floor tile; click to print the cell |
+| Emphasize one wall | Set `debug_focus_wall_id`, e.g. `bathroom_left_wall`, in the Inspector |
 
-Wall inventory columns: `id`, `enabled`, `source`, `axis`, `start_cell`, `end_cell`, `length`, `wall_type`, `doorway_offset`, `doorway_width`, `height_mode`, and `edit_hint`.
+Wall inventory columns: `id`, `enabled`, `source`, `axis`, `from_cell`, `to_cell`, `length`, `wall_type`, `doorway_offset`, `doorway_width`, `height_mode`, and `edit_hint`.
+
+`from_cell -> to_cell` is the preferred way to read wall placement. The older `start_cell + axis + length` values still drive the data model, but the `G` floor-coordinate overlay is the quickest way to see which direction `+X` and `+Y` currently point after `map_rotation`.
 
 Current bathroom shell wall IDs:
 

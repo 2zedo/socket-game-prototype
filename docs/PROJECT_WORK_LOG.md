@@ -63,3 +63,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
 - Next: Inspect the shell visually with `W` wall IDs enabled before further coordinate edits.
+
+### Apartment grid coordinate overlay
+
+- Commit: pending in this task.
+- Result: Added `G` floor coordinate overlay, origin / `+X` / `+Y` markers, hover/click cell readout, wall focus highlighting, and `from_cell -> to_cell` wall inventory output for apartment shell editing.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: bathroom/wall positions, room sizes, furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Use `G`, `W`, and `I` together to specify exact wall coordinate edits before moving shell walls.
