@@ -55,3 +55,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd`, `ApartmentWallSegmentConfig.gd`, and technical/status docs.
 - Not changed: shell wall positions, room size, furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
 - Next: Use the inventory table to identify which segment to move/hide before changing the shell layout itself.
+
+### Apartment bathroom/service merge
+
+- Commit: pending in this task.
+- Result: Merged the service area into the bathroom shell region, moved the bathroom footprint to `x=1..3`, `y=7..10`, added `bathroom_left_wall` / `bathroom_right_wall`, and left legacy service wall segments disabled in inventory.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Inspect the shell visually with `W` wall IDs enabled before further coordinate edits.

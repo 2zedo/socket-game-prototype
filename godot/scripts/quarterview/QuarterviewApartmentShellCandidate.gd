@@ -43,8 +43,8 @@ const DEFAULT_WORK_ROOM_ORIGIN := Vector2i(1, 0)
 const DEFAULT_WORK_ROOM_SIZE := Vector2i(8, 4)
 const DEFAULT_LIVING_ROOM_ORIGIN := Vector2i(0, 4)
 const DEFAULT_LIVING_ROOM_SIZE := Vector2i(11, 6)
-const DEFAULT_BATHROOM_ROOM_ORIGIN := Vector2i(0, 7)
-const DEFAULT_BATHROOM_ROOM_SIZE := Vector2i(2, 2)
+const DEFAULT_BATHROOM_ROOM_ORIGIN := Vector2i(1, 7)
+const DEFAULT_BATHROOM_ROOM_SIZE := Vector2i(2, 3)
 const DEFAULT_SERVICE_ROOM_ORIGIN := Vector2i(0, 9)
 const DEFAULT_SERVICE_ROOM_SIZE := Vector2i(2, 1)
 const DEFAULT_NO_LARGE_OBJECT_ZONE_ORIGIN := Vector2i(2, 8)
@@ -92,6 +92,7 @@ const COLOR_LABEL := Color(0.96, 0.91, 0.75, 1.0)
 const COLOR_LABEL_SHADOW := Color(0.01, 0.012, 0.016, 0.88)
 const COLOR_WALL_START_MARKER := Color(0.18, 0.95, 0.68, 0.95)
 const COLOR_WALL_END_MARKER := Color(1.0, 0.42, 0.32, 0.95)
+const COLOR_WALL_ID_BACKGROUND := Color(0.02, 0.025, 0.03, 0.82)
 
 @export_group("View Orientation")
 # view_orientation controls the isometric projection basis / mirroring only.
@@ -219,7 +220,7 @@ func _create_layers() -> void:
 	_wall_layer = _add_layer("WallLayer", 0)
 	_door_layer = _add_layer("DoorAndWindowLayer", 10)
 	_label_layer = _add_layer("DebugLabelLayer", 40)
-	_wall_id_layer = _add_layer("WallIdLayer", 45)
+	_wall_id_layer = _add_layer("WallIdLayer", 90)
 	_debug_overlay_layer = CanvasLayer.new()
 	_debug_overlay_layer.name = "DebugOverlayLayer"
 	add_child(_debug_overlay_layer)
@@ -230,7 +231,6 @@ func _build_shell() -> void:
 	_draw_floor_tiles(_living_room_rect(), COLOR_FLOOR, "living")
 	_draw_floor_tiles(_work_room_rect(), COLOR_FLOOR_WORK, "work_power")
 	_draw_floor_tiles(_bathroom_room_rect(), COLOR_FLOOR_BATH, "bathroom")
-	_draw_floor_tiles(_service_room_rect(), COLOR_FLOOR_BATH.darkened(0.08), "service")
 	_draw_no_large_object_zone()
 	_draw_floor_edges()
 	_draw_walls()
@@ -332,8 +332,7 @@ func _default_wall_segment_configs() -> Array[Resource]:
 	var living_bottom := living_room.position.y + living_room.size.y
 	var work_right := work_room.position.x + work_room.size.x
 	var work_bottom := work_room.position.y + work_room.size.y
-	var service_right := service_room.position.x + service_room.size.x
-	var service_wall_length := service_room.position.y + service_room.size.y - bathroom_room.position.y
+	var bathroom_right := bathroom_room.position.x + bathroom_room.size.x
 
 	return [
 		# Work room outer walls.
@@ -382,20 +381,29 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			inner_door_color
 		),
 
-		# Bathroom / service partitions remain structural placeholders, not furniture.
+		# Bathroom partitions represent the merged bathroom / former service footprint.
 		_make_wall_segment_config(
 			&"bathroom_wall",
 			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
 			bathroom_room.position,
 			bathroom_room.size.x,
+		),
+		_make_wall_segment_config(
+			&"bathroom_left_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
+			bathroom_room.position,
+			bathroom_room.size.y,
 			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
-			DEFAULT_BATHROOM_DOOR_OFFSET,
+			1,
 			DEFAULT_BATHROOM_DOOR_WIDTH,
 			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
 			true,
 			service_door_color
 		),
+		_make_wall_segment_config(&"bathroom_right_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, Vector2i(bathroom_right, bathroom_room.position.y), bathroom_room.size.y),
+
+		# Legacy service segments stay disabled so inventory can show they are intentionally retired.
 		_make_wall_segment_config(
 			&"service_wall",
 			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
@@ -406,10 +414,21 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			DEFAULT_SERVICE_DOOR_WIDTH,
 			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
-			true,
+			false,
 			service_door_color.darkened(0.08)
 		),
-		_make_wall_segment_config(&"service_right_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, Vector2i(service_right, bathroom_room.position.y), service_wall_length),
+		_make_wall_segment_config(
+			&"service_right_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
+			Vector2i(service_room.position.x + service_room.size.x, service_room.position.y - bathroom_room.size.y + service_room.size.y),
+			service_room.size.y + bathroom_room.size.y - 1,
+			ApartmentWallSegmentConfigScript.WallType.NORMAL,
+			-1,
+			0,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
+			-1.0,
+			false
+		),
 	]
 
 
@@ -520,6 +539,11 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 func _wall_edit_hint(segment: Dictionary) -> String:
 	var id := String(segment["id"])
 	var source := String(segment.get("source", "default"))
+	if id == "service_wall" or id == "service_right_wall":
+		var service_location := "edit _default_wall_segment_configs() legacy disabled entry id=\"%s\"" % id
+		if source == "custom_wall_segments":
+			service_location = "edit Inspector > custom_wall_segments legacy disabled entry id=\"%s\"" % id
+		return "%s; legacy disabled service segment; keep enabled=false unless testing old service layout" % service_location
 	var location := "edit _default_wall_segment_configs() entry id=\"%s\"" % id
 	if source == "custom_wall_segments":
 		location = "edit Inspector > custom_wall_segments entry id=\"%s\"" % id
@@ -535,7 +559,6 @@ func _draw_debug_labels() -> void:
 	_add_debug_label("living_label", "생활공간", _room_center(living_room) + Vector2(-30, 8))
 	_add_debug_label("work_label", "작업공간+전력공간", _room_center(_work_room_rect()) + Vector2(-76, -8))
 	_add_debug_label("bath_label", "욕실", _room_center(_bathroom_room_rect()) + Vector2(-18, -8))
-	_add_debug_label("service_label", "서비스 구획", _room_center(_service_room_rect()) + Vector2(-42, 8))
 	_add_debug_label("connection_label", "연결문", _doorway_center(&"work_front_shared_wall") + Vector2(-32, -104))
 	_add_debug_label("entrance_label", "현관문", _doorway_center(&"entrance_wall") + Vector2(-72, -84))
 	_add_debug_label("no_object_zone_label", "camera foreground no-large-object zone", _room_center(_no_large_object_zone_rect()) + Vector2(-148, 20))
@@ -754,12 +777,12 @@ func _add_wall_id_debug(segment: Dictionary) -> void:
 	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
 	var end_cell_i := _segment_end_cell_i(segment)
 	var midpoint := _offset_cell(start_cell, axis, length * 0.5)
-	var label_offset := Vector2(-46.0, -_resolve_wall_height(float(segment.get("height", -1.0))) - 26.0)
+	var label_offset := Vector2(-72.0, -_resolve_wall_height(float(segment.get("height", -1.0))) - 40.0)
 	if wall_type == WallType.CUTAWAY_STUB:
-		label_offset = Vector2(-46.0, 18.0)
-	_add_marker(_wall_id_layer, "wall_start_%s" % id, _iso(start_cell.x, start_cell.y), COLOR_WALL_START_MARKER)
-	_add_marker(_wall_id_layer, "wall_end_%s" % id, _iso(float(end_cell_i.x), float(end_cell_i.y)), COLOR_WALL_END_MARKER)
-	_add_label(
+		label_offset = Vector2(-72.0, 24.0)
+	_add_marker(_wall_id_layer, "wall_start_%s" % id, _iso(start_cell.x, start_cell.y), COLOR_WALL_START_MARKER, 11.0)
+	_add_marker(_wall_id_layer, "wall_end_%s" % id, _iso(float(end_cell_i.x), float(end_cell_i.y)), COLOR_WALL_END_MARKER, 11.0)
+	_add_label_with_background(
 		_wall_id_layer,
 		"wall_id_%s" % id,
 		"%s\nstart=(%d,%d) axis=%s len=%d" % [
@@ -770,7 +793,7 @@ func _add_wall_id_debug(segment: Dictionary) -> void:
 			length_i,
 		],
 		_iso(midpoint.x, midpoint.y) + label_offset,
-		11
+		15
 	)
 
 
@@ -1023,6 +1046,22 @@ func _add_marker(parent: Node, marker_name: String, position: Vector2, color: Co
 	marker.color = color
 	parent.add_child(marker)
 	return marker
+
+
+func _add_label_with_background(parent: Node, label_name: String, text: String, position: Vector2, font_size := 15) -> Label:
+	var lines := text.split("\n")
+	var longest_line := 0
+	for line in lines:
+		longest_line = maxi(longest_line, line.length())
+
+	var padding := Vector2(9.0, 6.0)
+	var background := ColorRect.new()
+	background.name = "%sBackground" % label_name
+	background.position = position - padding
+	background.size = Vector2(float(longest_line) * float(font_size) * 0.62 + padding.x * 2.0, float(lines.size()) * float(font_size + 5) + padding.y * 2.0)
+	background.color = COLOR_WALL_ID_BACKGROUND
+	parent.add_child(background)
+	return _add_label(parent, label_name, text, position, font_size)
 
 
 func _add_debug_label(label_name: String, text: String, position: Vector2, font_size := 15) -> Label:

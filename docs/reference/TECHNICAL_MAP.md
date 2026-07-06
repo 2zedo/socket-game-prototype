@@ -82,6 +82,17 @@ Do not modify by default:
 
 Wall inventory columns: `id`, `enabled`, `source`, `axis`, `start_cell`, `end_cell`, `length`, `wall_type`, `doorway_offset`, `doorway_width`, `height_mode`, and `edit_hint`.
 
+Current bathroom shell wall IDs:
+
+- `bathroom_wall`: top wall, `axis=A`, `start_cell=(1,7)`, `length=2`
+- `bathroom_left_wall`: left wall and bathroom doorway, `axis=B`, `start_cell=(1,7)`, `length=3`, `doorway_offset=1`, `doorway_width=1`
+- `bathroom_right_wall`: right wall, `axis=B`, `start_cell=(3,7)`, `length=3`
+
+Legacy service segments remain in the inventory as disabled entries:
+
+- `service_wall`: `enabled=false`
+- `service_right_wall`: `enabled=false`
+
 ## Candidate UI Scripts
 
 | Feature | File |
