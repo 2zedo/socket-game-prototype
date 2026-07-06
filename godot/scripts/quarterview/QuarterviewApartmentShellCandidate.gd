@@ -43,7 +43,7 @@ const DEFAULT_WORK_ROOM_ORIGIN := Vector2i(1, 0)
 const DEFAULT_WORK_ROOM_SIZE := Vector2i(8, 4)
 const DEFAULT_LIVING_ROOM_ORIGIN := Vector2i(0, 4)
 const DEFAULT_LIVING_ROOM_SIZE := Vector2i(11, 6)
-const DEFAULT_BATHROOM_ROOM_ORIGIN := Vector2i(1, 7)
+const DEFAULT_BATHROOM_ROOM_ORIGIN := Vector2i(0, 7)
 const DEFAULT_BATHROOM_ROOM_SIZE := Vector2i(2, 3)
 const DEFAULT_SERVICE_ROOM_ORIGIN := Vector2i(0, 9)
 const DEFAULT_SERVICE_ROOM_SIZE := Vector2i(2, 1)
@@ -52,7 +52,7 @@ const DEFAULT_NO_LARGE_OBJECT_ZONE_SIZE := Vector2i(8, 2)
 
 const DEFAULT_CONNECTION_DOOR_OFFSET := 6
 const DEFAULT_CONNECTION_DOOR_WIDTH := 1
-const DEFAULT_ENTRANCE_DOOR_OFFSET := 5
+const DEFAULT_ENTRANCE_DOOR_OFFSET := 4
 const DEFAULT_ENTRANCE_DOOR_WIDTH := 1
 const DEFAULT_BATHROOM_DOOR_OFFSET := 0
 const DEFAULT_BATHROOM_DOOR_WIDTH := 1
@@ -358,7 +358,6 @@ func _default_wall_segment_configs() -> Array[Resource]:
 	var living_bottom := living_room.position.y + living_room.size.y
 	var work_right := work_room.position.x + work_room.size.x
 	var work_bottom := work_room.position.y + work_room.size.y
-	var bathroom_right := bathroom_room.position.x + bathroom_room.size.x
 
 	return [
 		# Work room outer walls.
@@ -379,6 +378,19 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			-1.0,
 			true,
 			entrance_door_color
+		),
+		_make_wall_segment_config(
+			&"entrance_inner_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
+			Vector2i(2, 7),
+			2,
+			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
+			1,
+			1,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
+			-1.0,
+			true,
+			inner_door_color
 		),
 		_make_wall_segment_config(&"living_right_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, Vector2i(living_right, living_room.position.y), living_room.size.y),
 		_make_wall_segment_config(
@@ -424,10 +436,22 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			DEFAULT_BATHROOM_DOOR_WIDTH,
 			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
 			-1.0,
+			false,
+			service_door_color
+		),
+		_make_wall_segment_config(
+			&"bathroom_right_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
+			Vector2i(2, 4),
+			3,
+			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
+			2,
+			DEFAULT_BATHROOM_DOOR_WIDTH,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
+			-1.0,
 			true,
 			service_door_color
 		),
-		_make_wall_segment_config(&"bathroom_right_wall", ApartmentWallSegmentConfigScript.Axis.AXIS_B, Vector2i(bathroom_right, bathroom_room.position.y), bathroom_room.size.y),
 
 		# Legacy service segments stay disabled so inventory can show they are intentionally retired.
 		_make_wall_segment_config(
@@ -552,10 +576,7 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 			"to_cell": _format_cell(end_cell_i),
 			"length": int(segment.get("length", 0)),
 			"wall_type": _wall_type_name(segment.get("wall_type", WallType.NORMAL)),
-			"doorway": "offset=%d width=%d" % [
-				int(segment.get("doorway_offset", -1)),
-				int(segment.get("doorway_width", 0)),
-			],
+			"doorway": _wall_doorway_text(segment),
 			"height_mode": _height_mode_name(segment.get("height_mode", ApartmentWallSegmentConfigScript.HeightMode.DEFAULT)),
 			"edit_hint": _wall_edit_hint(segment),
 		})
@@ -565,6 +586,11 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 func _wall_edit_hint(segment: Dictionary) -> String:
 	var id := String(segment["id"])
 	var source := String(segment.get("source", "default"))
+	if id == "bathroom_left_wall" and not bool(segment.get("enabled", true)):
+		var bathroom_location := "edit _default_wall_segment_configs() legacy disabled entry id=\"%s\"" % id
+		if source == "custom_wall_segments":
+			bathroom_location = "edit Inspector > custom_wall_segments legacy disabled entry id=\"%s\"" % id
+		return "%s; legacy disabled bathroom segment; keep enabled=false unless testing old bathroom-left layout; use G grid overlay to confirm coordinates" % bathroom_location
 	if id == "service_wall" or id == "service_right_wall":
 		var service_location := "edit _default_wall_segment_configs() legacy disabled entry id=\"%s\"" % id
 		if source == "custom_wall_segments":
@@ -832,6 +858,24 @@ func _segment_end_cell_i(segment: Dictionary) -> Vector2i:
 	if axis == WallAxis.AXIS_B:
 		return start_cell + Vector2i(0, length)
 	return start_cell + Vector2i(length, 0)
+
+
+func _wall_doorway_text(segment: Dictionary) -> String:
+	var offset := int(segment.get("doorway_offset", -1))
+	var width := int(segment.get("doorway_width", 0))
+	if offset < 0 or width <= 0:
+		return "none offset=%d width=%d" % [offset, width]
+
+	var axis: WallAxis = segment.get("axis", WallAxis.AXIS_A)
+	var start_cell := Vector2(segment.get("start_cell", Vector2i.ZERO))
+	var doorway_start := _offset_cell(start_cell, axis, float(offset))
+	var doorway_end := _offset_cell(start_cell, axis, float(offset + width))
+	return "from=%s to=%s offset=%d width=%d" % [
+		_format_cell(Vector2i(doorway_start)),
+		_format_cell(Vector2i(doorway_end)),
+		offset,
+		width,
+	]
 
 
 func _wall_axis_name(axis: int) -> String:

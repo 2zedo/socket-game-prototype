@@ -89,9 +89,11 @@ Wall inventory columns: `id`, `enabled`, `source`, `axis`, `from_cell`, `to_cell
 
 Current bathroom shell wall IDs:
 
-- `bathroom_wall`: top wall, `axis=A`, `start_cell=(1,7)`, `length=2`
-- `bathroom_left_wall`: left wall and bathroom doorway, `axis=B`, `start_cell=(1,7)`, `length=3`, `doorway_offset=1`, `doorway_width=1`
-- `bathroom_right_wall`: right wall, `axis=B`, `start_cell=(3,7)`, `length=3`
+- `bathroom_wall`: shared bathroom / entrance boundary, `axis=A`, `from_cell=(0,7)`, `to_cell=(2,7)`
+- `bathroom_right_wall`: bathroom doorway wall, `axis=B`, `from_cell=(2,4)`, `to_cell=(2,7)`, doorway `from_cell=(2,6)`, `to_cell=(2,7)`
+- `entrance_inner_wall`: entrance inner wall, `axis=B`, `from_cell=(2,7)`, `to_cell=(2,9)`, doorway `from_cell=(2,8)`, `to_cell=(2,9)`
+- `entrance_wall`: outer entrance wall, doorway `from_cell=(0,8)`, `to_cell=(0,9)`
+- `bathroom_left_wall`: legacy disabled bathroom-left segment, `enabled=false`
 
 Legacy service segments remain in the inventory as disabled entries:
 

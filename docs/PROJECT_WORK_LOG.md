@@ -71,3 +71,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: bathroom/wall positions, room sizes, furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
 - Next: Use `G`, `W`, and `I` together to specify exact wall coordinate edits before moving shell walls.
+
+### Apartment bathroom / entrance wall coordinates
+
+- Commit: pending in this task.
+- Result: Repositioned the apartment shell bathroom / entrance walls to the requested grid-line coordinates, moved the bathroom doorway to `bathroom_right_wall`, added `entrance_inner_wall`, and kept legacy bathroom-left / service segments disabled in inventory.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: room scale, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, `SurvivalState`, `project.godot`.
+- Next: Inspect with `G`, `W`, and `I` enabled before any further wall coordinate edits.

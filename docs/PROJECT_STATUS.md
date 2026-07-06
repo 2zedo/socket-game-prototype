@@ -34,6 +34,7 @@
 - Wall segments are now editable through named `ApartmentWallSegmentConfig` entries, with `W` for wall ID markers and `I` for a console wall inventory / edit-hint table.
 - The former service area is folded into the bathroom shell region; legacy service wall segments remain disabled in the inventory for reference.
 - Floor grid coordinate debugging is available with `G`, including tile labels, origin / axis markers, hover cell display, click-to-print cell output, and `from_cell -> to_cell` wall inventory.
+- Bathroom / entrance shell walls now follow the specified grid-line coordinates: bathroom boundary `(0,7)->(2,7)`, bathroom doorway wall `(2,4)->(2,7)`, entrance inner wall `(2,7)->(2,9)`, and entrance doorway `(0,8)->(0,9)`.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.
 - Documentation now records the shell candidate path, coordinate basis, wall editing controls, and validation command.
 
