@@ -103,3 +103,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: room scale, bathroom/entrance coordinates, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character area reveal logic, `SurvivalState`, `project.godot`.
 - Next: Use `G`, `W`, and `I` to verify future wall requests against wall grid-line coordinates rather than interior floor cell coordinates.
+
+### Apartment wall edge coordinate overlay
+
+- Commit: pending in this task.
+- Result: Added `E` wall edge / vertex coordinate overlay to the apartment shell, separated it from `G` floor cell coordinates, and added click logging for exact wall edge `from/to` pairs.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: shell wall coordinates, room scale, bathroom/entrance structure, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, `SurvivalState`, `project.godot`.
+- Next: Use `G` to identify floor cells and `E` to pick exact wall grid-line edges before requesting wall movement.

@@ -80,17 +80,28 @@ Do not modify by default:
 | Change how a wall is displayed | Change `render_mode` on the wall segment |
 | Show wall IDs / start-end markers | Press `W` in the shell scene |
 | Print wall inventory | Press `I` in the shell scene |
-| Show floor grid coordinates | Press `G` in the shell scene |
+| Show floor cell coordinates | Press `G` in the shell scene |
+| Show wall edge / vertex coordinates | Press `E` in the shell scene |
 | Highlight occlusion / revealable walls | Press `O` in the shell scene |
-| Identify a floor cell under the mouse | Enable `G`, then hover a floor tile; click to print the cell |
+| Identify a floor cell under the mouse | Enable `G`, then hover a floor tile; click to print the cell and its four wall edges |
+| Identify an exact wall edge under the mouse | Enable `E`, then hover near a floor edge; click to print the nearest wall edge `from_cell -> to_cell` |
 | Emphasize one wall | Set `debug_focus_wall_id`, e.g. `bathroom_left_wall`, in the Inspector |
 | Preview revealable walls as full walls | Set `preview_revealed_walls=true` in the Inspector |
 
-Wall inventory columns: `id`, `enabled`, `source`, `axis`, `from_cell`, `to_cell`, `length`, `wall_type`, `render_mode`, `doorway`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
+Wall inventory columns: `id`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `doorway`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 
-`from_cell -> to_cell` is the preferred way to read wall placement. The older `start_cell + axis + length` values still drive the data model, but the `G` floor-coordinate overlay is the quickest way to see which direction `+X` and `+Y` currently point after `map_rotation`.
+`edge_from_cell -> edge_to_cell` is the preferred way to read wall placement. The older `start_cell + axis + length` values still drive the data model, but the `E` wall-edge overlay is the quickest way to pick an exact wall segment. `G` is for floor cell centers and room footprint checks.
 
 Floor cell coordinates and wall grid-line coordinates are related but not identical. A floor cell `(x,y)` spans to the next grid line, so its right outside wall is on `x+1`, and its front / lower outside wall is on `y+1`. For example, the outer right edge of floor cell `(10,9)` is wall grid line `x=11`, and its outer front edge is wall grid line `y=10`. Wall segments should be specified with grid-line `from_cell -> to_cell` coordinates, not the interior floor cell coordinate.
+
+When `G` is enabled, clicking a floor cell prints all four edge coordinates:
+
+- top edge: `(x,y) -> (x+1,y)`
+- right edge: `(x+1,y) -> (x+1,y+1)`
+- bottom edge: `(x,y+1) -> (x+1,y+1)`
+- left edge: `(x,y) -> (x,y+1)`
+
+When `E` is enabled, the shell displays wall grid-line vertices and the hover panel reports the nearest edge with `cell`, `edge`, `edge from`, `edge to`, and `axis`. Clicking prints the same nearest-edge information to the console.
 
 `render_mode` separates logical wall existence from the current shell display. `FULL` draws a full-height wall. `CUTAWAY_STUB`, `HIDDEN_STUB`, and `REVEALABLE` keep the wall enabled in inventory while showing only a low cutaway / stub in this camera view. `REVEALABLE` walls draw a visible low body, top cap line, and base shadow by default; `preview_revealed_walls=true` temporarily draws them as full walls for inspection. `LOGICAL_ONLY` keeps the wall as data without drawing it.
 

@@ -105,6 +105,8 @@ const COLOR_GRID_COORD := Color(0.82, 0.93, 1.0, 0.96)
 const COLOR_GRID_ORIGIN := Color(1.0, 0.92, 0.22, 1.0)
 const COLOR_GRID_AXIS_X := Color(0.35, 0.78, 1.0, 0.95)
 const COLOR_GRID_AXIS_Y := Color(0.50, 1.0, 0.60, 0.95)
+const COLOR_WALL_EDGE_COORD := Color(1.0, 0.84, 0.46, 0.98)
+const COLOR_WALL_EDGE_MARKER := Color(1.0, 0.54, 0.18, 0.92)
 const COLOR_OCCLUSION_STUB_BODY := Color(0.20, 0.22, 0.22, 0.58)
 const COLOR_OCCLUSION_STUB_CAP := Color(0.58, 0.61, 0.58, 0.90)
 const COLOR_OCCLUSION_STUB_SHADOW := Color(0.03, 0.035, 0.04, 0.58)
@@ -174,6 +176,8 @@ const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 @export var show_debug_labels := true
 @export var show_wall_ids := false
 @export var show_floor_grid_coords := false
+# Shows wall grid-line vertices / edges. Wall segments use these coordinates, not floor centers.
+@export var show_wall_edge_coords := false
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
 @export var show_occlusion_wall_debug := false
 # Preview helper only: draw REVEALABLE walls at full height without adding character/area logic.
@@ -191,11 +195,14 @@ var _wall_layer: Node2D
 var _door_layer: Node2D
 var _label_layer: Node2D
 var _grid_coord_layer: Node2D
+var _wall_edge_coord_layer: Node2D
 var _wall_id_layer: Node2D
 var _occlusion_debug_layer: Node2D
 var _debug_overlay_layer: CanvasLayer
 var _hover_coord_label: Label
 var _hover_coord_background: ColorRect
+var _hover_edge_label: Label
+var _hover_edge_background: ColorRect
 
 
 func _ready() -> void:
@@ -219,6 +226,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if event.keycode == KEY_G:
 			show_floor_grid_coords = not show_floor_grid_coords
+			_update_label_visibility()
+			_update_hover_cell()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_E:
+			show_wall_edge_coords = not show_wall_edge_coords
 			_update_label_visibility()
 			_update_hover_cell()
 			get_viewport().set_input_as_handled()
@@ -249,9 +262,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var hover_cell: Variant = _hover_floor_cell()
-		if hover_cell != null:
+		var printed_click := false
+		if show_floor_grid_coords and hover_cell != null:
 			var clicked_cell: Vector2i = hover_cell
-			print("clicked floor cell: %s" % _format_cell(clicked_cell))
+			_print_clicked_cell_edges(clicked_cell)
+			printed_click = true
+		if show_wall_edge_coords:
+			var edge_info := _hover_wall_edge()
+			if not edge_info.is_empty():
+				_print_clicked_wall_edge(edge_info)
+				printed_click = true
+		if printed_click:
+			get_viewport().set_input_as_handled()
 
 
 func set_camera_preset(preset: String) -> void:
@@ -269,6 +291,7 @@ func _create_layers() -> void:
 	_door_layer = _add_layer("DoorAndWindowLayer", 10)
 	_label_layer = _add_layer("DebugLabelLayer", 40)
 	_grid_coord_layer = _add_layer("GridCoordinateLayer", 85)
+	_wall_edge_coord_layer = _add_layer("WallEdgeCoordinateLayer", 88)
 	_wall_id_layer = _add_layer("WallIdLayer", 90)
 	_occlusion_debug_layer = _add_layer("OcclusionWallDebugLayer", 95)
 	_debug_overlay_layer = CanvasLayer.new()
@@ -287,6 +310,7 @@ func _build_shell() -> void:
 	_draw_doors_and_window_placeholders()
 	_draw_debug_labels()
 	_draw_floor_grid_overlay()
+	_draw_wall_edge_overlay()
 	_draw_control_hint()
 
 
@@ -628,7 +652,9 @@ func print_wall_segment_inventory() -> void:
 	var rows := _wall_segment_inventory_rows()
 	print("")
 	print("=== Apartment Wall Segment Inventory ===")
-	print("id | enabled | source | axis | from_cell | to_cell | length | wall_type | render_mode | doorway | reveal | logical | height_mode | edit_hint")
+	print("from_cell / to_cell are wall grid-line coordinates, not floor cell centers. Use E wall edge overlay to pick exact edge coordinates.")
+	print("To place a wall around floor cell (x,y), use that cell's printed edge coordinates from G or E.")
+	print("id | enabled | source | axis | edge_from_cell | edge_to_cell | length | wall_type | render_mode | doorway | reveal | logical | height_mode | edit_hint")
 	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
 	for row in rows:
 		print("%s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s | %s | %s | %s" % [
@@ -682,12 +708,12 @@ func _wall_edit_hint(segment: Dictionary) -> String:
 		var bathroom_location := "edit _default_wall_segment_configs() legacy disabled entry id=\"%s\"" % id
 		if source == "custom_wall_segments":
 			bathroom_location = "edit Inspector > custom_wall_segments legacy disabled entry id=\"%s\"" % id
-		return "%s; legacy disabled bathroom segment; keep enabled=false unless testing old bathroom-left layout; use G grid overlay to confirm coordinates" % bathroom_location
+		return "%s; legacy disabled bathroom segment; keep enabled=false unless testing old bathroom-left layout; use G for floor cells and E for wall edge coordinates" % bathroom_location
 	if id == "service_wall" or id == "service_right_wall":
 		var service_location := "edit _default_wall_segment_configs() legacy disabled entry id=\"%s\"" % id
 		if source == "custom_wall_segments":
 			service_location = "edit Inspector > custom_wall_segments legacy disabled entry id=\"%s\"" % id
-		return "%s; legacy disabled service segment; keep enabled=false unless testing old service layout; use G grid overlay to confirm coordinates" % service_location
+		return "%s; legacy disabled service segment; keep enabled=false unless testing old service layout; use G for floor cells and E for wall edge coordinates" % service_location
 	if id == "living_occlusion_right_wall" or id == "living_occlusion_front_wall":
 		var occlusion_location := "edit _default_wall_segment_configs() legacy disabled entry id=\"%s\"" % id
 		if source == "custom_wall_segments":
@@ -696,7 +722,7 @@ func _wall_edit_hint(segment: Dictionary) -> String:
 	var location := "edit _default_wall_segment_configs() entry id=\"%s\"" % id
 	if source == "custom_wall_segments":
 		location = "edit Inspector > custom_wall_segments entry id=\"%s\"" % id
-	return "%s; hide/remove wall: enabled=false; display: render_mode; future reveal: reveal_area_id / reveal_when_area_active; move: start_cell; direction: axis; length: length; door: doorway_offset / doorway_width; move right: increase x; move left: decrease x; move downward/forward: increase y; move upward/backward: decrease y; verify with G grid overlay because map_rotation changes screen direction" % location
+	return "%s; hide/remove wall: enabled=false; display: render_mode; future reveal: reveal_area_id / reveal_when_area_active; move: start_cell; direction: axis; length: length; door: doorway_offset / doorway_width; move right: increase x; move left: decrease x; move downward/forward: increase y; move upward/backward: decrease y; use G for floor cells and E for exact wall edge coordinates because map_rotation changes screen direction" % location
 
 
 func _draw_doors_and_window_placeholders() -> void:
@@ -730,7 +756,7 @@ func _draw_debug_labels() -> void:
 func _draw_control_hint() -> void:
 	var label := Label.new()
 	label.name = "ShellControlHint"
-	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  O: occlusion walls  |  I: print wall inventory"
+	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  E: wall edges  |  O: occlusion walls  |  I: print wall inventory"
 	label.position = Vector2(24, 20)
 	label.modulate = COLOR_LABEL
 	label.add_theme_font_size_override("font_size", 14)
@@ -766,6 +792,42 @@ func _draw_grid_axis_overlay() -> void:
 	_add_arrow_head(_grid_coord_layer, "grid_axis_y_head", origin, y_end, COLOR_GRID_AXIS_Y)
 	_add_label_with_background(_grid_coord_layer, "grid_axis_x_label", "+X", x_end + Vector2(12.0, -16.0), 15)
 	_add_label_with_background(_grid_coord_layer, "grid_axis_y_label", "+Y", y_end + Vector2(12.0, -16.0), 15)
+
+
+func _draw_wall_edge_overlay() -> void:
+	for vertex in _visible_wall_vertices():
+		var point := _iso(float(vertex.x), float(vertex.y))
+		_add_marker(_wall_edge_coord_layer, "wall_vertex_%d_%d" % [vertex.x, vertex.y], point, COLOR_WALL_EDGE_MARKER, 6.0)
+		var label := _add_label_with_background(
+			_wall_edge_coord_layer,
+			"wall_vertex_label_%d_%d" % [vertex.x, vertex.y],
+			_format_cell(vertex),
+			point + Vector2(8.0, -28.0),
+			11
+		)
+		label.modulate = COLOR_WALL_EDGE_COORD
+
+
+func _visible_wall_vertices() -> Array[Vector2i]:
+	var vertices_by_key: Dictionary = {}
+	for cell in _visible_floor_cells():
+		for vertex in [
+			cell,
+			cell + Vector2i(1, 0),
+			cell + Vector2i(1, 1),
+			cell + Vector2i(0, 1),
+		]:
+			vertices_by_key["%d,%d" % [vertex.x, vertex.y]] = vertex
+
+	var vertices: Array[Vector2i] = []
+	for key in vertices_by_key.keys():
+		vertices.append(vertices_by_key[key])
+	vertices.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		if a.y == b.y:
+			return a.x < b.x
+		return a.y < b.y
+	)
+	return vertices
 
 
 func _visible_floor_cells() -> Array[Vector2i]:
@@ -804,22 +866,54 @@ func _create_hover_coord_overlay() -> void:
 	_hover_coord_label.add_theme_constant_override("shadow_offset_x", 2)
 	_hover_coord_label.add_theme_constant_override("shadow_offset_y", 2)
 	_debug_overlay_layer.add_child(_hover_coord_label)
+
+	_hover_edge_background = ColorRect.new()
+	_hover_edge_background.name = "HoverEdgeBackground"
+	_hover_edge_background.position = Vector2(24.0, 84.0)
+	_hover_edge_background.size = Vector2(385.0, 93.0)
+	_hover_edge_background.color = COLOR_WALL_ID_BACKGROUND
+	_debug_overlay_layer.add_child(_hover_edge_background)
+
+	_hover_edge_label = Label.new()
+	_hover_edge_label.name = "HoverEdgeLabel"
+	_hover_edge_label.text = "nearest edge: -"
+	_hover_edge_label.position = Vector2(34.0, 90.0)
+	_hover_edge_label.modulate = COLOR_WALL_EDGE_COORD
+	_hover_edge_label.add_theme_font_size_override("font_size", 14)
+	_hover_edge_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
+	_hover_edge_label.add_theme_constant_override("shadow_offset_x", 2)
+	_hover_edge_label.add_theme_constant_override("shadow_offset_y", 2)
+	_debug_overlay_layer.add_child(_hover_edge_label)
 	_update_hover_cell()
 
 
 func _update_hover_cell() -> void:
-	if _hover_coord_label == null or _hover_coord_background == null:
-		return
-	_hover_coord_label.visible = show_floor_grid_coords
-	_hover_coord_background.visible = show_floor_grid_coords
-	if not show_floor_grid_coords:
-		return
+	if _hover_coord_label != null:
+		_hover_coord_label.visible = show_floor_grid_coords
+	if _hover_coord_background != null:
+		_hover_coord_background.visible = show_floor_grid_coords
+	if _hover_edge_label != null:
+		_hover_edge_label.visible = show_wall_edge_coords
+	if _hover_edge_background != null:
+		_hover_edge_background.visible = show_wall_edge_coords
+
 	var hover_cell: Variant = _hover_floor_cell()
-	if hover_cell == null:
-		_hover_coord_label.text = "hover cell: -"
+	if show_floor_grid_coords and _hover_coord_label != null:
+		if hover_cell == null:
+			_hover_coord_label.text = "hover cell: -"
+		else:
+			var hover_cell_i: Vector2i = hover_cell
+			_hover_coord_label.text = "hover cell: %s" % _format_cell(hover_cell_i)
+
+	if not show_wall_edge_coords or _hover_edge_label == null:
 		return
-	var hover_cell_i: Vector2i = hover_cell
-	_hover_coord_label.text = "hover cell: %s" % _format_cell(hover_cell_i)
+	var edge_info := _hover_wall_edge()
+	if edge_info.is_empty():
+		if _hover_coord_label != null:
+			_hover_coord_label.text = "hover cell: -"
+		_hover_edge_label.text = "nearest edge: -"
+		return
+	_hover_edge_label.text = _wall_edge_hover_text(edge_info)
 
 
 func _hover_floor_cell() -> Variant:
@@ -828,6 +922,112 @@ func _hover_floor_cell() -> Variant:
 	if _is_visible_floor_cell(cell):
 		return cell
 	return null
+
+
+func _hover_wall_edge() -> Dictionary:
+	var grid_point := _screen_to_grid_point(get_global_mouse_position())
+	var cell := Vector2i(floori(grid_point.x), floori(grid_point.y))
+	if not _is_visible_floor_cell(cell):
+		return {}
+	return _nearest_wall_edge_for_cell(cell, grid_point)
+
+
+# Converts a floor-cell side into the wall grid-line coordinates used by wall segments.
+func _wall_edge_info_for_cell(cell: Vector2i, edge_name: String) -> Dictionary:
+	var normalized_edge := edge_name.to_lower()
+	match normalized_edge:
+		"top":
+			return {
+				"cell": cell,
+				"edge": "top",
+				"from_cell": cell,
+				"to_cell": cell + Vector2i(1, 0),
+				"axis": WallAxis.AXIS_A,
+			}
+		"right":
+			return {
+				"cell": cell,
+				"edge": "right",
+				"from_cell": cell + Vector2i(1, 0),
+				"to_cell": cell + Vector2i(1, 1),
+				"axis": WallAxis.AXIS_B,
+			}
+		"bottom":
+			return {
+				"cell": cell,
+				"edge": "bottom",
+				"from_cell": cell + Vector2i(0, 1),
+				"to_cell": cell + Vector2i(1, 1),
+				"axis": WallAxis.AXIS_A,
+			}
+		"left":
+			return {
+				"cell": cell,
+				"edge": "left",
+				"from_cell": cell,
+				"to_cell": cell + Vector2i(0, 1),
+				"axis": WallAxis.AXIS_B,
+			}
+		_:
+			return {}
+
+
+func _nearest_wall_edge_for_cell(cell: Vector2i, grid_point: Vector2) -> Dictionary:
+	var local := grid_point - Vector2(cell)
+	var distances := {
+		"top": local.y,
+		"right": 1.0 - local.x,
+		"bottom": 1.0 - local.y,
+		"left": local.x,
+	}
+	var nearest_edge := "top"
+	var nearest_distance := INF
+	for edge_name in distances.keys():
+		var distance := absf(float(distances[edge_name]))
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_edge = edge_name
+	return _wall_edge_info_for_cell(cell, nearest_edge)
+
+
+func _wall_edge_hover_text(edge_info: Dictionary) -> String:
+	var cell: Vector2i = edge_info.get("cell", Vector2i.ZERO)
+	var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
+	var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
+	var axis: WallAxis = edge_info.get("axis", WallAxis.AXIS_A)
+	return "hover cell: %s\nnearest edge: %s\nedge from=%s to=%s\naxis=%s" % [
+		_format_cell(cell),
+		String(edge_info.get("edge", "-")),
+		_format_cell(from_cell),
+		_format_cell(to_cell),
+		_wall_axis_name(axis),
+	]
+
+
+func _print_clicked_cell_edges(cell: Vector2i) -> void:
+	print("clicked cell: %s" % _format_cell(cell))
+	for edge_name in ["top", "right", "bottom", "left"]:
+		var edge_info := _wall_edge_info_for_cell(cell, edge_name)
+		var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
+		var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
+		print("%s edge: from=%s to=%s" % [
+			edge_name,
+			_format_cell(from_cell),
+			_format_cell(to_cell),
+		])
+
+
+func _print_clicked_wall_edge(edge_info: Dictionary) -> void:
+	var cell: Vector2i = edge_info.get("cell", Vector2i.ZERO)
+	var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
+	var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
+	var axis: WallAxis = edge_info.get("axis", WallAxis.AXIS_A)
+	print("clicked wall edge:")
+	print("cell=%s" % _format_cell(cell))
+	print("edge=%s" % String(edge_info.get("edge", "-")))
+	print("from=%s" % _format_cell(from_cell))
+	print("to=%s" % _format_cell(to_cell))
+	print("axis=%s" % _wall_axis_name(axis))
 
 
 func _is_visible_floor_cell(cell: Vector2i) -> bool:
@@ -1042,7 +1242,7 @@ func _wall_doorway_text(segment: Dictionary) -> String:
 	var start_cell := Vector2(segment.get("start_cell", Vector2i.ZERO))
 	var doorway_start := _offset_cell(start_cell, axis, float(offset))
 	var doorway_end := _offset_cell(start_cell, axis, float(offset + width))
-	return "from=%s to=%s offset=%d width=%d" % [
+	return "edge from=%s to=%s offset=%d width=%d" % [
 		_format_cell(Vector2i(doorway_start)),
 		_format_cell(Vector2i(doorway_end)),
 		offset,
@@ -1178,17 +1378,32 @@ func _add_wall_id_debug(segment: Dictionary) -> void:
 	_add_label_with_background(
 		_wall_id_layer,
 		"wall_id_%s" % id,
-		"%s\nfrom=%s to=%s\naxis=%s len=%d mode=%s" % [
-			id,
-			_format_cell(start_cell_i),
-			_format_cell(end_cell_i),
-			_wall_axis_name(axis),
-			length_i,
-			_render_mode_name(render_mode),
-		],
+		_wall_id_label_text(id, start_cell_i, end_cell_i, axis, length_i, render_mode, segment),
 		_iso(midpoint.x, midpoint.y) + label_offset,
 		label_font_size
 	)
+
+
+func _wall_id_label_text(
+	id: String,
+	start_cell_i: Vector2i,
+	end_cell_i: Vector2i,
+	axis: WallAxis,
+	length_i: int,
+	render_mode: int,
+	segment: Dictionary
+) -> String:
+	var text := "%s\nedge from=%s to=%s\naxis=%s len=%d mode=%s" % [
+		id,
+		_format_cell(start_cell_i),
+		_format_cell(end_cell_i),
+		_wall_axis_name(axis),
+		length_i,
+		_render_mode_name(render_mode),
+	]
+	if int(segment.get("doorway_width", 0)) > 0:
+		text += "\ndoor %s" % _wall_doorway_text(segment)
+	return text
 
 
 func _draw_wall_segment(p0: Vector2, p1: Vector2, wall_name: String, height: float) -> void:
@@ -1231,10 +1446,12 @@ func _draw_doorway_axis_b(a: float, b_start: float, width: float, door_name: Str
 
 func _draw_doorway_frame(p0: Vector2, p1: Vector2, door_name: String, color: Color) -> void:
 	var up := Vector2(0.0, -wall_height + 10.0)
-	_add_line(_door_layer, "%sFrameLeft" % door_name, [p0, p0 + up], color, 5.0)
-	_add_line(_door_layer, "%sFrameRight" % door_name, [p1, p1 + up], color, 5.0)
-	_add_line(_door_layer, "%sFrameTop" % door_name, [p0 + up, p1 + up], color.lightened(0.12), 5.0)
-	_add_line(_door_layer, "%sThreshold" % door_name, [p0, p1], color.lightened(0.20), 4.0)
+	_add_line(_door_layer, "%sDoorwayOpening" % door_name, [p0, p1], color.lightened(0.34), 8.0)
+	_add_line(_door_layer, "%sFrameLeft" % door_name, [p0, p0 + up], color, 6.0)
+	_add_line(_door_layer, "%sFrameRight" % door_name, [p1, p1 + up], color, 6.0)
+	_add_line(_door_layer, "%sFrameTop" % door_name, [p0 + up, p1 + up], color.lightened(0.12), 6.0)
+	_add_line(_door_layer, "%sThresholdShadow" % door_name, [p0 + Vector2(0.0, 5.0), p1 + Vector2(0.0, 5.0)], COLOR_LABEL_SHADOW, 5.0)
+	_add_line(_door_layer, "%sThreshold" % door_name, [p0, p1], color.lightened(0.24), 6.0)
 
 
 func _draw_window_axis_b(a: float, b_start: float, width: float, window_name: String) -> void:
@@ -1527,12 +1744,18 @@ func _update_label_visibility() -> void:
 		_wall_id_layer.visible = show_wall_ids
 	if _grid_coord_layer != null:
 		_grid_coord_layer.visible = show_floor_grid_coords
+	if _wall_edge_coord_layer != null:
+		_wall_edge_coord_layer.visible = show_wall_edge_coords
 	if _occlusion_debug_layer != null:
 		_occlusion_debug_layer.visible = show_occlusion_wall_debug
 	if _hover_coord_label != null:
 		_hover_coord_label.visible = show_floor_grid_coords
 	if _hover_coord_background != null:
 		_hover_coord_background.visible = show_floor_grid_coords
+	if _hover_edge_label != null:
+		_hover_edge_label.visible = show_wall_edge_coords
+	if _hover_edge_background != null:
+		_hover_edge_background.visible = show_wall_edge_coords
 	_update_hover_cell()
 
 
