@@ -21,6 +21,14 @@ enum HeightMode {
 	CUTAWAY,
 }
 
+enum RenderMode {
+	FULL,
+	CUTAWAY_STUB,
+	HIDDEN_STUB,
+	LOGICAL_ONLY,
+	REVEALABLE,
+}
+
 @export var id: StringName = &""
 @export var enabled := true
 @export var axis: Axis = Axis.AXIS_A
@@ -32,3 +40,7 @@ enum HeightMode {
 @export var height_mode: HeightMode = HeightMode.DEFAULT
 @export var custom_height := -1.0
 @export var doorway_color := Color.TRANSPARENT
+@export var render_mode: RenderMode = RenderMode.FULL
+# Future reveal wiring can switch REVEALABLE segments from stub/hidden display to full wall.
+@export var reveal_area_id := ""
+@export var reveal_when_area_active := false

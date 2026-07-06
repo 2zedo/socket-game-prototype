@@ -30,6 +30,14 @@ enum WallType {
 	CORNER,
 }
 
+enum WallRenderMode {
+	FULL,
+	CUTAWAY_STUB,
+	HIDDEN_STUB,
+	LOGICAL_ONLY,
+	REVEALABLE,
+}
+
 const DEFAULT_TILE_WIDTH := 128.0
 const DEFAULT_TILE_HEIGHT := 64.0
 const DEFAULT_WALL_HEIGHT := 176.0
@@ -401,7 +409,43 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			ApartmentWallSegmentConfigScript.WallType.CUTAWAY_STUB,
 			-1.0,
 			0,
-			ApartmentWallSegmentConfigScript.HeightMode.CUTAWAY
+			ApartmentWallSegmentConfigScript.HeightMode.CUTAWAY,
+			-1.0,
+			true,
+			Color.TRANSPARENT,
+			ApartmentWallSegmentConfigScript.RenderMode.CUTAWAY_STUB
+		),
+		_make_wall_segment_config(
+			&"living_occlusion_right_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
+			Vector2i(10, 4),
+			5,
+			ApartmentWallSegmentConfigScript.WallType.NORMAL,
+			-1,
+			0,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
+			-1.0,
+			true,
+			Color.TRANSPARENT,
+			ApartmentWallSegmentConfigScript.RenderMode.REVEALABLE,
+			&"living_area",
+			true
+		),
+		_make_wall_segment_config(
+			&"living_occlusion_front_wall",
+			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
+			Vector2i(0, 9),
+			10,
+			ApartmentWallSegmentConfigScript.WallType.NORMAL,
+			-1,
+			0,
+			ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
+			-1.0,
+			true,
+			Color.TRANSPARENT,
+			ApartmentWallSegmentConfigScript.RenderMode.REVEALABLE,
+			&"living_area",
+			true
 		),
 
 		# Shared wall between the two rooms. Change doorway_offset / doorway_width here to move it.
@@ -494,6 +538,9 @@ func _wall_segment_from_config(config: Resource, source: String = "default") -> 
 		"doorway_offset": config.doorway_offset,
 		"doorway_width": config.doorway_width,
 		"height_mode": config.height_mode,
+		"render_mode": config.render_mode,
+		"reveal_area_id": String(config.reveal_area_id),
+		"reveal_when_area_active": config.reveal_when_area_active,
 		"height": _wall_height_from_config(config),
 		"doorway_color": doorway_debug_color if config.doorway_color == Color.TRANSPARENT else config.doorway_color,
 	}
@@ -510,7 +557,10 @@ func _make_wall_segment_config(
 	segment_height_mode: int = 0,
 	segment_custom_height := -1.0,
 	segment_enabled := true,
-	segment_doorway_color := Color.TRANSPARENT
+	segment_doorway_color := Color.TRANSPARENT,
+	segment_render_mode: int = 0,
+	segment_reveal_area_id: StringName = &"",
+	segment_reveal_when_area_active := false
 ) -> Resource:
 	var config: Resource = ApartmentWallSegmentConfigScript.new()
 	config.id = segment_id
@@ -524,6 +574,9 @@ func _make_wall_segment_config(
 	config.height_mode = segment_height_mode
 	config.custom_height = segment_custom_height
 	config.doorway_color = segment_doorway_color
+	config.render_mode = segment_render_mode
+	config.reveal_area_id = String(segment_reveal_area_id)
+	config.reveal_when_area_active = segment_reveal_when_area_active
 	return config
 
 
@@ -542,10 +595,10 @@ func print_wall_segment_inventory() -> void:
 	var rows := _wall_segment_inventory_rows()
 	print("")
 	print("=== Apartment Wall Segment Inventory ===")
-	print("id | enabled | source | axis | from_cell | to_cell | length | wall_type | doorway | height_mode | edit_hint")
-	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
+	print("id | enabled | source | axis | from_cell | to_cell | length | wall_type | render_mode | doorway | reveal | logical | height_mode | edit_hint")
+	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
 	for row in rows:
-		print("%s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s" % [
+		print("%s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s | %s | %s | %s" % [
 			row["id"],
 			str(row["enabled"]),
 			row["source"],
@@ -554,7 +607,10 @@ func print_wall_segment_inventory() -> void:
 			row["to_cell"],
 			row["length"],
 			row["wall_type"],
+			row["render_mode"],
 			row["doorway"],
+			row["reveal"],
+			row["logical"],
 			row["height_mode"],
 			row["edit_hint"],
 		])
@@ -576,7 +632,10 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 			"to_cell": _format_cell(end_cell_i),
 			"length": int(segment.get("length", 0)),
 			"wall_type": _wall_type_name(segment.get("wall_type", WallType.NORMAL)),
+			"render_mode": _render_mode_name(segment.get("render_mode", WallRenderMode.FULL)),
 			"doorway": _wall_doorway_text(segment),
+			"reveal": _wall_reveal_text(segment),
+			"logical": str(_is_logical_wall(segment)),
 			"height_mode": _height_mode_name(segment.get("height_mode", ApartmentWallSegmentConfigScript.HeightMode.DEFAULT)),
 			"edit_hint": _wall_edit_hint(segment),
 		})
@@ -599,7 +658,7 @@ func _wall_edit_hint(segment: Dictionary) -> String:
 	var location := "edit _default_wall_segment_configs() entry id=\"%s\"" % id
 	if source == "custom_wall_segments":
 		location = "edit Inspector > custom_wall_segments entry id=\"%s\"" % id
-	return "%s; hide: enabled=false; move: start_cell; direction: axis; length: length; door: doorway_offset / doorway_width; move right: increase x; move left: decrease x; move downward/forward: increase y; move upward/backward: decrease y; verify with G grid overlay because map_rotation changes screen direction" % location
+	return "%s; hide/remove wall: enabled=false; display: render_mode; future reveal: reveal_area_id / reveal_when_area_active; move: start_cell; direction: axis; length: length; door: doorway_offset / doorway_width; move right: increase x; move left: decrease x; move downward/forward: increase y; move upward/backward: decrease y; verify with G grid overlay because map_rotation changes screen direction" % location
 
 
 func _draw_doors_and_window_placeholders() -> void:
@@ -742,22 +801,31 @@ func _draw_wall_segment_data(segment: Dictionary) -> void:
 	if not bool(segment.get("enabled", true)):
 		return
 
-	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
-	match wall_type:
-		WallType.CUTAWAY_STUB:
+	var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
+	match render_mode:
+		WallRenderMode.CUTAWAY_STUB:
 			_draw_cutaway_stub_segment_data(segment)
-		WallType.DOORWAY_EMPTY:
-			_draw_wall_with_doorway(segment, false)
-		WallType.DOORWAY_FRAME:
-			_draw_wall_with_doorway(segment, true)
-		WallType.END:
-			_draw_solid_wall_segment(segment)
-			_draw_wall_end_marker(segment)
-		WallType.CORNER:
-			_draw_solid_wall_segment(segment)
-			_draw_wall_corner_marker(segment)
+		WallRenderMode.HIDDEN_STUB, WallRenderMode.REVEALABLE:
+			_draw_hidden_stub_segment_data(segment)
+		WallRenderMode.LOGICAL_ONLY:
+			pass
 		_:
-			_draw_solid_wall_segment(segment)
+			var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
+			match wall_type:
+				WallType.CUTAWAY_STUB:
+					_draw_cutaway_stub_segment_data(segment)
+				WallType.DOORWAY_EMPTY:
+					_draw_wall_with_doorway(segment, false)
+				WallType.DOORWAY_FRAME:
+					_draw_wall_with_doorway(segment, true)
+				WallType.END:
+					_draw_solid_wall_segment(segment)
+					_draw_wall_end_marker(segment)
+				WallType.CORNER:
+					_draw_solid_wall_segment(segment)
+					_draw_wall_corner_marker(segment)
+				_:
+					_draw_solid_wall_segment(segment)
 
 	_add_wall_id_debug(segment)
 
@@ -816,6 +884,29 @@ func _draw_cutaway_stub_segment_data(segment: Dictionary) -> void:
 			_draw_front_stub_axis_b(start_cell.x, start_cell.y, length, id, height)
 		_:
 			_draw_front_stub_axis_a(start_cell.x, start_cell.y, length, id, height)
+
+
+func _draw_hidden_stub_segment_data(segment: Dictionary) -> void:
+	var id := String(segment["id"])
+	var axis: WallAxis = segment["axis"]
+	var start_cell := _segment_start_cell(segment)
+	var end_cell := _offset_cell(start_cell, axis, float(segment["length"]))
+	var p0 := _iso(start_cell.x, start_cell.y)
+	var p1 := _iso(end_cell.x, end_cell.y)
+	var stub_height := minf(cutaway_front_stub_height, 28.0)
+	var stub_color := cutaway_stub_color
+	stub_color.a = 0.42
+	if axis == WallAxis.AXIS_B:
+		stub_color = stub_color.darkened(0.08)
+	var line_color := wall_cap_color.lightened(0.12)
+	line_color.a = 0.72
+	_add_polygon(_edge_layer, "%sHiddenStub" % id, [
+		p0,
+		p1,
+		p1 + Vector2(0.0, stub_height),
+		p0 + Vector2(0.0, stub_height),
+	], stub_color)
+	_add_line(_edge_layer, "%sHiddenStubTop" % id, [p0, p1], line_color, 3.0)
 
 
 func _draw_wall_end_marker(segment: Dictionary) -> void:
@@ -878,6 +969,21 @@ func _wall_doorway_text(segment: Dictionary) -> String:
 	]
 
 
+func _wall_reveal_text(segment: Dictionary) -> String:
+	var area_id := String(segment.get("reveal_area_id", ""))
+	var when_active := bool(segment.get("reveal_when_area_active", false))
+	if area_id.is_empty() and not when_active:
+		return "-"
+	return "area=%s when_active=%s" % [area_id, str(when_active)]
+
+
+func _is_logical_wall(segment: Dictionary) -> bool:
+	if not bool(segment.get("enabled", true)):
+		return false
+	var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
+	return render_mode != WallRenderMode.FULL
+
+
 func _wall_axis_name(axis: int) -> String:
 	match axis:
 		WallAxis.AXIS_B:
@@ -900,6 +1006,20 @@ func _wall_type_name(wall_type: int) -> String:
 			return "corner"
 		_:
 			return "normal"
+
+
+func _render_mode_name(render_mode: int) -> String:
+	match render_mode:
+		WallRenderMode.CUTAWAY_STUB:
+			return "CUTAWAY_STUB"
+		WallRenderMode.HIDDEN_STUB:
+			return "HIDDEN_STUB"
+		WallRenderMode.LOGICAL_ONLY:
+			return "LOGICAL_ONLY"
+		WallRenderMode.REVEALABLE:
+			return "REVEALABLE"
+		_:
+			return "FULL"
 
 
 func _height_mode_name(height_mode: int) -> String:
@@ -946,6 +1066,7 @@ func _add_wall_id_debug(segment: Dictionary) -> void:
 	var length := float(segment["length"])
 	var length_i := int(segment["length"])
 	var wall_type: WallType = segment.get("wall_type", WallType.NORMAL)
+	var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
 	var end_cell_i := _segment_end_cell_i(segment)
 	var end_cell := Vector2(end_cell_i)
 	var midpoint := _offset_cell(start_cell, axis, length * 0.5)
@@ -953,7 +1074,7 @@ func _add_wall_id_debug(segment: Dictionary) -> void:
 	var marker_radius := 16.0 if focused else 11.0
 	var label_font_size := 18 if focused else 15
 	var label_offset := Vector2(-72.0, -_resolve_wall_height(float(segment.get("height", -1.0))) - 40.0)
-	if wall_type == WallType.CUTAWAY_STUB:
+	if wall_type == WallType.CUTAWAY_STUB or render_mode != WallRenderMode.FULL:
 		label_offset = Vector2(-72.0, 24.0)
 	if focused:
 		_add_line(_wall_id_layer, "wall_focus_%s" % id, [_iso(start_cell.x, start_cell.y), _iso(end_cell.x, end_cell.y)], Color(1.0, 0.90, 0.20, 0.95), 9.0)
@@ -976,12 +1097,13 @@ func _add_wall_id_debug(segment: Dictionary) -> void:
 	_add_label_with_background(
 		_wall_id_layer,
 		"wall_id_%s" % id,
-		"%s\nfrom=%s to=%s\naxis=%s len=%d" % [
+		"%s\nfrom=%s to=%s\naxis=%s len=%d mode=%s" % [
 			id,
 			_format_cell(start_cell_i),
 			_format_cell(end_cell_i),
 			_wall_axis_name(axis),
 			length_i,
+			_render_mode_name(render_mode),
 		],
 		_iso(midpoint.x, midpoint.y) + label_offset,
 		label_font_size

@@ -77,15 +77,18 @@ Do not modify by default:
 | Change wall direction | Change `axis` |
 | Change wall length | Change `length` |
 | Move the shared room door | Change `work_front_shared_wall` `doorway_offset` / `doorway_width` |
+| Change how a wall is displayed | Change `render_mode` on the wall segment |
 | Show wall IDs / start-end markers | Press `W` in the shell scene |
 | Print wall inventory | Press `I` in the shell scene |
 | Show floor grid coordinates | Press `G` in the shell scene |
 | Identify a floor cell under the mouse | Enable `G`, then hover a floor tile; click to print the cell |
 | Emphasize one wall | Set `debug_focus_wall_id`, e.g. `bathroom_left_wall`, in the Inspector |
 
-Wall inventory columns: `id`, `enabled`, `source`, `axis`, `from_cell`, `to_cell`, `length`, `wall_type`, `doorway_offset`, `doorway_width`, `height_mode`, and `edit_hint`.
+Wall inventory columns: `id`, `enabled`, `source`, `axis`, `from_cell`, `to_cell`, `length`, `wall_type`, `render_mode`, `doorway`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 
 `from_cell -> to_cell` is the preferred way to read wall placement. The older `start_cell + axis + length` values still drive the data model, but the `G` floor-coordinate overlay is the quickest way to see which direction `+X` and `+Y` currently point after `map_rotation`.
+
+`render_mode` separates logical wall existence from the current shell display. `FULL` draws a full-height wall. `CUTAWAY_STUB`, `HIDDEN_STUB`, and `REVEALABLE` keep the wall enabled in inventory while showing only a low cutaway / stub in this camera view. `LOGICAL_ONLY` keeps the wall as data without drawing it.
 
 Current bathroom shell wall IDs:
 
@@ -94,6 +97,8 @@ Current bathroom shell wall IDs:
 - `entrance_inner_wall`: entrance inner wall, `axis=B`, `from_cell=(2,7)`, `to_cell=(2,9)`, doorway `from_cell=(2,8)`, `to_cell=(2,9)`
 - `entrance_wall`: outer entrance wall, doorway `from_cell=(0,8)`, `to_cell=(0,9)`
 - `bathroom_left_wall`: legacy disabled bathroom-left segment, `enabled=false`
+- `living_occlusion_right_wall`: logical right-side occlusion wall, `from_cell=(10,4)`, `to_cell=(10,9)`, `render_mode=REVEALABLE`
+- `living_occlusion_front_wall`: logical front occlusion wall, `from_cell=(0,9)`, `to_cell=(10,9)`, `render_mode=REVEALABLE`
 
 Legacy service segments remain in the inventory as disabled entries:
 
