@@ -111,3 +111,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: shell wall coordinates, room scale, bathroom/entrance structure, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, `SurvivalState`, `project.godot`.
 - Next: Use `G` to identify floor cells and `E` to pick exact wall grid-line edges before requesting wall movement.
+
+### Apartment entrance inner wall extension
+
+- Commit: pending in this task.
+- Result: Extended `entrance_inner_wall` from `(2,7)->(2,9)` to `(2,7)->(2,10)` while keeping the doorway opening at `(2,8)->(2,9)`.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: room scale, bathroom wall coordinates, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, `SurvivalState`, `project.godot`.
+- Next: Inspect with `W` wall IDs and `E` wall edge coordinates to confirm the new lower solid segment is visually in the intended place.

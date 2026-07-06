@@ -35,7 +35,7 @@
 - The former service area is folded into the bathroom shell region; legacy service wall segments remain disabled in the inventory for reference.
 - Floor grid coordinate debugging is available with `G`, including tile labels, origin / axis markers, hover cell display, click-to-print cell output, and `from_cell -> to_cell` wall inventory.
 - Wall edge coordinate debugging is available with `E`, separating wall grid-line / vertex coordinates from floor cell coordinates; `G` click output now prints a cell's four wall edges, and `E` click output prints the nearest edge `from/to` pair.
-- Bathroom / entrance shell walls now follow the specified grid-line coordinates: bathroom boundary `(0,7)->(2,7)`, bathroom doorway wall `(2,4)->(2,7)`, entrance inner wall `(2,7)->(2,9)`, and entrance doorway `(0,8)->(0,9)`.
+- Bathroom / entrance shell walls now follow the specified grid-line coordinates: bathroom boundary `(0,7)->(2,7)`, bathroom doorway wall `(2,4)->(2,7)`, entrance inner wall `(2,7)->(2,10)`, and entrance doorway `(0,8)->(0,9)`.
 - Wall segments now separate logical existence from display mode; living front/right occlusion walls are enabled logical walls but render as clearer low revealable stubs with body/cap/shadow in the current shell view.
 - Living occlusion display now uses the actual outer grid-line walls: `living_right_wall` at `(11,4)->(11,10)` and `living_front_cutaway` at `(0,10)->(11,10)`; earlier one-cell-inward occlusion wall segments remain disabled as legacy references.
 - Occlusion wall debugging is available with `O`, and `preview_revealed_walls` can temporarily show revealable walls at full height for shell inspection.

@@ -432,7 +432,7 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			&"entrance_inner_wall",
 			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
 			Vector2i(2, 7),
-			2,
+			3,
 			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
 			1,
 			1,
