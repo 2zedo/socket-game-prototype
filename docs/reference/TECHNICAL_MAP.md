@@ -78,13 +78,13 @@ Do not modify by default:
 | Change wall length | Change `length` |
 | Move the shared room door | Change `work_front_shared_wall` `doorway_offset` / `doorway_width` |
 | Change how a wall is displayed | Change `render_mode` on the wall segment |
-| Show wall IDs / start-end markers | Press `W` in the shell scene |
+| Show wall IDs / start-end markers | Press `W` in the shell scene; labels prioritize Korean wall names with `id` as secondary info |
 | Print wall inventory | Press `I` in the shell scene |
-| Show floor cell coordinates | Press `G` in the shell scene |
-| Show wall edge / vertex coordinates | Press `E` in the shell scene |
-| Show navigation / collision debug | Press `N` in the shell scene |
-| Show object footprint placeholders | Press `P` in the shell scene |
-| Highlight occlusion / revealable walls | Press `O` in the shell scene |
+| Show floor cell coordinates | Press `G` in the shell scene; floor labels use `칸 (x,y)` |
+| Show wall edge / vertex coordinates | Press `E` in the shell scene; wall labels use `벽선 from -> to` / `축=A/B` |
+| Show navigation / collision debug | Press `N` in the shell scene; labels use `이동 가능`, `막힘`, and `통과 가능` |
+| Show object footprint placeholders | Press `P` in the shell scene; object labels prioritize Korean names with `id` as secondary info |
+| Highlight occlusion / revealable walls | Press `O` in the shell scene; labels use `숨김벽` and Korean display-state text |
 | Identify a floor cell under the mouse | Enable `G`, then hover a floor tile; click to print the cell and its four wall edges |
 | Identify an exact wall edge under the mouse | Enable `E`, then hover near a floor edge; click to print the nearest wall edge `from_cell -> to_cell` |
 | Identify navigation state for a floor cell | Enable `N`, then click a floor tile to print room area, walkable state, neighbors, and edge blockers |
@@ -93,9 +93,15 @@ Do not modify by default:
 | Emphasize one wall | Set `debug_focus_wall_id`, e.g. `bathroom_left_wall`, in the Inspector |
 | Preview revealable walls as full walls | Set `preview_revealed_walls=true` in the Inspector |
 
-Wall inventory columns: `id`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `current_state`, `doorway`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
+Wall inventory columns: `id`, `name_ko`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `current_state`, `state_ko`, `doorway`, `doorway_ko`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 
-Object footprint summary columns, printed after `I`: `id`, `enabled`, `source`, `room_area_id`, `anchor_cell`, `size_cells`, `occupied_cells`, `blocks_movement`, `interaction_cells`, and `edit_hint`.
+Object footprint summary columns, printed after `I`: `id`, `name_ko`, `enabled`, `source`, `room_area_id`, `room_name_ko`, `anchor_cell`, `size_cells`, `occupied_cells`, `blocks_movement`, `interaction_cells`, and `edit_hint`.
+
+Debug overlay language policy:
+
+- Screen labels are Korean-first where practical.
+- Internal ids remain visible as secondary edit references.
+- No custom font asset is added; the shell relies on the current Godot/default project font stack for Korean rendering.
 
 `edge_from_cell -> edge_to_cell` is the preferred way to read wall placement. The older `start_cell + axis + length` values still drive the data model, but the `E` wall-edge overlay is the quickest way to pick an exact wall segment. `G` is for floor cell centers and room footprint checks.
 

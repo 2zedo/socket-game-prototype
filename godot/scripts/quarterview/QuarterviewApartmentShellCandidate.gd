@@ -103,17 +103,24 @@ const COLOR_WALL_START_MARKER := Color(0.18, 0.95, 0.68, 0.95)
 const COLOR_WALL_END_MARKER := Color(1.0, 0.42, 0.32, 0.95)
 const COLOR_WALL_ID_BACKGROUND := Color(0.02, 0.025, 0.03, 0.82)
 const COLOR_GRID_COORD := Color(0.82, 0.93, 1.0, 0.96)
+const COLOR_GRID_LABEL_BACKGROUND := Color(0.02, 0.34, 0.30, 0.76)
+const COLOR_GRID_LABEL_TEXT := Color(0.76, 1.0, 0.90, 1.0)
 const COLOR_GRID_ORIGIN := Color(1.0, 0.92, 0.22, 1.0)
 const COLOR_GRID_AXIS_X := Color(0.35, 0.78, 1.0, 0.95)
 const COLOR_GRID_AXIS_Y := Color(0.50, 1.0, 0.60, 0.95)
 const COLOR_WALL_EDGE_COORD := Color(1.0, 0.84, 0.46, 0.98)
+const COLOR_WALL_EDGE_LABEL_BACKGROUND := Color(0.36, 0.18, 0.02, 0.78)
 const COLOR_WALL_EDGE_MARKER := Color(1.0, 0.54, 0.18, 0.92)
+const COLOR_WALL_EDGE_HOVER := Color(1.0, 0.74, 0.14, 1.0)
 const COLOR_NAV_WALKABLE := Color(0.22, 0.92, 0.66, 0.24)
 const COLOR_NAV_WALKABLE_MARKER := Color(0.44, 1.0, 0.78, 0.72)
 const COLOR_NAV_BLOCKED_EDGE := Color(1.0, 0.30, 0.18, 0.92)
 const COLOR_NAV_OCCLUSION_EDGE := Color(1.0, 0.56, 0.18, 0.95)
 const COLOR_NAV_PASSABLE_EDGE := Color(0.22, 0.86, 1.0, 0.96)
 const COLOR_NAV_PLAYER := Color(1.0, 0.92, 0.24, 0.96)
+const COLOR_NAV_LABEL_BACKGROUND := Color(0.02, 0.18, 0.13, 0.78)
+const COLOR_OBJECT_LABEL_BACKGROUND := Color(0.10, 0.08, 0.04, 0.80)
+const COLOR_OCCLUSION_LABEL_BACKGROUND := Color(0.28, 0.15, 0.02, 0.82)
 const COLOR_OCCLUSION_STUB_BODY := Color(0.20, 0.22, 0.22, 0.58)
 const COLOR_OCCLUSION_STUB_CAP := Color(0.58, 0.61, 0.58, 0.90)
 const COLOR_OCCLUSION_STUB_SHADOW := Color(0.03, 0.035, 0.04, 0.58)
@@ -219,6 +226,7 @@ var _object_layer: Node2D
 var _navigation_layer: Node2D
 var _grid_coord_layer: Node2D
 var _wall_edge_coord_layer: Node2D
+var _hover_edge_highlight_layer: Node2D
 var _wall_id_layer: Node2D
 var _occlusion_debug_layer: Node2D
 var _debug_overlay_layer: CanvasLayer
@@ -339,6 +347,7 @@ func _create_layers() -> void:
 	_navigation_layer = _add_layer("NavigationDebugLayer", 70)
 	_grid_coord_layer = _add_layer("GridCoordinateLayer", 85)
 	_wall_edge_coord_layer = _add_layer("WallEdgeCoordinateLayer", 88)
+	_hover_edge_highlight_layer = _add_layer("WallEdgeHoverHighlightLayer", 89)
 	_wall_id_layer = _add_layer("WallIdLayer", 90)
 	_occlusion_debug_layer = _add_layer("OcclusionWallDebugLayer", 95)
 	_debug_overlay_layer = CanvasLayer.new()
@@ -995,11 +1004,12 @@ func print_wall_segment_inventory() -> void:
 	print("=== Apartment Wall Segment Inventory ===")
 	print("from_cell / to_cell are wall grid-line coordinates, not floor cell centers. Use E wall edge overlay to pick exact edge coordinates.")
 	print("To place a wall around floor cell (x,y), use that cell's printed edge coordinates from G or E.")
-	print("id | enabled | source | axis | edge_from_cell | edge_to_cell | length | wall_type | render_mode | current_state | doorway | reveal | logical | height_mode | edit_hint")
-	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
+	print("id | name_ko | enabled | source | axis | edge_from_cell | edge_to_cell | length | wall_type | render_mode | current_state | state_ko | doorway | doorway_ko | reveal | logical | height_mode | edit_hint")
+	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
 	for row in rows:
-		print("%s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s | %s | %s | %s | %s" % [
+		print("%s | %s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s" % [
 			row["id"],
+			row["name_ko"],
 			str(row["enabled"]),
 			row["source"],
 			row["axis"],
@@ -1009,7 +1019,9 @@ func print_wall_segment_inventory() -> void:
 			row["wall_type"],
 			row["render_mode"],
 			row["current_state"],
+			row["state_ko"],
 			row["doorway"],
+			row["doorway_ko"],
 			row["reveal"],
 			row["logical"],
 			row["height_mode"],
@@ -1028,6 +1040,7 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 		var end_cell_i := _segment_end_cell_i(segment)
 		rows.append({
 			"id": String(segment["id"]),
+			"name_ko": _wall_display_name_ko(String(segment["id"])),
 			"enabled": bool(segment.get("enabled", true)),
 			"source": String(segment.get("source", "default")),
 			"axis": _wall_axis_name(axis),
@@ -1037,7 +1050,9 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 			"wall_type": _wall_type_name(segment.get("wall_type", WallType.NORMAL)),
 			"render_mode": _render_mode_name(segment.get("render_mode", WallRenderMode.FULL)),
 			"current_state": _wall_render_state(segment),
+			"state_ko": _wall_render_state_ko(segment),
 			"doorway": _wall_doorway_text(segment),
+			"doorway_ko": _wall_doorway_text_ko(segment),
 			"reveal": _wall_reveal_text(segment),
 			"logical": str(_is_logical_wall(segment)),
 			"height_mode": _height_mode_name(segment.get("height_mode", ApartmentWallSegmentConfigScript.HeightMode.DEFAULT)),
@@ -1052,22 +1067,25 @@ func _print_navigation_summary() -> void:
 	for area_id in _navigation_area_ids():
 		if not area_text.is_empty():
 			area_text += ", "
-		area_text += area_id
+		area_text += "%s(%s)" % [area_id, _room_area_label(area_id)]
 	print("=== Apartment Navigation Debug Summary ===")
 	print("walkable_cells=%d" % _walkable_floor_cells().size())
 	print("blocked_edges=%d" % edge_sets["blocked"].size())
 	print("passable_edges=%d" % edge_sets["passable"].size())
 	print("room_areas=%s" % area_text)
-	print("player_debug_cell=%s active_room_area=%s" % [_format_cell(player_debug_cell), _active_room_area()])
+	print("player_debug_cell=%s active_room_area=%s(%s)" % [_format_cell(player_debug_cell), _active_room_area(), _room_area_label(_active_room_area())])
 	print("debug_auto_reveal_walls=%s preview_revealed_walls=%s" % [str(debug_auto_reveal_walls), str(preview_revealed_walls)])
 	for segment in _wall_segments():
 		if int(segment.get("render_mode", WallRenderMode.FULL)) != WallRenderMode.REVEALABLE:
 			continue
-		print("revealable id=%s reveal_area_id=%s reveal_when_area_active=%s current_state=%s" % [
+		print("revealable id=%s name_ko=%s reveal_area_id=%s(%s) reveal_when_area_active=%s current_state=%s state_ko=%s" % [
 			String(segment.get("id", "")),
+			_wall_display_name_ko(String(segment.get("id", ""))),
 			String(segment.get("reveal_area_id", "")),
+			_room_area_label(String(segment.get("reveal_area_id", ""))),
 			str(bool(segment.get("reveal_when_area_active", false))),
 			_wall_render_state(segment),
+			_wall_render_state_ko(segment),
 		])
 	print("=== End Navigation Debug Summary ===")
 
@@ -1076,14 +1094,16 @@ func _print_object_footprint_summary() -> void:
 	var rows := _object_footprint_inventory_rows()
 	print("=== Apartment Object Footprint Summary ===")
 	print("Object anchor/size/occupied/interactions are floor-cell coordinates. Wall segments use edge coordinates instead.")
-	print("id | enabled | source | room_area_id | anchor_cell | size_cells | occupied_cells | blocks_movement | interaction_cells | edit_hint")
-	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
+	print("id | name_ko | enabled | source | room_area_id | room_name_ko | anchor_cell | size_cells | occupied_cells | blocks_movement | interaction_cells | edit_hint")
+	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
 	for row in rows:
-		print("%s | %s | %s | %s | %s | %s | %s | %s | %s | %s" % [
+		print("%s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s" % [
 			row["id"],
+			row["name_ko"],
 			str(row["enabled"]),
 			row["source"],
 			row["room_area_id"],
+			row["room_name_ko"],
 			row["anchor_cell"],
 			row["size_cells"],
 			row["occupied_cells"],
@@ -1099,9 +1119,11 @@ func _object_footprint_inventory_rows() -> Array[Dictionary]:
 	for object_data in _object_footprints():
 		rows.append({
 			"id": String(object_data.get("id", "")),
+			"name_ko": _object_display_name_ko(String(object_data.get("id", ""))),
 			"enabled": bool(object_data.get("enabled", true)),
 			"source": String(object_data.get("source", "default")),
 			"room_area_id": String(object_data.get("room_area_id", "")),
+			"room_name_ko": _room_area_label(String(object_data.get("room_area_id", ""))),
 			"anchor_cell": _format_cell(object_data.get("anchor_cell", Vector2i.ZERO)),
 			"size_cells": _format_cell(object_data.get("size_cells", Vector2i.ONE)),
 			"occupied_cells": _format_cells(_object_occupied_cells(object_data)),
@@ -1119,6 +1141,136 @@ func _object_edit_hint(object_data: Dictionary) -> String:
 	if source == "custom_object_footprints":
 		location = "edit Inspector > custom_object_footprints entry id=\"%s\"" % id
 	return "%s; hide: enabled=false; move: anchor_cell; resize: size_cells; movement block: blocks_movement; use point: interaction_cell / interaction_cells; use G floor cell overlay for exact floor coordinates" % location
+
+
+func _wall_display_name_ko(id: String) -> String:
+	match id:
+		"work_back_wall":
+			return "작업공간 뒤쪽벽"
+		"work_left_wall":
+			return "작업공간 왼쪽벽"
+		"work_right_wall":
+			return "작업공간 오른쪽벽"
+		"work_front_shared_wall":
+			return "생활/작업 공유벽"
+		"entrance_wall":
+			return "현관 외벽"
+		"entrance_inner_wall":
+			return "현관 안쪽벽"
+		"living_right_wall":
+			return "생활공간 오른쪽 숨김벽"
+		"living_front_cutaway":
+			return "생활공간 앞쪽 낮은벽"
+		"living_occlusion_right_wall":
+			return "비활성 오른쪽 숨김벽"
+		"living_occlusion_front_wall":
+			return "비활성 앞쪽 숨김벽"
+		"bathroom_wall":
+			return "욕실 위쪽벽"
+		"bathroom_right_wall":
+			return "욕실 오른쪽벽"
+		"bathroom_left_wall":
+			return "비활성 욕실 왼쪽벽"
+		"service_wall":
+			return "비활성 서비스벽"
+		"service_right_wall":
+			return "비활성 서비스 오른쪽벽"
+		_:
+			return id
+
+
+func _object_display_name_ko(id: String) -> String:
+	match id:
+		"bed_placeholder":
+			return "침대"
+		"fridge_placeholder":
+			return "냉장고"
+		"sink_counter_placeholder":
+			return "싱크대"
+		"microwave_placeholder":
+			return "전자레인지"
+		"small_table_placeholder":
+			return "작은 테이블"
+		"desk_placeholder":
+			return "책상"
+		"navi_chair_placeholder":
+			return "NAVI 의자"
+		"power_panel_placeholder":
+			return "전력 패널"
+		"connector_board_placeholder":
+			return "커넥터 보드"
+		"comm_device_placeholder":
+			return "통신 장비"
+		"bathroom_fixture_placeholder":
+			return "욕실 설비"
+		"entrance_shoe_area_placeholder":
+			return "신발 공간"
+		_:
+			return id
+
+
+func _room_area_label(area_id: String) -> String:
+	match area_id:
+		"living_area":
+			return "생활공간"
+		"work_power_area":
+			return "작업/전력공간"
+		"bathroom":
+			return "욕실"
+		"entrance_area":
+			return "현관"
+		"unknown":
+			return "미확인"
+		_:
+			return "미확인"
+
+
+func _edge_name_ko(edge_name: String) -> String:
+	match edge_name:
+		"top":
+			return "위쪽"
+		"right":
+			return "오른쪽"
+		"bottom":
+			return "아래쪽"
+		"left":
+			return "왼쪽"
+		_:
+			return edge_name
+
+
+func _navigation_status_ko(status: String) -> String:
+	match status:
+		"blocked":
+			return "막힘"
+		"passable":
+			return "통과 가능"
+		"open":
+			return "열림"
+		_:
+			return status
+
+
+func _bool_ko(value: bool) -> String:
+	return "예" if value else "아니오"
+
+
+func _wall_render_state_ko(segment: Dictionary) -> String:
+	match _wall_render_state(segment):
+		"disabled":
+			return "비활성"
+		"full":
+			return "전체벽"
+		"stub":
+			return "낮은벽"
+		"hidden":
+			return "숨김"
+		"revealed":
+			return "전체벽"
+		"logical_only":
+			return "논리벽"
+		_:
+			return _wall_render_state(segment)
 
 
 func _wall_edit_hint(segment: Dictionary) -> String:
@@ -1167,7 +1319,7 @@ func _draw_debug_labels() -> void:
 	_add_debug_label("bath_label", "욕실", _room_center(_bathroom_room_rect()) + Vector2(-18, -8))
 	_add_debug_label("connection_label", "연결문", _doorway_center(&"work_front_shared_wall") + Vector2(-32, -104))
 	_add_debug_label("entrance_label", "현관문", _doorway_center(&"entrance_wall") + Vector2(-72, -84))
-	_add_debug_label("no_object_zone_label", "camera foreground no-large-object zone", _room_center(_no_large_object_zone_rect()) + Vector2(-148, 20))
+	_add_debug_label("no_object_zone_label", "전경 대형 오브젝트 금지 구역", _room_center(_no_large_object_zone_rect()) + Vector2(-118, 20))
 
 
 func _draw_object_placeholders() -> void:
@@ -1179,6 +1331,7 @@ func _draw_object_placeholders() -> void:
 
 func _draw_object_placeholder(object_data: Dictionary) -> void:
 	var id := String(object_data.get("id", ""))
+	var name_ko := _object_display_name_ko(id)
 	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
 	var size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
 	var blocks_movement := bool(object_data.get("blocks_movement", true))
@@ -1209,14 +1362,16 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 	_add_label_with_background(
 		_object_layer,
 		"object_%s_label" % id,
-		"%s\nanchor=%s size=%s\nblock=%s" % [
+		"%s\nid=%s\n칸=%s 크기=%s\n이동막음=%s" % [
+			name_ko,
 			id,
 			_format_cell(anchor),
 			_format_cell(size),
-			str(blocks_movement),
+			_bool_ko(blocks_movement),
 		],
 		label_position,
-		11
+		11,
+		COLOR_OBJECT_LABEL_BACKGROUND
 	)
 
 	for interaction_cell in _object_interaction_cells(object_data):
@@ -1231,16 +1386,18 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 		_add_label_with_background(
 			_object_layer,
 			"object_%s_interaction_label_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
-			"use %s" % _format_cell(interaction_cell),
+			"사용 위치 %s" % _format_cell(interaction_cell),
 			center + Vector2(9.0, -28.0),
-			10
+			10,
+			COLOR_GRID_LABEL_BACKGROUND,
+			COLOR_OBJECT_INTERACTION
 		)
 
 
 func _draw_control_hint() -> void:
 	var label := Label.new()
 	label.name = "ShellControlHint"
-	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  E: wall edges  |  N: navigation  |  P: object placeholders  |  O: occlusion walls  |  I: inventory"
+	label.text = "1/2/3: 카메라  |  L: 구역 라벨  |  G: 바닥 좌표  |  E: 벽선 좌표  |  W: 벽 정보\nN: 이동/충돌  |  P: 오브젝트  |  O: 숨김벽  |  I: 목록 출력  |  방향키: 디버그 위치 이동"
 	label.position = Vector2(24, 20)
 	label.modulate = COLOR_LABEL
 	label.add_theme_font_size_override("font_size", 14)
@@ -1257,11 +1414,13 @@ func _draw_floor_grid_overlay() -> void:
 		var coord_label := _add_label_with_background(
 			_grid_coord_layer,
 			"grid_coord_%d_%d" % [cell.x, cell.y],
-			_format_cell(cell),
-			_iso(float(cell.x) + 0.5, float(cell.y) + 0.5) + Vector2(-23.0, -12.0),
-			13
+			"칸 %s" % _format_cell(cell),
+			_iso(float(cell.x) + 0.5, float(cell.y) + 0.5) + Vector2(-30.0, -12.0),
+			12,
+			COLOR_GRID_LABEL_BACKGROUND,
+			COLOR_GRID_LABEL_TEXT
 		)
-		coord_label.modulate = COLOR_GRID_COORD
+		coord_label.modulate = COLOR_GRID_LABEL_TEXT
 	_draw_grid_axis_overlay()
 
 
@@ -1270,13 +1429,13 @@ func _draw_grid_axis_overlay() -> void:
 	var x_end := _iso(1.45, 0.0)
 	var y_end := _iso(0.0, 1.45)
 	_add_marker(_grid_coord_layer, "grid_origin_marker", origin, COLOR_GRID_ORIGIN, 15.0)
-	_add_label_with_background(_grid_coord_layer, "grid_origin_label", "origin (0,0)", origin + Vector2(16.0, -36.0), 14)
+	_add_label_with_background(_grid_coord_layer, "grid_origin_label", "원점 (0,0)", origin + Vector2(16.0, -36.0), 14, COLOR_GRID_LABEL_BACKGROUND, COLOR_GRID_LABEL_TEXT)
 	_add_line(_grid_coord_layer, "grid_axis_x", [origin, x_end], COLOR_GRID_AXIS_X, 5.0)
 	_add_line(_grid_coord_layer, "grid_axis_y", [origin, y_end], COLOR_GRID_AXIS_Y, 5.0)
 	_add_arrow_head(_grid_coord_layer, "grid_axis_x_head", origin, x_end, COLOR_GRID_AXIS_X)
 	_add_arrow_head(_grid_coord_layer, "grid_axis_y_head", origin, y_end, COLOR_GRID_AXIS_Y)
-	_add_label_with_background(_grid_coord_layer, "grid_axis_x_label", "+X", x_end + Vector2(12.0, -16.0), 15)
-	_add_label_with_background(_grid_coord_layer, "grid_axis_y_label", "+Y", y_end + Vector2(12.0, -16.0), 15)
+	_add_label_with_background(_grid_coord_layer, "grid_axis_x_label", "+X", x_end + Vector2(12.0, -16.0), 15, COLOR_GRID_LABEL_BACKGROUND, COLOR_GRID_AXIS_X)
+	_add_label_with_background(_grid_coord_layer, "grid_axis_y_label", "+Y", y_end + Vector2(12.0, -16.0), 15, COLOR_GRID_LABEL_BACKGROUND, COLOR_GRID_AXIS_Y)
 
 
 func _draw_navigation_overlay() -> void:
@@ -1290,7 +1449,9 @@ func _draw_navigation_overlay() -> void:
 				"nav_area_%s_label" % area_id,
 				_navigation_area_label(area_id),
 				_navigation_cells_center(cells) + Vector2(-52.0, -18.0),
-				13
+				13,
+				COLOR_NAV_LABEL_BACKGROUND,
+				COLOR_NAV_WALKABLE_MARKER
 			)
 
 	var edge_sets := _navigation_edge_sets()
@@ -1331,18 +1492,38 @@ func _draw_navigation_edge(edge_data: Dictionary, is_passable: bool) -> void:
 	)
 	var midpoint := (_iso(from_cell.x, from_cell.y) + _iso(to_cell.x, to_cell.y)) * 0.5
 	if is_passable:
-		_add_label_with_background(_navigation_layer, "nav_door_%s" % segment_id, "door %s" % segment_id, midpoint + Vector2(-38.0, -28.0), 11)
+		_add_label_with_background(
+			_navigation_layer,
+			"nav_door_%s" % segment_id,
+			"통과 가능\n%s" % _wall_display_name_ko(segment_id),
+			midpoint + Vector2(-42.0, -34.0),
+			11,
+			COLOR_NAV_LABEL_BACKGROUND,
+			COLOR_NAV_PASSABLE_EDGE
+		)
+	else:
+		_add_label_with_background(
+			_navigation_layer,
+			"nav_block_%s_%s" % [segment_id, _edge_key(from_cell, to_cell)],
+			"막힘",
+			midpoint + Vector2(8.0, -18.0),
+			10,
+			COLOR_WALL_ID_BACKGROUND,
+			color
+		)
 
 
 func _draw_player_debug_marker() -> void:
 	var center := _cell_center(player_debug_cell)
 	_player_debug_marker = _add_marker(_navigation_layer, "PlayerDebugMarker", center, COLOR_NAV_PLAYER, 15.0)
-	_player_debug_label = _add_label(
+	_player_debug_label = _add_label_with_background(
 		_navigation_layer,
 		"PlayerDebugMarkerLabel",
 		_player_debug_text(),
 		center + Vector2(14.0, -42.0),
-		14
+		14,
+		COLOR_NAV_LABEL_BACKGROUND,
+		COLOR_NAV_PLAYER
 	)
 	_update_player_debug_marker()
 
@@ -1354,9 +1535,11 @@ func _draw_wall_edge_overlay() -> void:
 		var label := _add_label_with_background(
 			_wall_edge_coord_layer,
 			"wall_vertex_label_%d_%d" % [vertex.x, vertex.y],
-			_format_cell(vertex),
+			"벽점 %s" % _format_cell(vertex),
 			point + Vector2(8.0, -28.0),
-			11
+			11,
+			COLOR_WALL_EDGE_LABEL_BACKGROUND,
+			COLOR_WALL_EDGE_COORD
 		)
 		label.modulate = COLOR_WALL_EDGE_COORD
 
@@ -1555,15 +1738,7 @@ func _is_cell_in_rect(cell: Vector2i, room: Rect2i) -> bool:
 
 
 func _navigation_area_label(area_id: String) -> String:
-	match area_id:
-		"work_power_area":
-			return "work_power_area"
-		"bathroom":
-			return "bathroom"
-		"entrance_area":
-			return "entrance_area"
-		_:
-			return "living_area"
+	return _room_area_label(area_id)
 
 
 func _navigation_area_color(area_id: String) -> Color:
@@ -1597,15 +1772,15 @@ func _create_hover_coord_overlay() -> void:
 	_hover_coord_background = ColorRect.new()
 	_hover_coord_background.name = "HoverCellBackground"
 	_hover_coord_background.position = Vector2(24.0, 48.0)
-	_hover_coord_background.size = Vector2(210.0, 31.0)
-	_hover_coord_background.color = COLOR_WALL_ID_BACKGROUND
+	_hover_coord_background.size = Vector2(230.0, 34.0)
+	_hover_coord_background.color = COLOR_GRID_LABEL_BACKGROUND
 	_debug_overlay_layer.add_child(_hover_coord_background)
 
 	_hover_coord_label = Label.new()
 	_hover_coord_label.name = "HoverCellLabel"
-	_hover_coord_label.text = "hover cell: -"
+	_hover_coord_label.text = "현재 칸: -"
 	_hover_coord_label.position = Vector2(34.0, 52.0)
-	_hover_coord_label.modulate = COLOR_GRID_COORD
+	_hover_coord_label.modulate = COLOR_GRID_LABEL_TEXT
 	_hover_coord_label.add_theme_font_size_override("font_size", 15)
 	_hover_coord_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
 	_hover_coord_label.add_theme_constant_override("shadow_offset_x", 2)
@@ -1615,13 +1790,13 @@ func _create_hover_coord_overlay() -> void:
 	_hover_edge_background = ColorRect.new()
 	_hover_edge_background.name = "HoverEdgeBackground"
 	_hover_edge_background.position = Vector2(24.0, 84.0)
-	_hover_edge_background.size = Vector2(385.0, 93.0)
-	_hover_edge_background.color = COLOR_WALL_ID_BACKGROUND
+	_hover_edge_background.size = Vector2(430.0, 104.0)
+	_hover_edge_background.color = COLOR_WALL_EDGE_LABEL_BACKGROUND
 	_debug_overlay_layer.add_child(_hover_edge_background)
 
 	_hover_edge_label = Label.new()
 	_hover_edge_label.name = "HoverEdgeLabel"
-	_hover_edge_label.text = "nearest edge: -"
+	_hover_edge_label.text = "벽선: -"
 	_hover_edge_label.position = Vector2(34.0, 90.0)
 	_hover_edge_label.modulate = COLOR_WALL_EDGE_COORD
 	_hover_edge_label.add_theme_font_size_override("font_size", 14)
@@ -1635,14 +1810,14 @@ func _create_hover_coord_overlay() -> void:
 func _create_active_room_overlay() -> void:
 	_active_room_background = ColorRect.new()
 	_active_room_background.name = "ActiveRoomBackground"
-	_active_room_background.position = Vector2(24.0, 184.0)
-	_active_room_background.size = Vector2(280.0, 58.0)
-	_active_room_background.color = COLOR_WALL_ID_BACKGROUND
+	_active_room_background.position = Vector2(24.0, 198.0)
+	_active_room_background.size = Vector2(300.0, 66.0)
+	_active_room_background.color = COLOR_NAV_LABEL_BACKGROUND
 	_debug_overlay_layer.add_child(_active_room_background)
 
 	_active_room_label = Label.new()
 	_active_room_label.name = "ActiveRoomLabel"
-	_active_room_label.position = Vector2(34.0, 190.0)
+	_active_room_label.position = Vector2(34.0, 204.0)
 	_active_room_label.modulate = COLOR_NAV_PLAYER
 	_active_room_label.add_theme_font_size_override("font_size", 14)
 	_active_room_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
@@ -1655,9 +1830,9 @@ func _create_active_room_overlay() -> void:
 func _update_active_room_overlay() -> void:
 	if _active_room_label == null:
 		return
-	_active_room_label.text = "player cell: %s\nactive room: %s\nauto reveal: %s" % [
+	_active_room_label.text = "디버그 위치: %s\n현재 구역: %s\nauto reveal=%s" % [
 		_format_cell(player_debug_cell),
-		_active_room_area(),
+		_room_area_label(_active_room_area()),
 		str(debug_auto_reveal_walls),
 	]
 
@@ -1675,20 +1850,23 @@ func _update_hover_cell() -> void:
 	var hover_cell: Variant = _hover_floor_cell()
 	if show_floor_grid_coords and _hover_coord_label != null:
 		if hover_cell == null:
-			_hover_coord_label.text = "hover cell: -"
+			_hover_coord_label.text = "현재 칸: -"
 		else:
 			var hover_cell_i: Vector2i = hover_cell
-			_hover_coord_label.text = "hover cell: %s" % _format_cell(hover_cell_i)
+			_hover_coord_label.text = "현재 칸: 칸 %s" % _format_cell(hover_cell_i)
 
 	if not show_wall_edge_coords or _hover_edge_label == null:
+		_update_hover_edge_highlight({})
 		return
 	var edge_info := _hover_wall_edge()
 	if edge_info.is_empty():
 		if _hover_coord_label != null:
-			_hover_coord_label.text = "hover cell: -"
-		_hover_edge_label.text = "nearest edge: -"
+			_hover_coord_label.text = "현재 칸: -"
+		_hover_edge_label.text = "벽선: -"
+		_update_hover_edge_highlight({})
 		return
 	_hover_edge_label.text = _wall_edge_hover_text(edge_info)
+	_update_hover_edge_highlight(edge_info)
 
 
 func _hover_floor_cell() -> Variant:
@@ -1770,23 +1948,41 @@ func _wall_edge_hover_text(edge_info: Dictionary) -> String:
 	var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
 	var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
 	var axis: WallAxis = edge_info.get("axis", WallAxis.AXIS_A)
-	return "hover cell: %s\nnearest edge: %s\nedge from=%s to=%s\naxis=%s" % [
+	return "칸 %s\n벽선: %s\nfrom=%s → to=%s\n축=%s" % [
 		_format_cell(cell),
-		String(edge_info.get("edge", "-")),
+		_edge_name_ko(String(edge_info.get("edge", "-"))),
 		_format_cell(from_cell),
 		_format_cell(to_cell),
 		_wall_axis_name(axis),
 	]
 
 
+func _update_hover_edge_highlight(edge_info: Dictionary) -> void:
+	if _hover_edge_highlight_layer == null:
+		return
+	_clear_layer_children(_hover_edge_highlight_layer)
+	if edge_info.is_empty():
+		return
+	var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
+	var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
+	_add_line(
+		_hover_edge_highlight_layer,
+		"HoverWallEdgeHighlight",
+		[_iso(from_cell.x, from_cell.y), _iso(to_cell.x, to_cell.y)],
+		COLOR_WALL_EDGE_HOVER,
+		10.0
+	)
+
+
 func _print_clicked_cell_edges(cell: Vector2i) -> void:
-	print("clicked cell: %s" % _format_cell(cell))
+	print("clicked floor cell / 바닥칸: %s" % _format_cell(cell))
 	for edge_name in ["top", "right", "bottom", "left"]:
 		var edge_info := _wall_edge_info_for_cell(cell, edge_name)
 		var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
 		var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
-		print("%s edge: from=%s to=%s" % [
+		print("%s edge / %s 벽선: from=%s to=%s" % [
 			edge_name,
+			_edge_name_ko(edge_name),
 			_format_cell(from_cell),
 			_format_cell(to_cell),
 		])
@@ -1797,12 +1993,12 @@ func _print_clicked_wall_edge(edge_info: Dictionary) -> void:
 	var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
 	var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
 	var axis: WallAxis = edge_info.get("axis", WallAxis.AXIS_A)
-	print("clicked wall edge:")
-	print("cell=%s" % _format_cell(cell))
-	print("edge=%s" % String(edge_info.get("edge", "-")))
+	print("clicked wall edge / 벽선 선택:")
+	print("cell=%s / 칸=%s" % [_format_cell(cell), _format_cell(cell)])
+	print("edge=%s / 벽선=%s" % [String(edge_info.get("edge", "-")), _edge_name_ko(String(edge_info.get("edge", "-")))])
 	print("from=%s" % _format_cell(from_cell))
 	print("to=%s" % _format_cell(to_cell))
-	print("axis=%s" % _wall_axis_name(axis))
+	print("axis=%s / 축=%s" % [_wall_axis_name(axis), _wall_axis_name(axis)])
 
 
 func _navigation_edge_sets() -> Dictionary:
@@ -1898,13 +2094,13 @@ func _neighbor_cell_for_edge(cell: Vector2i, edge_name: String) -> Vector2i:
 
 
 func _print_clicked_cell_navigation(cell: Vector2i) -> void:
-	print("navigation cell:")
-	print("clicked cell: %s" % _format_cell(cell))
-	print("room_area: %s" % _room_area_for_cell(cell))
-	print("walkable: %s" % str(_is_walkable_cell(cell)))
+	print("navigation cell / 이동 판정 칸:")
+	print("clicked cell / 칸: %s" % _format_cell(cell))
+	print("room_area: %s / %s" % [_room_area_for_cell(cell), _room_area_label(_room_area_for_cell(cell))])
+	print("walkable / 이동 가능: %s" % _bool_ko(_is_walkable_cell(cell)))
 	var blocker_ids := _object_blocker_ids_for_cell(cell)
-	print("object_blockers: %s" % (", ".join(blocker_ids) if not blocker_ids.is_empty() else "-"))
-	print("neighbors: top=%s right=%s bottom=%s left=%s" % [
+	print("object_blockers / 오브젝트 막힘: %s" % (", ".join(blocker_ids) if not blocker_ids.is_empty() else "-"))
+	print("neighbors / 이웃칸: top=%s right=%s bottom=%s left=%s" % [
 		_format_cell(_neighbor_cell_for_edge(cell, "top")),
 		_format_cell(_neighbor_cell_for_edge(cell, "right")),
 		_format_cell(_neighbor_cell_for_edge(cell, "bottom")),
@@ -1915,9 +2111,9 @@ func _print_clicked_cell_navigation(cell: Vector2i) -> void:
 		var status := String(edge_status.get("status", "open"))
 		var segment_id := String(edge_status.get("segment_id", ""))
 		if segment_id.is_empty():
-			print("%s edge: %s" % [edge_name, status])
+			print("%s edge / %s 벽선: %s" % [edge_name, _edge_name_ko(edge_name), _navigation_status_ko(status)])
 		else:
-			print("%s edge: %s by %s" % [edge_name, status, segment_id])
+			print("%s edge / %s 벽선: %s by %s(%s)" % [edge_name, _edge_name_ko(edge_name), _navigation_status_ko(status), segment_id, _wall_display_name_ko(segment_id)])
 
 
 func _try_move_player_debug_marker(keycode: Key) -> bool:
@@ -1940,19 +2136,19 @@ func _move_player_debug_marker(edge_name: String) -> bool:
 	var segment_id := String(edge_status.get("segment_id", ""))
 	var next_cell := _neighbor_cell_for_edge(player_debug_cell, edge_name)
 	if status == "blocked":
-		print("debug marker blocked: %s edge by %s at %s" % [edge_name, segment_id, _format_cell(player_debug_cell)])
+		print("debug marker blocked / 이동 막힘: %s 벽선 by %s(%s) at %s" % [_edge_name_ko(edge_name), segment_id, _wall_display_name_ko(segment_id), _format_cell(player_debug_cell)])
 		return true
 	if not _is_walkable_cell(next_cell):
 		var blocker_ids := _object_blocker_ids_for_cell(next_cell)
 		if not blocker_ids.is_empty():
-			print("debug marker blocked: target %s is occupied by %s" % [_format_cell(next_cell), ", ".join(blocker_ids)])
+			print("debug marker blocked / 이동 막힘: target %s is occupied by %s" % [_format_cell(next_cell), ", ".join(blocker_ids)])
 		else:
-			print("debug marker blocked: target %s is not walkable" % _format_cell(next_cell))
+			print("debug marker blocked / 이동 막힘: target %s is not walkable" % _format_cell(next_cell))
 		return true
 
 	player_debug_cell = next_cell
 	_update_player_debug_marker()
-	print("debug marker moved %s to %s via %s%s" % [
+	print("debug marker moved / 이동: %s to %s via %s%s" % [
 		edge_name,
 		_format_cell(player_debug_cell),
 		status,
@@ -1974,10 +2170,13 @@ func _update_player_debug_marker() -> void:
 	if _player_debug_label != null:
 		_player_debug_label.text = _player_debug_text()
 		_player_debug_label.position = center + Vector2(14.0, -42.0)
+		var label_background := _navigation_layer.get_node_or_null("PlayerDebugMarkerLabelBackground")
+		if label_background is ColorRect:
+			label_background.position = _player_debug_label.position - Vector2(9.0, 6.0)
 	var area_id := _active_room_area()
 	var area_changed := not _last_active_room_area.is_empty() and _last_active_room_area != area_id
 	if area_changed:
-		print("active room changed: %s -> %s" % [_last_active_room_area, area_id])
+		print("active room changed / 현재 구역 변경: %s(%s) -> %s(%s)" % [_last_active_room_area, _room_area_label(_last_active_room_area), area_id, _room_area_label(area_id)])
 	_last_active_room_area = area_id
 	_update_active_room_overlay()
 	if area_changed and debug_auto_reveal_walls:
@@ -1985,9 +2184,9 @@ func _update_player_debug_marker() -> void:
 
 
 func _player_debug_text() -> String:
-	return "debug marker\ncell=%s\narea=%s" % [
+	return "디버그 위치\n칸=%s\n구역=%s" % [
 		_format_cell(player_debug_cell),
-		_active_room_area(),
+		_room_area_label(_active_room_area()),
 	]
 
 
@@ -2207,13 +2406,16 @@ func _draw_occlusion_wall_debug(segment: Dictionary, p0: Vector2, p1: Vector2, s
 	_add_label_with_background(
 		_occlusion_debug_layer,
 		"%sOcclusionDebugLabel" % id,
-		"%s\nmode=%s state=%s" % [
+		"숨김벽: %s\nid=%s\n표시상태=%s\nmode=%s" % [
+			_wall_display_name_ko(id),
 			id,
+			_wall_render_state_ko(segment),
 			_render_mode_name(int(segment.get("render_mode", WallRenderMode.FULL))),
-			_wall_render_state(segment),
 		],
 		center + Vector2(-76.0, 8.0),
-		14
+		14,
+		COLOR_OCCLUSION_LABEL_BACKGROUND,
+		COLOR_OCCLUSION_STUB_DEBUG
 	)
 
 
@@ -2274,6 +2476,22 @@ func _wall_doorway_text(segment: Dictionary) -> String:
 		_format_cell(Vector2i(doorway_end)),
 		offset,
 		width,
+	]
+
+
+func _wall_doorway_text_ko(segment: Dictionary) -> String:
+	var offset := int(segment.get("doorway_offset", -1))
+	var width := int(segment.get("doorway_width", 0))
+	if offset < 0 or width <= 0:
+		return "없음 offset=%d width=%d" % [offset, width]
+
+	var axis: WallAxis = segment.get("axis", WallAxis.AXIS_A)
+	var start_cell := Vector2(segment.get("start_cell", Vector2i.ZERO))
+	var doorway_start := _offset_cell(start_cell, axis, float(offset))
+	var doorway_end := _offset_cell(start_cell, axis, float(offset + width))
+	return "%s → %s" % [
+		_format_cell(Vector2i(doorway_start)),
+		_format_cell(Vector2i(doorway_end)),
 	]
 
 
@@ -2400,23 +2618,28 @@ func _add_wall_id_debug(segment: Dictionary) -> void:
 	_add_label_with_background(
 		_wall_id_layer,
 		"wall_start_label_%s" % id,
-		"start %s" % _format_cell(start_cell_i),
+		"시작 %s" % _format_cell(start_cell_i),
 		_iso(start_cell.x, start_cell.y) + Vector2(12.0, -8.0),
-		12
+		12,
+		COLOR_WALL_ID_BACKGROUND,
+		COLOR_WALL_START_MARKER
 	)
 	_add_label_with_background(
 		_wall_id_layer,
 		"wall_end_label_%s" % id,
-		"end %s" % _format_cell(end_cell_i),
+		"끝 %s" % _format_cell(end_cell_i),
 		_iso(end_cell.x, end_cell.y) + Vector2(12.0, 8.0),
-		12
+		12,
+		COLOR_WALL_ID_BACKGROUND,
+		COLOR_WALL_END_MARKER
 	)
 	_add_label_with_background(
 		_wall_id_layer,
 		"wall_id_%s" % id,
 		_wall_id_label_text(id, start_cell_i, end_cell_i, axis, length_i, render_mode, segment),
 		_iso(midpoint.x, midpoint.y) + label_offset,
-		label_font_size
+		label_font_size,
+		COLOR_WALL_ID_BACKGROUND
 	)
 
 
@@ -2429,17 +2652,18 @@ func _wall_id_label_text(
 	render_mode: int,
 	segment: Dictionary
 ) -> String:
-	var text := "%s\nedge from=%s to=%s\naxis=%s len=%d mode=%s state=%s" % [
+	var text := "벽: %s\nid=%s\nedge %s → %s\n축=%s 길이=%d\n표시=%s (%s)" % [
+		_wall_display_name_ko(id),
 		id,
 		_format_cell(start_cell_i),
 		_format_cell(end_cell_i),
 		_wall_axis_name(axis),
 		length_i,
+		_wall_render_state_ko(segment),
 		_render_mode_name(render_mode),
-		_wall_render_state(segment),
 	]
 	if int(segment.get("doorway_width", 0)) > 0:
-		text += "\ndoor %s" % _wall_doorway_text(segment)
+		text += "\n문 %s" % _wall_doorway_text_ko(segment)
 	return text
 
 
@@ -2740,7 +2964,15 @@ func _add_marker(parent: Node, marker_name: String, position: Vector2, color: Co
 	return marker
 
 
-func _add_label_with_background(parent: Node, label_name: String, text: String, position: Vector2, font_size := 15) -> Label:
+func _add_label_with_background(
+	parent: Node,
+	label_name: String,
+	text: String,
+	position: Vector2,
+	font_size := 15,
+	background_color := COLOR_WALL_ID_BACKGROUND,
+	text_color := COLOR_LABEL
+) -> Label:
 	var lines := text.split("\n")
 	var longest_line := 0
 	for line in lines:
@@ -2751,9 +2983,11 @@ func _add_label_with_background(parent: Node, label_name: String, text: String, 
 	background.name = "%sBackground" % label_name
 	background.position = position - padding
 	background.size = Vector2(float(longest_line) * float(font_size) * 0.62 + padding.x * 2.0, float(lines.size()) * float(font_size + 5) + padding.y * 2.0)
-	background.color = COLOR_WALL_ID_BACKGROUND
+	background.color = background_color
 	parent.add_child(background)
-	return _add_label(parent, label_name, text, position, font_size)
+	var label := _add_label(parent, label_name, text, position, font_size)
+	label.modulate = text_color
+	return label
 
 
 func _add_debug_label(label_name: String, text: String, position: Vector2, font_size := 15) -> Label:
@@ -2787,6 +3021,8 @@ func _update_label_visibility() -> void:
 		_grid_coord_layer.visible = show_floor_grid_coords
 	if _wall_edge_coord_layer != null:
 		_wall_edge_coord_layer.visible = show_wall_edge_coords
+	if _hover_edge_highlight_layer != null:
+		_hover_edge_highlight_layer.visible = show_wall_edge_coords
 	if _occlusion_debug_layer != null:
 		_occlusion_debug_layer.visible = show_occlusion_wall_debug
 	if _hover_coord_label != null:

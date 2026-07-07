@@ -146,8 +146,16 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ### Apartment object footprint coordinate tune
 
-- Commit: pending in this task.
+- Commit: `ae815d8`
 - Result: Tuned the first-pass default object footprint coordinates so entrance/shared doorway paths stay open, interaction cells remain walkable, blocking objects stay in their intended room areas, and non-blocking shoe / comm / microwave markers do not remove walkable cells.
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current room-object/status docs.
 - Not changed: final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, pathfinding, `SurvivalState`, `project.godot`.
 - Next: Inspect the shell manually with `G`, `P`, and `N` enabled before deciding whether any footprint needs another coordinate pass.
+
+### Apartment debug overlay Korean labels
+
+- Commit: pending in this task.
+- Result: Localized the shell debug overlays so `G`, `E`, `W`, `N`, `P`, and `O` are visually distinct and Korean-first while retaining ids / coordinates for editing.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: wall coordinates, room rects, object footprint coordinates, movement / collision logic, production Main/DAY1, QuarterviewMain wiring, assets, atlas files, `SurvivalState`, `project.godot`.
+- Next: Open the shell scene and visually check Korean font rendering and label overlap with multiple debug toggles enabled.
