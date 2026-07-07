@@ -190,6 +190,8 @@ const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 @export var show_occlusion_wall_debug := false
 # Preview helper only: draw REVEALABLE walls at full height without adding character/area logic.
 @export var preview_revealed_walls := false
+# Shell-only reveal test. When true, REVEALABLE walls can become full walls for the active room area.
+@export var debug_auto_reveal_walls := false
 @export var debug_focus_wall_id := ""
 @export var player_debug_cell := Vector2i(1, 8)
 
@@ -213,9 +215,11 @@ var _hover_coord_label: Label
 var _hover_coord_background: ColorRect
 var _hover_edge_label: Label
 var _hover_edge_background: ColorRect
+var _active_room_label: Label
+var _active_room_background: ColorRect
 var _player_debug_marker: Polygon2D
 var _player_debug_label: Label
-var _last_player_debug_area := ""
+var _last_active_room_area := ""
 
 
 func _ready() -> void:
@@ -680,10 +684,10 @@ func print_wall_segment_inventory() -> void:
 	print("=== Apartment Wall Segment Inventory ===")
 	print("from_cell / to_cell are wall grid-line coordinates, not floor cell centers. Use E wall edge overlay to pick exact edge coordinates.")
 	print("To place a wall around floor cell (x,y), use that cell's printed edge coordinates from G or E.")
-	print("id | enabled | source | axis | edge_from_cell | edge_to_cell | length | wall_type | render_mode | doorway | reveal | logical | height_mode | edit_hint")
-	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
+	print("id | enabled | source | axis | edge_from_cell | edge_to_cell | length | wall_type | render_mode | current_state | doorway | reveal | logical | height_mode | edit_hint")
+	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
 	for row in rows:
-		print("%s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s | %s | %s | %s" % [
+		print("%s | %s | %s | %s | %s | %s | %d | %s | %s | %s | %s | %s | %s | %s | %s" % [
 			row["id"],
 			str(row["enabled"]),
 			row["source"],
@@ -693,6 +697,7 @@ func print_wall_segment_inventory() -> void:
 			row["length"],
 			row["wall_type"],
 			row["render_mode"],
+			row["current_state"],
 			row["doorway"],
 			row["reveal"],
 			row["logical"],
@@ -719,6 +724,7 @@ func _wall_segment_inventory_rows() -> Array[Dictionary]:
 			"length": int(segment.get("length", 0)),
 			"wall_type": _wall_type_name(segment.get("wall_type", WallType.NORMAL)),
 			"render_mode": _render_mode_name(segment.get("render_mode", WallRenderMode.FULL)),
+			"current_state": _wall_render_state(segment),
 			"doorway": _wall_doorway_text(segment),
 			"reveal": _wall_reveal_text(segment),
 			"logical": str(_is_logical_wall(segment)),
@@ -740,7 +746,17 @@ func _print_navigation_summary() -> void:
 	print("blocked_edges=%d" % edge_sets["blocked"].size())
 	print("passable_edges=%d" % edge_sets["passable"].size())
 	print("room_areas=%s" % area_text)
-	print("player_debug_cell=%s area=%s" % [_format_cell(player_debug_cell), _room_area_for_cell(player_debug_cell)])
+	print("player_debug_cell=%s active_room_area=%s" % [_format_cell(player_debug_cell), _active_room_area()])
+	print("debug_auto_reveal_walls=%s preview_revealed_walls=%s" % [str(debug_auto_reveal_walls), str(preview_revealed_walls)])
+	for segment in _wall_segments():
+		if int(segment.get("render_mode", WallRenderMode.FULL)) != WallRenderMode.REVEALABLE:
+			continue
+		print("revealable id=%s reveal_area_id=%s reveal_when_area_active=%s current_state=%s" % [
+			String(segment.get("id", "")),
+			String(segment.get("reveal_area_id", "")),
+			str(bool(segment.get("reveal_when_area_active", false))),
+			_wall_render_state(segment),
+		])
 	print("=== End Navigation Debug Summary ===")
 
 
@@ -774,15 +790,12 @@ func _draw_doors_and_window_placeholders() -> void:
 
 
 func _should_draw_living_window_placeholder() -> bool:
-	if preview_revealed_walls:
-		return true
 	for segment in _wall_segments():
 		if String(segment.get("id", "")) != "living_right_wall":
 			continue
 		if not bool(segment.get("enabled", true)):
 			return false
-		var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
-		return render_mode == WallRenderMode.FULL
+		return _should_draw_full_wall_for_segment(segment)
 	return true
 
 
@@ -808,6 +821,7 @@ func _draw_control_hint() -> void:
 	label.add_theme_constant_override("shadow_offset_y", 2)
 	_debug_overlay_layer.add_child(label)
 	_create_hover_coord_overlay()
+	_create_active_room_overlay()
 
 
 func _draw_floor_grid_overlay() -> void:
@@ -1009,6 +1023,13 @@ func _room_area_for_cell(cell: Vector2i) -> String:
 	return "none"
 
 
+func _active_room_area() -> String:
+	var area_id := _room_area_for_cell(player_debug_cell)
+	if area_id.is_empty() or area_id == "none":
+		return "unknown"
+	return area_id
+
+
 func _is_entrance_area_cell(cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.x < 2 and cell.y >= 8 and cell.y < 10
 
@@ -1100,6 +1121,36 @@ func _create_hover_coord_overlay() -> void:
 	_hover_edge_label.add_theme_constant_override("shadow_offset_y", 2)
 	_debug_overlay_layer.add_child(_hover_edge_label)
 	_update_hover_cell()
+
+
+func _create_active_room_overlay() -> void:
+	_active_room_background = ColorRect.new()
+	_active_room_background.name = "ActiveRoomBackground"
+	_active_room_background.position = Vector2(24.0, 184.0)
+	_active_room_background.size = Vector2(280.0, 58.0)
+	_active_room_background.color = COLOR_WALL_ID_BACKGROUND
+	_debug_overlay_layer.add_child(_active_room_background)
+
+	_active_room_label = Label.new()
+	_active_room_label.name = "ActiveRoomLabel"
+	_active_room_label.position = Vector2(34.0, 190.0)
+	_active_room_label.modulate = COLOR_NAV_PLAYER
+	_active_room_label.add_theme_font_size_override("font_size", 14)
+	_active_room_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
+	_active_room_label.add_theme_constant_override("shadow_offset_x", 2)
+	_active_room_label.add_theme_constant_override("shadow_offset_y", 2)
+	_debug_overlay_layer.add_child(_active_room_label)
+	_update_active_room_overlay()
+
+
+func _update_active_room_overlay() -> void:
+	if _active_room_label == null:
+		return
+	_active_room_label.text = "player cell: %s\nactive room: %s\nauto reveal: %s" % [
+		_format_cell(player_debug_cell),
+		_active_room_area(),
+		str(debug_auto_reveal_walls),
+	]
 
 
 func _update_hover_cell() -> void:
@@ -1408,16 +1459,20 @@ func _update_player_debug_marker() -> void:
 	if _player_debug_label != null:
 		_player_debug_label.text = _player_debug_text()
 		_player_debug_label.position = center + Vector2(14.0, -42.0)
-	var area_id := _room_area_for_cell(player_debug_cell)
-	if not _last_player_debug_area.is_empty() and _last_player_debug_area != area_id:
-		print("debug marker room_area changed: %s -> %s" % [_last_player_debug_area, area_id])
-	_last_player_debug_area = area_id
+	var area_id := _active_room_area()
+	var area_changed := not _last_active_room_area.is_empty() and _last_active_room_area != area_id
+	if area_changed:
+		print("active room changed: %s -> %s" % [_last_active_room_area, area_id])
+	_last_active_room_area = area_id
+	_update_active_room_overlay()
+	if area_changed and debug_auto_reveal_walls:
+		_redraw_reveal_sensitive_layers()
 
 
 func _player_debug_text() -> String:
 	return "debug marker\ncell=%s\narea=%s" % [
 		_format_cell(player_debug_cell),
-		_room_area_for_cell(player_debug_cell),
+		_active_room_area(),
 	]
 
 
@@ -1445,8 +1500,10 @@ func _draw_wall_segment_data(segment: Dictionary) -> void:
 		return
 
 	var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
-	if preview_revealed_walls and render_mode == WallRenderMode.REVEALABLE:
+	if _should_draw_full_wall_for_segment(segment):
 		_draw_full_wall_segment_data(segment)
+		if render_mode == WallRenderMode.REVEALABLE:
+			_draw_reveal_wall_debug_for_segment(segment)
 	elif render_mode == WallRenderMode.CUTAWAY_STUB:
 		_draw_cutaway_stub_segment_data(segment)
 	elif render_mode == WallRenderMode.HIDDEN_STUB or render_mode == WallRenderMode.REVEALABLE:
@@ -1457,6 +1514,59 @@ func _draw_wall_segment_data(segment: Dictionary) -> void:
 		_draw_full_wall_segment_data(segment)
 
 	_add_wall_id_debug(segment)
+
+
+func _should_draw_full_wall_for_segment(segment: Dictionary) -> bool:
+	var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
+	if render_mode == WallRenderMode.FULL:
+		return true
+	if render_mode != WallRenderMode.REVEALABLE:
+		return false
+	return _should_reveal_wall_for_active_area(segment)
+
+
+func _should_reveal_wall_for_active_area(segment: Dictionary) -> bool:
+	if preview_revealed_walls:
+		return true
+	if not debug_auto_reveal_walls:
+		return false
+	if not bool(segment.get("reveal_when_area_active", false)):
+		return false
+	var reveal_area_id := String(segment.get("reveal_area_id", ""))
+	return not reveal_area_id.is_empty() and reveal_area_id == _active_room_area()
+
+
+func _wall_render_state(segment: Dictionary) -> String:
+	if not bool(segment.get("enabled", true)):
+		return "disabled"
+	var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
+	match render_mode:
+		WallRenderMode.REVEALABLE:
+			return "revealed" if _should_draw_full_wall_for_segment(segment) else "stub"
+		WallRenderMode.CUTAWAY_STUB, WallRenderMode.HIDDEN_STUB:
+			return "stub"
+		WallRenderMode.LOGICAL_ONLY:
+			return "logical_only"
+		_:
+			return "full"
+
+
+func _redraw_reveal_sensitive_layers() -> void:
+	_clear_layer_children(_occlusion_stub_layer)
+	_clear_layer_children(_wall_layer)
+	_clear_layer_children(_door_layer)
+	_clear_layer_children(_wall_id_layer)
+	_clear_layer_children(_occlusion_debug_layer)
+	_draw_walls()
+	_draw_doors_and_window_placeholders()
+	_update_label_visibility()
+
+
+func _clear_layer_children(layer: Node) -> void:
+	if layer == null:
+		return
+	for child in layer.get_children():
+		child.free()
 
 
 func _draw_full_wall_segment_data(segment: Dictionary) -> void:
@@ -1559,6 +1669,13 @@ func _draw_hidden_stub_segment_data(segment: Dictionary) -> void:
 	_draw_occlusion_wall_debug(segment, p0, p1, stub_height)
 
 
+func _draw_reveal_wall_debug_for_segment(segment: Dictionary) -> void:
+	var axis: WallAxis = segment["axis"]
+	var start_cell := _segment_start_cell(segment)
+	var end_cell := _offset_cell(start_cell, axis, float(segment["length"]))
+	_draw_occlusion_wall_debug(segment, _iso(start_cell.x, start_cell.y), _iso(end_cell.x, end_cell.y), 0.0)
+
+
 # Draws the edit-only overlay for walls that exist logically but are cut down for camera visibility.
 func _draw_occlusion_wall_debug(segment: Dictionary, p0: Vector2, p1: Vector2, stub_height: float) -> void:
 	if _occlusion_debug_layer == null:
@@ -1575,7 +1692,11 @@ func _draw_occlusion_wall_debug(segment: Dictionary, p0: Vector2, p1: Vector2, s
 	_add_label_with_background(
 		_occlusion_debug_layer,
 		"%sOcclusionDebugLabel" % id,
-		"%s\n%s" % [id, _render_mode_name(int(segment.get("render_mode", WallRenderMode.FULL)))],
+		"%s\nmode=%s state=%s" % [
+			id,
+			_render_mode_name(int(segment.get("render_mode", WallRenderMode.FULL))),
+			_wall_render_state(segment),
+		],
 		center + Vector2(-76.0, 8.0),
 		14
 	)
@@ -1646,7 +1767,7 @@ func _wall_reveal_text(segment: Dictionary) -> String:
 	var when_active := bool(segment.get("reveal_when_area_active", false))
 	if area_id.is_empty() and not when_active:
 		return "-"
-	return "area=%s when_active=%s" % [area_id, str(when_active)]
+	return "area=%s when_active=%s state=%s" % [area_id, str(when_active), _wall_render_state(segment)]
 
 
 func _is_logical_wall(segment: Dictionary) -> bool:
@@ -1784,13 +1905,14 @@ func _wall_id_label_text(
 	render_mode: int,
 	segment: Dictionary
 ) -> String:
-	var text := "%s\nedge from=%s to=%s\naxis=%s len=%d mode=%s" % [
+	var text := "%s\nedge from=%s to=%s\naxis=%s len=%d mode=%s state=%s" % [
 		id,
 		_format_cell(start_cell_i),
 		_format_cell(end_cell_i),
 		_wall_axis_name(axis),
 		length_i,
 		_render_mode_name(render_mode),
+		_wall_render_state(segment),
 	]
 	if int(segment.get("doorway_width", 0)) > 0:
 		text += "\ndoor %s" % _wall_doorway_text(segment)
@@ -2149,6 +2271,11 @@ func _update_label_visibility() -> void:
 		_hover_edge_label.visible = show_wall_edge_coords
 	if _hover_edge_background != null:
 		_hover_edge_background.visible = show_wall_edge_coords
+	if _active_room_label != null:
+		_active_room_label.visible = show_navigation_debug
+	if _active_room_background != null:
+		_active_room_background.visible = show_navigation_debug
+	_update_active_room_overlay()
 	_update_hover_cell()
 
 

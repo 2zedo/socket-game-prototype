@@ -88,10 +88,11 @@ Do not modify by default:
 | Identify an exact wall edge under the mouse | Enable `E`, then hover near a floor edge; click to print the nearest wall edge `from_cell -> to_cell` |
 | Identify navigation state for a floor cell | Enable `N`, then click a floor tile to print room area, walkable state, neighbors, and edge blockers |
 | Move the shell-only navigation marker | Enable `N`, then use arrow keys to test movement through blocked / passable edges |
+| Test room-area reveal walls | Set `debug_auto_reveal_walls=true`, enable `N`, and move the shell marker between room areas |
 | Emphasize one wall | Set `debug_focus_wall_id`, e.g. `bathroom_left_wall`, in the Inspector |
 | Preview revealable walls as full walls | Set `preview_revealed_walls=true` in the Inspector |
 
-Wall inventory columns: `id`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `doorway`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
+Wall inventory columns: `id`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `current_state`, `doorway`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 
 `edge_from_cell -> edge_to_cell` is the preferred way to read wall placement. The older `start_cell + axis + length` values still drive the data model, but the `E` wall-edge overlay is the quickest way to pick an exact wall segment. `G` is for floor cell centers and room footprint checks.
 
@@ -109,6 +110,8 @@ When `E` is enabled, the shell displays wall grid-line vertices and the hover pa
 When `N` is enabled, the shell displays walkable floor cells, room areas, logical blocked wall edges, passable doorway edges, and a shell-only debug marker. Walkable cells currently come from the visible living / work-power / bathroom floor cells, with future exception hooks in `_navigation_extra_walkable_cells()` and `_navigation_unwalkable_cells()`. Enabled wall segments create blocked edges; doorway units from `doorway_offset` / `doorway_width` are marked passable and excluded from blocked movement. `REVEALABLE`, `CUTAWAY_STUB`, and `HIDDEN_STUB` walls still count as logical blockers unless their edge is a doorway.
 
 Navigation area ids are `living_area`, `work_power_area`, `bathroom`, and `entrance_area`. The shell-only marker starts at `player_debug_cell=(1,8)` by default. Arrow keys move the marker only when `N` is enabled; blocked wall edges and non-walkable target cells stop movement, while doorway edges allow passage.
+
+`debug_auto_reveal_walls=false` keeps the existing shell view: `REVEALABLE` walls stay as low stubs. When `debug_auto_reveal_walls=true`, the shell marker's active room area can reveal a `REVEALABLE` wall if that wall has `reveal_when_area_active=true` and matching `reveal_area_id`. `preview_revealed_walls=true` still has priority and forces all `REVEALABLE` walls to full-wall preview regardless of active room. Example reveal areas: `reveal_area_id="living_area"` reveals while the marker is in the living space; `reveal_area_id="work_power_area"` would reveal while the marker is in the work / power room.
 
 `render_mode` separates logical wall existence from the current shell display. `FULL` draws a full-height wall. `CUTAWAY_STUB`, `HIDDEN_STUB`, and `REVEALABLE` keep the wall enabled in inventory while showing only a low cutaway / stub in this camera view. `REVEALABLE` walls draw a visible low body, top cap line, and base shadow by default; `preview_revealed_walls=true` temporarily draws them as full walls for inspection. `LOGICAL_ONLY` keeps the wall as data without drawing it.
 

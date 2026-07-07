@@ -40,8 +40,9 @@
 - Living occlusion display now uses the actual outer grid-line walls: `living_right_wall` at `(11,4)->(11,10)` and `living_front_cutaway` at `(0,10)->(11,10)`; earlier one-cell-inward occlusion wall segments remain disabled as legacy references.
 - Occlusion wall debugging is available with `O`, and `preview_revealed_walls` can temporarily show revealable walls at full height for shell inspection.
 - Navigation / collision debugging is available with `N`, showing walkable cells, room areas, blocked wall edges, passable doorway edges, and a shell-only marker at `player_debug_cell`.
+- Room-area reveal debugging is available through `debug_auto_reveal_walls`; the shell marker's active room can switch matching `REVEALABLE` walls between stub and full-wall display without production character wiring.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.
-- Documentation now records the shell candidate path, coordinate basis, wall editing controls, navigation overlay controls, and validation command.
+- Documentation now records the shell candidate path, coordinate basis, wall editing controls, navigation / reveal overlay controls, and validation command.
 
 ## Validation Notes
 

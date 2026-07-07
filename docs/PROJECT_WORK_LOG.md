@@ -127,3 +127,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: wall coordinates, room scale, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character movement/pathfinding, `SurvivalState`, `project.godot`.
 - Next: Use `N` with `G`, `E`, `W`, and `I` to verify exact walkable cells and blocked/passable edge behavior before adding any production movement logic.
+
+### Apartment room-area reveal debug
+
+- Commit: pending in this task.
+- Result: Added shell-only active room tracking and `debug_auto_reveal_walls` so matching `REVEALABLE` walls can switch from stub to full-wall display when the debug marker enters a configured room area.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: production player movement, QuarterviewMain wiring, room scale, wall coordinates, furniture/assets/atlas, `SurvivalState`, `project.godot`.
+- Next: Use `N`, `O`, `W`, and `I` with `debug_auto_reveal_walls=true` to decide which future occlusion walls should reveal for each room area.
