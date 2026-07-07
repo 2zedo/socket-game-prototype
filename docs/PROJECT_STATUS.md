@@ -41,12 +41,13 @@
 - Occlusion wall debugging is available with `O`, and `preview_revealed_walls` can temporarily show revealable walls at full height for shell inspection.
 - Navigation / collision debugging is available with `N`, showing walkable cells, room areas, blocked wall edges, passable doorway edges, and a shell-only marker at `player_debug_cell`.
 - Room-area reveal debugging is available through `debug_auto_reveal_walls`; the shell marker's active room can switch matching `REVEALABLE` walls between stub and full-wall display without production character wiring.
+- Object footprint placeholder debugging is available with `P`; blocking footprints are removed from `N` walkable cells, non-blocking markers remain visible only, and `I` prints an object summary after the wall inventory.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.
-- Documentation now records the shell candidate path, coordinate basis, wall editing controls, navigation / reveal overlay controls, and validation command.
+- Documentation now records the shell candidate path, coordinate basis, wall editing controls, navigation / reveal / object footprint overlay controls, and validation command.
 
 ## Validation Notes
 
-- This change intentionally adds one candidate scene and one candidate script, plus documentation.
+- This change intentionally adds candidate-only shell scripts and documentation.
 - It uses generated geometry only; no image assets, imports, atlas resources, or production start scene wiring are added.
 - Full `git diff --check` may still report unrelated local whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`; targeted checks should be used for current-task files if that unrelated file remains dirty.
 

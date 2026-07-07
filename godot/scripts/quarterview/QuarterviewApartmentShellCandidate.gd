@@ -1,6 +1,7 @@
 extends Node2D
 
 const ApartmentWallSegmentConfigScript := preload("res://scripts/quarterview/ApartmentWallSegmentConfig.gd")
+const ApartmentObjectFootprintConfigScript := preload("res://scripts/quarterview/ApartmentObjectFootprintConfig.gd")
 
 enum ViewOrientation {
 	FRONT_RIGHT,
@@ -117,6 +118,8 @@ const COLOR_OCCLUSION_STUB_BODY := Color(0.20, 0.22, 0.22, 0.58)
 const COLOR_OCCLUSION_STUB_CAP := Color(0.58, 0.61, 0.58, 0.90)
 const COLOR_OCCLUSION_STUB_SHADOW := Color(0.03, 0.035, 0.04, 0.58)
 const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
+const COLOR_OBJECT_INTERACTION := Color(0.26, 1.0, 0.86, 0.94)
+const COLOR_OBJECT_BLOCKED_CELL := Color(1.0, 0.28, 0.20, 0.92)
 
 @export_group("View Orientation")
 # view_orientation controls the isometric projection basis / mirroring only.
@@ -164,6 +167,11 @@ const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 # wall movement, deletion, or extra walls without touching the renderer.
 @export var custom_wall_segments: Array[Resource] = []
 
+@export_group("Object Footprint Editing")
+# Floor object placeholders use floor-cell coordinates. Leave this empty to use the default
+# shell footprint test set, or add Resource items here to override the default list.
+@export var custom_object_footprints: Array[Resource] = []
+
 @export_group("Window Layout")
 @export var living_window_axis_a := DEFAULT_LIVING_WINDOW_AXIS_A
 @export var living_window_axis_b_start := DEFAULT_LIVING_WINDOW_B_START
@@ -186,6 +194,8 @@ const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 @export var show_wall_edge_coords := false
 # Shows walkable cells, logical blocked edges, passable doorway edges, and the shell-only marker.
 @export var show_navigation_debug := false
+# Shows coordinate-based furniture / device footprint placeholders. These are shell-only guides.
+@export var show_object_placeholders := false
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
 @export var show_occlusion_wall_debug := false
 # Preview helper only: draw REVEALABLE walls at full height without adding character/area logic.
@@ -205,6 +215,7 @@ var _occlusion_stub_layer: Node2D
 var _wall_layer: Node2D
 var _door_layer: Node2D
 var _label_layer: Node2D
+var _object_layer: Node2D
 var _navigation_layer: Node2D
 var _grid_coord_layer: Node2D
 var _wall_edge_coord_layer: Node2D
@@ -225,6 +236,7 @@ var _last_active_room_area := ""
 func _ready() -> void:
 	_create_layers()
 	_build_shell()
+	_validate_object_footprints()
 	_apply_camera_preset(camera_preset)
 	_update_label_visibility()
 
@@ -255,6 +267,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if event.keycode == KEY_N:
 			show_navigation_debug = not show_navigation_debug
+			_update_label_visibility()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_P:
+			show_object_placeholders = not show_object_placeholders
 			_update_label_visibility()
 			get_viewport().set_input_as_handled()
 			return
@@ -318,6 +335,7 @@ func _create_layers() -> void:
 	_wall_layer = _add_layer("WallLayer", 0)
 	_door_layer = _add_layer("DoorAndWindowLayer", 10)
 	_label_layer = _add_layer("DebugLabelLayer", 40)
+	_object_layer = _add_layer("ObjectFootprintLayer", 65)
 	_navigation_layer = _add_layer("NavigationDebugLayer", 70)
 	_grid_coord_layer = _add_layer("GridCoordinateLayer", 85)
 	_wall_edge_coord_layer = _add_layer("WallEdgeCoordinateLayer", 88)
@@ -338,6 +356,7 @@ func _build_shell() -> void:
 	_draw_walls()
 	_draw_doors_and_window_placeholders()
 	_draw_debug_labels()
+	_draw_object_placeholders()
 	_draw_navigation_overlay()
 	_draw_floor_grid_overlay()
 	_draw_wall_edge_overlay()
@@ -677,6 +696,298 @@ func _wall_height_from_config(config: Resource) -> float:
 			return -1.0
 
 
+# Object footprints are shell-only floor-cell placeholders. They make future furniture/device
+# placement editable before final sprites exist, and can feed the navigation debug blocker layer.
+func _object_footprints() -> Array[Dictionary]:
+	var footprints: Array[Dictionary] = []
+	for entry in _active_object_footprint_config_entries():
+		var config: Resource = entry.get("config")
+		if config == null:
+			continue
+		footprints.append(_object_footprint_from_config(config, String(entry.get("source", "default"))))
+	return footprints
+
+
+func _active_object_footprint_config_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	var source := "default"
+	var configs := _default_object_footprint_configs()
+	if not custom_object_footprints.is_empty():
+		source = "custom_object_footprints"
+		configs = custom_object_footprints
+
+	for config in configs:
+		entries.append({
+			"source": source,
+			"config": config,
+		})
+	return entries
+
+
+# Edit these defaults to rough in furniture/device footprints. Coordinates are floor cells,
+# unlike wall segments, whose from/to values are wall edge grid-line coordinates.
+func _default_object_footprint_configs() -> Array[Resource]:
+	return [
+		_make_object_footprint_config(
+			&"bed_placeholder",
+			&"living_area",
+			&"sleep",
+			Vector2i(8, 7),
+			Vector2i(2, 2),
+			true,
+			[Vector2i(7, 8)],
+			Color(0.45, 0.62, 0.95, 0.36),
+			"Bed placeholder",
+			"Sleep-area footprint candidate."
+		),
+		_make_object_footprint_config(
+			&"fridge_placeholder",
+			&"living_area",
+			&"kitchen",
+			Vector2i(10, 4),
+			Vector2i(1, 1),
+			true,
+			[Vector2i(9, 4)],
+			Color(0.82, 0.82, 0.72, 0.36),
+			"Fridge placeholder",
+			"Single-door fridge footprint candidate."
+		),
+		_make_object_footprint_config(
+			&"sink_counter_placeholder",
+			&"living_area",
+			&"kitchen",
+			Vector2i(8, 4),
+			Vector2i(1, 1),
+			true,
+			[Vector2i(8, 5)],
+			Color(0.42, 0.60, 0.62, 0.36),
+			"Sink counter placeholder",
+			"Small counter / sink footprint candidate."
+		),
+		_make_object_footprint_config(
+			&"microwave_placeholder",
+			&"living_area",
+			&"kitchen",
+			Vector2i(9, 4),
+			Vector2i(1, 1),
+			false,
+			[Vector2i(9, 5)],
+			Color(0.70, 0.70, 0.66, 0.30),
+			"Microwave placeholder",
+			"Non-blocking counter-top appliance marker."
+		),
+		_make_object_footprint_config(
+			&"small_table_placeholder",
+			&"living_area",
+			&"living",
+			Vector2i(5, 7),
+			Vector2i(2, 1),
+			true,
+			[Vector2i(5, 8)],
+			Color(0.72, 0.50, 0.28, 0.34),
+			"Small table placeholder",
+			"Two-seat table footprint candidate."
+		),
+		_make_object_footprint_config(
+			&"desk_placeholder",
+			&"work_power_area",
+			&"work",
+			Vector2i(2, 1),
+			Vector2i(2, 1),
+			true,
+			[Vector2i(2, 2)],
+			Color(0.50, 0.62, 0.74, 0.34),
+			"Desk placeholder",
+			"Small work surface candidate."
+		),
+		_make_object_footprint_config(
+			&"navi_chair_placeholder",
+			&"work_power_area",
+			&"navi",
+			Vector2i(4, 1),
+			Vector2i(2, 2),
+			true,
+			[Vector2i(4, 3)],
+			Color(0.55, 0.48, 0.92, 0.34),
+			"NAVI chair placeholder",
+			"NAVI LINK seat footprint candidate."
+		),
+		_make_object_footprint_config(
+			&"power_panel_placeholder",
+			&"work_power_area",
+			&"power",
+			Vector2i(8, 0),
+			Vector2i(1, 2),
+			true,
+			[Vector2i(7, 1)],
+			Color(0.18, 0.76, 0.98, 0.32),
+			"Power panel placeholder",
+			"Wall-side power panel footprint candidate."
+		),
+		_make_object_footprint_config(
+			&"connector_board_placeholder",
+			&"work_power_area",
+			&"power",
+			Vector2i(7, 0),
+			Vector2i(1, 1),
+			true,
+			[Vector2i(7, 1)],
+			Color(0.34, 0.86, 0.66, 0.32),
+			"Connector board placeholder",
+			"Compact connector-board footprint candidate."
+		),
+		_make_object_footprint_config(
+			&"comm_device_placeholder",
+			&"work_power_area",
+			&"signal",
+			Vector2i(1, 1),
+			Vector2i(1, 1),
+			false,
+			[Vector2i(1, 2)],
+			Color(0.38, 0.70, 1.0, 0.30),
+			"Comm device placeholder",
+			"Non-blocking small comm-device marker."
+		),
+		_make_object_footprint_config(
+			&"bathroom_fixture_placeholder",
+			&"bathroom",
+			&"bathroom",
+			Vector2i(0, 7),
+			Vector2i(1, 1),
+			true,
+			[Vector2i(1, 7)],
+			Color(0.42, 0.82, 0.92, 0.34),
+			"Bathroom fixture placeholder",
+			"Minimal bathroom fixture footprint candidate."
+		),
+		_make_object_footprint_config(
+			&"entrance_shoe_area_placeholder",
+			&"entrance_area",
+			&"entrance",
+			Vector2i(0, 8),
+			Vector2i(1, 1),
+			false,
+			[Vector2i(1, 8)],
+			Color(0.90, 0.76, 0.36, 0.30),
+			"Entrance shoe area placeholder",
+			"Non-blocking entry shoe/slipper marker."
+		),
+	]
+
+
+func _make_object_footprint_config(
+	object_id: StringName,
+	object_room_area_id: StringName,
+	object_category: StringName,
+	object_anchor_cell: Vector2i,
+	object_size_cells: Vector2i,
+	object_blocks_movement: bool,
+	object_interaction_cells: Array[Vector2i],
+	object_debug_color: Color,
+	object_display_name := "",
+	object_note := ""
+) -> Resource:
+	var config: Resource = ApartmentObjectFootprintConfigScript.new()
+	config.id = object_id
+	config.enabled = true
+	config.room_area_id = object_room_area_id
+	config.category = object_category
+	config.anchor_cell = object_anchor_cell
+	config.size_cells = object_size_cells
+	config.blocks_movement = object_blocks_movement
+	config.interaction_cells = object_interaction_cells
+	config.debug_color = object_debug_color
+	config.display_name = object_display_name
+	config.note = object_note
+	return config
+
+
+func _object_footprint_from_config(config: Resource, source: String = "default") -> Dictionary:
+	return {
+		"id": String(config.id),
+		"enabled": config.enabled,
+		"source": source,
+		"room_area_id": String(config.room_area_id),
+		"category": String(config.category),
+		"anchor_cell": config.anchor_cell,
+		"size_cells": config.size_cells,
+		"blocks_movement": config.blocks_movement,
+		"interaction_cells": _object_config_interaction_cells(config),
+		"debug_color": config.debug_color,
+		"display_name": config.display_name,
+		"note": config.note,
+	}
+
+
+func _object_config_interaction_cells(config: Resource) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	if config.interaction_cell != Vector2i(-1, -1):
+		cells.append(config.interaction_cell)
+	for cell in config.interaction_cells:
+		var cell_i: Vector2i = cell
+		if not cells.has(cell_i):
+			cells.append(cell_i)
+	return cells
+
+
+func _validate_object_footprints() -> void:
+	for warning in _object_placement_warnings():
+		push_warning(warning)
+
+
+func _object_placement_warnings() -> Array[String]:
+	var warnings: Array[String] = []
+	var occupied_by_cell: Dictionary = {}
+	var passable_edges: Dictionary = _navigation_edge_sets()["passable"]
+
+	for object_data in _object_footprints():
+		if not bool(object_data.get("enabled", true)):
+			continue
+		var object_id := String(object_data.get("id", ""))
+		var blocks_movement := bool(object_data.get("blocks_movement", true))
+		var occupied_cells := _object_occupied_cells(object_data)
+		if occupied_cells.is_empty():
+			warnings.append("object %s has no occupied cells; check size_cells" % object_id)
+
+		for cell in occupied_cells:
+			if not _is_base_walkable_cell(cell):
+				warnings.append("object %s occupies non-walkable or out-of-room floor cell %s" % [object_id, _format_cell(cell)])
+			var cell_key := _cell_key(cell)
+			if occupied_by_cell.has(cell_key):
+				warnings.append("object %s overlaps %s at floor cell %s" % [object_id, String(occupied_by_cell[cell_key]), _format_cell(cell)])
+			else:
+				occupied_by_cell[cell_key] = object_id
+
+			if blocks_movement:
+				for edge_name in ["top", "right", "bottom", "left"]:
+					var edge_info := _wall_edge_info_for_cell(cell, edge_name)
+					if edge_info.is_empty():
+						continue
+					var from_cell: Vector2i = edge_info.get("from_cell", Vector2i.ZERO)
+					var to_cell: Vector2i = edge_info.get("to_cell", Vector2i.ZERO)
+					var edge_key := _edge_key(from_cell, to_cell)
+					if passable_edges.has(edge_key):
+						warnings.append("object %s blocks doorway edge %s->%s at floor cell %s" % [
+							object_id,
+							_format_cell(from_cell),
+							_format_cell(to_cell),
+							_format_cell(cell),
+						])
+
+		for interaction_cell in _object_interaction_cells(object_data):
+			if not _is_base_walkable_cell(interaction_cell):
+				warnings.append("object %s interaction cell %s is outside base walkable floor" % [object_id, _format_cell(interaction_cell)])
+				continue
+			var blockers := _object_blocker_ids_for_cell(interaction_cell)
+			if not blockers.is_empty():
+				warnings.append("object %s interaction cell %s is occupied by blocking object(s): %s" % [
+					object_id,
+					_format_cell(interaction_cell),
+					", ".join(blockers),
+				])
+	return warnings
+
+
 # Prints an editor-friendly inventory so the user can identify which wall segment to edit.
 func print_wall_segment_inventory() -> void:
 	var rows := _wall_segment_inventory_rows()
@@ -706,6 +1017,7 @@ func print_wall_segment_inventory() -> void:
 		])
 	print("=== End Wall Segment Inventory ===")
 	_print_navigation_summary()
+	_print_object_footprint_summary()
 
 
 func _wall_segment_inventory_rows() -> Array[Dictionary]:
@@ -760,6 +1072,55 @@ func _print_navigation_summary() -> void:
 	print("=== End Navigation Debug Summary ===")
 
 
+func _print_object_footprint_summary() -> void:
+	var rows := _object_footprint_inventory_rows()
+	print("=== Apartment Object Footprint Summary ===")
+	print("Object anchor/size/occupied/interactions are floor-cell coordinates. Wall segments use edge coordinates instead.")
+	print("id | enabled | source | room_area_id | anchor_cell | size_cells | occupied_cells | blocks_movement | interaction_cells | edit_hint")
+	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
+	for row in rows:
+		print("%s | %s | %s | %s | %s | %s | %s | %s | %s | %s" % [
+			row["id"],
+			str(row["enabled"]),
+			row["source"],
+			row["room_area_id"],
+			row["anchor_cell"],
+			row["size_cells"],
+			row["occupied_cells"],
+			str(row["blocks_movement"]),
+			row["interaction_cells"],
+			row["edit_hint"],
+		])
+	print("=== End Object Footprint Summary ===")
+
+
+func _object_footprint_inventory_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for object_data in _object_footprints():
+		rows.append({
+			"id": String(object_data.get("id", "")),
+			"enabled": bool(object_data.get("enabled", true)),
+			"source": String(object_data.get("source", "default")),
+			"room_area_id": String(object_data.get("room_area_id", "")),
+			"anchor_cell": _format_cell(object_data.get("anchor_cell", Vector2i.ZERO)),
+			"size_cells": _format_cell(object_data.get("size_cells", Vector2i.ONE)),
+			"occupied_cells": _format_cells(_object_occupied_cells(object_data)),
+			"blocks_movement": bool(object_data.get("blocks_movement", true)),
+			"interaction_cells": _format_cells(_object_interaction_cells(object_data)),
+			"edit_hint": _object_edit_hint(object_data),
+		})
+	return rows
+
+
+func _object_edit_hint(object_data: Dictionary) -> String:
+	var id := String(object_data.get("id", ""))
+	var source := String(object_data.get("source", "default"))
+	var location := "edit _default_object_footprint_configs() entry id=\"%s\"" % id
+	if source == "custom_object_footprints":
+		location = "edit Inspector > custom_object_footprints entry id=\"%s\"" % id
+	return "%s; hide: enabled=false; move: anchor_cell; resize: size_cells; movement block: blocks_movement; use point: interaction_cell / interaction_cells; use G floor cell overlay for exact floor coordinates" % location
+
+
 func _wall_edit_hint(segment: Dictionary) -> String:
 	var id := String(segment["id"])
 	var source := String(segment.get("source", "default"))
@@ -809,10 +1170,77 @@ func _draw_debug_labels() -> void:
 	_add_debug_label("no_object_zone_label", "camera foreground no-large-object zone", _room_center(_no_large_object_zone_rect()) + Vector2(-148, 20))
 
 
+func _draw_object_placeholders() -> void:
+	for object_data in _object_footprints():
+		if not bool(object_data.get("enabled", true)):
+			continue
+		_draw_object_placeholder(object_data)
+
+
+func _draw_object_placeholder(object_data: Dictionary) -> void:
+	var id := String(object_data.get("id", ""))
+	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
+	var size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
+	var blocks_movement := bool(object_data.get("blocks_movement", true))
+	var color: Color = object_data.get("debug_color", Color(0.55, 0.74, 1.0, 0.38))
+	if not blocks_movement:
+		color.a *= 0.72
+
+	var points := _rect_points(Rect2i(anchor, size))
+	_add_polygon(_object_layer, "object_%s_footprint" % id, points, color)
+	_add_line(
+		_object_layer,
+		"object_%s_outline" % id,
+		points + [points[0]],
+		color.lightened(0.34),
+		3.0 if blocks_movement else 2.0
+	)
+
+	var label_position := _object_cells_center(_object_occupied_cells(object_data)) + Vector2(-58.0, -22.0)
+	if blocks_movement:
+		for occupied_cell in _object_occupied_cells(object_data):
+			_add_marker(
+				_object_layer,
+				"object_%s_block_marker_%d_%d" % [id, occupied_cell.x, occupied_cell.y],
+				_cell_center(occupied_cell),
+				COLOR_OBJECT_BLOCKED_CELL,
+				5.0
+			)
+	_add_label_with_background(
+		_object_layer,
+		"object_%s_label" % id,
+		"%s\nanchor=%s size=%s\nblock=%s" % [
+			id,
+			_format_cell(anchor),
+			_format_cell(size),
+			str(blocks_movement),
+		],
+		label_position,
+		11
+	)
+
+	for interaction_cell in _object_interaction_cells(object_data):
+		var center := _cell_center(interaction_cell)
+		_add_marker(
+			_object_layer,
+			"object_%s_interaction_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
+			center,
+			COLOR_OBJECT_INTERACTION,
+			8.0
+		)
+		_add_label_with_background(
+			_object_layer,
+			"object_%s_interaction_label_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
+			"use %s" % _format_cell(interaction_cell),
+			center + Vector2(9.0, -28.0),
+			10
+		)
+
+
 func _draw_control_hint() -> void:
 	var label := Label.new()
 	label.name = "ShellControlHint"
-	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  E: wall edges  |  N: navigation  |  O: occlusion walls  |  I: print wall inventory"
+	label.text = "1/2/3: camera  |  L: labels  |  W: wall ids  |  G: grid coords  |  E: wall edges  |  N: navigation  |  P: object placeholders  |  O: occlusion walls  |  I: inventory"
 	label.position = Vector2(24, 20)
 	label.modulate = COLOR_LABEL
 	label.add_theme_font_size_override("font_size", 14)
@@ -986,6 +1414,25 @@ func _navigation_room_cells(area_id: String) -> Array[Vector2i]:
 
 
 func _walkable_floor_cells() -> Array[Vector2i]:
+	var cells_by_key := _base_walkable_floor_cell_map()
+	for cell in _object_blocked_cells():
+		cells_by_key.erase(_cell_key(cell))
+
+	var cells: Array[Vector2i] = []
+	for key in cells_by_key.keys():
+		cells.append(cells_by_key[key])
+	return cells
+
+
+func _base_walkable_floor_cells() -> Array[Vector2i]:
+	var cells_by_key := _base_walkable_floor_cell_map()
+	var cells: Array[Vector2i] = []
+	for key in cells_by_key.keys():
+		cells.append(cells_by_key[key])
+	return cells
+
+
+func _base_walkable_floor_cell_map() -> Dictionary:
 	var cells_by_key: Dictionary = {}
 	for cell in _visible_floor_cells():
 		cells_by_key[_cell_key(cell)] = cell
@@ -993,11 +1440,7 @@ func _walkable_floor_cells() -> Array[Vector2i]:
 		cells_by_key[_cell_key(cell)] = cell
 	for cell in _navigation_unwalkable_cells():
 		cells_by_key.erase(_cell_key(cell))
-
-	var cells: Array[Vector2i] = []
-	for key in cells_by_key.keys():
-		cells.append(cells_by_key[key])
-	return cells
+	return cells_by_key
 
 
 # Keep these lists as the edit points for future navigation exceptions.
@@ -1009,8 +1452,11 @@ func _navigation_unwalkable_cells() -> Array[Vector2i]:
 	return []
 
 
-func _room_area_for_cell(cell: Vector2i) -> String:
-	if not _is_walkable_cell(cell):
+func _room_area_for_cell(cell: Vector2i, include_object_blocks := true) -> String:
+	if include_object_blocks:
+		if not _is_walkable_cell(cell):
+			return "none"
+	elif not _is_base_walkable_cell(cell):
 		return "none"
 	if _is_entrance_area_cell(cell):
 		return "entrance_area"
@@ -1039,6 +1485,69 @@ func _is_walkable_cell(cell: Vector2i) -> bool:
 		if walkable_cell == cell:
 			return true
 	return false
+
+
+func _is_base_walkable_cell(cell: Vector2i) -> bool:
+	for walkable_cell in _base_walkable_floor_cells():
+		if walkable_cell == cell:
+			return true
+	return false
+
+
+func _object_blocked_cells() -> Array[Vector2i]:
+	var blocked_by_key: Dictionary = {}
+	for object_data in _object_footprints():
+		if not bool(object_data.get("enabled", true)) or not bool(object_data.get("blocks_movement", true)):
+			continue
+		for cell in _object_occupied_cells(object_data):
+			blocked_by_key[_cell_key(cell)] = cell
+
+	var cells: Array[Vector2i] = []
+	for key in blocked_by_key.keys():
+		cells.append(blocked_by_key[key])
+	return cells
+
+
+func _object_blocker_ids_for_cell(cell: Vector2i) -> Array[String]:
+	var ids: Array[String] = []
+	for object_data in _object_footprints():
+		if not bool(object_data.get("enabled", true)) or not bool(object_data.get("blocks_movement", true)):
+			continue
+		for occupied_cell in _object_occupied_cells(object_data):
+			if occupied_cell == cell:
+				ids.append(String(object_data.get("id", "")))
+				break
+	return ids
+
+
+func _object_occupied_cells(object_data: Dictionary) -> Array[Vector2i]:
+	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
+	var size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
+	var width := maxi(0, size.x)
+	var height := maxi(0, size.y)
+	var cells: Array[Vector2i] = []
+	for x in range(anchor.x, anchor.x + width):
+		for y in range(anchor.y, anchor.y + height):
+			cells.append(Vector2i(x, y))
+	return cells
+
+
+func _object_interaction_cells(object_data: Dictionary) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for cell in object_data.get("interaction_cells", []):
+		var cell_i: Vector2i = cell
+		if not cells.has(cell_i):
+			cells.append(cell_i)
+	return cells
+
+
+func _object_cells_center(cells: Array[Vector2i]) -> Vector2:
+	if cells.is_empty():
+		return Vector2.ZERO
+	var total := Vector2.ZERO
+	for cell in cells:
+		total += _cell_center(cell)
+	return total / float(cells.size())
 
 
 func _is_cell_in_rect(cell: Vector2i, room: Rect2i) -> bool:
@@ -1393,6 +1902,8 @@ func _print_clicked_cell_navigation(cell: Vector2i) -> void:
 	print("clicked cell: %s" % _format_cell(cell))
 	print("room_area: %s" % _room_area_for_cell(cell))
 	print("walkable: %s" % str(_is_walkable_cell(cell)))
+	var blocker_ids := _object_blocker_ids_for_cell(cell)
+	print("object_blockers: %s" % (", ".join(blocker_ids) if not blocker_ids.is_empty() else "-"))
 	print("neighbors: top=%s right=%s bottom=%s left=%s" % [
 		_format_cell(_neighbor_cell_for_edge(cell, "top")),
 		_format_cell(_neighbor_cell_for_edge(cell, "right")),
@@ -1432,7 +1943,11 @@ func _move_player_debug_marker(edge_name: String) -> bool:
 		print("debug marker blocked: %s edge by %s at %s" % [edge_name, segment_id, _format_cell(player_debug_cell)])
 		return true
 	if not _is_walkable_cell(next_cell):
-		print("debug marker blocked: target %s is not walkable" % _format_cell(next_cell))
+		var blocker_ids := _object_blocker_ids_for_cell(next_cell)
+		if not blocker_ids.is_empty():
+			print("debug marker blocked: target %s is occupied by %s" % [_format_cell(next_cell), ", ".join(blocker_ids)])
+		else:
+			print("debug marker blocked: target %s is not walkable" % _format_cell(next_cell))
 		return true
 
 	player_debug_cell = next_cell
@@ -1827,6 +2342,15 @@ func _height_mode_name(height_mode: int) -> String:
 
 func _format_cell(cell: Vector2i) -> String:
 	return "(%d,%d)" % [cell.x, cell.y]
+
+
+func _format_cells(cells: Array[Vector2i]) -> String:
+	if cells.is_empty():
+		return "[]"
+	var parts: Array[String] = []
+	for cell in cells:
+		parts.append(_format_cell(cell))
+	return "[%s]" % ", ".join(parts)
 
 
 func _is_focus_wall(id: String) -> bool:
@@ -2253,6 +2777,8 @@ func _add_label(parent: Node, label_name: String, text: String, position: Vector
 func _update_label_visibility() -> void:
 	if _label_layer != null:
 		_label_layer.visible = show_debug_labels
+	if _object_layer != null:
+		_object_layer.visible = show_object_placeholders or show_navigation_debug
 	if _navigation_layer != null:
 		_navigation_layer.visible = show_navigation_debug
 	if _wall_id_layer != null:

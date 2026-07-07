@@ -130,8 +130,16 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ### Apartment room-area reveal debug
 
-- Commit: pending in this task.
+- Commit: `7276acc`
 - Result: Added shell-only active room tracking and `debug_auto_reveal_walls` so matching `REVEALABLE` walls can switch from stub to full-wall display when the debug marker enters a configured room area.
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: production player movement, QuarterviewMain wiring, room scale, wall coordinates, furniture/assets/atlas, `SurvivalState`, `project.godot`.
 - Next: Use `N`, `O`, `W`, and `I` with `debug_auto_reveal_walls=true` to decide which future occlusion walls should reveal for each room area.
+
+### Apartment object footprint placeholders
+
+- Commit: pending in this task.
+- Result: Added shell-only object footprint placeholder data, `P` object display, interaction markers, object-aware navigation blocking, and object summary output after the wall inventory.
+- Changed: `QuarterviewApartmentShellCandidate.gd`, `ApartmentObjectFootprintConfig.gd`, and current technical/room-object/status docs.
+- Not changed: final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, pathfinding, `SurvivalState`, `project.godot`.
+- Next: Use `G`, `P`, `N`, and `I` together to tune furniture/device footprint coordinates before any final art or production interaction work.

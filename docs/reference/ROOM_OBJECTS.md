@@ -116,6 +116,53 @@ These are current art / story planning cues, not implemented `RoomObjectDefiniti
 
 Do not add these as production gameplay objects without a dedicated Resource / interaction task.
 
+## Apartment Shell Footprint Placeholders
+
+These are coordinate-based debug placeholders in `QuarterviewApartmentShellCandidate`, not final room objects, sprites, or production interactions.
+
+Resource script:
+
+- `godot/scripts/quarterview/ApartmentObjectFootprintConfig.gd`
+
+Default list location:
+
+- `_default_object_footprint_configs()` in `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd`
+
+Current shell-only placeholder IDs:
+
+| Placeholder ID | Room Area | Purpose | Movement |
+| --- | --- | --- | --- |
+| `bed_placeholder` | `living_area` | bed footprint candidate | blocks |
+| `fridge_placeholder` | `living_area` | single-door fridge footprint candidate | blocks |
+| `sink_counter_placeholder` | `living_area` | sink / counter footprint candidate | blocks |
+| `microwave_placeholder` | `living_area` | counter-top appliance marker | non-blocking |
+| `small_table_placeholder` | `living_area` | 2-seat table footprint candidate | blocks |
+| `desk_placeholder` | `work_power_area` | small work surface candidate | blocks |
+| `navi_chair_placeholder` | `work_power_area` | NAVI LINK seat footprint candidate | blocks |
+| `power_panel_placeholder` | `work_power_area` | wall-side power panel footprint candidate | blocks |
+| `connector_board_placeholder` | `work_power_area` | compact connector board candidate | blocks |
+| `comm_device_placeholder` | `work_power_area` | small comm / NODE device marker | non-blocking |
+| `bathroom_fixture_placeholder` | `bathroom` | minimal bathroom fixture candidate | blocks |
+| `entrance_shoe_area_placeholder` | `entrance_area` | entry shoe / slipper area marker | non-blocking |
+
+Shell editing controls:
+
+- `P`: show object footprint placeholders.
+- `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
+- `I`: print wall inventory followed by object footprint summary.
+
+Coordinate rule:
+
+- Object footprints use floor cell coordinates: `anchor_cell`, `size_cells`, `occupied_cells`, and `interaction_cells`.
+- Wall segments use wall edge coordinates: `from_cell -> to_cell`.
+- Do not treat object floor cells and wall edge coordinates as the same coordinate layer.
+
+Production boundary:
+
+- These placeholders do not create `RoomObjectDefinition` Resources.
+- They do not add furniture, final sprites, atlas wiring, pathfinding, save-load, Grid Credit, story flags, or QuarterviewMain production wiring.
+- They exist only to test footprint, interaction-cell, and movement-blocking assumptions before final art / object placement.
+
 ## Job Resources
 
 Resource script:
