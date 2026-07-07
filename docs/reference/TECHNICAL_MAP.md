@@ -211,6 +211,18 @@ Current important tests:
 - `test_living_device_definition.gd`
 - `test_asset_smoke.gd`
 
+## Third-Party Asset Inventory
+
+The current asset smoke test reads this section instead of the archived `docs/old/THIRD_PARTY_ASSET_INVENTORY.md`. Root `docs/` stays limited to `GAME_INFO.md`, `PROJECT_STATUS.md`, and `PROJECT_WORK_LOG.md`.
+
+This inventory tracks selected copies that are actually present under `godot/assets/.../third_party/...`. Broad Asset Library addon folders, generated `.uid` files, and unrelated local addon installs remain outside the current commit scope unless a dedicated vendor-assets task says otherwise.
+
+| Asset Group | Selected Copies | License Evidence | Current Use | Notes |
+| --- | --- | --- | --- | --- |
+| Kenney UI Audio | selected copies under `godot/assets/audio/third_party/kenney/ui/`: `ui_select.wav`, `ui_confirm.wav` | `godot/assets/audio/third_party/kenney/LICENSES/kenney_ui_audio_LICENSE.txt` | Prototype UI select / confirm SFX smoke-tested as `AudioStreamWAV` | Source addon folder is not a required committed source for the smoke test. |
+| Kenney Interface Sounds | selected copies under `godot/assets/audio/third_party/kenney/interface/`: `prototype_open.wav`, `prototype_cancel.wav`, `hacking_hit.wav`, `hacking_damage.wav`, `hacking_success.wav`, `hacking_fail.wav` | `godot/assets/audio/third_party/kenney/LICENSES/kenney_interface_sounds_LICENSE.txt` | Prototype overlay / hacking feedback SFX smoke-tested as `AudioStreamWAV` | Only the selected copied asset paths are required for current tests. |
+| Kenney Input Prompts | selected copies under `godot/assets/ui/third_party/kenney/input_prompts/`: `key_a.png`, `key_arrows.png`, `key_b.png`, `key_backspace.png`, `key_d.png`, `key_e.png`, `key_enter.png`, `key_escape.png`, `key_j.png`, `key_r.png`, `key_s.png`, `key_shift.png`, `key_space.png`, `key_w.png`, `mouse_left.png` | `godot/assets/ui/third_party/kenney/LICENSES/kenney_input_prompts_LICENSE.txt` | Prototype prompt icons smoke-tested as `Texture2D` | Keep these as selected copies; do not point tests at raw addon source folders. |
+
 ## Validation Commands
 
 Godot project parse:

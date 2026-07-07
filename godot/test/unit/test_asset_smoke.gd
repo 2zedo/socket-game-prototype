@@ -35,7 +35,7 @@ const LICENSE_FILES := [
 	"res://assets/ui/third_party/kenney/LICENSES/kenney_input_prompts_LICENSE.txt",
 ]
 
-const INVENTORY_PATH := "res://../docs/THIRD_PARTY_ASSET_INVENTORY.md"
+const INVENTORY_PATH := "res://../docs/reference/TECHNICAL_MAP.md"
 
 
 func test_selected_audio_files_exist() -> void:
@@ -76,7 +76,7 @@ func test_license_files_exist_and_are_not_empty() -> void:
 
 func test_asset_inventory_mentions_selected_asset_groups() -> void:
 	var inventory_path := ProjectSettings.globalize_path(INVENTORY_PATH)
-	assert_true(FileAccess.file_exists(inventory_path), "THIRD_PARTY_ASSET_INVENTORY.md should be accessible.")
+	assert_true(FileAccess.file_exists(inventory_path), "Current technical asset inventory reference should be accessible.")
 
 	var inventory_text := FileAccess.get_file_as_string(inventory_path)
 	assert_true(inventory_text.contains("Kenney UI Audio"), "Inventory should mention Kenney UI Audio.")

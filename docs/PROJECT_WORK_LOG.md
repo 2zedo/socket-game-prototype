@@ -154,8 +154,16 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ### Apartment debug overlay Korean labels
 
-- Commit: pending in this task.
+- Commit: `a8c77d4`
 - Result: Localized the shell debug overlays so `G`, `E`, `W`, `N`, `P`, and `O` are visually distinct and Korean-first while retaining ids / coordinates for editing.
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
 - Not changed: wall coordinates, room rects, object footprint coordinates, movement / collision logic, production Main/DAY1, QuarterviewMain wiring, assets, atlas files, `SurvivalState`, `project.godot`.
 - Next: Open the shell scene and visually check Korean font rendering and label overlap with multiple debug toggles enabled.
+
+### Asset inventory smoke test cleanup
+
+- Commit: pending in this task.
+- Result: Moved the asset inventory smoke-test reference from the archived `docs/THIRD_PARTY_ASSET_INVENTORY.md` path to the current `docs/reference/TECHNICAL_MAP.md` structure, and recorded the selected Kenney third-party asset groups that the test validates.
+- Changed: `test_asset_smoke.gd`, `docs/reference/TECHNICAL_MAP.md`, and current status/work-log docs.
+- Not changed: production Main/DAY1, QuarterviewMain wiring, shell geometry/debug logic, assets, atlas files, import files, `SurvivalState`, `project.godot`.
+- Next: Keep future third-party selected-copy tracking in the current reference docs unless a dedicated asset inventory reference file is explicitly approved.
