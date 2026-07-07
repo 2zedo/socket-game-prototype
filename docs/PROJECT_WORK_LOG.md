@@ -138,8 +138,16 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ### Apartment object footprint placeholders
 
-- Commit: pending in this task.
+- Commit: `d7bde63`
 - Result: Added shell-only object footprint placeholder data, `P` object display, interaction markers, object-aware navigation blocking, and object summary output after the wall inventory.
 - Changed: `QuarterviewApartmentShellCandidate.gd`, `ApartmentObjectFootprintConfig.gd`, and current technical/room-object/status docs.
 - Not changed: final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, pathfinding, `SurvivalState`, `project.godot`.
 - Next: Use `G`, `P`, `N`, and `I` together to tune furniture/device footprint coordinates before any final art or production interaction work.
+
+### Apartment object footprint coordinate tune
+
+- Commit: pending in this task.
+- Result: Tuned the first-pass default object footprint coordinates so entrance/shared doorway paths stay open, interaction cells remain walkable, blocking objects stay in their intended room areas, and non-blocking shoe / comm / microwave markers do not remove walkable cells.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current room-object/status docs.
+- Not changed: final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, pathfinding, `SurvivalState`, `project.godot`.
+- Next: Inspect the shell manually with `G`, `P`, and `N` enabled before deciding whether any footprint needs another coordinate pass.

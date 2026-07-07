@@ -128,22 +128,29 @@ Default list location:
 
 - `_default_object_footprint_configs()` in `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd`
 
-Current shell-only placeholder IDs:
+Current shell-only placeholder defaults:
 
-| Placeholder ID | Room Area | Purpose | Movement |
-| --- | --- | --- | --- |
-| `bed_placeholder` | `living_area` | bed footprint candidate | blocks |
-| `fridge_placeholder` | `living_area` | single-door fridge footprint candidate | blocks |
-| `sink_counter_placeholder` | `living_area` | sink / counter footprint candidate | blocks |
-| `microwave_placeholder` | `living_area` | counter-top appliance marker | non-blocking |
-| `small_table_placeholder` | `living_area` | 2-seat table footprint candidate | blocks |
-| `desk_placeholder` | `work_power_area` | small work surface candidate | blocks |
-| `navi_chair_placeholder` | `work_power_area` | NAVI LINK seat footprint candidate | blocks |
-| `power_panel_placeholder` | `work_power_area` | wall-side power panel footprint candidate | blocks |
-| `connector_board_placeholder` | `work_power_area` | compact connector board candidate | blocks |
-| `comm_device_placeholder` | `work_power_area` | small comm / NODE device marker | non-blocking |
-| `bathroom_fixture_placeholder` | `bathroom` | minimal bathroom fixture candidate | blocks |
-| `entrance_shoe_area_placeholder` | `entrance_area` | entry shoe / slipper area marker | non-blocking |
+| Placeholder ID | Room Area | Anchor | Size | Interaction Cells | Movement |
+| --- | --- | --- | --- | --- | --- |
+| `bed_placeholder` | `living_area` | `(8,6)` | `(2,2)` | `(7,7)` | blocks |
+| `fridge_placeholder` | `living_area` | `(10,4)` | `(1,1)` | `(10,5)` | blocks |
+| `sink_counter_placeholder` | `living_area` | `(8,4)` | `(1,1)` | `(8,5)` | blocks |
+| `microwave_placeholder` | `living_area` | `(9,4)` | `(1,1)` | `(9,5)` | non-blocking |
+| `small_table_placeholder` | `living_area` | `(4,6)` | `(2,1)` | `(4,7)`, `(5,7)` | blocks |
+| `desk_placeholder` | `work_power_area` | `(2,0)` | `(2,1)` | `(2,1)` | blocks |
+| `navi_chair_placeholder` | `work_power_area` | `(4,1)` | `(2,2)` | `(4,3)`, `(5,3)` | blocks |
+| `power_panel_placeholder` | `work_power_area` | `(8,1)` | `(1,2)` | `(7,2)` | blocks |
+| `connector_board_placeholder` | `work_power_area` | `(7,1)` | `(1,1)` | `(7,2)` | blocks |
+| `comm_device_placeholder` | `work_power_area` | `(1,2)` | `(1,1)` | `(2,2)` | non-blocking |
+| `bathroom_fixture_placeholder` | `bathroom` | `(0,7)` | `(1,1)` | `(1,7)` | blocks |
+| `entrance_shoe_area_placeholder` | `entrance_area` | `(1,9)` | `(1,1)` | `(1,8)` | non-blocking |
+
+First-pass coordinate intent:
+
+- Doorway-adjacent placeholders avoid the current entrance and shared-room passable edges.
+- Blocking living-space placeholders leave the entrance, table approach, kitchen approach, and shared doorway test paths walkable.
+- Work-space placeholders stay inside `work_power_area` and keep the center / entry approach open for shell navigation checks.
+- `entrance_shoe_area_placeholder` is non-blocking and sits near the entrance without occupying the exterior door cell.
 
 Shell editing controls:
 

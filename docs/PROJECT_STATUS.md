@@ -42,6 +42,7 @@
 - Navigation / collision debugging is available with `N`, showing walkable cells, room areas, blocked wall edges, passable doorway edges, and a shell-only marker at `player_debug_cell`.
 - Room-area reveal debugging is available through `debug_auto_reveal_walls`; the shell marker's active room can switch matching `REVEALABLE` walls between stub and full-wall display without production character wiring.
 - Object footprint placeholder debugging is available with `P`; blocking footprints are removed from `N` walkable cells, non-blocking markers remain visible only, and `I` prints an object summary after the wall inventory.
+- Object footprint defaults have a first coordinate tune: doorway-adjacent placeholders avoid passable entrances, interaction cells stay walkable, and blocking placeholders stay within their intended room areas.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.
 - Documentation now records the shell candidate path, coordinate basis, wall editing controls, navigation / reveal / object footprint overlay controls, and validation command.
 
