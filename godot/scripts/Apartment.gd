@@ -24,7 +24,7 @@ const MAP_SCALE: float = 0.670391
 const MAP_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
 const ROOM_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
 const FLOOR_RECT: Rect2 = Rect2(149.27, 0.0, 981.45, 720.0)
-const PLAYABLE_BOUNDARY_SOURCE_RECT: Rect2 = Rect2(105.0, 345.0, 1270.0, 715.0)
+const PLAYABLE_BOUNDARY_SOURCE_RECT: Rect2 = Rect2(205.0, 365.0, 1150.0, 655.0)
 const WALL_THICKNESS: float = 32.0
 const WALL_CORNER_OVERLAP: float = 12.0
 
@@ -191,8 +191,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "멀티탭",
 		"title": "멀티탭",
 		"body": "방 안 기기들의 전원을 모으는 핵심 멀티탭입니다.",
-		"position": _map_point(Vector2(790.0, 584.0)),
-		"size": _map_size(Vector2(124.0, 70.0)),
+		"position": _map_point(Vector2(820.0, 535.0)),
+		"size": _map_size(Vector2(150.0, 70.0)),
 		"color": Color("#77654c"),
 		"outline_color": Color("#ffe6a3"),
 		"prompt_text": "[E] 멀티탭 관리",
@@ -204,8 +204,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "조명",
 		"title": "조명",
 		"body": "방 안을 겨우 밝히는 낡은 조명입니다.",
-		"position": _map_point(Vector2(1060.0, 242.0)),
-		"size": _map_size(Vector2(96.0, 78.0)),
+		"position": _map_point(Vector2(1060.0, 350.0)),
+		"size": _map_size(Vector2(96.0, 200.0)),
 		"color": Color("#a8894e"),
 		"power_units": 1,
 		"day1_action_key": "light",
@@ -217,8 +217,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "충전기",
 		"title": "충전기",
 		"body": "배터리를 회복하는 작은 장치입니다.\n전력은 낮지만 오래 빼두면 위험해집니다.",
-		"position": _map_point(Vector2(1090.0, 688.0)),
-		"size": _map_size(Vector2(80.0, 70.0)),
+		"position": _map_point(Vector2(1090.0, 715.0)),
+		"size": _map_size(Vector2(80.0, 45.0)),
 		"color": Color("#4e5e67"),
 		"power_units": 2,
 		"day1_action_key": "charger",
@@ -230,8 +230,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "선풍기",
 		"title": "선풍기",
 		"body": "더위를 낮출 수 있습니다.\n하지만 켜두면 다른 장치를 꽂을 여유가 줄어듭니다.",
-		"position": _map_point(Vector2(565.0, 510.0)),
-		"size": _map_size(Vector2(120.0, 150.0)),
+		"position": _map_point(Vector2(520.0, 600.0)),
+		"size": _map_size(Vector2(120.0, 230.0)),
 		"color": Color("#53645b"),
 		"power_units": 2,
 		"day1_action_key": "fan",
@@ -243,8 +243,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "노트북",
 		"title": "노트북",
 		"body": "오래된 노트북입니다.\n전력을 사용해 로그와 바깥 정보를 확인할 수 있습니다.",
-		"position": _map_point(Vector2(1110.0, 282.0)),
-		"size": _map_size(Vector2(120.0, 80.0)),
+		"position": _map_point(Vector2(1150.0, 325.0)),
+		"size": _map_size(Vector2(120.0, 120.0)),
 		"color": Color("#3b4748"),
 		"power_units": 3,
 		"day1_action_key": "laptop",
@@ -256,7 +256,7 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "통신 장치",
 		"title": "통신 장치",
 		"body": "끊긴 신호 사이에서 바깥의 안내를 잡아낼 수 있을지도 모릅니다.",
-		"position": _map_point(Vector2(760.0, 318.0)),
+		"position": _map_point(Vector2(940.0, 318.0)),
 		"size": _map_size(Vector2(72.0, 116.0)),
 		"color": Color("#5e5368"),
 		"power_units": 4,
@@ -269,8 +269,8 @@ func _spawn_placeholder_furniture() -> void:
 		"name": "침대",
 		"title": "오늘을 마친다",
 		"body": "더 할 일을 정리하고 오늘 하루를 마칠 수 있습니다.",
-		"position": _map_point(Vector2(286.0, 428.0)),
-		"size": _map_size(Vector2(230.0, 350.0)),
+		"position": _map_point(Vector2(286.0, 450.0)),
+		"size": _map_size(Vector2(250.0, 480.0)),
 		"color": Color("#5a5047"),
 		"interaction_type": "end_day",
 		"prompt_text": "[E] 하루 마치기",
@@ -318,11 +318,15 @@ func _add_furniture_blocker(center: Vector2, size: Vector2) -> void:
 
 func _add_environment_blockers() -> void:
 	# These blockers match major furniture already visible in the reference map.
-	_add_furniture_blocker(_map_point(Vector2(450.0, 250.0)), _map_size(Vector2(145.0, 260.0)))
+	_add_furniture_blocker(_map_point(Vector2(520.0, 270.0)), _map_size(Vector2(255.0, 380.0)))
 	_add_furniture_blocker(_map_point(Vector2(1080.0, 305.0)), _map_size(Vector2(330.0, 155.0)))
-	_add_furniture_blocker(_map_point(Vector2(1320.0, 350.0)), _map_size(Vector2(118.0, 330.0)))
-	_add_furniture_blocker(_map_point(Vector2(1080.0, 962.0)), _map_size(Vector2(450.0, 160.0)))
-	_add_furniture_blocker(_map_point(Vector2(210.0, 870.0)), _map_size(Vector2(320.0, 350.0)))
+	_add_furniture_blocker(_map_point(Vector2(1310.0, 340.0)), _map_size(Vector2(150.0, 330.0)))
+	_add_furniture_blocker(_map_point(Vector2(1150.0, 1025.0)), _map_size(Vector2(500.0, 160.0)))
+	_add_furniture_blocker(_map_point(Vector2(210.0, 950.0)), _map_size(Vector2(600.0, 450.0)))
+	_add_furniture_blocker(_map_point(Vector2(1115.0, 685.0)), _map_size(Vector2(200.0, 185.0)))
+	_add_furniture_blocker(_map_point(Vector2(690.0, 1050.0)), _map_size(Vector2(220.0, 100.0)))
+	_add_furniture_blocker(_map_point(Vector2(500.0, 990.0)), _map_size(Vector2(100.0, 250.0)))
+	_add_furniture_blocker(_map_point(Vector2(1175.0, 520.0)), _map_size(Vector2(120.0, 80.0)))
 
 
 func _update_nearest_interactable() -> void:
