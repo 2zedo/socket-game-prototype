@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://cgmly3c446law"]
 
-[ext_resource type="Script" uid="uid://wfffbmqy6wrw" path="res://scripts/quarterview/QuarterviewApartmentShellCandidate.gd" id="1_shell_candidate"]
+[ext_resource type="Script" path="res://scripts/quarterview/QuarterviewApartmentShellCandidate.gd" id="1_shell_candidate"]
 [ext_resource type="Resource" path="res://resources/quarterview/apartment_shell_object_footprints.tres" id="2_object_footprints"]
 
 [node name="QuarterviewApartmentShellCandidate" type="Node2D"]

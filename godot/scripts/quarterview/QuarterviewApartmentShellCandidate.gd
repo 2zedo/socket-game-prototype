@@ -128,6 +128,12 @@ const COLOR_OCCLUSION_STUB_SHADOW := Color(0.03, 0.035, 0.04, 0.58)
 const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 const COLOR_OBJECT_INTERACTION := Color(0.26, 1.0, 0.86, 0.94)
 const COLOR_OBJECT_BLOCKED_CELL := Color(1.0, 0.28, 0.20, 0.92)
+const COLOR_DEBUG_PANEL := Color(0.025, 0.03, 0.038, 0.92)
+const COLOR_DEBUG_PANEL_ALT := Color(0.045, 0.055, 0.068, 0.94)
+const COLOR_DEBUG_PANEL_BORDER := Color(0.46, 0.66, 0.70, 0.70)
+const COLOR_DEBUG_PANEL_BACKDROP := Color(0.0, 0.0, 0.0, 0.48)
+const COLOR_DEBUG_TEXT := Color(0.92, 0.94, 0.90, 1.0)
+const COLOR_DEBUG_MUTED_TEXT := Color(0.68, 0.76, 0.78, 1.0)
 
 @export_group("View Orientation")
 # view_orientation controls the isometric projection basis / mirroring only.
@@ -247,6 +253,15 @@ var _active_room_label: Label
 var _active_room_background: ColorRect
 var _player_debug_marker: Polygon2D
 var _player_debug_label: Label
+var _interaction_menu_panel: PanelContainer
+var _interaction_object_list: VBoxContainer
+var _interaction_panel: PanelContainer
+var _interaction_title_label: Label
+var _interaction_body_label: Label
+var _interaction_result_label: Label
+var _interaction_active_object_id := ""
+var _phone_overlay_root: Control
+var _phone_content_label: Label
 var _last_active_room_area := ""
 
 
@@ -260,6 +275,9 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE and _close_top_debug_overlay():
+			get_viewport().set_input_as_handled()
+			return
 		if event.keycode == KEY_L:
 			show_debug_labels = not show_debug_labels
 			_update_label_visibility()
@@ -295,6 +313,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_O:
 			show_occlusion_wall_debug = not show_occlusion_wall_debug
 			_update_label_visibility()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_J:
+			_toggle_interaction_debug_menu()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_H:
+			_toggle_phone_overlay()
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_I:
@@ -1129,6 +1155,19 @@ func _print_object_footprint_summary() -> void:
 			row["edit_hint"],
 		])
 	print("=== End Object Footprint Summary ===")
+	_print_interaction_debug_summary()
+
+
+func _print_interaction_debug_summary() -> void:
+	print("=== Apartment Interaction / Phone Debug Summary ===")
+	print("interaction_debug_objects=%d" % _interaction_debug_object_ids().size())
+	print("interaction_menu_visible=%s interaction_panel_visible=%s phone_debug_overlay_visible=%s" % [
+		str(_interaction_menu_panel != null and _interaction_menu_panel.visible),
+		str(_interaction_panel != null and _interaction_panel.visible),
+		str(_phone_overlay_root != null and _phone_overlay_root.visible),
+	])
+	print("keys: J=interaction debug menu, H=phone debug overlay, ESC=close top overlay")
+	print("=== End Interaction / Phone Debug Summary ===")
 
 
 func _object_footprint_inventory_rows() -> Array[Dictionary]:
@@ -1226,6 +1265,8 @@ func _object_display_name_ko(id: String) -> String:
 			return "욕실 설비"
 		"entrance_shoe_area_placeholder":
 			return "신발 공간"
+		"phone":
+			return "핸드폰"
 		_:
 			return id
 
@@ -1432,7 +1473,7 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 func _draw_control_hint() -> void:
 	var label := Label.new()
 	label.name = "ShellControlHint"
-	label.text = "1/2/3: 카메라  |  L: 구역 라벨  |  G: 바닥 좌표  |  E: 벽선 좌표  |  W: 벽 정보\nN: 이동/충돌  |  P: 오브젝트  |  O: 숨김벽  |  I: 목록 출력  |  방향키: 디버그 위치 이동"
+	label.text = "1/2/3: 카메라  |  L: 구역 라벨  |  G: 바닥 좌표  |  E: 벽선 좌표  |  W: 벽 정보\nN: 이동/충돌  |  P: 오브젝트  |  O: 숨김벽  |  J: 상호작용 테스트  |  H: 핸드폰\nI: 목록 출력  |  ESC: 열린 UI 닫기  |  방향키: 디버그 위치 이동"
 	label.position = Vector2(24, 20)
 	label.modulate = COLOR_LABEL
 	label.add_theme_font_size_override("font_size", 14)
@@ -1442,6 +1483,314 @@ func _draw_control_hint() -> void:
 	_debug_overlay_layer.add_child(label)
 	_create_hover_coord_overlay()
 	_create_active_room_overlay()
+	_create_interaction_debug_ui()
+
+
+# Builds shell-only interaction / phone UI. This deliberately stays in the candidate
+# scene and does not call production PhoneUI, object interaction, save, power, or time systems.
+func _create_interaction_debug_ui() -> void:
+	_interaction_menu_panel = _make_debug_panel("InteractionDebugMenu", Vector2(24.0, 132.0), Vector2(330.0, 520.0))
+	var menu_box: VBoxContainer = _make_panel_vbox(_interaction_menu_panel)
+	menu_box.add_child(_make_debug_label_control("상호작용 테스트", 18, COLOR_DEBUG_TEXT))
+	menu_box.add_child(_make_debug_label_control("shell debug mock / 실제 오브젝트 클릭 연결 없음", 12, COLOR_DEBUG_MUTED_TEXT))
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(300.0, 410.0)
+	_interaction_object_list = VBoxContainer.new()
+	_interaction_object_list.add_theme_constant_override("separation", 4)
+	scroll.add_child(_interaction_object_list)
+	menu_box.add_child(scroll)
+	for object_id in _interaction_debug_object_ids():
+		var data := _interaction_debug_object_data(object_id)
+		var button := Button.new()
+		button.text = "%s / %s" % [String(data.get("name", object_id)), object_id]
+		button.pressed.connect(Callable(self, "_open_interaction_panel").bind(object_id))
+		_interaction_object_list.add_child(button)
+	var close_menu_button := Button.new()
+	close_menu_button.text = "닫기"
+	close_menu_button.pressed.connect(func() -> void:
+		_close_interaction_debug_ui()
+	)
+	menu_box.add_child(close_menu_button)
+	_debug_overlay_layer.add_child(_interaction_menu_panel)
+	_interaction_menu_panel.visible = false
+
+	_interaction_panel = _make_debug_panel("InteractionDebugPanel", Vector2(380.0, 132.0), Vector2(420.0, 330.0), COLOR_DEBUG_PANEL_ALT)
+	var interaction_box: VBoxContainer = _make_panel_vbox(_interaction_panel)
+	_interaction_title_label = _make_debug_label_control("오브젝트", 18, COLOR_DEBUG_TEXT)
+	_interaction_body_label = _make_debug_label_control("", 13, COLOR_DEBUG_TEXT)
+	_interaction_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_interaction_result_label = _make_debug_label_control("", 13, COLOR_DEBUG_MUTED_TEXT)
+	_interaction_result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	interaction_box.add_child(_interaction_title_label)
+	interaction_box.add_child(_interaction_body_label)
+	interaction_box.add_child(_interaction_result_label)
+	var interaction_buttons := HBoxContainer.new()
+	interaction_buttons.add_theme_constant_override("separation", 8)
+	for button_data in [
+		{"label": "사용하기", "mode": "use"},
+		{"label": "살펴보기", "mode": "inspect"},
+		{"label": "취소", "mode": "cancel"},
+	]:
+		var button := Button.new()
+		button.text = String(button_data["label"])
+		var mode := String(button_data["mode"])
+		button.pressed.connect(Callable(self, "_handle_interaction_panel_action").bind(mode))
+		interaction_buttons.add_child(button)
+	interaction_box.add_child(interaction_buttons)
+	_debug_overlay_layer.add_child(_interaction_panel)
+	_interaction_panel.visible = false
+
+	_create_phone_debug_overlay()
+
+
+func _create_phone_debug_overlay() -> void:
+	_phone_overlay_root = Control.new()
+	_phone_overlay_root.name = "ApartmentShellPhoneDebugOverlay"
+	_phone_overlay_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_phone_overlay_root.visible = false
+	var backdrop := ColorRect.new()
+	backdrop.name = "PhoneDebugBackdrop"
+	backdrop.color = COLOR_DEBUG_PANEL_BACKDROP
+	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_phone_overlay_root.add_child(backdrop)
+	var panel := _make_debug_panel("PhoneDebugPanel", Vector2(500.0, 90.0), Vector2(430.0, 470.0), COLOR_DEBUG_PANEL_ALT)
+	var phone_box: VBoxContainer = _make_panel_vbox(panel)
+	phone_box.add_child(_make_debug_label_control("CONCENT Phone", 22, COLOR_DEBUG_TEXT))
+	phone_box.add_child(_make_debug_label_control("shell debug overlay / production PhoneUI 미연결", 12, COLOR_DEBUG_MUTED_TEXT))
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 6)
+	for tab_data in [
+		{"label": "메시지", "tab": "messages"},
+		{"label": "전력", "tab": "power"},
+		{"label": "의뢰", "tab": "jobs"},
+		{"label": "설정", "tab": "settings"},
+	]:
+		var tab_button := Button.new()
+		tab_button.text = String(tab_data["label"])
+		var tab := String(tab_data["tab"])
+		tab_button.pressed.connect(Callable(self, "_show_phone_tab").bind(tab))
+		tabs.add_child(tab_button)
+	phone_box.add_child(tabs)
+	_phone_content_label = _make_debug_label_control("", 14, COLOR_DEBUG_TEXT)
+	_phone_content_label.custom_minimum_size = Vector2(380.0, 250.0)
+	_phone_content_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	phone_box.add_child(_phone_content_label)
+	var close_button := Button.new()
+	close_button.text = "닫기"
+	close_button.pressed.connect(func() -> void:
+		_close_phone_overlay()
+	)
+	phone_box.add_child(close_button)
+	_phone_overlay_root.add_child(panel)
+	_debug_overlay_layer.add_child(_phone_overlay_root)
+	_show_phone_tab("messages")
+
+
+func _make_debug_panel(panel_name: String, position: Vector2, size: Vector2, fill_color := COLOR_DEBUG_PANEL) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.name = panel_name
+	panel.position = position
+	panel.custom_minimum_size = size
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill_color
+	style.border_color = COLOR_DEBUG_PANEL_BORDER
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 10.0
+	style.content_margin_bottom = 10.0
+	panel.add_theme_stylebox_override("panel", style)
+	return panel
+
+
+func _make_panel_vbox(panel: PanelContainer) -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+	return box
+
+
+func _make_debug_label_control(text: String, font_size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.modulate = color
+	label.add_theme_font_size_override("font_size", font_size)
+	return label
+
+
+func _toggle_interaction_debug_menu() -> void:
+	if _phone_overlay_root != null and _phone_overlay_root.visible:
+		_close_phone_overlay()
+	if _interaction_menu_panel == null:
+		return
+	var should_show := not _interaction_menu_panel.visible
+	_interaction_menu_panel.visible = should_show
+	if not should_show and _interaction_panel != null:
+		_interaction_panel.visible = false
+
+
+func _close_interaction_debug_ui() -> void:
+	if _interaction_menu_panel != null:
+		_interaction_menu_panel.visible = false
+	if _interaction_panel != null:
+		_interaction_panel.visible = false
+	_interaction_active_object_id = ""
+
+
+func _open_interaction_panel(object_id: String) -> void:
+	if _phone_overlay_root != null and _phone_overlay_root.visible:
+		_close_phone_overlay()
+	_interaction_active_object_id = object_id
+	var data := _interaction_debug_object_data(object_id)
+	if _interaction_title_label != null:
+		_interaction_title_label.text = "%s / %s" % [String(data.get("name", object_id)), object_id]
+	if _interaction_body_label != null:
+		_interaction_body_label.text = "%s\n\n현재 패널은 shell debug mock입니다. 실제 오브젝트 클릭, 이동, 허기, 전력, 시간 변화와 연결되지 않았습니다." % String(data.get("summary", "설명이 없는 shell object입니다."))
+	if _interaction_result_label != null:
+		_interaction_result_label.text = "버튼을 눌러 mock 결과를 확인하세요."
+	if _interaction_panel != null:
+		_interaction_panel.visible = true
+	if _interaction_menu_panel != null:
+		_interaction_menu_panel.visible = true
+
+
+func _handle_interaction_panel_action(mode: String) -> void:
+	if mode == "cancel":
+		if _interaction_panel != null:
+			_interaction_panel.visible = false
+		_interaction_active_object_id = ""
+		return
+	if _interaction_active_object_id.is_empty():
+		return
+	var data := _interaction_debug_object_data(_interaction_active_object_id)
+	if _interaction_result_label == null:
+		return
+	if mode == "inspect":
+		_interaction_result_label.text = "살펴보기: %s" % String(data.get("inspect", data.get("summary", "")))
+	elif mode == "use":
+		_interaction_result_label.text = "사용 결과: %s" % String(data.get("use_result", "아직 실제 효과는 연결되지 않았습니다. 나중에 허기/전력/시간 변화와 연결 예정."))
+
+
+func _toggle_phone_overlay() -> void:
+	if _phone_overlay_root == null:
+		return
+	if _phone_overlay_root.visible:
+		_close_phone_overlay()
+	else:
+		_open_phone_overlay()
+
+
+func _open_phone_overlay() -> void:
+	_close_interaction_debug_ui()
+	if _phone_overlay_root != null:
+		_show_phone_tab("messages")
+		_phone_overlay_root.visible = true
+
+
+func _close_phone_overlay() -> void:
+	if _phone_overlay_root != null:
+		_phone_overlay_root.visible = false
+
+
+func _close_top_debug_overlay() -> bool:
+	if _phone_overlay_root != null and _phone_overlay_root.visible:
+		_close_phone_overlay()
+		return true
+	if _interaction_panel != null and _interaction_panel.visible:
+		_interaction_panel.visible = false
+		_interaction_active_object_id = ""
+		return true
+	if _interaction_menu_panel != null and _interaction_menu_panel.visible:
+		_close_interaction_debug_ui()
+		return true
+	return false
+
+
+func _show_phone_tab(tab: String) -> void:
+	if _phone_content_label == null:
+		return
+	match tab:
+		"messages":
+			_phone_content_label.text = "메시지\n\n읽지 않은 메시지: 1\n브로커: 오늘 배급 전력 확인했어?\n\n이 화면은 shell debug mock입니다."
+		"power":
+			_phone_content_label.text = "전력\n\n현재 전력: mock\n소비량: mock\n주의: 실제 전력 시스템과 아직 연결되지 않음"
+		"jobs":
+			_phone_content_label.text = "의뢰\n\n진행 가능한 의뢰 없음\n나중에 브로커 의뢰 / 해킹 의뢰와 연결 예정"
+		"settings":
+			_phone_content_label.text = "설정\n\ndebug phone overlay\nproduction PhoneUI와 연결되지 않음\nESC 또는 닫기로 종료"
+		_:
+			_phone_content_label.text = "알 수 없는 debug phone tab: %s" % tab
+
+
+func _interaction_debug_object_ids() -> Array[String]:
+	return [
+		"bed_placeholder",
+		"fridge_placeholder",
+		"sink_counter_placeholder",
+		"microwave_placeholder",
+		"small_table_placeholder",
+		"desk_placeholder",
+		"navi_chair_placeholder",
+		"power_panel_placeholder",
+		"connector_board_placeholder",
+		"comm_device_placeholder",
+		"bathroom_fixture_placeholder",
+		"entrance_shoe_area_placeholder",
+		"phone",
+	]
+
+
+func _interaction_debug_object_data(object_id: String) -> Dictionary:
+	var data := {
+		"name": _object_display_name_ko(object_id),
+		"summary": "아파트 shell object footprint 후보입니다.",
+		"inspect": "아직 상세 설명이 연결되지 않았습니다.",
+		"use_result": "아직 실제 효과는 연결되지 않았습니다. 나중에 허기/전력/시간 변화와 연결 예정.",
+	}
+	match object_id:
+		"bed_placeholder":
+			data["summary"] = "수면 구역의 침대 footprint 후보입니다."
+			data["inspect"] = "정돈된 침대다. 휴식과 하루 종료 후보가 될 수 있다."
+		"fridge_placeholder":
+			data["summary"] = "생활공간 주방 쪽 소형 냉장고 후보입니다."
+			data["inspect"] = "소형 냉장고다. 배급 식품을 보관한다."
+		"sink_counter_placeholder":
+			data["summary"] = "작은 싱크대와 조리대 후보입니다."
+			data["inspect"] = "작은 싱크대다. 컵과 커피 도구를 씻는 정도의 생활 설비다."
+		"microwave_placeholder":
+			data["summary"] = "비차단 전자레인지 후보입니다."
+			data["inspect"] = "전자레인지다. 간단한 배급식을 데울 수 있을 것 같다."
+		"small_table_placeholder":
+			data["summary"] = "작은 2인용 식탁 footprint 후보입니다."
+			data["inspect"] = "작은 테이블이다. 식사, 메모 확인, Phone 충전 자리로 쓸 수 있다."
+		"desk_placeholder":
+			data["summary"] = "작업공간의 작은 책상 후보입니다."
+			data["inspect"] = "간단한 작업 표면이다. 핵심 해킹 장비의 중심은 아니다."
+		"navi_chair_placeholder":
+			data["summary"] = "NAVI LINK 진입 좌석 후보입니다."
+			data["inspect"] = "NAVI 접속과 장시간 작업에 쓰는 의자다."
+		"power_panel_placeholder":
+			data["summary"] = "작업공간 벽면 전력 패널 후보입니다."
+			data["inspect"] = "방의 전력 상태를 확인하는 패널이다."
+		"connector_board_placeholder":
+			data["summary"] = "소형 커넥터 보드 후보입니다."
+			data["inspect"] = "전력 라인과 장비 연결 상태를 점검하는 보드다."
+		"comm_device_placeholder":
+			data["summary"] = "소형 통신 장비 후보입니다."
+			data["inspect"] = "작은 통신 장비다. NODE나 브로커 접점과 이어질 수 있다."
+		"bathroom_fixture_placeholder":
+			data["summary"] = "욕실 설비 후보입니다."
+			data["inspect"] = "작은 욕실 설비다. 현재는 구조 검증용 표시다."
+		"entrance_shoe_area_placeholder":
+			data["summary"] = "현관 신발/슬리퍼 영역 후보입니다."
+			data["inspect"] = "출입 동선을 막지 않는 작은 신발 공간이다."
+		"phone":
+			data["name"] = "핸드폰"
+			data["summary"] = "유이가 휴대하는 Phone mock 항목입니다."
+			data["inspect"] = "Phone은 방 고정 오브젝트가 아니라 휴대 장비다. 이 shell에서는 H 키로 debug overlay를 연다."
+			data["use_result"] = "Phone debug overlay는 H 키로 열 수 있습니다. production PhoneUI와는 연결되지 않았습니다."
+	return data
 
 
 func _draw_floor_grid_overlay() -> void:

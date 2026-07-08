@@ -168,6 +168,9 @@ Shell editing controls:
 - `P`: show object footprint placeholders.
 - `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
 - `I`: print wall inventory followed by object footprint summary.
+- `J`: open shell-only interaction debug menu for mock object use / inspect / cancel flow.
+- `H`: open shell-only Phone debug overlay; this does not call production `PhoneUI`.
+- `ESC`: close the topmost shell debug overlay.
 - `debug_focus_object_id`: emphasize one footprint id, for example `bed_placeholder`.
 - Object overlay detail options: `show_object_labels`, `show_object_interaction_cells`, `show_blocking_object_cells`, and `show_nonblocking_object_cells`.
 
@@ -180,6 +183,7 @@ Coordinate rule:
 Production boundary:
 
 - These placeholders do not create `RoomObjectDefinition` Resources.
+- The shell interaction menu and Phone overlay are debug-only UI and do not call production object interaction, production `PhoneUI`, save-load, Grid Credit, story flags, or QuarterviewMain production wiring.
 - They do not add furniture, final sprites, atlas wiring, pathfinding, save-load, Grid Credit, story flags, or QuarterviewMain production wiring.
 - They exist only to test footprint, interaction-cell, and movement-blocking assumptions before final art / object placement.
 

@@ -175,3 +175,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd`, object footprint Resource scripts/resources, shell scene Resource assignment, and current room-object/technical/status docs.
 - Not changed: footprint coordinates, final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
 - Next: Use `debug_focus_object_id` and the P overlay detail toggles to inspect individual footprints before any further coordinate tuning.
+
+### Apartment shell interaction / Phone debug UI
+
+- Commit: pending in this task.
+- Result: Added shell-only `J` interaction debug menu, mock object interaction panel, `H` Phone overlay, mock Phone tabs, and `ESC` top-overlay close behavior.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current room-object/technical/status docs.
+- Not changed: object click movement, production PhoneUI, production object system, hunger/power/time state, save-load, assets/atlas/fonts, room structure, footprint coordinates, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Manually inspect Korean label readability and button flow in the shell scene before promoting any interaction UX to a real candidate scene.

@@ -84,6 +84,9 @@ Do not modify by default:
 | Show wall edge / vertex coordinates | Press `E` in the shell scene; wall labels use `벽선 from -> to` / `축=A/B` |
 | Show navigation / collision debug | Press `N` in the shell scene; labels use `이동 가능`, `막힘`, and `통과 가능` |
 | Show object footprint placeholders | Press `P` in the shell scene; object labels prioritize Korean names with `id` as secondary info |
+| Open shell interaction debug menu | Press `J`; choose a mock object to test use / inspect / cancel panel flow |
+| Open shell Phone debug overlay | Press `H`; switch mock Messages / Power / Jobs / Settings tabs |
+| Close top shell debug UI | Press `ESC`; closes Phone overlay, then interaction panel, then interaction menu |
 | Highlight occlusion / revealable walls | Press `O` in the shell scene; labels use `숨김벽` and Korean display-state text |
 | Identify a floor cell under the mouse | Enable `G`, then hover a floor tile; click to print the cell and its four wall edges |
 | Identify an exact wall edge under the mouse | Enable `E`, then hover near a floor edge; click to print the nearest wall edge `from_cell -> to_cell` |
@@ -131,6 +134,15 @@ Object footprint edit helpers:
 - `show_object_interaction_cells` controls use-position markers.
 - `show_blocking_object_cells` and `show_nonblocking_object_cells` control whether blocking or non-blocking footprint categories are drawn in the `P` overlay.
 - `I` prints each object's `source`: `resource`, `fallback`, or `custom`, plus an edit hint for the correct edit location.
+
+Shell-only interaction UI:
+
+- `J` opens a mock object menu for the current footprint ids plus portable `phone`.
+- Selecting an item opens a candidate-only interaction panel with `사용하기`, `살펴보기`, and `취소`.
+- The panel only writes mock text; it does not move Yui, mutate hunger / power / time, call production object logic, or save state.
+- `H` opens a separate shell-only Phone overlay with mock tabs: `메시지`, `전력`, `의뢰`, and `설정`.
+- The shell Phone overlay does not use production `PhoneUI` and intentionally avoids `SurvivalState`, save-load, job state, and production wiring.
+- Phone and interaction panels are kept mutually exclusive; `ESC` closes the topmost shell debug UI.
 
 `debug_auto_reveal_walls=false` keeps the existing shell view: `REVEALABLE` walls stay as low stubs. When `debug_auto_reveal_walls=true`, the shell marker's active room area can reveal a `REVEALABLE` wall if that wall has `reveal_when_area_active=true` and matching `reveal_area_id`. `preview_revealed_walls=true` still has priority and forces all `REVEALABLE` walls to full-wall preview regardless of active room. Example reveal areas: `reveal_area_id="living_area"` reveals while the marker is in the living space; `reveal_area_id="work_power_area"` would reveal while the marker is in the work / power room.
 
