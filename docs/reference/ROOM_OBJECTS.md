@@ -123,10 +123,21 @@ These are coordinate-based debug placeholders in `QuarterviewApartmentShellCandi
 Resource script:
 
 - `godot/scripts/quarterview/ApartmentObjectFootprintConfig.gd`
+- `godot/scripts/quarterview/ApartmentObjectFootprintSetConfig.gd`
 
-Default list location:
+Default Resource:
+
+- `godot/resources/quarterview/apartment_shell_object_footprints.tres`
+
+Fallback list location:
 
 - `_default_object_footprint_configs()` in `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd`
+
+Loading order:
+
+1. `object_footprint_set.objects` from the Resource assigned on `QuarterviewApartmentShellCandidate`
+2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
+3. additive `custom_object_footprints` entries from the Inspector
 
 Current shell-only placeholder defaults:
 
@@ -157,6 +168,8 @@ Shell editing controls:
 - `P`: show object footprint placeholders.
 - `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
 - `I`: print wall inventory followed by object footprint summary.
+- `debug_focus_object_id`: emphasize one footprint id, for example `bed_placeholder`.
+- Object overlay detail options: `show_object_labels`, `show_object_interaction_cells`, `show_blocking_object_cells`, and `show_nonblocking_object_cells`.
 
 Coordinate rule:
 

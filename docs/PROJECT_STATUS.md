@@ -43,6 +43,7 @@
 - Room-area reveal debugging is available through `debug_auto_reveal_walls`; the shell marker's active room can switch matching `REVEALABLE` walls between stub and full-wall display without production character wiring.
 - Object footprint placeholder debugging is available with `P`; blocking footprints are removed from `N` walkable cells, non-blocking markers remain visible only, and `I` prints an object summary after the wall inventory.
 - Object footprint defaults have a first coordinate tune: doorway-adjacent placeholders avoid passable entrances, interaction cells stay walkable, and blocking placeholders stay within their intended room areas.
+- Object footprint defaults are now Resource-backed through `godot/resources/quarterview/apartment_shell_object_footprints.tres`, with script fallback and additive Inspector custom entries preserved.
 - Apartment shell debug overlays are now Korean-first for screen labels: `G` shows `칸`, `E` shows `벽선`, `W` shows Korean wall names plus ids, `N` shows movement/collision states, `P` shows Korean object names, and `O` labels hidden / revealable walls.
 - Third-party selected asset inventory is now tracked in `docs/reference/TECHNICAL_MAP.md`, and `test_asset_smoke.gd` reads that current reference location instead of the archived old root document path.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.

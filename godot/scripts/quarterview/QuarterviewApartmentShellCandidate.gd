@@ -2,6 +2,7 @@ extends Node2D
 
 const ApartmentWallSegmentConfigScript := preload("res://scripts/quarterview/ApartmentWallSegmentConfig.gd")
 const ApartmentObjectFootprintConfigScript := preload("res://scripts/quarterview/ApartmentObjectFootprintConfig.gd")
+const ApartmentObjectFootprintSetConfigScript := preload("res://scripts/quarterview/ApartmentObjectFootprintSetConfig.gd")
 
 enum ViewOrientation {
 	FRONT_RIGHT,
@@ -175,8 +176,11 @@ const COLOR_OBJECT_BLOCKED_CELL := Color(1.0, 0.28, 0.20, 0.92)
 @export var custom_wall_segments: Array[Resource] = []
 
 @export_group("Object Footprint Editing")
-# Floor object placeholders use floor-cell coordinates. Leave this empty to use the default
-# shell footprint test set, or add Resource items here to override the default list.
+# Floor object placeholders use floor-cell coordinates. The Resource set is the main editable
+# source; the script fallback stays available when the Resource is not assigned or is empty.
+@export var object_footprint_set: ApartmentObjectFootprintSetConfig
+# Custom entries are additive shell tests. Keep ids unique unless you intentionally want overlap
+# warnings while comparing a custom footprint against the Resource-backed baseline.
 @export var custom_object_footprints: Array[Resource] = []
 
 @export_group("Window Layout")
@@ -203,6 +207,10 @@ const COLOR_OBJECT_BLOCKED_CELL := Color(1.0, 0.28, 0.20, 0.92)
 @export var show_navigation_debug := false
 # Shows coordinate-based furniture / device footprint placeholders. These are shell-only guides.
 @export var show_object_placeholders := false
+@export var show_object_labels := true
+@export var show_object_interaction_cells := true
+@export var show_blocking_object_cells := true
+@export var show_nonblocking_object_cells := true
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
 @export var show_occlusion_wall_debug := false
 # Preview helper only: draw REVEALABLE walls at full height without adding character/area logic.
@@ -210,6 +218,7 @@ const COLOR_OBJECT_BLOCKED_CELL := Color(1.0, 0.28, 0.20, 0.92)
 # Shell-only reveal test. When true, REVEALABLE walls can become full walls for the active room area.
 @export var debug_auto_reveal_walls := false
 @export var debug_focus_wall_id := ""
+@export var debug_focus_object_id := ""
 @export var player_debug_cell := Vector2i(1, 8)
 
 @onready var camera_2d: Camera2D = $Camera2D
@@ -719,15 +728,23 @@ func _object_footprints() -> Array[Dictionary]:
 
 func _active_object_footprint_config_entries() -> Array[Dictionary]:
 	var entries: Array[Dictionary] = []
-	var source := "default"
-	var configs := _default_object_footprint_configs()
-	if not custom_object_footprints.is_empty():
-		source = "custom_object_footprints"
-		configs = custom_object_footprints
+	var base_source := "fallback"
+	var configs: Array[Resource] = []
+	if object_footprint_set != null and not object_footprint_set.objects.is_empty():
+		base_source = "resource"
+		for config in object_footprint_set.objects:
+			configs.append(config)
+	else:
+		configs = _default_object_footprint_configs()
 
 	for config in configs:
 		entries.append({
-			"source": source,
+			"source": base_source,
+			"config": config,
+		})
+	for config in custom_object_footprints:
+		entries.append({
+			"source": "custom",
 			"config": config,
 		})
 	return entries
@@ -1138,7 +1155,11 @@ func _object_edit_hint(object_data: Dictionary) -> String:
 	var id := String(object_data.get("id", ""))
 	var source := String(object_data.get("source", "default"))
 	var location := "edit _default_object_footprint_configs() entry id=\"%s\"" % id
-	if source == "custom_object_footprints":
+	if source == "resource":
+		location = "edit godot/resources/quarterview/apartment_shell_object_footprints.tres entry id=\"%s\"" % id
+	elif source == "fallback":
+		location = "edit _default_object_footprint_configs() entry id=\"%s\"" % id
+	elif source == "custom":
 		location = "edit Inspector > custom_object_footprints entry id=\"%s\"" % id
 	return "%s; hide: enabled=false; move: anchor_cell; resize: size_cells; movement block: blocks_movement; use point: interaction_cell / interaction_cells; use G floor cell overlay for exact floor coordinates" % location
 
@@ -1326,6 +1347,11 @@ func _draw_object_placeholders() -> void:
 	for object_data in _object_footprints():
 		if not bool(object_data.get("enabled", true)):
 			continue
+		var blocks_movement := bool(object_data.get("blocks_movement", true))
+		if blocks_movement and not show_blocking_object_cells:
+			continue
+		if not blocks_movement and not show_nonblocking_object_cells:
+			continue
 		_draw_object_placeholder(object_data)
 
 
@@ -1336,8 +1362,13 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 	var size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
 	var blocks_movement := bool(object_data.get("blocks_movement", true))
 	var color: Color = object_data.get("debug_color", Color(0.55, 0.74, 1.0, 0.38))
+	var focus_id := debug_focus_object_id.strip_edges()
+	var has_focus := not focus_id.is_empty()
+	var is_focused := not has_focus or focus_id == id
 	if not blocks_movement:
 		color.a *= 0.72
+	if has_focus and not is_focused:
+		color.a *= 0.24
 
 	var points := _rect_points(Rect2i(anchor, size))
 	_add_polygon(_object_layer, "object_%s_footprint" % id, points, color)
@@ -1345,12 +1376,12 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 		_object_layer,
 		"object_%s_outline" % id,
 		points + [points[0]],
-		color.lightened(0.34),
-		3.0 if blocks_movement else 2.0
+		color.lightened(0.52 if is_focused else 0.18),
+		5.0 if has_focus and is_focused else (3.0 if blocks_movement else 2.0)
 	)
 
 	var label_position := _object_cells_center(_object_occupied_cells(object_data)) + Vector2(-58.0, -22.0)
-	if blocks_movement:
+	if blocks_movement and is_focused:
 		for occupied_cell in _object_occupied_cells(object_data):
 			_add_marker(
 				_object_layer,
@@ -1359,21 +1390,25 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 				COLOR_OBJECT_BLOCKED_CELL,
 				5.0
 			)
-	_add_label_with_background(
-		_object_layer,
-		"object_%s_label" % id,
-		"%s\nid=%s\n칸=%s 크기=%s\n이동막음=%s" % [
-			name_ko,
-			id,
-			_format_cell(anchor),
-			_format_cell(size),
-			_bool_ko(blocks_movement),
-		],
-		label_position,
-		11,
-		COLOR_OBJECT_LABEL_BACKGROUND
-	)
+	if show_object_labels and is_focused:
+		_add_label_with_background(
+			_object_layer,
+			"object_%s_label" % id,
+			"%s\nid=%s\n칸=%s 크기=%s\n이동막음=%s\nsource=%s" % [
+				name_ko,
+				id,
+				_format_cell(anchor),
+				_format_cell(size),
+				_bool_ko(blocks_movement),
+				String(object_data.get("source", "fallback")),
+			],
+			label_position,
+			12 if has_focus else 11,
+			COLOR_OBJECT_LABEL_BACKGROUND
+		)
 
+	if not show_object_interaction_cells or not is_focused:
+		return
 	for interaction_cell in _object_interaction_cells(object_data):
 		var center := _cell_center(interaction_cell)
 		_add_marker(
@@ -1381,7 +1416,7 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 			"object_%s_interaction_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
 			center,
 			COLOR_OBJECT_INTERACTION,
-			8.0
+			10.0 if has_focus else 8.0
 		)
 		_add_label_with_background(
 			_object_layer,

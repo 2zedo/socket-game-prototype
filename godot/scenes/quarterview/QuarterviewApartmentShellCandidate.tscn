@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://cgmly3c446law"]
+[gd_scene load_steps=3 format=3 uid="uid://cgmly3c446law"]
 
 [ext_resource type="Script" uid="uid://wfffbmqy6wrw" path="res://scripts/quarterview/QuarterviewApartmentShellCandidate.gd" id="1_shell_candidate"]
+[ext_resource type="Resource" path="res://resources/quarterview/apartment_shell_object_footprints.tres" id="2_object_footprints"]
 
 [node name="QuarterviewApartmentShellCandidate" type="Node2D"]
 script = ExtResource("1_shell_candidate")
@@ -24,6 +25,7 @@ service_room_origin = null
 service_room_size = null
 no_large_object_zone_origin = null
 no_large_object_zone_size = null
+object_footprint_set = ExtResource("2_object_footprints")
 living_window_axis_a = null
 living_window_axis_b_start = null
 living_window_width = null

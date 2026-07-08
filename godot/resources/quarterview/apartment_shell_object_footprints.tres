@@ -1,0 +1,165 @@
+[gd_resource type="Resource" script_class="ApartmentObjectFootprintSetConfig" load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scripts/quarterview/ApartmentObjectFootprintSetConfig.gd" id="1_object_set"]
+[ext_resource type="Script" path="res://scripts/quarterview/ApartmentObjectFootprintConfig.gd" id="2_object"]
+
+[sub_resource type="Resource" id="ObjectFootprint_bed"]
+script = ExtResource("2_object")
+id = &"bed_placeholder"
+room_area_id = &"living_area"
+category = &"sleep"
+anchor_cell = Vector2i(8, 6)
+size_cells = Vector2i(2, 2)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(7, 7)])
+debug_color = Color(0.45, 0.62, 0.95, 0.36)
+display_name = "Bed placeholder"
+note = "Sleep-area footprint candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_fridge"]
+script = ExtResource("2_object")
+id = &"fridge_placeholder"
+room_area_id = &"living_area"
+category = &"kitchen"
+anchor_cell = Vector2i(10, 4)
+size_cells = Vector2i(1, 1)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(10, 5)])
+debug_color = Color(0.82, 0.82, 0.72, 0.36)
+display_name = "Fridge placeholder"
+note = "Single-door fridge footprint candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_sink_counter"]
+script = ExtResource("2_object")
+id = &"sink_counter_placeholder"
+room_area_id = &"living_area"
+category = &"kitchen"
+anchor_cell = Vector2i(8, 4)
+size_cells = Vector2i(1, 1)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(8, 5)])
+debug_color = Color(0.42, 0.6, 0.62, 0.36)
+display_name = "Sink counter placeholder"
+note = "Small counter / sink footprint candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_microwave"]
+script = ExtResource("2_object")
+id = &"microwave_placeholder"
+room_area_id = &"living_area"
+category = &"kitchen"
+anchor_cell = Vector2i(9, 4)
+size_cells = Vector2i(1, 1)
+blocks_movement = false
+interaction_cells = Array[Vector2i]([Vector2i(9, 5)])
+debug_color = Color(0.7, 0.7, 0.66, 0.3)
+display_name = "Microwave placeholder"
+note = "Non-blocking counter-top appliance marker."
+
+[sub_resource type="Resource" id="ObjectFootprint_small_table"]
+script = ExtResource("2_object")
+id = &"small_table_placeholder"
+room_area_id = &"living_area"
+category = &"living"
+anchor_cell = Vector2i(4, 6)
+size_cells = Vector2i(2, 1)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(4, 7), Vector2i(5, 7)])
+debug_color = Color(0.72, 0.5, 0.28, 0.34)
+display_name = "Small table placeholder"
+note = "Two-seat table footprint candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_desk"]
+script = ExtResource("2_object")
+id = &"desk_placeholder"
+room_area_id = &"work_power_area"
+category = &"work"
+anchor_cell = Vector2i(2, 0)
+size_cells = Vector2i(2, 1)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(2, 1)])
+debug_color = Color(0.5, 0.62, 0.74, 0.34)
+display_name = "Desk placeholder"
+note = "Small work surface candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_navi_chair"]
+script = ExtResource("2_object")
+id = &"navi_chair_placeholder"
+room_area_id = &"work_power_area"
+category = &"navi"
+anchor_cell = Vector2i(4, 1)
+size_cells = Vector2i(2, 2)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(4, 3), Vector2i(5, 3)])
+debug_color = Color(0.55, 0.48, 0.92, 0.34)
+display_name = "NAVI chair placeholder"
+note = "NAVI LINK seat footprint candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_power_panel"]
+script = ExtResource("2_object")
+id = &"power_panel_placeholder"
+room_area_id = &"work_power_area"
+category = &"power"
+anchor_cell = Vector2i(8, 1)
+size_cells = Vector2i(1, 2)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(7, 2)])
+debug_color = Color(0.18, 0.76, 0.98, 0.32)
+display_name = "Power panel placeholder"
+note = "Wall-side power panel footprint candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_connector_board"]
+script = ExtResource("2_object")
+id = &"connector_board_placeholder"
+room_area_id = &"work_power_area"
+category = &"power"
+anchor_cell = Vector2i(7, 1)
+size_cells = Vector2i(1, 1)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(7, 2)])
+debug_color = Color(0.34, 0.86, 0.66, 0.32)
+display_name = "Connector board placeholder"
+note = "Compact connector-board footprint candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_comm_device"]
+script = ExtResource("2_object")
+id = &"comm_device_placeholder"
+room_area_id = &"work_power_area"
+category = &"signal"
+anchor_cell = Vector2i(1, 2)
+size_cells = Vector2i(1, 1)
+blocks_movement = false
+interaction_cells = Array[Vector2i]([Vector2i(2, 2)])
+debug_color = Color(0.38, 0.7, 1, 0.3)
+display_name = "Comm device placeholder"
+note = "Non-blocking small comm-device marker."
+
+[sub_resource type="Resource" id="ObjectFootprint_bathroom_fixture"]
+script = ExtResource("2_object")
+id = &"bathroom_fixture_placeholder"
+room_area_id = &"bathroom"
+category = &"bathroom"
+anchor_cell = Vector2i(0, 7)
+size_cells = Vector2i(1, 1)
+blocks_movement = true
+interaction_cells = Array[Vector2i]([Vector2i(1, 7)])
+debug_color = Color(0.42, 0.82, 0.92, 0.34)
+display_name = "Bathroom fixture placeholder"
+note = "Minimal bathroom fixture footprint candidate."
+
+[sub_resource type="Resource" id="ObjectFootprint_entrance_shoe_area"]
+script = ExtResource("2_object")
+id = &"entrance_shoe_area_placeholder"
+room_area_id = &"entrance_area"
+category = &"entrance"
+anchor_cell = Vector2i(1, 9)
+size_cells = Vector2i(1, 1)
+blocks_movement = false
+interaction_cells = Array[Vector2i]([Vector2i(1, 8)])
+debug_color = Color(0.9, 0.76, 0.36, 0.3)
+display_name = "Entrance shoe area placeholder"
+note = "Non-blocking entry shoe/slipper marker."
+
+[resource]
+script = ExtResource("1_object_set")
+note = "Default shell-only apartment object footprint placeholders. These are not final furniture sprites or production interactions."
+objects = Array[Resource]([SubResource("ObjectFootprint_bed"), SubResource("ObjectFootprint_fridge"), SubResource("ObjectFootprint_sink_counter"), SubResource("ObjectFootprint_microwave"), SubResource("ObjectFootprint_small_table"), SubResource("ObjectFootprint_desk"), SubResource("ObjectFootprint_navi_chair"), SubResource("ObjectFootprint_power_panel"), SubResource("ObjectFootprint_connector_board"), SubResource("ObjectFootprint_comm_device"), SubResource("ObjectFootprint_bathroom_fixture"), SubResource("ObjectFootprint_entrance_shoe_area")])

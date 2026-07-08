@@ -167,3 +167,11 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `test_asset_smoke.gd`, `docs/reference/TECHNICAL_MAP.md`, and current status/work-log docs.
 - Not changed: production Main/DAY1, QuarterviewMain wiring, shell geometry/debug logic, assets, atlas files, import files, `SurvivalState`, `project.godot`.
 - Next: Keep future third-party selected-copy tracking in the current reference docs unless a dedicated asset inventory reference file is explicitly approved.
+
+### Apartment object footprint Resource set
+
+- Commit: pending in this task.
+- Result: Moved the shell object footprint baseline into `godot/resources/quarterview/apartment_shell_object_footprints.tres`, added `ApartmentObjectFootprintSetConfig`, kept script fallback defaults, and preserved additive Inspector custom entries.
+- Changed: `QuarterviewApartmentShellCandidate.gd`, object footprint Resource scripts/resources, shell scene Resource assignment, and current room-object/technical/status docs.
+- Not changed: footprint coordinates, final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Use `debug_focus_object_id` and the P overlay detail toggles to inspect individual footprints before any further coordinate tuning.

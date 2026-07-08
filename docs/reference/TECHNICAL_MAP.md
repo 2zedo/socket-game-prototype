@@ -122,7 +122,15 @@ Navigation area ids are `living_area`, `work_power_area`, `bathroom`, and `entra
 
 When `P` is enabled, the shell displays object footprint placeholders from `ApartmentObjectFootprintConfig` data. Footprints use floor cell coordinates: `anchor_cell` is the top-left floor cell and `size_cells` expands over floor cells. This is separate from wall segment `from_cell -> to_cell` edge coordinates. `blocks_movement=true` removes occupied floor cells from the `N` walkable-cell overlay; `blocks_movement=false` stays visible without blocking the debug marker. Interaction markers are drawn from `interaction_cell` / `interaction_cells` and are also visible when `N` is enabled.
 
-Object footprint defaults live in `_default_object_footprint_configs()` in `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd`. Add `ApartmentObjectFootprintConfig` Resources to `custom_object_footprints` in the Inspector to override the default list for layout tests. The shell warns, without stopping scene load, when a footprint is outside base walkable cells, overlaps another footprint, blocks a doorway edge, or has an unusable interaction cell.
+Object footprint defaults now live in `godot/resources/quarterview/apartment_shell_object_footprints.tres`, assigned through `object_footprint_set` on `QuarterviewApartmentShellCandidate`. If that Resource is empty or unassigned, the script fallback `_default_object_footprint_configs()` still creates the same baseline. Add `ApartmentObjectFootprintConfig` Resources to `custom_object_footprints` in the Inspector for additive layout tests. The shell warns, without stopping scene load, when a footprint is outside base walkable cells, overlaps another footprint, blocks a doorway edge, or has an unusable interaction cell.
+
+Object footprint edit helpers:
+
+- Set `debug_focus_object_id`, for example `bed_placeholder`, to make one footprint brighter and reduce non-focused label clutter.
+- `show_object_labels` controls footprint labels.
+- `show_object_interaction_cells` controls use-position markers.
+- `show_blocking_object_cells` and `show_nonblocking_object_cells` control whether blocking or non-blocking footprint categories are drawn in the `P` overlay.
+- `I` prints each object's `source`: `resource`, `fallback`, or `custom`, plus an edit hint for the correct edit location.
 
 `debug_auto_reveal_walls=false` keeps the existing shell view: `REVEALABLE` walls stay as low stubs. When `debug_auto_reveal_walls=true`, the shell marker's active room area can reveal a `REVEALABLE` wall if that wall has `reveal_when_area_active=true` and matching `reveal_area_id`. `preview_revealed_walls=true` still has priority and forces all `REVEALABLE` walls to full-wall preview regardless of active room. Example reveal areas: `reveal_area_id="living_area"` reveals while the marker is in the living space; `reveal_area_id="work_power_area"` would reveal while the marker is in the work / power room.
 
@@ -180,6 +188,7 @@ Current shell object footprint placeholder IDs:
 | LivingDeviceDefinition | `godot/scripts/resources/LivingDeviceDefinition.gd` |
 | GridCreditState | `godot/scripts/systems/GridCreditState.gd` |
 | ApartmentObjectFootprintConfig | `godot/scripts/quarterview/ApartmentObjectFootprintConfig.gd` |
+| ApartmentObjectFootprintSetConfig | `godot/scripts/quarterview/ApartmentObjectFootprintSetConfig.gd` |
 
 ## Prototype Scenes
 
