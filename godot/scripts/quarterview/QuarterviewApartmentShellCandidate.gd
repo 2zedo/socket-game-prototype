@@ -1831,20 +1831,20 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 
 	if show_object_interaction_areas:
 		for interaction_cell in _object_interaction_cells(object_data):
-			var center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
+			var interaction_center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
 			var interaction_size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
 			if interaction_size != Vector2.ZERO:
 				_draw_dashed_rect(
 					_object_layer,
 					"object_%s_interaction_area_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
-					center,
+					interaction_center,
 					interaction_size,
 					COLOR_OBJECT_INTERACTION_AREA
 				)
 			_add_marker(
 				_object_layer,
 				"object_%s_interaction_marker_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
-				center,
+				interaction_center,
 				COLOR_OBJECT_INTERACTION_AREA,
 				8.0
 			)

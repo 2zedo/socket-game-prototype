@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Candidate parse error and validator fatal-log detection
+
+- Commit message: `fix: catch candidate script parse errors`.
+- Result: Renamed the interaction-cell local `center` to `interaction_center` to resolve the same-scope declaration conflict, without changing its coordinate calculation or candidate behavior.
+- Validation: Godot MCP reopened the candidate Scene and outlined the script with no new editor errors after the previous log cursor. A fake Godot that printed `Parse Error` and `Failed to load script` while exiting 0 made the validator return non-zero. The isolated task-only worktree passed full validation with the Phone PNG warning still classified as known; the main worktree's four GUT failures belong to the paused anchor/overlay changes and are outside this commit.
+- Not changed: object placement, M/P/N behavior, coordinates, camera behavior, production files, Scenes, `project.godot`, or generated `.import`/`.uid` metadata.
+
 ### CONCENT Documentation Sync Skill
 
 - Commit message: `chore: add concent docs sync skill`.

@@ -156,30 +156,74 @@ record_step() {
 	STEP_DETAILS[${#STEP_DETAILS[@]}]="$4"
 }
 
+godot_fatal_log_markers() {
+	local log_file="$1"
+	local marker_text=""
+	if grep -Fq -- 'Parse Error' "$log_file"; then
+		marker_text="Parse Error"
+	fi
+	if grep -Fq -- 'Failed to load script' "$log_file"; then
+		if [[ -n "$marker_text" ]]; then
+			marker_text+=", "
+		fi
+		marker_text+="Failed to load script"
+	fi
+	printf '%s' "$marker_text"
+}
+
 run_step() {
 	local name="$1"
 	local log_name="$2"
 	shift 2
+	local scan_godot_log=0
+	if [[ "${1:-}" == "--scan-godot-log" ]]; then
+		scan_godot_log=1
+		shift
+	fi
 	local log_file="$LOG_DIR/$log_name.log"
 	local command_text
 	local rc=0
+	local command_rc=0
+	local fatal_markers=""
+	local detail=""
 
 	CURRENT_STEP="$name"
 	command_text="$(format_command "$@")"
 	printf '\n[%s]\nCommand: %s\n' "$name" "$command_text"
 	if "$@" > "$log_file" 2>&1; then
+		command_rc=0
+	else
+		command_rc=$?
+	fi
+	if (( scan_godot_log )); then
+		fatal_markers="$(godot_fatal_log_markers "$log_file")"
+	fi
+	if (( command_rc == 0 )) && [[ -z "$fatal_markers" ]]; then
 		record_step "$name" "PASS" "$log_file" ""
 		printf 'PASS: %s\n' "$name"
-	else
-		rc=$?
-		FAILED_STEPS=$((FAILED_STEPS + 1))
-		if (( FINAL_EXIT_CODE == 0 )); then
-			FINAL_EXIT_CODE="$rc"
-		fi
-		record_step "$name" "FAIL" "$log_file" "exit=$rc"
-		printf 'FAIL: %s (exit %s)\nLog: %s\nLast log lines:\n' "$name" "$rc" "$log_file" >&2
-		tail -n 30 "$log_file" >&2
+		return
 	fi
+
+	rc="$command_rc"
+	if (( rc == 0 )); then
+		rc=1
+	fi
+	if (( command_rc != 0 )); then
+		detail="exit=$command_rc"
+	fi
+	if [[ -n "$fatal_markers" ]]; then
+		if [[ -n "$detail" ]]; then
+			detail+="; "
+		fi
+		detail+="fatal-log=$fatal_markers"
+	fi
+	FAILED_STEPS=$((FAILED_STEPS + 1))
+	if (( FINAL_EXIT_CODE == 0 )); then
+		FINAL_EXIT_CODE="$rc"
+	fi
+	record_step "$name" "FAIL" "$log_file" "$detail"
+	printf 'FAIL: %s (%s)\nLog: %s\nLast log lines:\n' "$name" "$detail" "$log_file" >&2
+	tail -n 30 "$log_file" >&2
 }
 
 skip_step() {
@@ -331,7 +375,7 @@ print_summary() {
 		warning_summary="known Phone PNG export warning ${warning_count} / other warnings $((total_warning_count - warning_count))"
 	fi
 	if (( error_marker_count > 0 )); then
-		warning_summary="$warning_summary; log ERROR markers $error_marker_count (exit codes remain authoritative)"
+		warning_summary="$warning_summary; log ERROR markers $error_marker_count (fatal script-load markers fail their Godot step; other errors follow command exit status)"
 	fi
 	if [[ -f "$FINAL_STATUS_LOG" ]] && ! cmp -s "$START_STATUS_LOG" "$FINAL_STATUS_LOG"; then
 		status_note="changed during validation; review the final status below"
@@ -404,11 +448,11 @@ else
 fi
 run_step "Git working diff check" "git_diff_check" git -C "$REPO_ROOT" diff --check
 run_step "Git staged diff check" "git_staged_diff_check" git -C "$REPO_ROOT" diff --cached --check
-run_step "Godot project parse" "godot_parse" "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" --quit-after 2
-run_step "QuarterviewMain startup" "quarterview_main_startup" "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/QuarterviewMain.tscn --quit-after 2
-run_step "Apartment shell startup" "apartment_shell_startup" "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn --quit-after 2
+run_step "Godot project parse" "godot_parse" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" --quit-after 2
+run_step "QuarterviewMain startup" "quarterview_main_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/QuarterviewMain.tscn --quit-after 2
+run_step "Apartment shell startup" "apartment_shell_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn --quit-after 2
 if [[ "$MODE" == "full" ]]; then
-	run_step "Full GUT" "gut_full" "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" -s res://addons/gut/gut_cmdln.gd -gdir=res://test/unit -gexit
+	run_step "Full GUT" "gut_full" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" -s res://addons/gut/gut_cmdln.gd -gdir=res://test/unit -gexit
 else
 	skip_step "Full GUT" "quick mode"
 fi

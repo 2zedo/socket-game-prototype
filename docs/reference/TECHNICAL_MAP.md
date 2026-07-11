@@ -327,7 +327,8 @@ scripts/validate_concent.sh --godot-bin /Applications/Godot.app/Contents/MacOS/G
 - Godot lookup order is `--godot-bin`, `GODOT_BIN`, `godot`/`godot4` on `PATH`, then the macOS app path above.
 - Logs are created outside the repository and are removed after a successful run unless `--keep-logs` is supplied. Failed runs preserve their logs.
 - The script only reports Git status; it never stages, commits, pushes, cleans, restores, or deletes repository files. Godot may still generate its normal `.import`, `.uid`, or `.godot` metadata, which the final Git-status comparison reports.
-- The known Phone PNG direct-load export warning may appear during QuarterviewMain startup. Exit status remains authoritative; the script reports the known warning separately and counts other warning/error markers without filtering failures.
+- Every Godot validation step fails when its log contains `Parse Error` or `Failed to load script`, even if Godot exits with status 0. This closes the engine case where a script reload failure is logged without a failing process exit.
+- The known Phone PNG direct-load export warning may appear during QuarterviewMain startup and remains warning-only; it does not match the fatal script-load markers.
 
 Targeted GUT examples:
 

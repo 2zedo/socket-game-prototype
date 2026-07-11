@@ -29,6 +29,7 @@
 
 ## Latest Work
 
+- Fixed the candidate script's duplicate local variable parse error without changing placement behavior, and hardened `scripts/validate_concent.sh` so `Parse Error` or `Failed to load script` fails a Godot step even when the engine process exits 0. The known Phone PNG warning remains warning-only.
 - Added `$concent-docs-sync` for minimal documentation synchronization after
   CONCENT implementation, design, or technical-structure changes. It selects a
   current reference source of truth and keeps summaries, current status, work
