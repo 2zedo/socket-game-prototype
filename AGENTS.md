@@ -262,6 +262,8 @@ Follow `$concent-safe-git` for selective staging, commit, and push after task va
 
 Candidate development and graduation decisions follow `$concent-candidate-workflow`.
 
+문서 갱신 여부와 정본 선택은 `$concent-docs-sync` 절차를 따른다.
+
 Common targeted GUT examples:
 
 ```bash

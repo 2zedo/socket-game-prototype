@@ -8,6 +8,18 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### CONCENT Documentation Sync Skill
+
+- Commit message: `chore: add concent docs sync skill`.
+- Result: Added `.agents/skills/concent-docs-sync/SKILL.md` to decide whether a
+  CONCENT change needs documentation, select the current canonical reference,
+  and keep summary, status, work-log, and archive roles distinct.
+- Validation: Skill frontmatter/structure checks passed. `$concent-godot-validation`
+  quick validation passed; project parse, QuarterviewMain, and apartment-shell
+  startup passed, while Full GUT was correctly skipped.
+- Not changed: game code, Scenes, Resources, GAME_INFO, game-design reference
+  documents, validation script, or existing Skills.
+
 ### CONCENT Candidate Development and Graduation Workflow Skill
 
 - Commit message: `chore: add concent candidate workflow skill`.

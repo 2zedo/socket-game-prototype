@@ -306,6 +306,16 @@ criteria, and `GRADUATE` / `KEEP_CANDIDATE` / `ABANDON` decision. It delegates
 validation to `$concent-godot-validation` and selective Git completion to
 `$concent-safe-git`; it does not wire a candidate into production.
 
+### Documentation Sync
+
+`.agents/skills/concent-docs-sync/SKILL.md` selects the minimal current
+documentation update after a CONCENT implementation, design, or structure
+change. It maps changes to one reference source of truth, keeps GAME_INFO,
+current status, and work history distinct, and checks `docs/old/` convention
+before any rotation. Candidate status remains owned by
+`$concent-candidate-workflow`; validation and Git remain owned by
+`$concent-godot-validation` and `$concent-safe-git`.
+
 ```bash
 scripts/validate_concent.sh --full
 scripts/validate_concent.sh --quick

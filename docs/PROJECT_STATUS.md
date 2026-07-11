@@ -29,6 +29,10 @@
 
 ## Latest Work
 
+- Added `$concent-docs-sync` for minimal documentation synchronization after
+  CONCENT implementation, design, or technical-structure changes. It selects a
+  current reference source of truth and keeps summaries, current status, work
+  history, and archive rotation distinct.
 - Added `$concent-candidate-workflow` for candidate scope, production boundary,
   validation/manual-confirmation split, and graduation decisions. The Apartment
   candidate remains `KEEP_CANDIDATE`: automated placement checks are complete,
