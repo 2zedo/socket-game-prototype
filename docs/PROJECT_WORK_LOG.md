@@ -192,3 +192,7 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/room-object/status docs.
 - Not changed: wall/door/window coordinates, room footprint size, object footprint Resource coordinates, assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
 - Next: Use `M` with `G`, `E`, `N`, and `P` to choose final pixel-sized object positions without treating floor cells as mandatory sprite sizes.
+
+### Quarterview candidate interaction and boundary tests
+- Result: Added deterministic Room interaction, Main panel/modal/Phone gating, input-lock recovery, and candidate executable-dependency boundary coverage.
+- Changed: three `godot/test/unit/test_quarterview_*.gd` files plus current technical/status/work-log docs; no candidate or production gameplay code.

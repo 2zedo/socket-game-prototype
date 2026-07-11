@@ -240,6 +240,9 @@ Current important tests:
 
 - `test_survival_state.gd`
 - `test_room_scene_contract.gd`
+- `test_quarterview_room_interaction_flow.gd`
+- `test_quarterview_main_candidate_flow.gd`
+- `test_quarterview_candidate_dependencies.gd`
 - `test_room_object_definition.gd`
 - `test_quarterview_job_definition.gd`
 - `test_power_module_definition.gd`
@@ -248,6 +251,8 @@ Current important tests:
 - `test_grid_credit_state.gd`
 - `test_living_device_definition.gd`
 - `test_asset_smoke.gd`
+
+The Quarterview candidate regression tests keep movement completion deterministic: they test object selection, pending focus, cancellation/replacement, and the arrival gate without waiting on long physics movement. Main candidate tests instantiate the real scene and cover panel/modal routing, room input lock restoration, close/ESC/backdrop paths, and portable Phone gating. The dependency boundary test recursively inspects candidate Resource dependencies and executable reference patterns while leaving production-wide autoload policy outside candidate ownership.
 
 ## Third-Party Asset Inventory
 
