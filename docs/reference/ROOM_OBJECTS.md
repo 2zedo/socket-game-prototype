@@ -141,28 +141,28 @@ Loading order:
 2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
 3. additive `custom_object_footprints` entries from the Inspector
 
-Current first-placement candidate:
+Current rotated-floorplan placement candidate:
 
 | Object ID | Room | Anchor | Offset px | Visual px | Collision px | Interaction | Anchor type / role |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `entrance_door` | entrance | `(0,8)` | `(0,-6)` | `150x220` | none | `(0,8)`, `96x56` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
 | `bed` | living | `(9,6)` | `(10,-6)` | `260x180` | `180x90` | `(8,7)`, `120x64` | `FLOOR` / interaction |
-| `fridge` | living | `(10,4)` | `(-8,-12)` | `120x190` | `70x70` | `(10,5)`, `80x56` | floor |
-| `microwave` | living | `(8,4)` | `(0,-60)` | `96x72` | none | `(8,5)`, `96x56` | `PARENT_OBJECT`: `sink_counter` / interaction |
+| `fridge` | living | `(5,4)` | `(-8,-12)` | `120x190` | `70x70` | `(5,5)`, `80x56` | floor |
+| `microwave` | living | `(3,4)` | `(0,-60)` | `96x72` | none | `(4,5)`, `96x56` | `PARENT_OBJECT`: `sink_counter` / interaction |
 | `navi_link` | work/power | `(4,1)` | `(12,-16)` | `300x240` | `210x120` | `(4,3)`, `(5,3)`, `128x80` | floor |
-| `power_module_board` | work/power | `(8,1)` | `(0,-30)` | `200x180` | none | `(7,2)`, `120x72` | `WALL_EDGE`: `work_right_wall` / interaction |
+| `power_module_board` | work/power | `(6,0)` | `(0,-30)` | `200x180` | none | `(6,1)`, `120x72` | `WALL_EDGE`: `work_back_wall` / interaction |
 | `node_17` | work/power | `(1,2)` | `(0,-8)` | `150x140` | `90x60` candidate | `(2,2)`, `96x64` | floor |
-| `sink_counter` | living | `(8,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
+| `sink_counter` | living | `(3,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
 | `dining_table` | living | `(4,7)` | `(0,0)` | `170x120` | `130x70` | none | `FLOOR` / environment |
 | `signal_booster` | work/power | `(1,2)` | `(-68,-58)` | `112x96` | none | none | parent: `node_17` |
 | `ups_unit` | work/power | `(8,2)` | `(0,0)` | `140x110` | `100x60` | none | `FLOOR` / environment |
 | `bathroom_fixture` | bathroom | `(0,4)` | `(0,0)` | `200x140` | `150x80` | none | floor environment |
-| `sea_horizon_poster` | living | `(10,7)` | `(0,-20)` | `160x80` | none | none | wall: `living_right_wall` |
+| `sea_horizon_poster` | living | `(11,7)` | `(0,-20)` | `160x80` | none | none | wall edge: `living_right_wall` |
 | `fluorescent_light` | living | `(6,6)` | `(0,0)` | `240x40` | none | none | ceiling |
 | `shoes_slippers` | entrance | `(1,9)` | `(0,0)` | `100x60` | none | none | `FLOOR` / non-blocking decoration |
 | `cable_bundle` | work/power | `(2,2)` | `(36,42)` | `80x40` | none | none | parent: `node_17` |
-| `wall_conduit` | work/power | `(7,0)` | `(0,0)` | `128x64` | none | none | wall: `work_back_wall` |
-| `power_housing` | work/power | `(8,1)` | `(0,0)` | `240x210` | none | none | parent: board / same wall |
+| `wall_conduit` | work/power | `(3,0)` | `(0,0)` | `128x64` | none | none | wall edge: `work_back_wall` |
+| `power_housing` | work/power | `(6,0)` | `(0,0)` | `240x210` | none | none | parent: board / `work_back_wall` |
 
 Attachment policy:
 
@@ -178,7 +178,7 @@ Shell editing controls:
 - `M`: show room measurement only; the default view does not include object detail.
 - `P`: show the object-placement legend, visual bounds, floor occupancy, collision, interaction, and attachment guides.
 - `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
-- `V`: make the living front/right occlusion-stub layer translucent for wall-attached and behind-wall inspection; logical walls, navigation edges, and reveal state do not change.
+- `V`: make all candidate wall, stub, door, and window visuals translucent for wall-attached and behind-wall inspection; floor edges, logical walls, navigation edges, collision, and reveal state do not change.
 - `I`: print wall inventory followed by object footprint summary.
 - `J`: open shell-only interaction debug menu for mock object use / inspect / cancel flow.
 - `H`: open shell-only Phone debug overlay; this does not call production `PhoneUI`.

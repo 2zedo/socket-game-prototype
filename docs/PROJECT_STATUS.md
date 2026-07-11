@@ -29,6 +29,7 @@
 
 ## Latest Work
 
+- The rotated-floorplan second placement pass moves the kitchen line to the living side of the shared wall (`sink_counter (3,4)`, `fridge (5,4)`, microwave parented at `(3,4)`) and moves the Power Board/Housing to the work back wall while keeping the already-aligned bed, dining table, NAVI, NODE-17, bathroom fixture, and entrance door candidates. V now ghosts all candidate wall/door/window visuals instead of only the living occlusion strips. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` for final art-scale offsets.
 - `QuarterviewApartmentShellCandidate` object placement pass 1 now separates `FLOOR`, `WALL_EDGE`, `CEILING`, and `PARENT_OBJECT` anchors from interaction/environment/decoration categories. P has a dedicated legend and selected-bound emphasis, V provides visual-only occlusion-wall transparency, and bed/table placement was adjusted while placement/measurement warnings remain zero. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` for final floorplan alignment and overlay readability.
 - Fixed the candidate script's duplicate local variable parse error without changing placement behavior, and hardened `scripts/validate_concent.sh` so `Parse Error` or `Failed to load script` fails a Godot step even when the engine process exits 0. The known Phone PNG warning remains warning-only.
 - Added `$concent-docs-sync` for minimal documentation synchronization after
@@ -64,7 +65,7 @@
 - Apartment shell debug overlays are now Korean-first for screen labels: `G` shows `칸`, `E` shows `벽선`, `W` shows Korean wall names plus ids, `N` shows movement/collision states, `P` shows Korean object names, and `O` labels hidden / revealable walls.
 - Third-party selected asset inventory is now tracked in `docs/reference/TECHNICAL_MAP.md`, and `test_asset_smoke.gd` reads that current reference location instead of the archived old root document path.
 - Quarterview candidate regression coverage now fixes the deterministic object-click/pending-focus/arrival signal flow, panel and modal routing, input-lock restoration, portable Phone gating, and executable dependency boundary without changing candidate gameplay code.
-- Apartment shell object data still uses the 18-object first-placement candidate with unchanged pixel visual/collision/interaction sizes. Category/anchor semantics, selected display, and the textual-floorplan layout pass remain candidate-only pending manual visual review.
+- Apartment shell object data still uses the 18-object rotated-floorplan candidate with unchanged pixel visual/collision/interaction sizes. Category/anchor semantics, selected display, and layout passes remain candidate-only pending manual visual review.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.
 - Documentation now records the shell candidate path, coordinate basis, wall editing controls, navigation / reveal / object footprint overlay controls, and validation command.
 

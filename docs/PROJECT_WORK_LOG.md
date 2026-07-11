@@ -8,6 +8,14 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Rotated-floorplan placement and whole-wall inspection
+
+- Commit message: `feat: align apartment candidate to rotated floorplan`.
+- Result: Repositioned the kitchen group along the shared-wall left side, moved Power Board/Housing and conduit references onto separated work back-wall edges, and made poster fallback metadata use its actual living-right wall edge. Existing bed/table/NAVI/NODE/bathroom/entrance candidates were retained where they already matched the rotated plan.
+- V inspection: Replaced the living-strip-only alpha change with one visual-only toggle for all wall, stub, door, and window layers. Floor edges, logical wall inventory, navigation, collision, reveal state, and production ownership remain unchanged.
+- Visual check: Godot MCP reloaded and ran the candidate before and after the change. The kitchen line now reads beside the shared wall, work wall devices resolve from back-wall guides, and V exposes objects behind every room wall with no new game-log errors.
+- Status: `KEEP_CANDIDATE`. Manual confirmation: `REQUIRED` for final art-scale offsets and user acceptance; production Main/DAY1, Apartment, SurvivalState, `project.godot`, and generated metadata remain unchanged.
+
 ### Apartment object anchor and placement display pass 1
 
 - Commit message: `feat: refine apartment object placement debug`.

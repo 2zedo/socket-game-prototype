@@ -162,7 +162,7 @@ Object placement display options:
 
 `ApartmentObjectFootprintConfig.AnchorType` separates spatial anchoring from category: `FLOOR`, `WALL_EDGE`, `CEILING`, and `PARENT_OBJECT` determine the resolved placement reference, while `interaction`, `environment`, and `decoration` determine inventory/interaction behavior. Wall and parent anchors resolve from their referenced wall unit or parent object instead of treating `anchor_cell` as a fake floor center. The current pass is visually authored against the existing `ROTATE_90` reference view; compatibility rotation logic remains but is not a visual expansion target.
 
-`V` toggles `wall_inspection_transparency` on the visual `OcclusionStubLayer` only. It lowers the living front/right low-wall opacity for behind-wall inspection without mutating wall segment Resources, blocked/passable navigation edges, room reveal ownership, or collision data.
+`V` toggles `wall_inspection_transparency` across the visual `WallLayer`, `OcclusionStubLayer`, and `DoorAndWindowLayer`. The whole candidate shell wall/door/window presentation drops to inspection alpha while floor/edge/debug layers remain opaque. It does not mutate wall segment Resources, blocked/passable navigation edges, room reveal ownership, collision data, or object anchors, and the alpha is reapplied after reveal-sensitive wall redraws.
 
 Shell-only interaction UI:
 

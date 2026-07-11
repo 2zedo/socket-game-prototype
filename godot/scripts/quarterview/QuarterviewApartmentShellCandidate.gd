@@ -143,7 +143,7 @@ const COLOR_OBJECT_OCCUPANCY := Color(0.38, 0.36, 1.0, 0.26)
 const COLOR_OBJECT_OCCUPANCY_OUTLINE := Color(0.56, 0.58, 1.0, 0.92)
 const COLOR_OBJECT_ATTACHMENT := Color(0.92, 0.42, 1.0, 0.96)
 const COLOR_OBJECT_LEGEND_BACKGROUND := Color(0.055, 0.035, 0.10, 0.92)
-const WALL_INSPECTION_ALPHA := 0.12
+const WALL_INSPECTION_ALPHA := 0.18
 const COLOR_DEBUG_PANEL := Color(0.025, 0.03, 0.038, 0.92)
 const COLOR_DEBUG_PANEL_ALT := Color(0.045, 0.055, 0.068, 0.94)
 const COLOR_DEBUG_PANEL_BORDER := Color(0.46, 0.66, 0.70, 0.70)
@@ -261,8 +261,8 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 @export_group("Debug")
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
 @export var show_occlusion_wall_debug := false
-# Visual-only inspection aid. It lowers the front/right occlusion stub layer opacity without
-# changing wall data, navigation edges, reveal state, or collision ownership.
+# Visual-only inspection aid. It lowers every candidate wall/door/window visual layer opacity
+# without changing wall data, navigation edges, reveal state, or collision ownership.
 @export var wall_inspection_transparency := false
 # Shows room dimensions, placement reference cells, doorway clearance, and wall-mount spans.
 @export var show_room_measurements := false
@@ -459,15 +459,9 @@ func set_camera_preset(preset: String) -> void:
 
 func _apply_wall_inspection_transparency() -> void:
 	var alpha := WALL_INSPECTION_ALPHA if wall_inspection_transparency else 1.0
-	for layer in [_occlusion_stub_layer, _wall_layer]:
-		if layer == null:
-			continue
-		for child in layer.get_children():
-			if child is CanvasItem and (
-				String(child.name).begins_with("living_front_cutaway")
-				or String(child.name).begins_with("living_right_wall")
-			):
-				child.modulate.a = alpha
+	for layer in [_occlusion_stub_layer, _wall_layer, _door_layer]:
+		if layer != null:
+			layer.modulate.a = alpha
 
 
 func _initialize_debug_mode_from_legacy_flags() -> void:
@@ -976,22 +970,22 @@ func _candidate_object_footprint_specs() -> Array[Dictionary]:
 	return [
 		_object_spec("entrance_door", "현관문", "entrance_area", "interaction", Vector2i(0, 8), Vector2(150, 220), false, [Vector2i(0, 8)], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "entrance_wall", "", Vector2(0, -6), Vector2.ZERO, Vector2(96, 56), Vector2(50, 0), "entrance_door_dl_closed.png", "objects/apartment/EntranceDoor.tscn", "audio_entrance_door", "문 안쪽 면이 생활공간 중앙을 향함", false, Vector2i.ONE, 0.75),
 		_object_spec("bed", "침대", "living_area", "interaction", Vector2i(9, 6), Vector2(260, 180), true, [Vector2i(8, 7)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(10, -6), Vector2(180, 90), Vector2(120, 64), Vector2(-120, 28), "bed_dl_base.png", "objects/apartment/Bed.tscn", "", "침대 옆면과 머리맡이 보이고 왼쪽에서 접근", true, Vector2i(2, 1)),
-		_object_spec("fridge", "냉장고", "living_area", "interaction", Vector2i(10, 4), Vector2(120, 190), true, [Vector2i(10, 5)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(-8, -12), Vector2(70, 70), Vector2(80, 56), Vector2(-50, 42), "fridge_dl_closed.png", "objects/apartment/Fridge.tscn", "audio_fridge", "문 앞면이 생활공간 중앙을 향함"),
-		_object_spec("microwave", "전자레인지", "living_area", "interaction", Vector2i(8, 4), Vector2(96, 72), false, [Vector2i(8, 5)], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "sink_counter", Vector2(0, -60), Vector2.ZERO, Vector2(96, 56), Vector2(0, 96), "microwave_dl_base.png", "objects/apartment/Microwave.tscn", "audio_microwave", "조작면이 주방 통로를 향함", false),
+		_object_spec("fridge", "냉장고", "living_area", "interaction", Vector2i(5, 4), Vector2(120, 190), true, [Vector2i(5, 5)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(-8, -12), Vector2(70, 70), Vector2(80, 56), Vector2(-50, 42), "fridge_dl_closed.png", "objects/apartment/Fridge.tscn", "audio_fridge", "문 앞면이 생활공간 중앙을 향함"),
+		_object_spec("microwave", "전자레인지", "living_area", "interaction", Vector2i(3, 4), Vector2(96, 72), false, [Vector2i(4, 5)], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "sink_counter", Vector2(0, -60), Vector2.ZERO, Vector2(96, 56), Vector2(0, 96), "microwave_dl_base.png", "objects/apartment/Microwave.tscn", "audio_microwave", "조작면이 주방 통로를 향함", false),
 		_object_spec("navi_link", "NAVI LINK", "work_power_area", "interaction", Vector2i(4, 1), Vector2(300, 240), true, [Vector2i(4, 3), Vector2i(5, 3)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(12, -16), Vector2(210, 120), Vector2(128, 80), Vector2(0, 150), "navi_link_dl_idle_base.png", "objects/apartment/NaviLink.tscn", "audio_navi_link", "좌석 입구와 조작부가 작업공간 통로를 향함", true, Vector2i(2, 2)),
-		_object_spec("power_module_board", "전력 모듈 보드", "work_power_area", "interaction", Vector2i(8, 1), Vector2(200, 180), false, [Vector2i(7, 2)], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_right_wall", "", Vector2(0, -30), Vector2.ZERO, Vector2(120, 72), Vector2(-88, 92), "power_module_board_dl_base.png", "objects/apartment/PowerModuleBoard.tscn", "audio_power_board", "화면과 슬롯이 작업공간 안쪽을 향함", false, Vector2i.ONE, 0.375),
+		_object_spec("power_module_board", "전력 모듈 보드", "work_power_area", "interaction", Vector2i(6, 0), Vector2(200, 180), false, [Vector2i(6, 1)], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_back_wall", "", Vector2(0, -30), Vector2.ZERO, Vector2(120, 72), Vector2(0, 92), "power_module_board_dl_base.png", "objects/apartment/PowerModuleBoard.tscn", "audio_power_board", "화면과 슬롯이 작업공간 안쪽을 향함", false, Vector2i.ONE, 0.68),
 		_object_spec("node_17", "NODE-17", "work_power_area", "interaction", Vector2i(1, 2), Vector2(150, 140), true, [Vector2i(2, 2)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(0, -8), Vector2(90, 60), Vector2(96, 64), Vector2(84, 30), "node_17_dl_base.png", "objects/apartment/Node17.tscn", "audio_node_17", "표시 화면과 신호등이 작업공간 중앙을 향함"),
-		_object_spec("sink_counter", "싱크대·주방 카운터", "living_area", "environment", Vector2i(8, 4), Vector2(220, 150), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(160, 70), Vector2.ZERO, Vector2.ZERO, "sink_counter_dl_base.png", "objects/apartment/sink_counter.tres", "", "상판 정면이 주방 통로를 향함", true, Vector2i(2, 1)),
+		_object_spec("sink_counter", "싱크대·주방 카운터", "living_area", "environment", Vector2i(3, 4), Vector2(220, 150), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(160, 70), Vector2.ZERO, Vector2.ZERO, "sink_counter_dl_base.png", "objects/apartment/sink_counter.tres", "", "상판 정면이 주방 통로를 향함", true, Vector2i(2, 1)),
 		_object_spec("dining_table", "작은 식탁", "living_area", "environment", Vector2i(4, 7), Vector2(170, 120), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(130, 70), Vector2.ZERO, Vector2.ZERO, "dining_table_dl_base.png", "objects/apartment/dining_table.tres", "", "의자 접근면이 생활공간 통로를 향함"),
 		_object_spec("signal_booster", "신호 증폭기", "work_power_area", "environment", Vector2i(1, 2), Vector2(112, 96), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2(-68, -58), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "signal_booster_dl_base.png", "objects/apartment/signal_booster.tres", "audio_signal_booster", "표시등이 작업공간 중앙을 향함", false),
 		_object_spec("ups_unit", "UPS·보조전원", "work_power_area", "environment", Vector2i(8, 2), Vector2(140, 110), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(100, 60), Vector2.ZERO, Vector2.ZERO, "ups_unit_dl_base.png", "objects/apartment/ups_unit.tres", "audio_ups_unit", "전면 패널이 작업공간 통로를 향함"),
 		_object_spec("bathroom_fixture", "욕실 통합 설비", "bathroom", "environment", Vector2i(0, 4), Vector2(200, 140), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(150, 80), Vector2.ZERO, Vector2.ZERO, "bathroom_fixture_dl_base.png", "objects/apartment/bathroom_fixture.tres", "", "욕실문에서 내부를 볼 때 정면이 보임"),
-		_object_spec("sea_horizon_poster", "바다·수평선 포스터", "living_area", "decoration", Vector2i(10, 7), Vector2(160, 80), false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "living_right_wall", "", Vector2(0, -20), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "sea_horizon_poster_wall.png", "objects/apartment/sea_horizon_poster.tres", "", "포스터 그림이 침대와 방 안쪽을 향함", false, Vector2i.ONE, 0.58),
+		_object_spec("sea_horizon_poster", "바다·수평선 포스터", "living_area", "decoration", Vector2i(11, 7), Vector2(160, 80), false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "living_right_wall", "", Vector2(0, -20), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "sea_horizon_poster_wall.png", "objects/apartment/sea_horizon_poster.tres", "", "포스터 그림이 침대와 방 안쪽을 향함", false, Vector2i.ONE, 0.58),
 		_object_spec("fluorescent_light", "형광등", "living_area", "environment", Vector2i(6, 6), Vector2(240, 40), false, [], ApartmentObjectFootprintConfigScript.AnchorType.CEILING, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "fluorescent_light_base.png", "objects/apartment/fluorescent_light.tres", "audio_fluorescent_light", "천장에서 생활공간 전체를 비춤", false),
 		_object_spec("shoes_slippers", "신발·슬리퍼", "entrance_area", "decoration", Vector2i(1, 9), Vector2(100, 60), false, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "shoes_slippers_dl_base.png", "objects/apartment/shoes_slippers.tres", "", "신발 앞코가 현관 통로를 향함", false),
 		_object_spec("cable_bundle", "케이블 묶음", "work_power_area", "decoration", Vector2i(2, 2), Vector2(80, 40), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2(36, 42), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "cable_bundle_var01.png", "objects/apartment/cable_bundle.tres", "", "NODE-17에서 전력 장비 방향으로 정리됨", false),
-		_object_spec("wall_conduit", "벽면 전선관", "work_power_area", "decoration", Vector2i(7, 0), Vector2(128, 64), false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_back_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "wall_conduit_axis_a_1x.png", "objects/apartment/wall_conduit.tres", "", "작업공간 뒤쪽 벽 방향을 따라 이어짐", false, Vector2i.ONE, 0.78),
-		_object_spec("power_housing", "전력 장비 외장 프레임", "work_power_area", "decoration", Vector2i(8, 1), Vector2(240, 210), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "work_right_wall", "power_module_board", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "power_housing_dl_base.png", "objects/apartment/power_housing.tres", "", "전력 모듈 보드와 같은 방향", false, Vector2i.ONE, 0.375),
+		_object_spec("wall_conduit", "벽면 전선관", "work_power_area", "decoration", Vector2i(3, 0), Vector2(128, 64), false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_back_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "wall_conduit_axis_a_1x.png", "objects/apartment/wall_conduit.tres", "", "작업공간 뒤쪽 벽 방향을 따라 이어짐", false, Vector2i.ONE, 0.31),
+		_object_spec("power_housing", "전력 장비 외장 프레임", "work_power_area", "decoration", Vector2i(6, 0), Vector2(240, 210), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "work_back_wall", "power_module_board", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "power_housing_dl_base.png", "objects/apartment/power_housing.tres", "", "전력 모듈 보드와 같은 방향", false, Vector2i.ONE, 0.68),
 	]
 
 
@@ -2680,7 +2674,7 @@ func _create_object_legend_overlay() -> void:
 	_object_legend_label.name = "ObjectPlacementLegendLabel"
 	_object_legend_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_object_legend_label.position = Vector2(-418.0, 28.0)
-	_object_legend_label.text = "오브젝트 배치 범례\n선택 흰색 점선: visual 배치 범위  |  파랑 면·선: 바닥 점유\n빨강 면·실선: collision  |  주황 점선·마커: interaction\n분홍 선·마커: WALL_EDGE / PARENT_OBJECT anchor\n클릭 선택: 모든 범위를 굵게 강조  |  V: 시야벽 반투명"
+	_object_legend_label.text = "오브젝트 배치 범례\n선택 흰색 점선: visual 배치 범위  |  파랑 면·선: 바닥 점유\n빨강 면·실선: collision  |  주황 점선·마커: interaction\n분홍 선·마커: WALL_EDGE / PARENT_OBJECT anchor\n클릭 선택: 모든 범위를 굵게 강조  |  V: 전체 벽 반투명"
 	_object_legend_label.modulate = COLOR_DEBUG_TEXT
 	_object_legend_label.add_theme_font_size_override("font_size", 12)
 	_object_legend_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
@@ -2707,7 +2701,7 @@ func _create_full_debug_help_panel() -> void:
 	var box := _make_panel_vbox(_debug_help_panel)
 	box.add_child(_make_debug_label_control("아파트 shell 디버그 단축키", 20, COLOR_DEBUG_TEXT))
 	box.add_child(_make_debug_label_control(
-		"기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 측량 모드\nP  오브젝트 배치 모드\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nV  생활공간 앞·오른쪽 시야벽 반투명\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽 논리선  /  L  구역 라벨  /  I  inventory 출력\nJ  상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기",
+		"기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 측량 모드\nP  오브젝트 배치 모드\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nV  전체 candidate 벽·문·창 반투명\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽 논리선  /  L  구역 라벨  /  I  inventory 출력\nJ  상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기",
 		15,
 		COLOR_DEBUG_TEXT
 	))
@@ -2728,7 +2722,7 @@ func _update_compact_debug_help() -> void:
 	if _compact_help_label == null:
 		return
 	var wall_state := "반투명" if wall_inspection_transparency else "기본"
-	_compact_help_label.text = "기준 시점 ROTATE_90  |  현재 모드: %s  |  M 측량  P 오브젝트  N 이동·충돌  |  V 시야벽=%s  |  F1 도움말" % [_debug_mode_display_name(), wall_state]
+	_compact_help_label.text = "기준 시점 ROTATE_90  |  현재 모드: %s  |  M 측량  P 오브젝트  N 이동·충돌  |  V 전체벽=%s  |  F1 도움말" % [_debug_mode_display_name(), wall_state]
 
 
 func _update_debug_detail_panel() -> void:
