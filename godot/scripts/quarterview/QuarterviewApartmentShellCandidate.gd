@@ -18,6 +18,13 @@ enum MapRotation {
 	ROTATE_270,
 }
 
+enum DebugMode {
+	NONE,
+	ROOM_MEASUREMENT,
+	OBJECT_PLACEMENT,
+	NAVIGATION,
+}
+
 enum WallAxis {
 	AXIS_A,
 	AXIS_B,
@@ -129,6 +136,7 @@ const COLOR_OCCLUSION_STUB_CAP := Color(0.58, 0.61, 0.58, 0.90)
 const COLOR_OCCLUSION_STUB_SHADOW := Color(0.03, 0.035, 0.04, 0.58)
 const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 const COLOR_OBJECT_INTERACTION := Color(0.26, 1.0, 0.86, 0.94)
+const COLOR_OBJECT_INTERACTION_AREA := Color(1.0, 0.82, 0.18, 0.92)
 const COLOR_OBJECT_BLOCKED_CELL := Color(1.0, 0.28, 0.20, 0.92)
 const COLOR_DEBUG_PANEL := Color(0.025, 0.03, 0.038, 0.92)
 const COLOR_DEBUG_PANEL_ALT := Color(0.045, 0.055, 0.068, 0.94)
@@ -220,6 +228,8 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 @export_enum("full_map", "living_area", "work_power_area") var camera_preset: String = "full_map"
 
 @export_group("Debug")
+@export var active_debug_mode: DebugMode = DebugMode.NONE
+@export var allow_combined_debug_overlays := false
 @export var show_debug_labels := true
 @export var show_wall_ids := false
 @export var show_floor_grid_coords := false
@@ -233,6 +243,14 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 @export var show_object_interaction_cells := true
 @export var show_blocking_object_cells := true
 @export var show_nonblocking_object_cells := true
+@export_group("Object Placement Debug")
+@export var show_object_names := true
+@export var show_object_floor_footprints := true
+@export var show_object_collision_shapes := true
+@export var show_object_interaction_areas := true
+@export var show_object_visual_bounds := false
+@export var show_object_parent_links := false
+@export_group("Debug")
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
 @export var show_occlusion_wall_debug := false
 # Shows room dimensions, placement reference cells, doorway clearance, and wall-mount spans.
@@ -258,6 +276,7 @@ var _wall_layer: Node2D
 var _door_layer: Node2D
 var _label_layer: Node2D
 var _object_layer: Node2D
+var _debug_selection_layer: Node2D
 var _navigation_layer: Node2D
 var _grid_coord_layer: Node2D
 var _wall_edge_coord_layer: Node2D
@@ -266,6 +285,10 @@ var _wall_id_layer: Node2D
 var _occlusion_debug_layer: Node2D
 var _room_measurement_layer: Node2D
 var _debug_overlay_layer: CanvasLayer
+var _debug_detail_panel: PanelContainer
+var _debug_detail_label: Label
+var _debug_help_panel: PanelContainer
+var _compact_help_label: Label
 var _hover_coord_label: Label
 var _hover_coord_background: ColorRect
 var _hover_edge_label: Label
@@ -288,9 +311,12 @@ var _interaction_active_object_id := ""
 var _phone_overlay_root: Control
 var _phone_content_label: Label
 var _last_active_room_area := ""
+var _hovered_object_id := ""
+var _selected_object_id := ""
 
 
 func _ready() -> void:
+	_initialize_debug_mode_from_legacy_flags()
 	_create_layers()
 	_build_shell()
 	_validate_object_footprints()
@@ -300,7 +326,16 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_ESCAPE and _close_top_debug_overlay():
+		if event.keycode == KEY_ESCAPE:
+			if _close_top_debug_overlay():
+				get_viewport().set_input_as_handled()
+				return
+			if _has_primary_debug_mode():
+				_set_primary_debug_mode(DebugMode.NONE)
+				get_viewport().set_input_as_handled()
+				return
+		if event.keycode == KEY_F1:
+			_toggle_full_debug_help()
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_L:
@@ -326,13 +361,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_N:
-			show_navigation_debug = not show_navigation_debug
-			_update_label_visibility()
+			_toggle_primary_debug_mode(DebugMode.NAVIGATION, event.shift_pressed)
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_P:
-			show_object_placeholders = not show_object_placeholders
-			_update_label_visibility()
+			_toggle_primary_debug_mode(DebugMode.OBJECT_PLACEMENT, event.shift_pressed)
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_O:
@@ -341,8 +374,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_M:
-			show_room_measurements = not show_room_measurements
-			_update_label_visibility()
+			_toggle_primary_debug_mode(DebugMode.ROOM_MEASUREMENT, event.shift_pressed)
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_J:
@@ -374,8 +406,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	if event is InputEventMouseMotion:
 		_update_hover_cell()
+		_update_object_hover_at(_mouse_event_world_position(event))
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if show_object_placeholders:
+			_update_object_hover_at(_mouse_event_world_position(event))
+			if _select_hovered_object():
+				get_viewport().set_input_as_handled()
+				return
 		var hover_cell: Variant = _hover_floor_cell()
 		var printed_click := false
 		if show_floor_grid_coords and hover_cell != null:
@@ -399,6 +437,86 @@ func set_camera_preset(preset: String) -> void:
 	_apply_camera_preset(camera_preset)
 
 
+func _initialize_debug_mode_from_legacy_flags() -> void:
+	if active_debug_mode != DebugMode.NONE and not allow_combined_debug_overlays:
+		_set_primary_debug_flags(active_debug_mode)
+		return
+	if allow_combined_debug_overlays:
+		active_debug_mode = _most_recent_enabled_debug_mode()
+		return
+	if show_navigation_debug:
+		_set_primary_debug_flags(DebugMode.NAVIGATION)
+	elif show_object_placeholders:
+		_set_primary_debug_flags(DebugMode.OBJECT_PLACEMENT)
+	elif show_room_measurements:
+		_set_primary_debug_flags(DebugMode.ROOM_MEASUREMENT)
+	else:
+		_set_primary_debug_flags(DebugMode.NONE)
+
+
+func _toggle_primary_debug_mode(mode: DebugMode, combine := false) -> void:
+	if allow_combined_debug_overlays or combine:
+		match mode:
+			DebugMode.ROOM_MEASUREMENT:
+				show_room_measurements = not show_room_measurements
+			DebugMode.OBJECT_PLACEMENT:
+				show_object_placeholders = not show_object_placeholders
+			DebugMode.NAVIGATION:
+				show_navigation_debug = not show_navigation_debug
+		active_debug_mode = mode if _debug_mode_is_enabled(mode) else _most_recent_enabled_debug_mode()
+		_update_label_visibility()
+		return
+	_set_primary_debug_mode(DebugMode.NONE if active_debug_mode == mode else mode)
+
+
+func _set_primary_debug_mode(mode: DebugMode) -> void:
+	active_debug_mode = mode
+	_set_primary_debug_flags(mode)
+	_update_label_visibility()
+
+
+func _set_primary_debug_flags(mode: DebugMode) -> void:
+	show_room_measurements = mode == DebugMode.ROOM_MEASUREMENT
+	show_object_placeholders = mode == DebugMode.OBJECT_PLACEMENT
+	show_navigation_debug = mode == DebugMode.NAVIGATION
+
+
+func _debug_mode_is_enabled(mode: DebugMode) -> bool:
+	match mode:
+		DebugMode.ROOM_MEASUREMENT:
+			return show_room_measurements
+		DebugMode.OBJECT_PLACEMENT:
+			return show_object_placeholders
+		DebugMode.NAVIGATION:
+			return show_navigation_debug
+	return not _has_primary_debug_mode()
+
+
+func _most_recent_enabled_debug_mode() -> DebugMode:
+	if show_navigation_debug:
+		return DebugMode.NAVIGATION
+	if show_object_placeholders:
+		return DebugMode.OBJECT_PLACEMENT
+	if show_room_measurements:
+		return DebugMode.ROOM_MEASUREMENT
+	return DebugMode.NONE
+
+
+func _has_primary_debug_mode() -> bool:
+	return show_room_measurements or show_object_placeholders or show_navigation_debug
+
+
+func _debug_mode_display_name() -> String:
+	var names: Array[String] = []
+	if show_room_measurements:
+		names.append("방 측량")
+	if show_object_placeholders:
+		names.append("오브젝트 배치")
+	if show_navigation_debug:
+		names.append("이동·충돌")
+	return "없음" if names.is_empty() else " + ".join(names)
+
+
 func _create_layers() -> void:
 	_background_layer = _add_layer("BackgroundLayer", -30)
 	_floor_layer = _add_layer("FloorTileLayer", -20)
@@ -408,14 +526,15 @@ func _create_layers() -> void:
 	_wall_layer = _add_layer("WallLayer", 0)
 	_door_layer = _add_layer("DoorAndWindowLayer", 10)
 	_label_layer = _add_layer("DebugLabelLayer", 40)
-	_object_layer = _add_layer("ObjectFootprintLayer", 65)
+	_object_layer = _add_layer("ObjectPlacementDebugLayer", 65)
+	_debug_selection_layer = _add_layer("DebugSelectionLayer", 68)
 	_navigation_layer = _add_layer("NavigationDebugLayer", 70)
 	_grid_coord_layer = _add_layer("GridCoordinateLayer", 85)
 	_wall_edge_coord_layer = _add_layer("WallEdgeCoordinateLayer", 88)
 	_hover_edge_highlight_layer = _add_layer("WallEdgeHoverHighlightLayer", 89)
 	_wall_id_layer = _add_layer("WallIdLayer", 90)
 	_occlusion_debug_layer = _add_layer("OcclusionWallDebugLayer", 95)
-	_room_measurement_layer = _add_layer("RoomMeasurementLayer", 98)
+	_room_measurement_layer = _add_layer("RoomMeasurementDebugLayer", 98)
 	_debug_overlay_layer = CanvasLayer.new()
 	_debug_overlay_layer.name = "DebugOverlayLayer"
 	add_child(_debug_overlay_layer)
@@ -1679,98 +1798,203 @@ func _draw_object_placeholders() -> void:
 
 func _draw_object_placeholder(object_data: Dictionary) -> void:
 	var id := String(object_data.get("id", ""))
-	var name_ko := String(object_data.get("display_name_ko", _object_display_name_ko(id)))
-	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
 	var blocks_movement := bool(object_data.get("blocks_movement", true))
+	var uses_floor := _object_uses_floor_occupancy(object_data)
 	var color: Color = object_data.get("debug_color", Color(0.55, 0.74, 1.0, 0.38))
-	var focus_id := debug_focus_object_id.strip_edges()
-	var has_focus := not focus_id.is_empty()
-	var is_focused := not has_focus or focus_id == id
 	if not blocks_movement:
 		color.a *= 0.72
-	if has_focus and not is_focused:
-		color.a *= 0.24
 
-	var visual_size: Vector2 = object_data.get("visual_size_px", Vector2.ZERO)
-	var visual_center := _object_pixel_center(object_data)
-	var points := _pixel_rect_points(visual_center, visual_size)
-	_add_polygon(_object_layer, "object_%s_footprint" % id, points, color)
-	_add_line(
-		_object_layer,
-		"object_%s_outline" % id,
-		points + [points[0]],
-		color.lightened(0.52 if is_focused else 0.18),
-		5.0 if has_focus and is_focused else (3.0 if blocks_movement else 2.0)
-	)
+	if show_object_floor_footprints and uses_floor:
+		var floor_points := _object_floor_polygon_points(object_data)
+		_add_polygon(_object_layer, "object_%s_floor_footprint" % id, floor_points, color)
+		_add_line(
+			_object_layer,
+			"object_%s_floor_outline" % id,
+			floor_points + [floor_points[0]],
+			color.lightened(0.48),
+			3.0 if blocks_movement else 2.0
+		)
 
-	var collision_size: Vector2 = object_data.get("collision_size_px", Vector2.ZERO)
-	if collision_size != Vector2.ZERO and is_focused:
-		var collision_center := visual_center + Vector2(object_data.get("collision_offset_px", Vector2.ZERO))
-		var collision_points := _pixel_rect_points(collision_center, collision_size)
-		_add_line(_object_layer, "object_%s_collision" % id, collision_points + [collision_points[0]], COLOR_OBJECT_BLOCKED_CELL, 3.0)
-	var label_position := visual_center + Vector2(-visual_size.x * 0.5, -visual_size.y * 0.5 - 76.0)
-	if blocks_movement and _object_uses_floor_occupancy(object_data) and is_focused:
-		for occupied_cell in _object_occupied_cells(object_data):
+	if show_object_collision_shapes:
+		var collision_points := _object_collision_polygon_points(object_data)
+		if collision_points.size() == 4:
+			var collision_fill := COLOR_OBJECT_BLOCKED_CELL
+			collision_fill.a = 0.16
+			_add_polygon(_object_layer, "object_%s_collision_shape" % id, collision_points, collision_fill)
+			_add_line(
+				_object_layer,
+				"object_%s_collision_outline" % id,
+				collision_points + [collision_points[0]],
+				COLOR_OBJECT_BLOCKED_CELL,
+				3.0
+			)
+
+	if show_object_interaction_areas:
+		for interaction_cell in _object_interaction_cells(object_data):
+			var center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
+			var interaction_size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
+			if interaction_size != Vector2.ZERO:
+				_draw_dashed_rect(
+					_object_layer,
+					"object_%s_interaction_area_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
+					center,
+					interaction_size,
+					COLOR_OBJECT_INTERACTION_AREA
+				)
 			_add_marker(
 				_object_layer,
-				"object_%s_block_marker_%d_%d" % [id, occupied_cell.x, occupied_cell.y],
-				_cell_center(occupied_cell),
-				COLOR_OBJECT_BLOCKED_CELL,
-				5.0
+				"object_%s_interaction_marker_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
+				center,
+				COLOR_OBJECT_INTERACTION_AREA,
+				8.0
 			)
-	if show_object_labels and is_focused:
-		_add_label_with_background(
-			_object_layer,
-			"object_%s_label" % id,
-			"%s\nid=%s\nanchor=%s offset=%s\nvisual=%s collision=%s@%s\ninteraction=%s@%s %s\nparent=%s wall=%s@%.2f" % [
-				name_ko,
-				id,
-				_format_cell(anchor),
-				str(object_data.get("position_offset_px", Vector2.ZERO)),
-				str(visual_size),
-				str(collision_size),
-				str(object_data.get("collision_offset_px", Vector2.ZERO)),
-				str(object_data.get("interaction_size_px", Vector2.ZERO)),
-				str(object_data.get("interaction_offset_px", Vector2.ZERO)),
-				_object_placement_type_name(object_data),
-				String(object_data.get("parent_object_id", "-")) if not String(object_data.get("parent_object_id", "")).is_empty() else "-",
-				String(object_data.get("wall_segment_id", "-")) if not String(object_data.get("wall_segment_id", "")).is_empty() else "-",
-				float(object_data.get("wall_position_ratio", 0.5)),
-			],
-			label_position,
-			12 if has_focus else 11,
-			COLOR_OBJECT_LABEL_BACKGROUND
+
+
+func _object_floor_polygon_points(object_data: Dictionary) -> Array[Vector2]:
+	if not _object_uses_floor_occupancy(object_data):
+		return []
+	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
+	var size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
+	return _rect_points(Rect2i(anchor, size))
+
+
+func _object_collision_polygon_points(object_data: Dictionary) -> Array[Vector2]:
+	if not _object_uses_floor_occupancy(object_data):
+		return []
+	var collision_size: Vector2 = object_data.get("collision_size_px", Vector2.ZERO)
+	if collision_size == Vector2.ZERO:
+		return []
+	# Collision dimensions and offsets are authored as screen pixels. Keep those values in
+	# screen space while orienting the polygon sides to the rotated isometric floor axes.
+	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
+	var center := _object_pixel_center(object_data) + Vector2(object_data.get("collision_offset_px", Vector2.ZERO))
+	var axis_a := (_iso(float(anchor.x) + 1.0, float(anchor.y)) - _iso(float(anchor.x), float(anchor.y))).normalized()
+	var axis_b := (_iso(float(anchor.x), float(anchor.y) + 1.0) - _iso(float(anchor.x), float(anchor.y))).normalized()
+	var half_a := axis_a * collision_size.x * 0.5
+	var half_b := axis_b * collision_size.y * 0.5
+	return [
+		center - half_a - half_b,
+		center + half_a - half_b,
+		center + half_a + half_b,
+		center - half_a + half_b,
+	]
+
+
+func _mouse_event_world_position(event: InputEventMouse) -> Vector2:
+	return get_canvas_transform().affine_inverse() * event.position
+
+
+func _draw_dashed_rect(parent: Node, prefix: String, center: Vector2, size: Vector2, color: Color) -> void:
+	var points := _pixel_rect_points(center, size)
+	for edge_index in range(4):
+		_draw_dashed_line(
+			parent,
+			"%s_edge_%d" % [prefix, edge_index],
+			points[edge_index],
+			points[(edge_index + 1) % 4],
+			color
 		)
 
-	if not show_object_interaction_cells or not is_focused:
-		return
-	for interaction_cell in _object_interaction_cells(object_data):
-		var center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
-		var interaction_size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
-		if interaction_size != Vector2.ZERO:
-			var interaction_points := _pixel_rect_points(center, interaction_size)
-			_add_line(_object_layer, "object_%s_interaction_bounds_%d_%d" % [id, interaction_cell.x, interaction_cell.y], interaction_points + [interaction_points[0]], COLOR_OBJECT_INTERACTION, 2.0)
-		_add_marker(
-			_object_layer,
-			"object_%s_interaction_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
-			center,
-			COLOR_OBJECT_INTERACTION,
-			10.0 if has_focus else 8.0
-		)
-		_add_label_with_background(
-			_object_layer,
-			"object_%s_interaction_label_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
-			"사용 위치 %s" % _format_cell(interaction_cell),
-			center + Vector2(9.0, -28.0),
-			10,
-			COLOR_GRID_LABEL_BACKGROUND,
-			COLOR_OBJECT_INTERACTION
-		)
+
+func _draw_dashed_line(parent: Node, prefix: String, from: Vector2, to: Vector2, color: Color) -> void:
+	const DASH_COUNT := 6
+	for index in range(DASH_COUNT):
+		var start_ratio := float(index) / float(DASH_COUNT)
+		var end_ratio := minf(start_ratio + 0.10, 1.0)
+		_add_line(parent, "%s_dash_%d" % [prefix, index], [from.lerp(to, start_ratio), from.lerp(to, end_ratio)], color, 2.0)
 
 
 func _object_pixel_center(object_data: Dictionary) -> Vector2:
 	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
 	return _cell_center(anchor) + Vector2(object_data.get("position_offset_px", Vector2.ZERO)) + Vector2(object_data.get("wall_offset_px", Vector2.ZERO))
+
+
+func _object_at_world_position(world_position: Vector2) -> String:
+	var best_id := ""
+	var best_distance := INF
+	for object_data in _object_footprints():
+		if not bool(object_data.get("enabled", true)):
+			continue
+		var visual_size: Vector2 = object_data.get("visual_size_px", Vector2.ZERO)
+		var center := _object_pixel_center(object_data)
+		var hit_rect := Rect2(center - visual_size * 0.5, visual_size)
+		if not hit_rect.has_point(world_position):
+			continue
+		var distance := center.distance_squared_to(world_position)
+		if distance < best_distance:
+			best_distance = distance
+			best_id = String(object_data.get("id", ""))
+	return best_id
+
+
+func _update_object_hover_at(world_position: Vector2) -> void:
+	var next_id := _object_at_world_position(world_position) if show_object_placeholders else ""
+	if next_id == _hovered_object_id:
+		return
+	_hovered_object_id = next_id
+	_redraw_object_selection_overlay()
+	_update_debug_detail_panel()
+
+
+func _select_hovered_object() -> bool:
+	if _hovered_object_id.is_empty():
+		return false
+	_select_object_for_debug(_hovered_object_id)
+	return true
+
+
+func _select_object_for_debug(object_id: String) -> void:
+	if _object_data_by_id(object_id).is_empty():
+		return
+	_selected_object_id = object_id
+	debug_focus_object_id = object_id
+	_redraw_object_selection_overlay()
+	_update_debug_detail_panel()
+
+
+func _object_data_by_id(object_id: String) -> Dictionary:
+	for object_data in _object_footprints():
+		if String(object_data.get("id", "")) == object_id:
+			return object_data
+	return {}
+
+
+func _redraw_object_selection_overlay() -> void:
+	if _debug_selection_layer == null:
+		return
+	_clear_layer_children(_debug_selection_layer)
+	if not show_object_placeholders:
+		return
+	var ids: Array[String] = []
+	if not _hovered_object_id.is_empty():
+		ids.append(_hovered_object_id)
+	if not _selected_object_id.is_empty() and not ids.has(_selected_object_id):
+		ids.append(_selected_object_id)
+	for object_id in ids:
+		var object_data := _object_data_by_id(object_id)
+		if object_data.is_empty():
+			continue
+		var is_selected := object_id == _selected_object_id
+		var center := _object_pixel_center(object_data)
+		var visual_size: Vector2 = object_data.get("visual_size_px", Vector2.ZERO)
+		if is_selected and show_object_visual_bounds and visual_size != Vector2.ZERO:
+			_draw_dashed_rect(_debug_selection_layer, "object_%s_visual_bounds" % object_id, center, visual_size, COLOR_GRID_COORD)
+		if is_selected and show_object_parent_links:
+			var parent_id := String(object_data.get("parent_object_id", ""))
+			var parent_data := _object_data_by_id(parent_id)
+			if not parent_data.is_empty():
+				_add_line(_debug_selection_layer, "object_%s_parent_link" % object_id, [center, _object_pixel_center(parent_data)], COLOR_MEASUREMENT_WALL_LOGICAL, 2.0)
+		if show_object_names and show_object_labels:
+			var name_ko := String(object_data.get("display_name_ko", _object_display_name_ko(object_id)))
+			_add_label_with_background(
+				_debug_selection_layer,
+				"object_%s_short_name" % object_id,
+				name_ko,
+				center + Vector2(12.0, -34.0),
+				12,
+				COLOR_OBJECT_LABEL_BACKGROUND,
+				COLOR_LABEL
+			)
 
 
 func _object_collision_grid_rect(object_data: Dictionary) -> Rect2:
@@ -2157,6 +2381,7 @@ func _draw_room_measurement_overlay() -> void:
 
 func _draw_room_measurement_cells(data: Dictionary) -> void:
 	var room_color: Color = data.get("color", COLOR_MEASUREMENT_LIVING)
+	var room_rect: Rect2i = data.get("rect", Rect2i())
 	for cell in data.get("floor_cells", []):
 		_add_polygon(
 			_room_measurement_layer,
@@ -2171,15 +2396,23 @@ func _draw_room_measurement_cells(data: Dictionary) -> void:
 			_measurement_inset_tile_points(cell, 0.42),
 			COLOR_MEASUREMENT_PLACEMENT
 		)
-	for cell in data.get("walkable_cells", []):
-		var outline := _measurement_inset_tile_points(cell, 0.20)
-		_add_line(
-			_room_measurement_layer,
-			"measurement_walkable_%s_%d_%d" % [data["room_id"], cell.x, cell.y],
-			outline + [outline[0]],
-			COLOR_MEASUREMENT_WALKABLE,
-			1.5
-		)
+	var bounds_points := _rect_points(room_rect)
+	_add_line(
+		_room_measurement_layer,
+		"measurement_room_%s_bounds" % data["room_id"],
+		bounds_points + [bounds_points[0]],
+		room_color.lightened(0.55),
+		4.0
+	)
+	_add_label_with_background(
+		_room_measurement_layer,
+		"measurement_room_%s_name" % data["room_id"],
+		String(data.get("name_ko", data["room_id"])),
+		_room_center(room_rect) + Vector2(-44.0, -18.0),
+		13,
+		COLOR_MEASUREMENT_LABEL_BACKGROUND,
+		COLOR_DEBUG_TEXT
+	)
 	for cell in data.get("main_path_cells", []):
 		_add_polygon(
 			_room_measurement_layer,
@@ -2251,21 +2484,116 @@ func _draw_measurement_dashed_line(line_name: String, p0: Vector2, p1: Vector2, 
 
 
 func _draw_control_hint() -> void:
-	var label := Label.new()
-	label.name = "ShellControlHint"
-	label.text = "1/2/3: 카메라  |  L: 구역 라벨  |  G: 바닥 좌표  |  E: 벽선 좌표  |  W: 벽 정보\nN: 이동/충돌  |  P: 오브젝트  |  O: 숨김벽  |  M: 방 측량  |  J: 상호작용 테스트  |  H: 핸드폰\nI: 목록 출력  |  ESC: 열린 UI 닫기  |  방향키: 디버그 위치 이동"
-	label.position = Vector2(24, 20)
-	label.modulate = COLOR_LABEL
-	label.add_theme_font_size_override("font_size", 14)
-	label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
-	label.add_theme_constant_override("shadow_offset_x", 2)
-	label.add_theme_constant_override("shadow_offset_y", 2)
-	_debug_overlay_layer.add_child(label)
+	_compact_help_label = Label.new()
+	_compact_help_label.name = "CompactDebugHelp"
+	_compact_help_label.position = Vector2(24, 20)
+	_compact_help_label.modulate = COLOR_LABEL
+	_compact_help_label.add_theme_font_size_override("font_size", 14)
+	_compact_help_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
+	_compact_help_label.add_theme_constant_override("shadow_offset_x", 2)
+	_compact_help_label.add_theme_constant_override("shadow_offset_y", 2)
+	_debug_overlay_layer.add_child(_compact_help_label)
 	_create_hover_coord_overlay()
 	_create_active_room_overlay()
 	_create_measurement_legend_overlay()
-	_create_measurement_summary_overlay()
+	_create_debug_detail_panel()
+	_create_full_debug_help_panel()
 	_create_interaction_debug_ui()
+	_update_compact_debug_help()
+
+
+func _create_debug_detail_panel() -> void:
+	_debug_detail_panel = _make_debug_panel("DebugDetailPanel", Vector2.ZERO, Vector2(410.0, 500.0))
+	_debug_overlay_layer.add_child(_debug_detail_panel)
+	_debug_detail_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_debug_detail_panel.position = Vector2(-430.0, 112.0)
+	var box := _make_panel_vbox(_debug_detail_panel)
+	_debug_detail_label = _make_debug_label_control("", 12, COLOR_DEBUG_TEXT)
+	_debug_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(_debug_detail_label)
+	_update_debug_detail_panel()
+
+
+func _create_full_debug_help_panel() -> void:
+	_debug_help_panel = _make_debug_panel("DebugHelpPanel", Vector2(300.0, 90.0), Vector2(760.0, 620.0))
+	_debug_overlay_layer.add_child(_debug_help_panel)
+	var box := _make_panel_vbox(_debug_help_panel)
+	box.add_child(_make_debug_label_control("아파트 shell 디버그 단축키", 20, COLOR_DEBUG_TEXT))
+	box.add_child(_make_debug_label_control(
+		"M  방 측량 모드\nP  오브젝트 배치 모드\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽  /  L  구역 라벨  /  I  inventory 출력\nJ  상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기",
+		15,
+		COLOR_DEBUG_TEXT
+	))
+	_debug_help_panel.visible = false
+
+
+func _toggle_full_debug_help() -> void:
+	if _debug_help_panel == null:
+		return
+	if not _debug_help_panel.visible:
+		_close_interaction_debug_ui()
+		if _phone_overlay_root != null:
+			_phone_overlay_root.visible = false
+	_debug_help_panel.visible = not _debug_help_panel.visible
+
+
+func _update_compact_debug_help() -> void:
+	if _compact_help_label == null:
+		return
+	_compact_help_label.text = "현재 모드: %s  |  M 방 측량  P 오브젝트  N 이동·충돌  |  F1 전체 도움말  ESC 닫기" % _debug_mode_display_name()
+
+
+func _update_debug_detail_panel() -> void:
+	if _debug_detail_label == null:
+		return
+	if show_object_placeholders:
+		var object_id := _selected_object_id if not _selected_object_id.is_empty() else _hovered_object_id
+		var object_data := _object_data_by_id(object_id)
+		_debug_detail_label.text = _object_debug_detail_text(object_data)
+	elif show_room_measurements:
+		_debug_detail_label.text = _room_measurement_detail_text()
+	elif show_navigation_debug:
+		_debug_detail_label.text = _navigation_debug_detail_text()
+	else:
+		_debug_detail_label.text = ""
+
+
+func _object_debug_detail_text(object_data: Dictionary) -> String:
+	if object_data.is_empty():
+		return "오브젝트 배치\n\n오브젝트를 가리키거나 클릭하면 상세 정보가 표시됩니다."
+	var id := String(object_data.get("id", ""))
+	return "%s\nid: %s\nroom: %s\nplacement: %s\nanchor: %s\nposition offset: %s\nvisual: %s\ncollision: %s @ %s\ninteraction: %s @ %s\ninteraction cells: %s\nmovement block: %s / floor occupancy: %s\nparent: %s\nwall: %s @ %.2f" % [
+		String(object_data.get("display_name_ko", _object_display_name_ko(id))), id,
+		_room_area_label(String(object_data.get("room_area_id", ""))), _object_placement_type_name(object_data),
+		_format_cell(object_data.get("anchor_cell", Vector2i.ZERO)), str(object_data.get("position_offset_px", Vector2.ZERO)),
+		str(object_data.get("visual_size_px", Vector2.ZERO)), str(object_data.get("collision_size_px", Vector2.ZERO)),
+		str(object_data.get("collision_offset_px", Vector2.ZERO)), str(object_data.get("interaction_size_px", Vector2.ZERO)),
+		str(object_data.get("interaction_offset_px", Vector2.ZERO)), _format_cells(_object_interaction_cells(object_data)),
+		_bool_ko(bool(object_data.get("blocks_movement", false))), _bool_ko(_object_uses_floor_occupancy(object_data)),
+		String(object_data.get("parent_object_id", "-")) if not String(object_data.get("parent_object_id", "")).is_empty() else "-",
+		String(object_data.get("wall_segment_id", "-")) if not String(object_data.get("wall_segment_id", "")).is_empty() else "-",
+		float(object_data.get("wall_position_ratio", 0.5)),
+	]
+
+
+func _room_measurement_detail_text() -> String:
+	var lines: Array[String] = ["방 측량 요약"]
+	for definition in _room_measurement_definitions():
+		var data := _room_measurement_data(String(definition["room_id"]))
+		var rect: Rect2i = data["rect"]
+		lines.append("\n%s  %s→%s" % [data["name_ko"], _format_cell(rect.position), _format_cell(rect.end)])
+		lines.append("이동 %d / 배치 후보 %d / 문 여유 %d / 필수 경로 %d" % [
+			data["walkable_cells"].size(), data["placement_cells"].size(),
+			data["doorway_clearance_cells"].size(), data["main_path_cells"].size(),
+		])
+	return "\n".join(lines)
+
+
+func _navigation_debug_detail_text() -> String:
+	return "이동·충돌\n\n초록: 이동 가능\n빨강: 오브젝트 차단\n빨강 선: 벽 차단\n청록 선: 문 통과 가능\n노랑: 디버그 플레이어\n\n현재 칸: %s\n현재 방: %s\nwalkable: %d / blocked objects: %d" % [
+		_format_cell(player_debug_cell), _room_area_label(_active_room_area()),
+		_walkable_floor_cells().size(), _object_blocked_cells().size(),
+	]
 
 
 # Builds shell-only interaction / phone UI. This deliberately stays in the candidate
@@ -2402,6 +2730,8 @@ func _make_debug_label_control(text: String, font_size: int, color: Color) -> La
 
 
 func _toggle_interaction_debug_menu() -> void:
+	if _debug_help_panel != null:
+		_debug_help_panel.visible = false
 	if _phone_overlay_root != null and _phone_overlay_root.visible:
 		_close_phone_overlay()
 	if _interaction_menu_panel == null:
@@ -2464,6 +2794,8 @@ func _toggle_phone_overlay() -> void:
 
 
 func _open_phone_overlay() -> void:
+	if _debug_help_panel != null:
+		_debug_help_panel.visible = false
 	_close_interaction_debug_ui()
 	if _phone_overlay_root != null:
 		_show_phone_tab("messages")
@@ -2485,6 +2817,9 @@ func _close_top_debug_overlay() -> bool:
 		return true
 	if _interaction_menu_panel != null and _interaction_menu_panel.visible:
 		_close_interaction_debug_ui()
+		return true
+	if _debug_help_panel != null and _debug_help_panel.visible:
+		_debug_help_panel.visible = false
 		return true
 	return false
 
@@ -2595,6 +2930,10 @@ func _draw_navigation_overlay() -> void:
 				COLOR_NAV_LABEL_BACKGROUND,
 				COLOR_NAV_WALKABLE_MARKER
 			)
+	for cell in _object_blocked_cells():
+		var points := _measurement_inset_tile_points(cell, 0.18)
+		_add_polygon(_navigation_layer, "nav_object_blocked_%d_%d" % [cell.x, cell.y], points, Color(1.0, 0.22, 0.16, 0.34))
+		_add_line(_navigation_layer, "nav_object_blocked_outline_%d_%d" % [cell.x, cell.y], points + [points[0]], COLOR_OBJECT_BLOCKED_CELL, 2.0)
 
 	var edge_sets := _navigation_edge_sets()
 	for edge_data in edge_sets["blocked"].values():
@@ -3396,6 +3735,7 @@ func _update_player_debug_marker() -> void:
 		print("active room changed / 현재 구역 변경: %s(%s) -> %s(%s)" % [_last_active_room_area, _room_area_label(_last_active_room_area), area_id, _room_area_label(area_id)])
 	_last_active_room_area = area_id
 	_update_active_room_overlay()
+	_update_debug_detail_panel()
 	if area_changed and debug_auto_reveal_walls:
 		_redraw_reveal_sensitive_layers()
 
@@ -4233,9 +4573,12 @@ func _add_label(parent: Node, label_name: String, text: String, position: Vector
 
 func _update_label_visibility() -> void:
 	if _label_layer != null:
-		_label_layer.visible = show_debug_labels
+		# M owns one room-name label per measured room; suppress the legacy broad label set there.
+		_label_layer.visible = show_debug_labels and not show_room_measurements
 	if _object_layer != null:
-		_object_layer.visible = show_object_placeholders or show_navigation_debug
+		_object_layer.visible = show_object_placeholders
+	if _debug_selection_layer != null:
+		_debug_selection_layer.visible = show_object_placeholders
 	if _navigation_layer != null:
 		_navigation_layer.visible = show_navigation_debug
 	if _wall_id_layer != null:
@@ -4250,6 +4593,8 @@ func _update_label_visibility() -> void:
 		_occlusion_debug_layer.visible = show_occlusion_wall_debug
 	if _room_measurement_layer != null:
 		_room_measurement_layer.visible = show_room_measurements
+	if _zone_layer != null:
+		_zone_layer.visible = show_room_measurements
 	if _hover_coord_label != null:
 		_hover_coord_label.visible = show_floor_grid_coords
 	if _hover_coord_background != null:
@@ -4267,9 +4612,16 @@ func _update_label_visibility() -> void:
 	if _measurement_legend_background != null:
 		_measurement_legend_background.visible = show_room_measurements
 	if _measurement_summary_label != null:
-		_measurement_summary_label.visible = show_room_measurements
+		_measurement_summary_label.visible = false
 	if _measurement_summary_background != null:
-		_measurement_summary_background.visible = show_room_measurements
+		_measurement_summary_background.visible = false
+	if _debug_detail_panel != null:
+		_debug_detail_panel.visible = _has_primary_debug_mode()
+	if not show_object_placeholders:
+		_hovered_object_id = ""
+	_update_compact_debug_help()
+	_update_debug_detail_panel()
+	_redraw_object_selection_overlay()
 	_update_active_room_overlay()
 	_update_hover_cell()
 

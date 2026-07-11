@@ -82,12 +82,13 @@ Do not modify by default:
 | Print wall inventory | Press `I` in the shell scene |
 | Show floor cell coordinates | Press `G` in the shell scene; floor labels use `칸 (x,y)` |
 | Show wall edge / vertex coordinates | Press `E` in the shell scene; wall labels use `벽선 from -> to` / `축=A/B` |
-| Show navigation / collision debug | Press `N` in the shell scene; labels use `이동 가능`, `막힘`, and `통과 가능` |
-| Show object footprint placeholders | Press `P` in the shell scene; object labels prioritize Korean names with `id` as secondary info |
-| Show room measurements / placement reference | Press `M`; displays room bounds, walkable and placement-reference cells, doorway clearance, required paths, and wall-mount spans |
+| Show navigation / collision debug | Press `N`; shows only movement cells, object-blocked cells, wall/door edges, the marker, current room, and a compact legend |
+| Show object placement debug | Press `P`; shows projected floor/collision polygons and interaction markers, with one selected object's details in the fixed panel |
+| Show room measurements / placement reference | Press `M`; shows simplified room bounds, placement zones, doorway clearance, required paths, and wall-mount availability |
+| Open complete shell shortcut help | Press `F1`; press `F1` or `ESC` to close the Korean help panel |
 | Open shell interaction debug menu | Press `J`; choose a mock object to test use / inspect / cancel panel flow |
 | Open shell Phone debug overlay | Press `H`; switch mock Messages / Power / Jobs / Settings tabs |
-| Close top shell debug UI | Press `ESC`; closes Phone overlay, then interaction panel, then interaction menu |
+| Close top shell debug UI | Press `ESC`; closes Phone, interaction detail/menu, full help, then the active M/P/N mode in priority order |
 | Highlight occlusion / revealable walls | Press `O` in the shell scene; labels use `숨김벽` and Korean display-state text |
 | Identify a floor cell under the mouse | Enable `G`, then hover a floor tile; click to print the cell and its four wall edges |
 | Identify an exact wall edge under the mouse | Enable `E`, then hover near a floor edge; click to print the nearest wall edge `from_cell -> to_cell` |
@@ -136,20 +137,27 @@ When `G` is enabled, clicking a floor cell prints all four edge coordinates:
 
 When `E` is enabled, the shell displays wall grid-line vertices and the hover panel reports the nearest edge with `cell`, `edge`, `edge from`, `edge to`, and `axis`. Clicking prints the same nearest-edge information to the console.
 
-When `N` is enabled, the shell displays walkable floor cells, room areas, logical blocked wall edges, passable doorway edges, and a shell-only debug marker. Walkable cells currently come from the visible living / work-power / bathroom floor cells, with future exception hooks in `_navigation_extra_walkable_cells()` and `_navigation_unwalkable_cells()`. Enabled wall segments create blocked edges; doorway units from `doorway_offset` / `doorway_width` are marked passable and excluded from blocked movement. `REVEALABLE`, `CUTAWAY_STUB`, and `HIDDEN_STUB` walls still count as logical blockers unless their edge is a doorway.
+`M`, `P`, and `N` are primary debug modes backed by `DebugMode.NONE`, `ROOM_MEASUREMENT`, `OBJECT_PLACEMENT`, and `NAVIGATION`. A normal key press replaces the previous primary mode; pressing the active key again returns to `NONE`. `Shift+M/P/N`, or `allow_combined_debug_overlays=true`, explicitly permits combined inspection while the default remains exclusive. Legacy `show_room_measurements`, `show_object_placeholders`, and `show_navigation_debug` exports remain load-compatible and are normalized into the active mode at startup.
+
+Their render responsibilities are separated into `RoomMeasurementDebugLayer`, `ObjectPlacementDebugLayer`, `NavigationDebugLayer`, and `DebugSelectionLayer`. `DebugDetailPanel` shows only the current mode's room/object/navigation summary, and `DebugHelpPanel` owns the complete Korean shortcut list. The compact top help always shows the current mode, M/P/N, F1, and ESC.
+
+When `N` is enabled, the shell displays walkable floor cells, room areas, object-blocked cells, logical blocked wall edges, passable doorway edges, and a shell-only debug marker. It continues to use the existing footprint collision/navigation data but does not display object names, ids, sizes, interaction data, parent data, or `ObjectPlacementDebugLayer`. Walkable cells currently come from the visible living / work-power / bathroom floor cells, with future exception hooks in `_navigation_extra_walkable_cells()` and `_navigation_unwalkable_cells()`. Enabled wall segments create blocked edges; doorway units from `doorway_offset` / `doorway_width` are marked passable and excluded from blocked movement. `REVEALABLE`, `CUTAWAY_STUB`, and `HIDDEN_STUB` walls still count as logical blockers unless their edge is a doorway.
 
 Navigation area ids are `living_area`, `work_power_area`, `bathroom`, and `entrance_area`. The shell-only marker starts at `player_debug_cell=(1,8)` by default. Arrow keys move the marker only when `N` is enabled; blocked wall edges and non-walkable target cells stop movement, while doorway edges allow passage.
 
-When `P` is enabled, the shell displays `ApartmentObjectFootprintConfig` data using independent pixel visual, collision, and interaction rectangles. Floor cells remain approximate room/navigation anchors. `uses_floor_occupancy` decides whether an object contributes floor cells; wall, ceiling, and most parent attachments do not block `N`, while the parent-related UPS explicitly retains a floor collision.
+When `P` is enabled, floor footprints use the same rotated grid-to-screen projection as the apartment floor. Pixel collision dimensions are drawn as four-point floor-plane parallelograms: their sides follow the current rotated isometric axes while their authored `collision_size_px` side lengths and `collision_offset_px` screen vector remain unchanged. Interaction cells use separate yellow markers/areas. `visual_size_px` remains a screen-axis sprite bound and is drawn as a dashed rectangle only for the selected object when `show_object_visual_bounds` is enabled. `uses_floor_occupancy` decides whether an object receives floor/collision geometry; wall, ceiling, and non-floor parent attachments do not block `N`, while the parent-related UPS explicitly retains a floor collision.
+
+Hovering or clicking in `P` selects the nearest matching object placeholder. The world shows only the short Korean name for the hovered/selected object. `DebugDetailPanel` shows one selected object's id, room, placement, anchor, offsets, visual/collision/interaction sizes, occupied and interaction cells, movement blocking, parent, and wall attachment.
 
 Object footprint defaults now live in `godot/resources/quarterview/apartment_shell_object_footprints.tres`, assigned through `object_footprint_set` on `QuarterviewApartmentShellCandidate`. If that Resource is empty or unassigned, the script fallback `_default_object_footprint_configs()` still creates the same baseline. Add `ApartmentObjectFootprintConfig` Resources to `custom_object_footprints` in the Inspector for additive layout tests. The shell warns, without stopping scene load, when a footprint is outside base walkable cells, overlaps another footprint, blocks a doorway edge, or has an unusable interaction cell.
 
-Object footprint edit helpers:
+Object placement display options:
 
-- Set `debug_focus_object_id`, for example `bed_placeholder`, to make one footprint brighter and reduce non-focused label clutter.
-- `show_object_labels` controls footprint labels.
-- `show_object_interaction_cells` controls use-position markers.
-- `show_blocking_object_cells` and `show_nonblocking_object_cells` control whether blocking or non-blocking footprint categories are drawn in the `P` overlay.
+- `show_object_names=true` permits the hover/selected Korean short name; it does not restore persistent world detail labels.
+- `show_object_floor_footprints=true`, `show_object_collision_shapes=true`, and `show_object_interaction_areas=true` control the three distinct P geometry categories.
+- `show_object_visual_bounds=false` keeps screen-axis sprite bounds off by default; when enabled they remain selected-only.
+- `show_object_parent_links=false` keeps parent leaders off by default and selected-only when enabled.
+- Legacy object display exports remain available for scene compatibility, but they do not make P details appear in M or N.
 - `I` prints each object's `source`: `resource`, `fallback`, or `custom`, plus an edit hint for the correct edit location.
 
 Shell-only interaction UI:

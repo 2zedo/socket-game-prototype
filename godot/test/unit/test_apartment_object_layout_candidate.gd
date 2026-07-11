@@ -149,6 +149,17 @@ func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
 		add_child_autoqfree(shell)
 		assert_eq(shell._object_footprints().size(), 18, "ROTATE_%d should instantiate all objects." % [rotation * 90])
 		var objects := _dictionary_map(shell._object_footprints())
+		var bed_floor: Array[Vector2] = shell._object_floor_polygon_points(objects["bed"])
+		var bed_anchor: Vector2i = objects["bed"].anchor_cell
+		var bed_size: Vector2i = objects["bed"].size_cells
+		var expected_floor := [
+			shell._iso(bed_anchor.x, bed_anchor.y),
+			shell._iso(bed_anchor.x + bed_size.x, bed_anchor.y),
+			shell._iso(bed_anchor.x + bed_size.x, bed_anchor.y + bed_size.y),
+			shell._iso(bed_anchor.x, bed_anchor.y + bed_size.y),
+		]
+		assert_eq(bed_floor, expected_floor, "ROTATE_%d floor footprint must use the rotated grid corners." % [rotation * 90])
+		_assert_collision_polygon_contract(shell, objects["bed"], rotation * 90)
 		for id in ["bed", "entrance_door", "microwave"]:
 			var expected_center: Vector2 = shell._cell_center(objects[id].anchor_cell) + Vector2(objects[id].position_offset_px) + Vector2(objects[id].wall_offset_px)
 			assert_eq(shell._object_pixel_center(objects[id]), expected_center, "ROTATE_%d %s pixel offsets should remain attached to the rotated anchor." % [rotation * 90, id])
@@ -163,17 +174,154 @@ func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
 
 func test_shell_debug_key_smoke() -> void:
 	var shell = _make_shell()
-	for keycode in [KEY_G, KEY_W, KEY_E, KEY_O, KEY_I, KEY_L, KEY_N, KEY_P, KEY_J, KEY_H, KEY_M]:
+	for keycode in [KEY_G, KEY_W, KEY_E, KEY_O, KEY_I, KEY_L, KEY_J, KEY_H]:
 		shell._unhandled_input(_key_event(keycode))
 	assert_true(shell.show_floor_grid_coords)
 	assert_true(shell.show_wall_ids)
 	assert_true(shell.show_wall_edge_coords)
 	assert_true(shell.show_occlusion_wall_debug)
 	assert_true(shell.show_debug_labels)
-	assert_true(shell.show_navigation_debug)
-	assert_true(shell.show_object_placeholders)
-	assert_true(shell.show_room_measurements)
+	assert_false(shell.show_navigation_debug)
+	assert_false(shell.show_object_placeholders)
+	assert_false(shell.show_room_measurements)
 	assert_true(shell._phone_overlay_root.visible, "H should open the shell-only Phone overlay after J smoke coverage.")
+	shell._unhandled_input(_key_event(KEY_M))
+	assert_true(shell.show_room_measurements)
+	shell._unhandled_input(_key_event(KEY_P))
+	assert_true(shell.show_object_placeholders)
+	assert_false(shell.show_room_measurements)
+	shell._unhandled_input(_key_event(KEY_N))
+	assert_true(shell.show_navigation_debug)
+	assert_false(shell.show_object_placeholders)
+
+
+func test_primary_debug_modes_are_exclusive_and_same_key_returns_to_none() -> void:
+	var shell = _make_shell()
+	_assert_primary_mode(shell, 0, false, false, false)
+	shell._unhandled_input(_key_event(KEY_M))
+	_assert_primary_mode(shell, 1, true, false, false)
+	shell._unhandled_input(_key_event(KEY_M))
+	_assert_primary_mode(shell, 0, false, false, false)
+	shell._unhandled_input(_key_event(KEY_P))
+	_assert_primary_mode(shell, 2, false, true, false)
+	shell._unhandled_input(_key_event(KEY_N))
+	_assert_primary_mode(shell, 3, false, false, true)
+	assert_eq(shell.get_node("RoomMeasurementDebugLayer").visible, false)
+	assert_eq(shell.get_node("ObjectPlacementDebugLayer").visible, false)
+	assert_eq(shell.get_node("NavigationDebugLayer").visible, true)
+
+
+func test_shift_primary_debug_key_allows_explicit_combined_view() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_M))
+	shell._unhandled_input(_key_event(KEY_P, true))
+	assert_true(shell.show_room_measurements)
+	assert_true(shell.show_object_placeholders)
+	assert_false(shell.show_navigation_debug)
+	shell._unhandled_input(_key_event(KEY_N))
+	_assert_primary_mode(shell, 3, false, false, true)
+
+
+func test_navigation_mode_hides_all_object_placement_details() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_N))
+	assert_false(shell.get_node("ObjectPlacementDebugLayer").visible)
+	assert_false(shell.get_node("DebugSelectionLayer").visible)
+	assert_false(shell._debug_detail_label.text.contains("anchor:"))
+	assert_true(shell._debug_detail_label.text.contains("이동·충돌"))
+
+
+func test_measurement_mode_has_room_summary_without_object_details() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_M))
+	assert_true(shell.get_node("RoomMeasurementDebugLayer").visible)
+	assert_false(shell.get_node("ObjectPlacementDebugLayer").visible)
+	assert_false(shell.get_node("DebugLabelLayer").visible, "M should use its single per-room labels instead of the legacy broad label set.")
+	assert_true(shell._debug_detail_label.text.contains("방 측량 요약"))
+	assert_false(shell._debug_detail_label.text.contains("bed"))
+
+
+func test_object_mode_draws_four_point_floor_and_collision_polygons() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_P))
+	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
+	var floor_polygon: Polygon2D = layer.get_node("object_bed_floor_footprint")
+	var collision_polygon: Polygon2D = layer.get_node("object_bed_collision_shape")
+	assert_eq(floor_polygon.polygon.size(), 4)
+	assert_eq(collision_polygon.polygon.size(), 4)
+	var objects := _dictionary_map(shell._object_footprints())
+	for id in ["entrance_door", "microwave", "power_module_board", "signal_booster", "sea_horizon_poster", "fluorescent_light", "cable_bundle", "wall_conduit", "power_housing"]:
+		assert_null(layer.get_node_or_null("object_%s_collision_shape" % id), "%s must not gain fake floor collision geometry." % id)
+		assert_eq(shell._object_collision_polygon_points(objects[id]), [], "%s must not project a floor collision polygon." % id)
+	assert_eq(shell._object_collision_polygon_points(objects["ups_unit"]).size(), 4, "UPS keeps its floor collision despite parent metadata.")
+
+
+func test_visual_bounds_are_selected_only_and_hover_click_updates_detail() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_P))
+	shell.show_object_visual_bounds = true
+	var bed: Dictionary = _dictionary_map(shell._object_footprints())["bed"]
+	var bed_viewport_position: Vector2 = shell.get_viewport().get_canvas_transform() * shell._object_pixel_center(bed)
+	shell._unhandled_input(_mouse_motion_event(bed_viewport_position))
+	assert_eq(shell._hovered_object_id, "bed")
+	assert_not_null(shell.get_node("DebugSelectionLayer").get_node_or_null("object_bed_short_name"))
+	shell._unhandled_input(_mouse_click_event(bed_viewport_position))
+	assert_eq(shell._selected_object_id, "bed")
+	assert_true(shell._debug_detail_label.text.contains("id: bed"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_visual_bounds"))
+	shell._update_object_hover_at(Vector2(-10000, -10000))
+	assert_eq(shell._hovered_object_id, "")
+	assert_eq(shell._selected_object_id, "bed", "Moving hover away must preserve click selection.")
+
+
+func test_inspector_mode_initialization_preserves_legacy_exports_and_combined_policy() -> void:
+	var exclusive_shell = SHELL_SCENE.instantiate()
+	exclusive_shell.active_debug_mode = 1
+	exclusive_shell.show_navigation_debug = true
+	add_child_autoqfree(exclusive_shell)
+	_assert_primary_mode(exclusive_shell, 1, true, false, false)
+
+	var combined_shell = SHELL_SCENE.instantiate()
+	combined_shell.allow_combined_debug_overlays = true
+	combined_shell.show_room_measurements = true
+	combined_shell.show_object_placeholders = true
+	add_child_autoqfree(combined_shell)
+	assert_true(combined_shell.show_room_measurements)
+	assert_true(combined_shell.show_object_placeholders)
+	combined_shell._unhandled_input(_key_event(KEY_N))
+	assert_true(combined_shell.show_room_measurements)
+	assert_true(combined_shell.show_object_placeholders)
+	assert_true(combined_shell.show_navigation_debug)
+
+
+func test_navigation_mode_keeps_movement_and_collision_calculation_unchanged() -> void:
+	var shell = _make_shell()
+	var blocked_before: Array[Vector2i] = shell._object_blocked_cells()
+	var walkable_before: Array[Vector2i] = shell._walkable_floor_cells()
+	var edges_before: Dictionary = shell._navigation_edge_sets()
+	shell._unhandled_input(_key_event(KEY_N))
+	assert_eq(shell._object_blocked_cells(), blocked_before)
+	assert_eq(shell._walkable_floor_cells(), walkable_before)
+	assert_eq(shell._navigation_edge_sets()["blocked"].keys().size(), edges_before["blocked"].keys().size())
+	assert_eq(shell._navigation_edge_sets()["passable"].keys().size(), edges_before["passable"].keys().size())
+
+
+func test_f1_help_and_j_h_escape_priority_do_not_overlap() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_F1))
+	assert_true(shell._debug_help_panel.visible)
+	shell._unhandled_input(_key_event(KEY_ESCAPE))
+	assert_false(shell._debug_help_panel.visible)
+	shell._unhandled_input(_key_event(KEY_F1))
+	shell._unhandled_input(_key_event(KEY_J))
+	assert_false(shell._debug_help_panel.visible)
+	assert_true(shell._interaction_menu_panel.visible)
+	shell._unhandled_input(_key_event(KEY_H))
+	assert_false(shell._interaction_menu_panel.visible)
+	assert_true(shell._phone_overlay_root.visible)
+	shell._unhandled_input(_key_event(KEY_ESCAPE))
+	assert_false(shell._phone_overlay_root.visible)
+	assert_false(shell._debug_help_panel.visible)
 
 
 func _make_shell():
@@ -220,8 +368,55 @@ func _assert_pixels(object, anchor: Vector2i, offset: Vector2, visual: Vector2, 
 	assert_eq(object.interaction_offset_px, interaction_offset)
 
 
-func _key_event(keycode: Key) -> InputEventKey:
+func _assert_primary_mode(shell, mode: int, measurement: bool, objects: bool, navigation: bool) -> void:
+	assert_eq(shell.active_debug_mode, mode)
+	assert_eq(shell.show_room_measurements, measurement)
+	assert_eq(shell.show_object_placeholders, objects)
+	assert_eq(shell.show_navigation_debug, navigation)
+
+
+func _has_child_prefix(parent: Node, prefix: String) -> bool:
+	for child in parent.get_children():
+		if String(child.name).begins_with(prefix):
+			return true
+	return false
+
+
+func _assert_collision_polygon_contract(shell, object_data: Dictionary, rotation_degrees: int) -> void:
+	var points: Array[Vector2] = shell._object_collision_polygon_points(object_data)
+	assert_eq(points.size(), 4)
+	var center := Vector2.ZERO
+	for point in points:
+		center += point
+	center /= float(points.size())
+	var expected_center: Vector2 = shell._object_pixel_center(object_data) + Vector2(object_data.collision_offset_px)
+	assert_lt(center.distance_to(expected_center), 0.001, "ROTATE_%d collision offset must remain a screen-pixel vector." % rotation_degrees)
+	assert_lt(absf(points[0].distance_to(points[1]) - float(object_data.collision_size_px.x)), 0.001, "ROTATE_%d collision width must remain in screen pixels." % rotation_degrees)
+	assert_lt(absf(points[1].distance_to(points[2]) - float(object_data.collision_size_px.y)), 0.001, "ROTATE_%d collision depth must remain in screen pixels." % rotation_degrees)
+	var anchor: Vector2i = object_data.anchor_cell
+	var expected_axis_a: Vector2 = (shell._iso(anchor.x + 1, anchor.y) - shell._iso(anchor.x, anchor.y)).normalized()
+	var expected_axis_b: Vector2 = (shell._iso(anchor.x, anchor.y + 1) - shell._iso(anchor.x, anchor.y)).normalized()
+	assert_gt((points[1] - points[0]).normalized().dot(expected_axis_a), 0.999, "ROTATE_%d collision width must follow the rotated floor axis." % rotation_degrees)
+	assert_gt((points[2] - points[1]).normalized().dot(expected_axis_b), 0.999, "ROTATE_%d collision depth must follow the rotated floor axis." % rotation_degrees)
+
+
+func _key_event(keycode: Key, shift := false) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.keycode = keycode
+	event.pressed = true
+	event.shift_pressed = shift
+	return event
+
+
+func _mouse_motion_event(position: Vector2) -> InputEventMouseMotion:
+	var event := InputEventMouseMotion.new()
+	event.position = position
+	return event
+
+
+func _mouse_click_event(position: Vector2) -> InputEventMouseButton:
+	var event := InputEventMouseButton.new()
+	event.position = position
+	event.button_index = MOUSE_BUTTON_LEFT
 	event.pressed = true
 	return event
