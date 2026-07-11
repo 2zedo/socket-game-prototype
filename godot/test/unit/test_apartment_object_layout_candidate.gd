@@ -60,12 +60,12 @@ func test_fallback_inventory_matches_resource_inventory_and_metadata() -> void:
 func test_rotated_floorplan_interaction_layout_values_are_preserved() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
 	_assert_pixels(objects["entrance_door"], Vector2i(0, 8), Vector2(0, -6), Vector2(150, 220), Vector2.ZERO, Vector2.ZERO, Vector2(96, 56), Vector2(50, 0))
-	_assert_pixels(objects["bed"], Vector2i(9, 6), Vector2(10, -6), Vector2(260, 180), Vector2(180, 90), Vector2(0, 30), Vector2(120, 64), Vector2(-120, 28))
-	_assert_pixels(objects["fridge"], Vector2i(5, 4), Vector2(-8, -12), Vector2(120, 190), Vector2(70, 70), Vector2(0, 38), Vector2(80, 56), Vector2(-50, 42))
-	_assert_pixels(objects["microwave"], Vector2i(3, 4), Vector2(0, -60), Vector2(96, 72), Vector2.ZERO, Vector2.ZERO, Vector2(96, 56), Vector2(0, 96))
-	_assert_pixels(objects["navi_link"], Vector2i(4, 1), Vector2(12, -16), Vector2(300, 240), Vector2(210, 120), Vector2(0, 45), Vector2(128, 80), Vector2(0, 150))
+	_assert_pixels(objects["bed"], Vector2i(9, 6), Vector2(10, -6), Vector2(260, 180), Vector2(180, 90), Vector2(0, 30), Vector2(120, 64), Vector2.ZERO)
+	_assert_pixels(objects["fridge"], Vector2i(5, 4), Vector2(-8, -12), Vector2(120, 190), Vector2(70, 70), Vector2(0, 38), Vector2(80, 56), Vector2.ZERO)
+	_assert_pixels(objects["microwave"], Vector2i(3, 4), Vector2(0, -60), Vector2(96, 72), Vector2.ZERO, Vector2.ZERO, Vector2(96, 56), Vector2.ZERO)
+	_assert_pixels(objects["navi_link"], Vector2i(4, 1), Vector2(12, -16), Vector2(300, 240), Vector2(210, 120), Vector2(0, 45), Vector2(128, 80), Vector2.ZERO)
 	_assert_pixels(objects["power_module_board"], Vector2i(6, 0), Vector2(0, -30), Vector2(200, 180), Vector2.ZERO, Vector2.ZERO, Vector2(120, 72), Vector2(0, 92))
-	_assert_pixels(objects["node_17"], Vector2i(1, 2), Vector2(0, -8), Vector2(150, 140), Vector2(90, 60), Vector2(0, 28), Vector2(96, 64), Vector2(84, 30))
+	_assert_pixels(objects["node_17"], Vector2i(1, 2), Vector2(0, -8), Vector2(150, 140), Vector2(90, 60), Vector2(0, 28), Vector2(96, 64), Vector2.ZERO)
 	var expected_interactions := {
 		"entrance_door": [Vector2i(0, 8)], "bed": [Vector2i(8, 7)],
 		"fridge": [Vector2i(5, 5)], "microwave": [Vector2i(4, 5)],
@@ -172,6 +172,25 @@ func test_environment_and_decoration_objects_have_no_gameplay_interaction_geomet
 		assert_eq(shell._object_raw_interaction_cells(objects[id]), [])
 		assert_eq(shell._object_interaction_cells(objects[id]), [])
 		assert_false(shell._object_has_valid_interaction_area(objects[id]))
+
+
+func test_priority_interaction_cells_touch_their_object_or_parent_collision() -> void:
+	var shell = _make_shell()
+	var objects := _dictionary_map(shell._object_footprints())
+	for id in ["bed", "fridge", "node_17", "navi_link"]:
+		var object_data: Dictionary = objects[id]
+		var collision_polygon := PackedVector2Array(shell._object_collision_polygon_points(object_data))
+		assert_eq(collision_polygon.size(), 4, "%s must have collision geometry." % id)
+		for cell in shell._object_interaction_cells(object_data):
+			var interaction_center: Vector2 = shell._cell_center(cell) + Vector2(object_data.interaction_offset_px)
+			var interaction_polygon := PackedVector2Array(shell._pixel_rect_points(interaction_center, object_data.interaction_size_px))
+			assert_false(Geometry2D.intersect_polygons(interaction_polygon, collision_polygon).is_empty(), "%s interaction cell must touch its collision." % id)
+
+	var microwave: Dictionary = objects["microwave"]
+	var sink_collision_polygon := PackedVector2Array(shell._object_collision_polygon_points(objects["sink_counter"]))
+	var microwave_center: Vector2 = shell._cell_center(shell._object_interaction_cells(microwave)[0]) + Vector2(microwave.interaction_offset_px)
+	var microwave_polygon := PackedVector2Array(shell._pixel_rect_points(microwave_center, microwave.interaction_size_px))
+	assert_false(Geometry2D.intersect_polygons(microwave_polygon, sink_collision_polygon).is_empty(), "Microwave interaction must touch its parent sink-counter collision.")
 
 
 func test_rotated_floorplan_layout_invariants() -> void:
@@ -370,20 +389,20 @@ func test_invalid_or_empty_interaction_data_draws_no_orange_geometry() -> void:
 		assert_true(_has_child_prefix(layer, "object_%s_interaction_area" % id), "%s must draw its owned interaction area." % id)
 
 
-func test_interaction_priority_and_repeated_click_cycle_over_ceiling_visual() -> void:
+func test_interaction_priority_and_repeated_click_cycle_over_environment_overlap() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_P))
 	var objects := _dictionary_map(shell._object_footprints())
 	var fridge_interaction_center: Vector2 = shell._cell_center(Vector2i(5, 5)) + Vector2(objects["fridge"].interaction_offset_px)
-	var overlap_world_position: Vector2 = fridge_interaction_center + Vector2(30.0, 8.0)
+	var overlap_world_position: Vector2 = fridge_interaction_center + Vector2(-30.0, -20.0)
 	var candidates: Array[Dictionary] = shell._object_hit_candidates(overlap_world_position)
-	assert_eq(_candidate_ids(candidates).slice(0, 3), ["fridge", "microwave", "fluorescent_light"])
+	assert_eq(_candidate_ids(candidates).slice(0, 3), ["fridge", "microwave", "sink_counter"])
 	assert_eq(candidates[0].hit_kind, "interaction")
 	assert_eq(candidates[1].hit_kind, "interaction")
-	assert_eq(candidates[2].hit_kind, "ceiling/environment visual")
+	assert_eq(candidates[2].hit_kind, "collision")
 
 	shell._update_object_hover_at(overlap_world_position)
-	assert_eq(shell._hovered_object_id, "fridge", "Interaction must beat the ceiling visual hit.")
+	assert_eq(shell._hovered_object_id, "fridge", "Interaction must beat overlapping environment geometry.")
 	assert_true(shell._debug_detail_label.text.contains("interaction owner: fridge"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
 	assert_eq(shell._selected_object_id, "fridge")
@@ -392,7 +411,7 @@ func test_interaction_priority_and_repeated_click_cycle_over_ceiling_visual() ->
 	assert_eq(shell._selected_object_id, "microwave")
 	assert_true(shell._debug_detail_label.text.contains("선택 2/3"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
-	assert_eq(shell._selected_object_id, "fluorescent_light")
+	assert_eq(shell._selected_object_id, "sink_counter")
 	assert_true(shell._debug_detail_label.text.contains("선택 3/3"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
 	assert_eq(shell._selected_object_id, "fridge", "Fourth click must wrap to the first ranked candidate.")

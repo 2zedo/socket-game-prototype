@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment interaction position alignment
+
+- Result: Removed legacy pixel offsets from bed, fridge, microwave, NAVI LINK, and NODE-17 interaction geometry. Their existing access cells already represented the usable adjacent floor positions, so adding the offsets during draw/hit/detail calculations displaced the orange areas a second time.
+- Layout: Kept all object anchors and placements unchanged because the kitchen line, right-side bed, and work-room NAVI/NODE positions already match the latest rotated floorplan. Interaction cells and sizes also remain unchanged; only the five offsets are now `(0,0)` in both Resource and fallback data.
+- Visual check: Godot MCP ran the candidate in ROTATE_90 with P+V. Direct hover/click selected each of the five through its interaction hit, detail cells matched the Resource, and the fresh editor/game log window contained no errors.
+- Validation: Candidate regression coverage now requires each corrected interaction area to touch its object collision or, for microwave, its parent sink-counter collision. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` for user acceptance. Production files, camera, project settings, interaction inventory, and generated metadata remain unchanged.
+
 ### Apartment interaction contract and overlap selection
 
 - Commit message: `fix: align apartment interaction debug with object spec`.
