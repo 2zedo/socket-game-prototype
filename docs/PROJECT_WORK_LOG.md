@@ -8,6 +8,15 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment interaction contract and overlap selection
+
+- Commit message: `fix: align apartment interaction debug with object spec`.
+- Result: Fixed direct world interaction to seven objects, removed gameplay interaction geometry from the other eleven, recorded the entrance door's closed-state wall blocking without adding floor occupancy, and kept every placement coordinate unchanged.
+- P debug: Added interaction/floor-collision/attachment/visual hit priority, repeated-click `선택 n/m` cycling, interaction-owner hover text, selected-only visual bounds, and blue-fill/red-outline composition for effectively identical floor/collision surfaces.
+- Visual check: Godot MCP reproduced the fluorescent-light overlap before the change, then confirmed the ranked `fridge 1/3 → microwave 2/3 → fluorescent_light 3/3` cycle, no fluorescent interaction nodes, composite fridge geometry, and zero new editor/game errors.
+- Validation: Candidate GUT `28/28` with 1,093 assertions; full validator PASS in `00:02:20`, placement/measurement warnings and other warnings zero, known Phone PNG warning 32 only.
+- Status: `KEEP_CANDIDATE`. Manual confirmation: `REQUIRED` for click-cycle feel and production approval; production files, scene geometry, camera, Excel, and generated metadata remain unchanged.
+
 ### Rotated-floorplan placement and whole-wall inspection
 
 - Commit message: `feat: align apartment candidate to rotated floorplan`.

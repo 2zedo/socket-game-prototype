@@ -83,7 +83,7 @@ Do not modify by default:
 | Show floor cell coordinates | Press `G` in the shell scene; floor labels use `칸 (x,y)` |
 | Show wall edge / vertex coordinates | Press `E` in the shell scene; wall labels use `벽선 from -> to` / `축=A/B` |
 | Show navigation / collision debug | Press `N`; shows only movement cells, object-blocked cells, wall/door edges, the marker, current room, and a compact legend |
-| Show object placement debug | Press `P`; shows projected floor/collision polygons and interaction markers, with one selected object's details in the fixed panel |
+| Show object placement debug | Press `P`; shows composite/separate floor-collision geometry, valid interaction owners, ranked hover candidates, and `선택 n/m` click cycling |
 | Show room measurements / placement reference | Press `M`; shows simplified room bounds, placement zones, doorway clearance, required paths, and wall-mount availability |
 | Open complete shell shortcut help | Press `F1`; press `F1` or `ESC` to close the Korean help panel |
 | Open shell interaction debug menu | Press `J`; choose a mock object to test use / inspect / cancel panel flow |
@@ -145,11 +145,11 @@ When `N` is enabled, the shell displays walkable floor cells, room areas, object
 
 Navigation area ids are `living_area`, `work_power_area`, `bathroom`, and `entrance_area`. The shell-only marker starts at `player_debug_cell=(1,8)` by default. Arrow keys move the marker only when `N` is enabled; blocked wall edges and non-walkable target cells stop movement, while doorway edges allow passage.
 
-When `P` is enabled, floor footprints use the same rotated grid-to-screen projection as the apartment floor. Its legend separates selected pale dashed visual bounds, blue floor occupancy, red collision geometry, orange dashed interaction areas, and pink wall/parent attachment guides. Pixel collision dimensions are drawn as four-point floor-plane parallelograms: their sides follow the current rotated isometric axes while their authored `collision_size_px` side lengths and `collision_offset_px` screen vector remain unchanged. `visual_size_px` remains a screen-axis sprite bound and is drawn strongly for the clicked selection, avoiding persistent dashed-node clutter for every object. `uses_floor_occupancy` decides whether an object receives floor/collision geometry; wall, ceiling, and non-floor parent attachments do not block `N`. UPS is explicitly `FLOOR` with no spatial parent anchor.
+When `P` is enabled, floor footprints use the same rotated grid-to-screen projection as the apartment floor. Its legend uses blue fill for floor occupancy, red for collision, orange dashed geometry for valid interaction ownership, pink for wall/parent attachment, and a pale dashed visual bound only for the selected object. When floor and collision polygons are effectively the same surface, P draws one blue face with a red collision outline; genuinely different polygons retain separate faces. Pixel collision dimensions remain four-point floor-plane parallelograms following the rotated isometric axes without changing authored sizes, offsets, navigation, or coordinates. `uses_floor_occupancy` decides whether an object receives floor/collision geometry; wall, ceiling, and non-floor parent attachments do not block `N`. UPS is explicitly `FLOOR` with no spatial parent anchor.
 
-Hovering or clicking in `P` selects the nearest matching object placeholder. The world label includes the short Korean name and readable anchor reference. `DebugDetailPanel` shows one selected object's id, category, room, anchor type/resolved position, offsets, visual/collision/interaction sizes, occupied and interaction cells, movement blocking, parent, and wall attachment. WALL_EDGE selection also highlights the exact wall unit.
+P hit testing is separate from the gameplay interaction inventory. Candidates are ranked by valid interaction rectangle, floor/collision polygon, wall/parent anchor proximity, then visual fallback; ceiling and environment-only visuals are last, so a large fluorescent-light bound cannot preempt an underlying interaction or physical footprint. Repeated clicks with the same candidate group cycle in ranked order, and `DebugDetailPanel` shows `선택 n/m`, hit kind, and interaction owner. The panel also retains id, category, room, resolved anchor, offsets, geometry sizes, movement blocking, parent, and wall details. WALL_EDGE selection highlights the exact wall unit.
 
-Object footprint defaults now live in `godot/resources/quarterview/apartment_shell_object_footprints.tres`, assigned through `object_footprint_set` on `QuarterviewApartmentShellCandidate`. If that Resource is empty or unassigned, the script fallback `_default_object_footprint_configs()` still creates the same baseline. Add `ApartmentObjectFootprintConfig` Resources to `custom_object_footprints` in the Inspector for additive layout tests. The shell warns, without stopping scene load, when a footprint is outside base walkable cells, overlaps another footprint, blocks a doorway edge, or has an unusable interaction cell.
+Object footprint defaults now live in `godot/resources/quarterview/apartment_shell_object_footprints.tres`, assigned through `object_footprint_set` on `QuarterviewApartmentShellCandidate`. If that Resource is empty or unassigned, the script fallback `_default_object_footprint_configs()` still creates the same baseline. Add `ApartmentObjectFootprintConfig` Resources to `custom_object_footprints` in the Inspector for additive layout tests. The shell warns, without stopping scene load, when a footprint is outside base walkable cells, overlaps another footprint, blocks a doorway edge, violates the fixed seven-object direct-interaction list, gives a direct object no usable area/access cell, or gives environment/decoration objects gameplay interaction geometry.
 
 Object placement display options:
 
@@ -166,7 +166,7 @@ Object placement display options:
 
 Shell-only interaction UI:
 
-- `J` opens a mock object menu for the current footprint ids plus portable `phone`.
+- `J` opens a mock menu for the seven direct world-interaction ids plus portable `phone`; the other eleven footprints remain P-debug-selectable but are excluded from use/inspect interaction inventory.
 - Selecting an item opens a candidate-only interaction panel with `사용하기`, `살펴보기`, and `취소`.
 - The panel only writes mock text; it does not move Yui, mutate hunger / power / time, call production object logic, or save state.
 - `H` opens a separate shell-only Phone overlay with mock tabs: `메시지`, `전력`, `의뢰`, and `설정`.

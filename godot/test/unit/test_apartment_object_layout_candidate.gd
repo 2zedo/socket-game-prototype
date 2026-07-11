@@ -11,6 +11,15 @@ const EXPECTED_IDS := [
 	"fluorescent_light", "shoes_slippers", "cable_bundle", "wall_conduit",
 	"power_housing",
 ]
+const DIRECT_INTERACTION_IDS := [
+	"entrance_door", "bed", "fridge", "microwave", "navi_link",
+	"power_module_board", "node_17",
+]
+const NON_INTERACTION_IDS := [
+	"sink_counter", "dining_table", "signal_booster", "ups_unit",
+	"bathroom_fixture", "sea_horizon_poster", "fluorescent_light",
+	"shoes_slippers", "cable_bundle", "wall_conduit", "power_housing",
+]
 const RETIRED_IDS := [
 	"phone", "air_conditioner", "desk", "bed_placeholder", "fridge_placeholder",
 	"microwave_placeholder", "sink_counter_placeholder", "small_table_placeholder",
@@ -93,6 +102,8 @@ func test_attachment_and_floor_occupancy_policy() -> void:
 	assert_true(objects["ups_unit"].uses_floor_occupancy, "UPS is floor-anchored and keeps a real floor collision.")
 	assert_true(shell._object_blocked_cells().has(objects["ups_unit"].anchor_cell))
 	assert_false(objects["entrance_door"].uses_floor_occupancy)
+	assert_true(objects["entrance_door"].blocks_movement, "Door contract records closed-state wall blocking without adding a floor blocker.")
+	assert_eq(objects["entrance_door"].collision_size_px, Vector2.ZERO)
 	assert_false(objects["power_module_board"].uses_floor_occupancy)
 
 
@@ -138,19 +149,29 @@ func test_wall_attached_objects_use_valid_wall_edge_anchors() -> void:
 			assert_true(shell._object_wall_attachment_is_available(object_data, wall))
 
 
-func test_object_categories_drive_interaction_inventory() -> void:
+func test_direct_interaction_contract_contains_exactly_seven_world_objects() -> void:
 	var shell = _make_shell()
 	var objects := _dictionary_map(shell._object_footprints())
-	assert_eq(objects["bathroom_fixture"].category, &"environment")
-	assert_eq(objects["entrance_door"].category, &"interaction")
-	assert_eq(objects["sink_counter"].category, &"environment")
-	for id in ["power_module_board", "node_17", "navi_link"]:
+	assert_eq(_sorted_strings(shell._direct_interaction_object_ids()), _sorted_strings(DIRECT_INTERACTION_IDS))
+	assert_eq(shell._interaction_debug_object_ids().size(), 8, "J debug menu keeps Phone separate from seven world objects.")
+	assert_true(shell._interaction_debug_object_ids().has("phone"))
+	for id in DIRECT_INTERACTION_IDS:
 		assert_eq(objects[id].category, &"interaction")
-	var interaction_ids: Array[String] = shell._interaction_debug_object_ids()
-	assert_true(interaction_ids.has("entrance_door"))
-	assert_true(interaction_ids.has("power_module_board"))
-	assert_false(interaction_ids.has("bathroom_fixture"))
-	assert_false(interaction_ids.has("sink_counter"))
+		assert_true(shell._object_has_valid_interaction_area(objects[id]), "%s needs a valid interaction area." % id)
+		assert_gt(Vector2(objects[id].interaction_size_px).x, 0.0)
+		assert_gt(Vector2(objects[id].interaction_size_px).y, 0.0)
+		assert_false(shell._object_interaction_cells(objects[id]).is_empty(), "%s needs at least one access cell." % id)
+
+
+func test_environment_and_decoration_objects_have_no_gameplay_interaction_geometry() -> void:
+	var shell = _make_shell()
+	var objects := _dictionary_map(shell._object_footprints())
+	for id in NON_INTERACTION_IDS:
+		assert_ne(String(objects[id].category), "interaction", "%s must remain P-debug-only, not directly usable." % id)
+		assert_eq(Vector2(objects[id].interaction_size_px), Vector2.ZERO)
+		assert_eq(shell._object_raw_interaction_cells(objects[id]), [])
+		assert_eq(shell._object_interaction_cells(objects[id]), [])
+		assert_false(shell._object_has_valid_interaction_area(objects[id]))
 
 
 func test_rotated_floorplan_layout_invariants() -> void:
@@ -326,6 +347,68 @@ func test_object_mode_draws_four_point_floor_and_collision_polygons() -> void:
 	assert_eq(shell._object_collision_polygon_points(objects["ups_unit"]).size(), 4, "UPS keeps its floor collision despite parent metadata.")
 
 
+func test_object_mode_composites_equivalent_floor_and_collision_without_duplicate_fill() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_P))
+	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
+	var objects := _dictionary_map(shell._object_footprints())
+	assert_true(shell._object_floor_collision_are_equivalent(objects["fridge"]))
+	assert_not_null(layer.get_node_or_null("object_fridge_floor_footprint"))
+	assert_null(layer.get_node_or_null("object_fridge_collision_shape"), "Equivalent geometry must not draw a second red face.")
+	assert_not_null(layer.get_node_or_null("object_fridge_composite_collision_outline"))
+	assert_false(shell._object_floor_collision_are_equivalent(objects["bed"]))
+	assert_not_null(layer.get_node_or_null("object_bed_collision_shape"), "Actually different geometry keeps a separate red face.")
+
+
+func test_invalid_or_empty_interaction_data_draws_no_orange_geometry() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_P))
+	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
+	for id in NON_INTERACTION_IDS:
+		assert_false(_has_child_prefix(layer, "object_%s_interaction_" % id), "%s must not draw orange geometry." % id)
+	for id in DIRECT_INTERACTION_IDS:
+		assert_true(_has_child_prefix(layer, "object_%s_interaction_area" % id), "%s must draw its owned interaction area." % id)
+
+
+func test_interaction_priority_and_repeated_click_cycle_over_ceiling_visual() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_P))
+	var objects := _dictionary_map(shell._object_footprints())
+	var fridge_interaction_center: Vector2 = shell._cell_center(Vector2i(5, 5)) + Vector2(objects["fridge"].interaction_offset_px)
+	var overlap_world_position: Vector2 = fridge_interaction_center + Vector2(30.0, 8.0)
+	var candidates: Array[Dictionary] = shell._object_hit_candidates(overlap_world_position)
+	assert_eq(_candidate_ids(candidates).slice(0, 3), ["fridge", "microwave", "fluorescent_light"])
+	assert_eq(candidates[0].hit_kind, "interaction")
+	assert_eq(candidates[1].hit_kind, "interaction")
+	assert_eq(candidates[2].hit_kind, "ceiling/environment visual")
+
+	shell._update_object_hover_at(overlap_world_position)
+	assert_eq(shell._hovered_object_id, "fridge", "Interaction must beat the ceiling visual hit.")
+	assert_true(shell._debug_detail_label.text.contains("interaction owner: fridge"))
+	assert_true(shell._select_hovered_object(overlap_world_position))
+	assert_eq(shell._selected_object_id, "fridge")
+	assert_true(shell._debug_detail_label.text.contains("선택 1/3"))
+	assert_true(shell._select_hovered_object(overlap_world_position))
+	assert_eq(shell._selected_object_id, "microwave")
+	assert_true(shell._debug_detail_label.text.contains("선택 2/3"))
+	assert_true(shell._select_hovered_object(overlap_world_position))
+	assert_eq(shell._selected_object_id, "fluorescent_light")
+	assert_true(shell._debug_detail_label.text.contains("선택 3/3"))
+	assert_true(shell._select_hovered_object(overlap_world_position))
+	assert_eq(shell._selected_object_id, "fridge", "Fourth click must wrap to the first ranked candidate.")
+
+
+func test_visual_bounds_are_created_only_for_selected_object() -> void:
+	var shell = _make_shell()
+	shell.show_object_visual_bounds = true
+	shell._unhandled_input(_key_event(KEY_P))
+	var object_layer: Node = shell.get_node("ObjectPlacementDebugLayer")
+	for id in EXPECTED_IDS:
+		assert_false(_has_child_prefix(object_layer, "object_%s_visual_bounds" % id))
+	shell._select_object_for_debug("fridge")
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_visual_bounds"))
+
+
 func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_P))
@@ -334,7 +417,9 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(shell._object_legend_label.text.contains("visual"))
 	assert_true(shell._object_legend_label.text.contains("collision"))
 	assert_true(shell._object_legend_label.text.contains("interaction"))
-	assert_true(shell._object_legend_label.text.contains("WALL_EDGE / PARENT_OBJECT"))
+	assert_true(shell._object_legend_label.text.contains("wall/parent anchor"))
+	assert_true(shell._object_legend_label.text.contains("파랑 채움 + 빨강 테두리"))
+	assert_true(shell._object_legend_label.text.contains("후보 순환"))
 	assert_true(shell._object_legend_label.text.contains("전체 벽 반투명"))
 	assert_gt(shell._debug_detail_panel.get_global_rect().position.x, 0.0, "P detail panel must stay inside the viewport.")
 	var bed: Dictionary = _dictionary_map(shell._object_footprints())["bed"]
@@ -462,6 +547,13 @@ func _dictionary_map(objects: Array[Dictionary]) -> Dictionary:
 	for object in objects:
 		result[String(object.id)] = object
 	return result
+
+
+func _candidate_ids(candidates: Array[Dictionary]) -> Array[String]:
+	var ids: Array[String] = []
+	for candidate in candidates:
+		ids.append(String(candidate.get("id", "")))
+	return ids
 
 
 func _sorted_ids(objects: Array) -> Array:

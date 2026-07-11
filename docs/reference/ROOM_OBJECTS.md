@@ -147,11 +147,11 @@ Current rotated-floorplan placement candidate:
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `entrance_door` | entrance | `(0,8)` | `(0,-6)` | `150x220` | none | `(0,8)`, `96x56` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
 | `bed` | living | `(9,6)` | `(10,-6)` | `260x180` | `180x90` | `(8,7)`, `120x64` | `FLOOR` / interaction |
-| `fridge` | living | `(5,4)` | `(-8,-12)` | `120x190` | `70x70` | `(5,5)`, `80x56` | floor |
+| `fridge` | living | `(5,4)` | `(-8,-12)` | `120x190` | `70x70` | `(5,5)`, `80x56` | `FLOOR` / interaction |
 | `microwave` | living | `(3,4)` | `(0,-60)` | `96x72` | none | `(4,5)`, `96x56` | `PARENT_OBJECT`: `sink_counter` / interaction |
-| `navi_link` | work/power | `(4,1)` | `(12,-16)` | `300x240` | `210x120` | `(4,3)`, `(5,3)`, `128x80` | floor |
+| `navi_link` | work/power | `(4,1)` | `(12,-16)` | `300x240` | `210x120` | `(4,3)`, `(5,3)`, `128x80` | `FLOOR` / interaction |
 | `power_module_board` | work/power | `(6,0)` | `(0,-30)` | `200x180` | none | `(6,1)`, `120x72` | `WALL_EDGE`: `work_back_wall` / interaction |
-| `node_17` | work/power | `(1,2)` | `(0,-8)` | `150x140` | `90x60` candidate | `(2,2)`, `96x64` | floor |
+| `node_17` | work/power | `(1,2)` | `(0,-8)` | `150x140` | `90x60` candidate | `(2,2)`, `96x64` | `FLOOR` / interaction |
 | `sink_counter` | living | `(3,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
 | `dining_table` | living | `(4,7)` | `(0,0)` | `170x120` | `130x70` | none | `FLOOR` / environment |
 | `signal_booster` | work/power | `(1,2)` | `(-68,-58)` | `112x96` | none | none | parent: `node_17` |
@@ -169,14 +169,16 @@ Attachment policy:
 - Candidate Resources expose `anchor_type` as `FLOOR`, `WALL_EDGE`, `CEILING`, or `PARENT_OBJECT`; object category remains independently `interaction`, `environment`, or `decoration`.
 - Wall, ceiling, and non-floor parent attachments do not remove navigation cells or participate in floor overlap checks.
 - `ups_unit` is floor-anchored and retains floor occupancy/collision; it has no spatial parent anchor.
-- `entrance_door` is represented in object inventory but aligns to the existing wall doorway unit; it does not create a duplicate floor blocker.
-- `bathroom_fixture` and `sink_counter` are environment objects. `entrance_door`, `power_module_board`, `node_17`, and `navi_link` remain direct interaction objects.
+- `entrance_door` records closed-state movement blocking but aligns to the existing wall doorway unit; it does not create a duplicate floor occupancy or collision polygon.
+- Direct world interaction is limited to exactly seven objects: `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17`. Each has a non-zero interaction rectangle and at least one walkable access cell.
+- `sink_counter`, `dining_table`, `signal_booster`, `ups_unit`, `bathroom_fixture`, `sea_horizon_poster`, `fluorescent_light`, `shoes_slippers`, `cable_bundle`, `wall_conduit`, and `power_housing` have no gameplay interaction geometry. They remain selectable only for P placement inspection.
+- P debug selection and direct game/mock interaction are separate contracts. A zero size, empty access-cell set, or non-interaction category never creates an orange interaction marker.
 - Expected image/scene/audio values are future logical specification strings only. Missing assets are not loaded or validated in this candidate.
 
 Shell editing controls:
 
 - `M`: show room measurement only; the default view does not include object detail.
-- `P`: show the object-placement legend, visual bounds, floor occupancy, collision, interaction, and attachment guides.
+- `P`: show floor occupancy, collision, valid interaction areas, and attachment guides; white visual bounds appear only on the selected object. Equivalent floor/collision surfaces use one blue fill with a red collision outline.
 - `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
 - `V`: make all candidate wall, stub, door, and window visuals translucent for wall-attached and behind-wall inspection; floor edges, logical walls, navigation edges, collision, and reveal state do not change.
 - `I`: print wall inventory followed by object footprint summary.
@@ -184,7 +186,7 @@ Shell editing controls:
 - `H`: open shell-only Phone debug overlay; this does not call production `PhoneUI`.
 - `ESC`: close the topmost shell debug overlay.
 - `debug_focus_object_id`: emphasize one object id, for example `bed`.
-- Hover labels include the anchor type/reference. Click selection strengthens visual, occupancy, collision, interaction, and wall/parent attachment bounds.
+- Hover labels include the hit owner for interaction geometry or the anchor type/reference otherwise. Hit priority is interaction, floor/collision, wall/parent anchor, then visual fallback; repeated clicks at one location cycle candidates and show `선택 n/m`.
 
 Coordinate rule:
 

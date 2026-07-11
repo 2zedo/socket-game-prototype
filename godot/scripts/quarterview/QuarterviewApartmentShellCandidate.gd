@@ -143,6 +143,12 @@ const COLOR_OBJECT_OCCUPANCY := Color(0.38, 0.36, 1.0, 0.26)
 const COLOR_OBJECT_OCCUPANCY_OUTLINE := Color(0.56, 0.58, 1.0, 0.92)
 const COLOR_OBJECT_ATTACHMENT := Color(0.92, 0.42, 1.0, 0.96)
 const COLOR_OBJECT_LEGEND_BACKGROUND := Color(0.055, 0.035, 0.10, 0.92)
+const DIRECT_INTERACTION_OBJECT_IDS := [
+	"entrance_door", "bed", "fridge", "microwave", "navi_link",
+	"power_module_board", "node_17",
+]
+const OBJECT_ANCHOR_HIT_RADIUS := 18.0
+const OBJECT_CLICK_CYCLE_RADIUS := 3.0
 const WALL_INSPECTION_ALPHA := 0.18
 const COLOR_DEBUG_PANEL := Color(0.025, 0.03, 0.038, 0.92)
 const COLOR_DEBUG_PANEL_ALT := Color(0.045, 0.055, 0.068, 0.94)
@@ -325,7 +331,13 @@ var _phone_overlay_root: Control
 var _phone_content_label: Label
 var _last_active_room_area := ""
 var _hovered_object_id := ""
+var _hovered_object_candidates: Array[Dictionary] = []
 var _selected_object_id := ""
+var _selected_candidate_ids: Array[String] = []
+var _selected_candidate_index := -1
+var _selected_hit_kind := ""
+var _last_selection_signature := ""
+var _last_selection_world_position := Vector2(INF, INF)
 
 
 func _ready() -> void:
@@ -430,8 +442,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if show_object_placeholders:
-			_update_object_hover_at(_mouse_event_world_position(event))
-			if _select_hovered_object():
+			var click_world_position := _mouse_event_world_position(event)
+			_update_object_hover_at(click_world_position)
+			if _select_hovered_object(click_world_position):
 				get_viewport().set_input_as_handled()
 				return
 		var hover_cell: Variant = _hover_floor_cell()
@@ -968,7 +981,7 @@ func _default_object_footprint_configs() -> Array[Resource]:
 
 func _candidate_object_footprint_specs() -> Array[Dictionary]:
 	return [
-		_object_spec("entrance_door", "현관문", "entrance_area", "interaction", Vector2i(0, 8), Vector2(150, 220), false, [Vector2i(0, 8)], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "entrance_wall", "", Vector2(0, -6), Vector2.ZERO, Vector2(96, 56), Vector2(50, 0), "entrance_door_dl_closed.png", "objects/apartment/EntranceDoor.tscn", "audio_entrance_door", "문 안쪽 면이 생활공간 중앙을 향함", false, Vector2i.ONE, 0.75),
+		_object_spec("entrance_door", "현관문", "entrance_area", "interaction", Vector2i(0, 8), Vector2(150, 220), true, [Vector2i(0, 8)], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "entrance_wall", "", Vector2(0, -6), Vector2.ZERO, Vector2(96, 56), Vector2(50, 0), "entrance_door_dl_closed.png", "objects/apartment/EntranceDoor.tscn", "audio_entrance_door", "문 안쪽 면이 생활공간 중앙을 향함", false, Vector2i.ONE, 0.75),
 		_object_spec("bed", "침대", "living_area", "interaction", Vector2i(9, 6), Vector2(260, 180), true, [Vector2i(8, 7)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(10, -6), Vector2(180, 90), Vector2(120, 64), Vector2(-120, 28), "bed_dl_base.png", "objects/apartment/Bed.tscn", "", "침대 옆면과 머리맡이 보이고 왼쪽에서 접근", true, Vector2i(2, 1)),
 		_object_spec("fridge", "냉장고", "living_area", "interaction", Vector2i(5, 4), Vector2(120, 190), true, [Vector2i(5, 5)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(-8, -12), Vector2(70, 70), Vector2(80, 56), Vector2(-50, 42), "fridge_dl_closed.png", "objects/apartment/Fridge.tscn", "audio_fridge", "문 앞면이 생활공간 중앙을 향함"),
 		_object_spec("microwave", "전자레인지", "living_area", "interaction", Vector2i(3, 4), Vector2(96, 72), false, [Vector2i(4, 5)], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "sink_counter", Vector2(0, -60), Vector2.ZERO, Vector2(96, 56), Vector2(0, 96), "microwave_dl_base.png", "objects/apartment/Microwave.tscn", "audio_microwave", "조작면이 주방 통로를 향함", false),
@@ -1114,6 +1127,18 @@ func _object_placement_warnings() -> Array[String]:
 		var object_id := String(object_data.get("id", ""))
 		var blocks_movement := bool(object_data.get("blocks_movement", true))
 		var uses_floor := _object_uses_floor_occupancy(object_data)
+		var category := String(object_data.get("category", ""))
+		var contract_interaction := DIRECT_INTERACTION_OBJECT_IDS.has(object_id)
+		var raw_interaction_cells := _object_raw_interaction_cells(object_data)
+		var interaction_size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
+		if contract_interaction and category != "interaction":
+			warnings.append("object %s must use interaction category" % object_id)
+		elif not contract_interaction and category == "interaction":
+			warnings.append("object %s is not one of the seven direct interaction objects" % object_id)
+		if contract_interaction and not _object_has_valid_interaction_area(object_data):
+			warnings.append("object %s requires a non-zero interaction area and access cell" % object_id)
+		elif not contract_interaction and (not raw_interaction_cells.is_empty() or interaction_size != Vector2.ZERO):
+			warnings.append("object %s must not define gameplay interaction geometry" % object_id)
 		var occupied_cells: Array[Vector2i] = []
 		if uses_floor:
 			occupied_cells = _object_occupied_cells(object_data)
@@ -1355,7 +1380,9 @@ func _print_object_footprint_summary() -> void:
 
 func _print_interaction_debug_summary() -> void:
 	print("=== Apartment Interaction / Phone Debug Summary ===")
-	print("interaction_debug_objects=%d" % _interaction_debug_object_ids().size())
+	print("direct_world_interaction_objects=%d debug_menu_entries_including_phone=%d" % [
+		_direct_interaction_object_ids().size(), _interaction_debug_object_ids().size(),
+	])
 	print("interaction_menu_visible=%s interaction_panel_visible=%s phone_debug_overlay_visible=%s" % [
 		str(_interaction_menu_panel != null and _interaction_menu_panel.visible),
 		str(_interaction_panel != null and _interaction_panel.visible),
@@ -1848,31 +1875,38 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 	var id := String(object_data.get("id", ""))
 	var blocks_movement := bool(object_data.get("blocks_movement", true))
 	var uses_floor := _object_uses_floor_occupancy(object_data)
-	var center := _object_pixel_center(object_data)
-	var visual_size: Vector2 = object_data.get("visual_size_px", Vector2.ZERO)
+	var floor_points := _object_floor_polygon_points(object_data)
+	var collision_points := _object_collision_polygon_points(object_data)
+	var composite_surface := (
+		show_object_floor_footprints
+		and show_object_collision_shapes
+		and _object_floor_collision_are_equivalent(object_data)
+	)
 
-	if show_object_visual_bounds and visual_size != Vector2.ZERO:
-		var visual_color := COLOR_OBJECT_VISUAL_BOUNDS
-		visual_color.a = 0.48
-		_draw_dashed_rect(_object_layer, "object_%s_visual_bounds" % id, center, visual_size, visual_color, 1.5, 8)
-
-	if show_object_floor_footprints and uses_floor:
-		var floor_points := _object_floor_polygon_points(object_data)
+	if show_object_floor_footprints and uses_floor and floor_points.size() == 4:
 		var occupancy_fill := COLOR_OBJECT_OCCUPANCY
 		if not blocks_movement:
 			occupancy_fill.a *= 0.62
 		_add_polygon(_object_layer, "object_%s_floor_footprint" % id, floor_points, occupancy_fill)
-		_add_line(
-			_object_layer,
-			"object_%s_floor_outline" % id,
-			floor_points + [floor_points[0]],
-			COLOR_OBJECT_OCCUPANCY_OUTLINE,
-			3.0 if blocks_movement else 2.0
-		)
+		if not composite_surface:
+			_add_line(
+				_object_layer,
+				"object_%s_floor_outline" % id,
+				floor_points + [floor_points[0]],
+				COLOR_OBJECT_OCCUPANCY_OUTLINE,
+				3.0 if blocks_movement else 2.0
+			)
 
-	if show_object_collision_shapes:
-		var collision_points := _object_collision_polygon_points(object_data)
-		if collision_points.size() == 4:
+	if show_object_collision_shapes and collision_points.size() == 4:
+		if composite_surface:
+			_add_line(
+				_object_layer,
+				"object_%s_composite_collision_outline" % id,
+				collision_points + [collision_points[0]],
+				COLOR_OBJECT_BLOCKED_CELL,
+				3.0
+			)
+		else:
 			var collision_fill := COLOR_OBJECT_BLOCKED_CELL
 			collision_fill.a = 0.16
 			_add_polygon(_object_layer, "object_%s_collision_shape" % id, collision_points, collision_fill)
@@ -1884,18 +1918,17 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 				3.0
 			)
 
-	if show_object_interaction_areas:
+	if show_object_interaction_areas and _object_has_valid_interaction_area(object_data):
 		for interaction_cell in _object_interaction_cells(object_data):
 			var interaction_center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
 			var interaction_size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
-			if interaction_size != Vector2.ZERO:
-				_draw_dashed_rect(
-					_object_layer,
-					"object_%s_interaction_area_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
-					interaction_center,
-					interaction_size,
-					COLOR_OBJECT_INTERACTION_AREA
-				)
+			_draw_dashed_rect(
+				_object_layer,
+				"object_%s_interaction_area_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
+				interaction_center,
+				interaction_size,
+				COLOR_OBJECT_INTERACTION_AREA
+			)
 			_add_marker(
 				_object_layer,
 				"object_%s_interaction_marker_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
@@ -1936,6 +1969,35 @@ func _object_collision_polygon_points(object_data: Dictionary) -> Array[Vector2]
 		center + half_a + half_b,
 		center - half_a + half_b,
 	]
+
+
+func _object_floor_collision_are_equivalent(object_data: Dictionary) -> bool:
+	var floor_points := _object_floor_polygon_points(object_data)
+	var collision_points := _object_collision_polygon_points(object_data)
+	if floor_points.size() != 4 or collision_points.size() != 4:
+		return false
+	var floor_bounds := _polygon_bounds(floor_points)
+	var collision_bounds := _polygon_bounds(collision_points)
+	var size_delta := (floor_bounds.size - collision_bounds.size).abs()
+	var size_tolerance := Vector2(
+		maxf(16.0, floor_bounds.size.x * 0.20),
+		maxf(14.0, floor_bounds.size.y * 0.28)
+	)
+	var center_tolerance := maxf(20.0, minf(floor_bounds.size.x, floor_bounds.size.y) * 0.46)
+	return (
+		size_delta.x <= size_tolerance.x
+		and size_delta.y <= size_tolerance.y
+		and floor_bounds.get_center().distance_to(collision_bounds.get_center()) <= center_tolerance
+	)
+
+
+func _polygon_bounds(points: Array[Vector2]) -> Rect2:
+	if points.is_empty():
+		return Rect2()
+	var bounds := Rect2(points[0], Vector2.ZERO)
+	for point in points.slice(1):
+		bounds = bounds.expand(point)
+	return bounds
 
 
 func _mouse_event_world_position(event: InputEventMouse) -> Vector2:
@@ -2047,36 +2109,126 @@ func _object_anchor_short_text(object_data: Dictionary) -> String:
 
 
 func _object_at_world_position(world_position: Vector2) -> String:
-	var best_id := ""
-	var best_distance := INF
+	var candidates := _object_hit_candidates(world_position)
+	return String(candidates[0].get("id", "")) if not candidates.is_empty() else ""
+
+
+func _object_hit_candidates(world_position: Vector2) -> Array[Dictionary]:
+	var candidates: Array[Dictionary] = []
 	for object_data in _object_footprints():
 		if not bool(object_data.get("enabled", true)):
 			continue
-		var visual_size: Vector2 = object_data.get("visual_size_px", Vector2.ZERO)
-		var center := _object_pixel_center(object_data)
-		var hit_rect := Rect2(center - visual_size * 0.5, visual_size)
-		if not hit_rect.has_point(world_position):
-			continue
-		var distance := center.distance_squared_to(world_position)
-		if distance < best_distance:
-			best_distance = distance
-			best_id = String(object_data.get("id", ""))
-	return best_id
+		var candidate := _object_hit_candidate(object_data, world_position)
+		if not candidate.is_empty():
+			candidates.append(candidate)
+	candidates.sort_custom(func(first: Dictionary, second: Dictionary) -> bool:
+		var first_priority := int(first.get("priority", 99))
+		var second_priority := int(second.get("priority", 99))
+		if first_priority != second_priority:
+			return first_priority < second_priority
+		var first_distance := float(first.get("distance", INF))
+		var second_distance := float(second.get("distance", INF))
+		if not is_equal_approx(first_distance, second_distance):
+			return first_distance < second_distance
+		return String(first.get("id", "")) < String(second.get("id", ""))
+	)
+	return candidates
+
+
+func _object_hit_candidate(object_data: Dictionary, world_position: Vector2) -> Dictionary:
+	var id := String(object_data.get("id", ""))
+	if _object_has_valid_interaction_area(object_data):
+		var interaction_size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
+		for interaction_cell in _object_interaction_cells(object_data):
+			var interaction_center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
+			if Rect2(interaction_center - interaction_size * 0.5, interaction_size).has_point(world_position):
+				return {
+					"id": id, "priority": 0, "hit_kind": "interaction",
+					"distance": interaction_center.distance_squared_to(world_position),
+				}
+
+	var floor_points := _object_floor_polygon_points(object_data)
+	var collision_points := _object_collision_polygon_points(object_data)
+	var floor_hit := _point_in_object_polygon(world_position, floor_points)
+	var collision_hit := _point_in_object_polygon(world_position, collision_points)
+	if floor_hit or collision_hit:
+		var physical_center := _object_pixel_center(object_data)
+		var hit_kind := "floor+collision" if floor_hit and collision_hit else ("floor occupancy" if floor_hit else "collision")
+		return {
+			"id": id, "priority": 1, "hit_kind": hit_kind,
+			"distance": physical_center.distance_squared_to(world_position),
+		}
+
+	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
+	if anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE or anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT:
+		var anchor_position := _object_anchor_world_position(object_data)
+		if anchor_position.distance_to(world_position) <= OBJECT_ANCHOR_HIT_RADIUS:
+			return {
+				"id": id, "priority": 2, "hit_kind": "attachment anchor",
+				"distance": anchor_position.distance_squared_to(world_position),
+			}
+
+	var visual_size: Vector2 = object_data.get("visual_size_px", Vector2.ZERO)
+	var center := _object_pixel_center(object_data)
+	if visual_size.x <= 0.0 or visual_size.y <= 0.0 or not Rect2(center - visual_size * 0.5, visual_size).has_point(world_position):
+		return {}
+	var low_priority_visual := (
+		anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.CEILING
+		or String(object_data.get("category", "")) != "interaction"
+	)
+	return {
+		"id": id,
+		"priority": 4 if low_priority_visual else 3,
+		"hit_kind": "ceiling/environment visual" if low_priority_visual else "visual",
+		"distance": center.distance_squared_to(world_position),
+	}
+
+
+func _point_in_object_polygon(world_position: Vector2, points: Array[Vector2]) -> bool:
+	return points.size() >= 3 and Geometry2D.is_point_in_polygon(world_position, PackedVector2Array(points))
+
+
+func _object_candidate_signature(candidates: Array[Dictionary]) -> String:
+	var parts: Array[String] = []
+	for candidate in candidates:
+		parts.append("%s:%s" % [String(candidate.get("id", "")), String(candidate.get("hit_kind", ""))])
+	return "|".join(parts)
 
 
 func _update_object_hover_at(world_position: Vector2) -> void:
-	var next_id := _object_at_world_position(world_position) if show_object_placeholders else ""
-	if next_id == _hovered_object_id:
+	var next_candidates: Array[Dictionary] = []
+	if show_object_placeholders:
+		next_candidates = _object_hit_candidates(world_position)
+	var next_id := String(next_candidates[0].get("id", "")) if not next_candidates.is_empty() else ""
+	if next_id == _hovered_object_id and _object_candidate_signature(next_candidates) == _object_candidate_signature(_hovered_object_candidates):
 		return
+	_hovered_object_candidates = next_candidates
 	_hovered_object_id = next_id
 	_redraw_object_selection_overlay()
 	_update_debug_detail_panel()
 
 
-func _select_hovered_object() -> bool:
-	if _hovered_object_id.is_empty():
+func _select_hovered_object(world_position: Vector2 = Vector2(INF, INF)) -> bool:
+	if _hovered_object_candidates.is_empty():
 		return false
-	_select_object_for_debug(_hovered_object_id)
+	var candidate_ids: Array[String] = []
+	for candidate in _hovered_object_candidates:
+		candidate_ids.append(String(candidate.get("id", "")))
+	var signature := _object_candidate_signature(_hovered_object_candidates)
+	var same_click_group := (
+		signature == _last_selection_signature
+		and _last_selection_world_position.distance_to(world_position) <= OBJECT_CLICK_CYCLE_RADIUS
+	)
+	_selected_candidate_index = (_selected_candidate_index + 1) % candidate_ids.size() if same_click_group else 0
+	_selected_candidate_ids = candidate_ids
+	var selected_candidate := _hovered_object_candidates[_selected_candidate_index]
+	_selected_object_id = String(selected_candidate.get("id", ""))
+	_selected_hit_kind = String(selected_candidate.get("hit_kind", ""))
+	_last_selection_signature = signature
+	_last_selection_world_position = world_position
+	debug_focus_object_id = _selected_object_id
+	_redraw_object_selection_overlay()
+	_update_debug_detail_panel()
 	return true
 
 
@@ -2084,6 +2236,11 @@ func _select_object_for_debug(object_id: String) -> void:
 	if _object_data_by_id(object_id).is_empty():
 		return
 	_selected_object_id = object_id
+	_selected_candidate_ids = [object_id]
+	_selected_candidate_index = 0
+	_selected_hit_kind = "direct debug selection"
+	_last_selection_signature = ""
+	_last_selection_world_position = Vector2(INF, INF)
 	debug_focus_object_id = object_id
 	_redraw_object_selection_overlay()
 	_update_debug_detail_panel()
@@ -2114,6 +2271,7 @@ func _redraw_object_selection_overlay() -> void:
 		var is_selected := object_id == _selected_object_id
 		var center := _object_pixel_center(object_data)
 		var visual_size: Vector2 = object_data.get("visual_size_px", Vector2.ZERO)
+		var composite_surface := _object_floor_collision_are_equivalent(object_data)
 		if is_selected and visual_size != Vector2.ZERO:
 			_draw_dashed_rect(_debug_selection_layer, "object_%s_visual_bounds" % object_id, center, visual_size, COLOR_OBJECT_VISUAL_BOUNDS, 3.5, 10)
 		if is_selected and show_object_floor_footprints and _object_uses_floor_occupancy(object_data):
@@ -2122,11 +2280,18 @@ func _redraw_object_selection_overlay() -> void:
 		if is_selected and show_object_collision_shapes:
 			var collision_points := _object_collision_polygon_points(object_data)
 			if not collision_points.is_empty():
-				var collision_fill := COLOR_OBJECT_BLOCKED_CELL
-				collision_fill.a = 0.22
-				_add_polygon(_debug_selection_layer, "object_%s_collision_bounds" % object_id, collision_points, collision_fill)
-				_add_line(_debug_selection_layer, "object_%s_collision_outline" % object_id, collision_points + [collision_points[0]], COLOR_OBJECT_BLOCKED_CELL, 5.0)
-		if is_selected and show_object_interaction_areas:
+				if not composite_surface:
+					var collision_fill := COLOR_OBJECT_BLOCKED_CELL
+					collision_fill.a = 0.22
+					_add_polygon(_debug_selection_layer, "object_%s_collision_bounds" % object_id, collision_points, collision_fill)
+				_add_line(
+					_debug_selection_layer,
+					"object_%s_composite_collision_outline" % object_id if composite_surface else "object_%s_collision_outline" % object_id,
+					collision_points + [collision_points[0]],
+					COLOR_OBJECT_BLOCKED_CELL,
+					5.0
+				)
+		if is_selected and show_object_interaction_areas and _object_has_valid_interaction_area(object_data):
 			for interaction_cell in _object_interaction_cells(object_data):
 				var interaction_center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
 				var interaction_size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
@@ -2144,15 +2309,26 @@ func _redraw_object_selection_overlay() -> void:
 			_draw_object_attachment_guide(_debug_selection_layer, "object_%s_selected_attachment" % object_id, object_data, COLOR_OBJECT_ATTACHMENT, 4.0)
 		if show_object_names and show_object_labels:
 			var name_ko := String(object_data.get("display_name_ko", _object_display_name_ko(object_id)))
+			var hit_kind := _object_selection_hit_kind(object_id)
+			var context_text := "interaction owner: %s" % object_id if hit_kind == "interaction" else _object_anchor_short_text(object_data)
 			_add_label_with_background(
 				_debug_selection_layer,
 				"object_%s_short_name" % object_id,
-				"%s\n%s" % [name_ko, _object_anchor_short_text(object_data)],
+				"%s\n%s" % [name_ko, context_text],
 				center + Vector2(12.0, -34.0),
 				12,
 				COLOR_OBJECT_LABEL_BACKGROUND,
 				COLOR_LABEL
 			)
+
+
+func _object_selection_hit_kind(object_id: String) -> String:
+	if object_id == _selected_object_id and not _selected_hit_kind.is_empty():
+		return _selected_hit_kind
+	for candidate in _hovered_object_candidates:
+		if String(candidate.get("id", "")) == object_id:
+			return String(candidate.get("hit_kind", ""))
+	return ""
 
 
 func _object_collision_grid_rect(object_data: Dictionary) -> Rect2:
@@ -2666,7 +2842,7 @@ func _create_object_legend_overlay() -> void:
 	_object_legend_background.name = "ObjectPlacementLegendBackground"
 	_object_legend_background.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_object_legend_background.position = Vector2(-430.0, 20.0)
-	_object_legend_background.size = Vector2(406.0, 132.0)
+	_object_legend_background.size = Vector2(406.0, 148.0)
 	_object_legend_background.color = COLOR_OBJECT_LEGEND_BACKGROUND
 	_debug_overlay_layer.add_child(_object_legend_background)
 
@@ -2674,7 +2850,7 @@ func _create_object_legend_overlay() -> void:
 	_object_legend_label.name = "ObjectPlacementLegendLabel"
 	_object_legend_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_object_legend_label.position = Vector2(-418.0, 28.0)
-	_object_legend_label.text = "오브젝트 배치 범례\n선택 흰색 점선: visual 배치 범위  |  파랑 면·선: 바닥 점유\n빨강 면·실선: collision  |  주황 점선·마커: interaction\n분홍 선·마커: WALL_EDGE / PARENT_OBJECT anchor\n클릭 선택: 모든 범위를 굵게 강조  |  V: 전체 벽 반투명"
+	_object_legend_label.text = "오브젝트 배치 범례\n파랑 면: floor occupancy  |  빨강: collision\n같은 면: 파랑 채움 + 빨강 테두리  |  다른 면: 별도 도형\n주황 점선·마커: interaction (hover에 owner 표시)\n선택 흰색 점선: visual bounds  |  분홍: wall/parent anchor\n같은 위치 반복 클릭: 후보 순환  |  V: 전체 벽 반투명"
 	_object_legend_label.modulate = COLOR_DEBUG_TEXT
 	_object_legend_label.add_theme_font_size_override("font_size", 12)
 	_object_legend_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
@@ -2701,7 +2877,7 @@ func _create_full_debug_help_panel() -> void:
 	var box := _make_panel_vbox(_debug_help_panel)
 	box.add_child(_make_debug_label_control("아파트 shell 디버그 단축키", 20, COLOR_DEBUG_TEXT))
 	box.add_child(_make_debug_label_control(
-		"기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 측량 모드\nP  오브젝트 배치 모드\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nV  전체 candidate 벽·문·창 반투명\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽 논리선  /  L  구역 라벨  /  I  inventory 출력\nJ  상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기",
+		"기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 측량 모드\nP  오브젝트 배치 모드 (같은 위치 반복 클릭: 후보 순환)\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nV  전체 candidate 벽·문·창 반투명\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽 논리선  /  L  구역 라벨  /  I  inventory 출력\nJ  7개 직접 상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기",
 		15,
 		COLOR_DEBUG_TEXT
 	))
@@ -2744,7 +2920,16 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 	if object_data.is_empty():
 		return "오브젝트 배치\n\n오브젝트를 가리키거나 클릭하면 상세 정보가 표시됩니다."
 	var id := String(object_data.get("id", ""))
-	return "%s\nid: %s\ncategory: %s\nroom: %s\nanchor type: %s\nanchor resolved: %s\nposition offset: %s\nvisual: %s\ncollision: %s @ %s\ninteraction: %s @ %s\ninteraction cells: %s\nmovement block: %s / floor occupancy: %s\nparent: %s\nwall: %s @ %.2f" % [
+	var hit_kind := _object_selection_hit_kind(id)
+	var selection_text := "hover 판정: %s" % hit_kind
+	if id == _selected_object_id:
+		var candidate_count := maxi(1, _selected_candidate_ids.size())
+		var candidate_position := clampi(_selected_candidate_index + 1, 1, candidate_count)
+		selection_text = "선택 %d/%d · 판정: %s" % [candidate_position, candidate_count, hit_kind]
+	if hit_kind == "interaction":
+		selection_text += " · interaction owner: %s" % id
+	return "%s\n%s\nid: %s\ncategory: %s\nroom: %s\nanchor type: %s\nanchor resolved: %s\nposition offset: %s\nvisual: %s\ncollision: %s @ %s\ninteraction: %s @ %s\ninteraction cells: %s\nmovement block: %s / floor occupancy: %s\nparent: %s\nwall: %s @ %.2f" % [
+		selection_text,
 		String(object_data.get("display_name_ko", _object_display_name_ko(id))), id,
 		_object_category_name(object_data), _room_area_label(String(object_data.get("room_area_id", ""))), _object_anchor_type_name(object_data),
 		_object_anchor_debug_text(object_data), str(object_data.get("position_offset_px", Vector2.ZERO)),
@@ -3022,11 +3207,17 @@ func _show_phone_tab(tab: String) -> void:
 			_phone_content_label.text = "알 수 없는 debug phone tab: %s" % tab
 
 
-func _interaction_debug_object_ids() -> Array[String]:
+func _direct_interaction_object_ids() -> Array[String]:
 	var ids: Array[String] = []
-	for object_data in _object_footprints():
-		if bool(object_data.get("enabled", true)) and String(object_data.get("category", "")) == "interaction":
-			ids.append(String(object_data.get("id", "")))
+	for contract_id in DIRECT_INTERACTION_OBJECT_IDS:
+		var object_data := _object_data_by_id(contract_id)
+		if not object_data.is_empty() and bool(object_data.get("enabled", true)) and _object_is_direct_interaction(object_data):
+			ids.append(contract_id)
+	return ids
+
+
+func _interaction_debug_object_ids() -> Array[String]:
+	var ids := _direct_interaction_object_ids()
 	ids.append("phone")
 	return ids
 
@@ -3385,12 +3576,32 @@ func _object_floor_occupied_cells(object_data: Dictionary) -> Array[Vector2i]:
 
 
 func _object_interaction_cells(object_data: Dictionary) -> Array[Vector2i]:
+	if not _object_has_valid_interaction_area(object_data):
+		return []
+	return _object_raw_interaction_cells(object_data)
+
+
+func _object_raw_interaction_cells(object_data: Dictionary) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	for cell in object_data.get("interaction_cells", []):
 		var cell_i: Vector2i = cell
 		if not cells.has(cell_i):
 			cells.append(cell_i)
 	return cells
+
+
+func _object_is_direct_interaction(object_data: Dictionary) -> bool:
+	return (
+		DIRECT_INTERACTION_OBJECT_IDS.has(String(object_data.get("id", "")))
+		and String(object_data.get("category", "")) == "interaction"
+	)
+
+
+func _object_has_valid_interaction_area(object_data: Dictionary) -> bool:
+	if not _object_is_direct_interaction(object_data):
+		return false
+	var size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
+	return size.x > 0.0 and size.y > 0.0 and not _object_raw_interaction_cells(object_data).is_empty()
 
 
 func _object_cells_center(cells: Array[Vector2i]) -> Vector2:
@@ -4806,6 +5017,7 @@ func _update_label_visibility() -> void:
 		_debug_detail_panel.visible = _has_primary_debug_mode()
 	if not show_object_placeholders:
 		_hovered_object_id = ""
+		_hovered_object_candidates.clear()
 	_update_compact_debug_help()
 	_update_debug_detail_panel()
 	_redraw_object_selection_overlay()
