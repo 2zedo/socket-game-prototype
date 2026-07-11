@@ -8,6 +8,21 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### CONCENT Candidate Development and Graduation Workflow Skill
+
+- Commit message: `chore: add concent candidate workflow skill`.
+- Result: Added `.agents/skills/concent-candidate-workflow/SKILL.md` for
+  candidate scope, protected production boundaries, agent selection,
+  automated/manual confirmation separation, anti-overbuild decisions, and
+  `GRADUATE` / `KEEP_CANDIDATE` / `ABANDON` reporting.
+- Validation: YAML frontmatter and folder/name parity passed; the workflow
+  delegates validation and Git without copying their command sequences.
+  `$concent-godot-validation` quick validation passed: project parse,
+  QuarterviewMain, and apartment-shell startup passed; Full GUT was correctly
+  skipped and the known Phone PNG warning was reported once.
+- Status: Apartment remains `KEEP_CANDIDATE` pending Godot-window visual
+  confirmation and explicit production approval; no production wiring changed.
+
 ### CONCENT Safe Git Skill
 
 - Commit message: `chore: add concent safe git skill`.

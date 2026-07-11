@@ -260,6 +260,8 @@ Use `$concent-godot-validation` to select and run the shared validator for repea
 
 Follow `$concent-safe-git` for selective staging, commit, and push after task validation.
 
+Candidate development and graduation decisions follow `$concent-candidate-workflow`.
+
 Common targeted GUT examples:
 
 ```bash

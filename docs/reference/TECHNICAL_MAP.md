@@ -298,6 +298,14 @@ Run `scripts/validate_concent.sh` from any directory to execute the current Git 
 
 Codex should use the repository Skill at `.agents/skills/concent-godot-validation/SKILL.md` to choose `--full` or `--quick`; invoke it explicitly as `$concent-godot-validation` when needed.
 
+### Candidate Workflow
+
+`.agents/skills/concent-candidate-workflow/SKILL.md` defines the CONCENT-only
+candidate decision, protected-production boundary, automated/manual completion
+criteria, and `GRADUATE` / `KEEP_CANDIDATE` / `ABANDON` decision. It delegates
+validation to `$concent-godot-validation` and selective Git completion to
+`$concent-safe-git`; it does not wire a candidate into production.
+
 ```bash
 scripts/validate_concent.sh --full
 scripts/validate_concent.sh --quick

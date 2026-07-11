@@ -29,6 +29,10 @@
 
 ## Latest Work
 
+- Added `$concent-candidate-workflow` for candidate scope, production boundary,
+  validation/manual-confirmation split, and graduation decisions. The Apartment
+  candidate remains `KEEP_CANDIDATE`: automated placement checks are complete,
+  but Godot-window visual confirmation and explicit production approval remain.
 - Added the repository-local `$concent-safe-git` Skill for validated, explicit-path staging, reviewed commits, and normal upstream pushes while excluding unrelated changes and generated Godot metadata.
 - Added the repository-local `$concent-godot-validation` Skill, which selects the existing CONCENT validator's full or quick mode and reports results without replacing validation logic or performing Git mutation.
 - Added `scripts/validate_concent.sh`, a unified validation wrapper that issues no Git mutation commands while running Git diff checks, Godot project parse, QuarterviewMain and apartment-shell startup, and optional Full GUT. It resolves Godot safely from an explicit argument, `GODOT_BIN`, PATH, or the macOS app path and keeps logs outside the repository; normal Godot import metadata remains reported rather than deleted.
