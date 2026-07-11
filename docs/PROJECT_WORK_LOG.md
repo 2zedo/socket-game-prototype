@@ -8,6 +8,14 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment object anchor and placement display pass 1
+
+- Commit message: `feat: refine apartment object placement debug`.
+- Result: Replaced candidate `placement_type` with readable `FLOOR` / `WALL_EDGE` / `CEILING` / `PARENT_OBJECT` anchors, aligned interaction/environment categories, added a P-only geometry legend and stronger selected anchor/bounds display, and added the visual-only V occlusion-wall transparency toggle for both stub and revealed right-wall rendering.
+- Layout: Bed moved from `(8,6)` to `(9,6)` with interaction access from `(8,7)`; the dining table moved from `(4,6)` to `(4,7)`. Other named floor anchors already matched the supplied textual room directions, while wall and parent visuals now resolve from their actual attachment reference.
+- Validation: Candidate-specific anchor/category/layout/P-N separation/selection/V tests and candidate Scene startup pass; placement and room measurement warnings remain zero. Godot MCP reloaded and ran the candidate with no new script/game errors and confirmed the P legend/V state in the current ROTATE_90 view.
+- Status: `KEEP_CANDIDATE`. Manual confirmation: `REQUIRED` because the floorplan image was unavailable in this session and final pixel alignment/readability still needs a Godot-window check. Production Main/DAY1, Apartment, SurvivalState, `project.godot`, and generated metadata remain unchanged.
+
 ### Candidate parse error and validator fatal-log detection
 
 - Commit message: `fix: catch candidate script parse errors`.

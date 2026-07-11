@@ -29,6 +29,7 @@
 
 ## Latest Work
 
+- `QuarterviewApartmentShellCandidate` object placement pass 1 now separates `FLOOR`, `WALL_EDGE`, `CEILING`, and `PARENT_OBJECT` anchors from interaction/environment/decoration categories. P has a dedicated legend and selected-bound emphasis, V provides visual-only occlusion-wall transparency, and bed/table placement was adjusted while placement/measurement warnings remain zero. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` for final floorplan alignment and overlay readability.
 - Fixed the candidate script's duplicate local variable parse error without changing placement behavior, and hardened `scripts/validate_concent.sh` so `Parse Error` or `Failed to load script` fails a Godot step even when the engine process exits 0. The known Phone PNG warning remains warning-only.
 - Added `$concent-docs-sync` for minimal documentation synchronization after
   CONCENT implementation, design, or technical-structure changes. It selects a
@@ -54,16 +55,16 @@
 - `M`, `P`, and `N` now use one exclusive primary debug mode by default; the active key returns to no primary mode, while `Shift` or the opt-in Inspector combined setting can add overlays deliberately.
 - Navigation / collision debugging is available with `N`, showing only walkable/non-walkable and object-blocked cells, room areas, blocked wall edges, passable doorway edges, and a shell-only marker at `player_debug_cell` without object placement labels.
 - Room-area reveal debugging is available through `debug_auto_reveal_walls`; the shell marker's active room can switch matching `REVEALABLE` walls between stub and full-wall display without production character wiring.
-- Object placement debugging is available with `P`; floor footprints and pixel collision shapes are distinct four-point isometric polygons, interaction areas are yellow, hover/click selects one object for the fixed detail panel, and optional sprite visual bounds remain a selected-only screen rectangle.
-- Object footprint defaults have a first coordinate tune: doorway-adjacent placeholders avoid passable entrances, interaction cells stay walkable, and blocking placeholders stay within their intended room areas.
+- Object placement debugging is available with `P`; its dedicated legend separates visual, occupancy, collision, interaction, and wall/parent attachment ranges, while hover/click exposes the readable anchor reference and strengthens the selected bounds.
+- Object footprint defaults now use explicit anchor types. Bed moved to `(9,6)` with access at `(8,7)`, the dining table moved to `(4,7)`, and wall/parent objects resolve from their real attachment reference instead of a fake floor center.
 - Object footprint defaults are now Resource-backed through `godot/resources/quarterview/apartment_shell_object_footprints.tres`, with script fallback and additive Inspector custom entries preserved.
 - Shell-only interaction UI is available with `J`, and shell-only Phone debug overlay is available with `H`; both are mock overlays and do not call production object / Phone systems.
 - Room measurement debugging is available with `M`; its world layer is limited to room areas/bounds/names, placement and no-large zones, doorway clearance, required paths, and wall-mount availability, while numeric summaries stay in the fixed panel.
-- The compact top hint now shows only the active mode and M/P/N/F1/ESC; `F1` opens the complete Korean shortcut panel and `F1` or `ESC` closes it without overriding J/H modal priority.
+- The compact top hint identifies the ROTATE_90 review view, active M/P/N mode, and V wall-inspection state; `F1` opens the complete Korean shortcut panel without overriding J/H modal priority.
 - Apartment shell debug overlays are now Korean-first for screen labels: `G` shows `칸`, `E` shows `벽선`, `W` shows Korean wall names plus ids, `N` shows movement/collision states, `P` shows Korean object names, and `O` labels hidden / revealable walls.
 - Third-party selected asset inventory is now tracked in `docs/reference/TECHNICAL_MAP.md`, and `test_asset_smoke.gd` reads that current reference location instead of the archived old root document path.
 - Quarterview candidate regression coverage now fixes the deterministic object-click/pending-focus/arrival signal flow, panel and modal routing, input-lock restoration, portable Phone gating, and executable dependency boundary without changing candidate gameplay code.
-- Apartment shell object data still uses the approved 18-object first-placement candidate with unchanged pixel visual/collision/interaction metadata and wall, ceiling, parent, or floor placement semantics; the separated M/P/N and explicit Shift-combined views remain candidates pending manual visual review.
+- Apartment shell object data still uses the 18-object first-placement candidate with unchanged pixel visual/collision/interaction sizes. Category/anchor semantics, selected display, and the textual-floorplan layout pass remain candidate-only pending manual visual review.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.
 - Documentation now records the shell candidate path, coordinate basis, wall editing controls, navigation / reveal / object footprint overlay controls, and validation command.
 

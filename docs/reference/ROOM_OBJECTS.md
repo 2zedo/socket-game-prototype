@@ -120,7 +120,7 @@ Do not add these as production gameplay objects without a dedicated Resource / i
 
 These are the first measured placement candidates in `QuarterviewApartmentShellCandidate`, not final sprites or production interactions. The list is synchronized with the approved apartment world-object inventory. Phone remains portable UI equipment and is not a world footprint; the spreadsheet's optional air-conditioner candidate is not part of this first pass.
 
-Press `M + P + N` in the shell candidate to compare pixel visual/collision/interaction rectangles against room areas, doorway clearance, required circulation, wall attachment spans, and navigation. Automatic checks do not move walls or force art sizes to floor-cell dimensions. User visual confirmation is still required before placement is treated as final.
+Use the exclusive `M`, `P`, and `N` views first, then hold Shift while adding another M/P/N mode only when a combined comparison is needed. Automatic checks do not move walls or force art sizes to floor-cell dimensions. User visual confirmation is still required before placement is treated as final.
 
 Resource script:
 
@@ -143,49 +143,53 @@ Loading order:
 
 Current first-placement candidate:
 
-| Object ID | Room | Anchor | Offset px | Visual px | Collision px | Interaction | Placement |
+| Object ID | Room | Anchor | Offset px | Visual px | Collision px | Interaction | Anchor type / role |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `entrance_door` | entrance | `(0,8)` | `(0,-6)` | `150x220` | none | `(0,8)`, `96x56` | wall: `entrance_wall` doorway |
-| `bed` | living | `(8,6)` | `(10,-6)` | `260x180` | `180x90` | `(7,7)`, `120x64` | floor |
+| `entrance_door` | entrance | `(0,8)` | `(0,-6)` | `150x220` | none | `(0,8)`, `96x56` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
+| `bed` | living | `(9,6)` | `(10,-6)` | `260x180` | `180x90` | `(8,7)`, `120x64` | `FLOOR` / interaction |
 | `fridge` | living | `(10,4)` | `(-8,-12)` | `120x190` | `70x70` | `(10,5)`, `80x56` | floor |
-| `microwave` | living | `(8,4)` | `(0,-60)` | `96x72` | none | `(8,5)`, `96x56` | parent: `sink_counter` |
+| `microwave` | living | `(8,4)` | `(0,-60)` | `96x72` | none | `(8,5)`, `96x56` | `PARENT_OBJECT`: `sink_counter` / interaction |
 | `navi_link` | work/power | `(4,1)` | `(12,-16)` | `300x240` | `210x120` | `(4,3)`, `(5,3)`, `128x80` | floor |
-| `power_module_board` | work/power | `(8,1)` | `(0,-30)` | `200x180` | none | `(7,2)`, `120x72` | wall: `work_right_wall` |
+| `power_module_board` | work/power | `(8,1)` | `(0,-30)` | `200x180` | none | `(7,2)`, `120x72` | `WALL_EDGE`: `work_right_wall` / interaction |
 | `node_17` | work/power | `(1,2)` | `(0,-8)` | `150x140` | `90x60` candidate | `(2,2)`, `96x64` | floor |
 | `sink_counter` | living | `(8,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
-| `dining_table` | living | `(4,6)` | `(0,0)` | `170x120` | `130x70` | none | floor environment |
+| `dining_table` | living | `(4,7)` | `(0,0)` | `170x120` | `130x70` | none | `FLOOR` / environment |
 | `signal_booster` | work/power | `(1,2)` | `(-68,-58)` | `112x96` | none | none | parent: `node_17` |
-| `ups_unit` | work/power | `(8,2)` | `(0,0)` | `140x110` | `100x60` | none | parent: board; floor blocker |
+| `ups_unit` | work/power | `(8,2)` | `(0,0)` | `140x110` | `100x60` | none | `FLOOR` / environment |
 | `bathroom_fixture` | bathroom | `(0,4)` | `(0,0)` | `200x140` | `150x80` | none | floor environment |
 | `sea_horizon_poster` | living | `(10,7)` | `(0,-20)` | `160x80` | none | none | wall: `living_right_wall` |
 | `fluorescent_light` | living | `(6,6)` | `(0,0)` | `240x40` | none | none | ceiling |
-| `shoes_slippers` | entrance | `(1,9)` | `(0,0)` | `100x60` | none | none | non-blocking environment |
+| `shoes_slippers` | entrance | `(1,9)` | `(0,0)` | `100x60` | none | none | `FLOOR` / non-blocking decoration |
 | `cable_bundle` | work/power | `(2,2)` | `(36,42)` | `80x40` | none | none | parent: `node_17` |
 | `wall_conduit` | work/power | `(7,0)` | `(0,0)` | `128x64` | none | none | wall: `work_back_wall` |
 | `power_housing` | work/power | `(8,1)` | `(0,0)` | `240x210` | none | none | parent: board / same wall |
 
 Attachment policy:
 
+- Candidate Resources expose `anchor_type` as `FLOOR`, `WALL_EDGE`, `CEILING`, or `PARENT_OBJECT`; object category remains independently `interaction`, `environment`, or `decoration`.
 - Wall, ceiling, and non-floor parent attachments do not remove navigation cells or participate in floor overlap checks.
-- `ups_unit` retains floor occupancy and collision despite its relationship to `power_module_board`.
+- `ups_unit` is floor-anchored and retains floor occupancy/collision; it has no spatial parent anchor.
 - `entrance_door` is represented in object inventory but aligns to the existing wall doorway unit; it does not create a duplicate floor blocker.
+- `bathroom_fixture` and `sink_counter` are environment objects. `entrance_door`, `power_module_board`, `node_17`, and `navi_link` remain direct interaction objects.
 - Expected image/scene/audio values are future logical specification strings only. Missing assets are not loaded or validated in this candidate.
 
 Shell editing controls:
 
-- `P`: show object footprint placeholders.
+- `M`: show room measurement only; the default view does not include object detail.
+- `P`: show the object-placement legend, visual bounds, floor occupancy, collision, interaction, and attachment guides.
 - `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
+- `V`: make the living front/right occlusion-stub layer translucent for wall-attached and behind-wall inspection; logical walls, navigation edges, and reveal state do not change.
 - `I`: print wall inventory followed by object footprint summary.
 - `J`: open shell-only interaction debug menu for mock object use / inspect / cancel flow.
 - `H`: open shell-only Phone debug overlay; this does not call production `PhoneUI`.
 - `ESC`: close the topmost shell debug overlay.
 - `debug_focus_object_id`: emphasize one object id, for example `bed`.
-- Object overlay detail options: `show_object_labels`, `show_object_interaction_cells`, `show_blocking_object_cells`, and `show_nonblocking_object_cells`.
+- Hover labels include the anchor type/reference. Click selection strengthens visual, occupancy, collision, interaction, and wall/parent attachment bounds.
 
 Coordinate rule:
 
 - Floor objects use `anchor_cell`, `size_cells`, occupied cells, and interaction cells for room membership and navigation. Pixel offsets and visual/collision/interaction sizes remain independent.
-- Wall/ceiling/parent objects use `placement_type`, `parent_object_id`, `wall_segment_id`, and `wall_position_ratio` without automatically occupying a floor cell.
+- Wall/ceiling/parent objects use `anchor_type`, `parent_object_id`, `wall_segment_id`, and `wall_position_ratio` without automatically occupying a floor cell.
 - Wall segments use wall edge coordinates: `from_cell -> to_cell`.
 - Do not treat object floor cells and wall edge coordinates as the same coordinate layer.
 

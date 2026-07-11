@@ -7,12 +7,11 @@ enum CollisionShapeType {
 	CIRCLE,
 }
 
-enum PlacementType {
+enum AnchorType {
 	FLOOR,
-	WALL,
-	PARENT_ATTACHED,
-	ENVIRONMENT,
+	WALL_EDGE,
 	CEILING,
+	PARENT_OBJECT,
 }
 
 @export var id: StringName = &""
@@ -32,7 +31,7 @@ enum PlacementType {
 @export var uses_floor_occupancy := true
 @export var interaction_cell := Vector2i(-1, -1)
 @export var interaction_cells: Array[Vector2i] = []
-@export var placement_type: PlacementType = PlacementType.FLOOR
+@export var anchor_type: AnchorType = AnchorType.FLOOR
 @export var parent_object_id: StringName = &""
 @export var wall_segment_id: StringName = &""
 @export_range(0.0, 1.0, 0.01) var wall_position_ratio := 0.5

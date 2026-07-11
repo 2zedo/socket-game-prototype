@@ -2,6 +2,7 @@ extends GutTest
 
 const SHELL_SCENE := preload("res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn")
 const FOOTPRINT_SET := preload("res://resources/quarterview/apartment_shell_object_footprints.tres")
+const FOOTPRINT_CONFIG_SCRIPT := preload("res://scripts/quarterview/ApartmentObjectFootprintConfig.gd")
 
 const EXPECTED_IDS := [
 	"entrance_door", "bed", "fridge", "microwave", "navi_link",
@@ -34,10 +35,10 @@ func test_fallback_inventory_matches_resource_inventory_and_metadata() -> void:
 		var resource = resource_objects[id]
 		var fallback = fallback_objects[id]
 		for property_name in [
-			"room_area_id", "anchor_cell", "size_cells", "position_offset_px",
+			"room_area_id", "category", "anchor_type", "anchor_cell", "size_cells", "position_offset_px",
 			"visual_size_px", "collision_shape_type", "collision_size_px",
 			"collision_offset_px", "interaction_size_px", "interaction_offset_px",
-			"blocks_movement", "uses_floor_occupancy", "placement_type",
+			"blocks_movement", "uses_floor_occupancy",
 			"parent_object_id", "wall_segment_id", "wall_position_ratio",
 			"wall_offset_px", "facing_description_ko", "display_name_ko",
 			"expected_image_file", "expected_scene_file", "expected_audio_set_id",
@@ -47,17 +48,17 @@ func test_fallback_inventory_matches_resource_inventory_and_metadata() -> void:
 		assert_eq(fallback.interaction_cells, resource.interaction_cells, "%s interactions must match." % id)
 
 
-func test_excel_canonical_interaction_pixel_values_are_preserved() -> void:
+func test_first_pass_interaction_layout_values_are_preserved() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
 	_assert_pixels(objects["entrance_door"], Vector2i(0, 8), Vector2(0, -6), Vector2(150, 220), Vector2.ZERO, Vector2.ZERO, Vector2(96, 56), Vector2(50, 0))
-	_assert_pixels(objects["bed"], Vector2i(8, 6), Vector2(10, -6), Vector2(260, 180), Vector2(180, 90), Vector2(0, 30), Vector2(120, 64), Vector2(-120, 28))
+	_assert_pixels(objects["bed"], Vector2i(9, 6), Vector2(10, -6), Vector2(260, 180), Vector2(180, 90), Vector2(0, 30), Vector2(120, 64), Vector2(-120, 28))
 	_assert_pixels(objects["fridge"], Vector2i(10, 4), Vector2(-8, -12), Vector2(120, 190), Vector2(70, 70), Vector2(0, 38), Vector2(80, 56), Vector2(-50, 42))
 	_assert_pixels(objects["microwave"], Vector2i(8, 4), Vector2(0, -60), Vector2(96, 72), Vector2.ZERO, Vector2.ZERO, Vector2(96, 56), Vector2(0, 96))
 	_assert_pixels(objects["navi_link"], Vector2i(4, 1), Vector2(12, -16), Vector2(300, 240), Vector2(210, 120), Vector2(0, 45), Vector2(128, 80), Vector2(0, 150))
 	_assert_pixels(objects["power_module_board"], Vector2i(8, 1), Vector2(0, -30), Vector2(200, 180), Vector2.ZERO, Vector2.ZERO, Vector2(120, 72), Vector2(-88, 92))
 	_assert_pixels(objects["node_17"], Vector2i(1, 2), Vector2(0, -8), Vector2(150, 140), Vector2(90, 60), Vector2(0, 28), Vector2(96, 64), Vector2(84, 30))
 	var expected_interactions := {
-		"entrance_door": [Vector2i(0, 8)], "bed": [Vector2i(7, 7)],
+		"entrance_door": [Vector2i(0, 8)], "bed": [Vector2i(8, 7)],
 		"fridge": [Vector2i(10, 5)], "microwave": [Vector2i(8, 5)],
 		"navi_link": [Vector2i(4, 3), Vector2i(5, 3)],
 		"power_module_board": [Vector2i(7, 2)], "node_17": [Vector2i(2, 2)],
@@ -66,10 +67,10 @@ func test_excel_canonical_interaction_pixel_values_are_preserved() -> void:
 		assert_eq(objects[id].interaction_cells, expected_interactions[id], "%s interaction cells must remain canonical." % id)
 
 
-func test_excel_canonical_environment_pixel_values_are_preserved() -> void:
+func test_first_pass_environment_layout_values_are_preserved() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
 	_assert_pixels(objects["sink_counter"], Vector2i(8, 4), Vector2.ZERO, Vector2(220, 150), Vector2(160, 70), Vector2(0, 32), Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["dining_table"], Vector2i(4, 6), Vector2.ZERO, Vector2(170, 120), Vector2(130, 70), Vector2(0, 24), Vector2.ZERO, Vector2.ZERO)
+	_assert_pixels(objects["dining_table"], Vector2i(4, 7), Vector2.ZERO, Vector2(170, 120), Vector2(130, 70), Vector2(0, 24), Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["signal_booster"], Vector2i(1, 2), Vector2(-68, -58), Vector2(112, 96), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["ups_unit"], Vector2i(8, 2), Vector2.ZERO, Vector2(140, 110), Vector2(100, 60), Vector2(0, 22), Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["bathroom_fixture"], Vector2i(0, 4), Vector2.ZERO, Vector2(200, 140), Vector2(150, 80), Vector2(0, 28), Vector2.ZERO, Vector2.ZERO)
@@ -85,11 +86,11 @@ func test_attachment_and_floor_occupancy_policy() -> void:
 	var shell = _make_shell()
 	var objects := _dictionary_map(shell._object_footprints())
 	for id in ["microwave", "signal_booster", "cable_bundle", "power_housing"]:
-		assert_eq(objects[id].placement_type, 2)
+		assert_eq(objects[id].anchor_type, FOOTPRINT_CONFIG_SCRIPT.AnchorType.PARENT_OBJECT)
 		assert_false(objects[id].uses_floor_occupancy)
 		assert_false(shell._object_blocker_ids_for_cell(objects[id].anchor_cell).has(id), "%s must not add its own floor blocker." % id)
-	assert_eq(objects["ups_unit"].placement_type, 2)
-	assert_true(objects["ups_unit"].uses_floor_occupancy, "UPS keeps a real floor collision despite parent metadata.")
+	assert_eq(objects["ups_unit"].anchor_type, FOOTPRINT_CONFIG_SCRIPT.AnchorType.FLOOR)
+	assert_true(objects["ups_unit"].uses_floor_occupancy, "UPS is floor-anchored and keeps a real floor collision.")
 	assert_true(shell._object_blocked_cells().has(objects["ups_unit"].anchor_cell))
 	assert_false(objects["entrance_door"].uses_floor_occupancy)
 	assert_false(objects["power_module_board"].uses_floor_occupancy)
@@ -100,7 +101,6 @@ func test_parent_and_wall_references_are_valid_and_acyclic() -> void:
 	var objects := _dictionary_map(shell._object_footprints())
 	assert_eq(objects["microwave"].parent_object_id, "sink_counter")
 	assert_eq(objects["signal_booster"].parent_object_id, "node_17")
-	assert_eq(objects["ups_unit"].parent_object_id, "power_module_board")
 	assert_eq(objects["power_housing"].parent_object_id, "power_module_board")
 	assert_eq(objects["entrance_door"].wall_segment_id, "entrance_wall")
 	assert_eq(objects["power_module_board"].wall_segment_id, "work_right_wall")
@@ -108,7 +108,7 @@ func test_parent_and_wall_references_are_valid_and_acyclic() -> void:
 	assert_eq(objects["wall_conduit"].wall_segment_id, "work_back_wall")
 	for id in objects:
 		var parent_id := String(objects[id].parent_object_id)
-		if int(objects[id].placement_type) == 2:
+		if int(objects[id].anchor_type) == FOOTPRINT_CONFIG_SCRIPT.AnchorType.PARENT_OBJECT:
 			assert_false(parent_id.is_empty(), "%s parent-attached placement requires a parent." % id)
 		if parent_id.is_empty():
 			continue
@@ -121,6 +121,58 @@ func test_parent_and_wall_references_are_valid_and_acyclic() -> void:
 	assert_eq(int(entrance_unit.get("offset", -1)), int(entrance_wall.get("doorway_offset", -2)))
 	assert_true(shell._object_wall_attachment_is_doorway(objects["entrance_door"], entrance_wall))
 	assert_eq(shell._object_placement_warnings(), [])
+
+
+func test_wall_attached_objects_use_valid_wall_edge_anchors() -> void:
+	var shell = _make_shell()
+	var objects := _dictionary_map(shell._object_footprints())
+	for id in ["entrance_door", "power_module_board", "sea_horizon_poster", "wall_conduit"]:
+		var object_data: Dictionary = objects[id]
+		assert_eq(object_data.anchor_type, FOOTPRINT_CONFIG_SCRIPT.AnchorType.WALL_EDGE, "%s must use WALL_EDGE." % id)
+		assert_false(object_data.uses_floor_occupancy, "%s must not fake a floor footprint." % id)
+		var wall: Dictionary = shell._wall_segment_by_id(String(object_data.wall_segment_id))
+		assert_false(wall.is_empty(), "%s wall must exist." % id)
+		if id == "entrance_door":
+			assert_true(shell._object_wall_attachment_is_doorway(object_data, wall))
+		else:
+			assert_true(shell._object_wall_attachment_is_available(object_data, wall))
+
+
+func test_object_categories_drive_interaction_inventory() -> void:
+	var shell = _make_shell()
+	var objects := _dictionary_map(shell._object_footprints())
+	assert_eq(objects["bathroom_fixture"].category, &"environment")
+	assert_eq(objects["entrance_door"].category, &"interaction")
+	assert_eq(objects["sink_counter"].category, &"environment")
+	for id in ["power_module_board", "node_17", "navi_link"]:
+		assert_eq(objects[id].category, &"interaction")
+	var interaction_ids: Array[String] = shell._interaction_debug_object_ids()
+	assert_true(interaction_ids.has("entrance_door"))
+	assert_true(interaction_ids.has("power_module_board"))
+	assert_false(interaction_ids.has("bathroom_fixture"))
+	assert_false(interaction_ids.has("sink_counter"))
+
+
+func test_first_pass_floorplan_layout_invariants() -> void:
+	var objects := _object_map(FOOTPRINT_SET.objects)
+	var expected_anchors := {
+		"entrance_door": Vector2i(0, 8),
+		"bed": Vector2i(9, 6),
+		"fridge": Vector2i(10, 4),
+		"sink_counter": Vector2i(8, 4),
+		"microwave": Vector2i(8, 4),
+		"dining_table": Vector2i(4, 7),
+		"navi_link": Vector2i(4, 1),
+		"power_module_board": Vector2i(8, 1),
+		"node_17": Vector2i(1, 2),
+		"bathroom_fixture": Vector2i(0, 4),
+	}
+	for id in expected_anchors:
+		assert_eq(objects[id].anchor_cell, expected_anchors[id], "%s first-pass anchor changed unexpectedly." % id)
+	assert_eq(objects["microwave"].parent_object_id, &"sink_counter")
+	assert_eq(objects["entrance_door"].wall_segment_id, &"entrance_wall")
+	assert_eq(objects["power_module_board"].wall_segment_id, &"work_right_wall")
+	assert_eq(objects["bed"].size_cells, Vector2i(2, 1))
 
 
 func test_candidate_layout_has_no_placement_or_measurement_warnings() -> void:
@@ -160,9 +212,15 @@ func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
 		]
 		assert_eq(bed_floor, expected_floor, "ROTATE_%d floor footprint must use the rotated grid corners." % [rotation * 90])
 		_assert_collision_polygon_contract(shell, objects["bed"], rotation * 90)
-		for id in ["bed", "entrance_door", "microwave"]:
-			var expected_center: Vector2 = shell._cell_center(objects[id].anchor_cell) + Vector2(objects[id].position_offset_px) + Vector2(objects[id].wall_offset_px)
-			assert_eq(shell._object_pixel_center(objects[id]), expected_center, "ROTATE_%d %s pixel offsets should remain attached to the rotated anchor." % [rotation * 90, id])
+		var bed_center: Vector2 = shell._cell_center(objects["bed"].anchor_cell) + Vector2(objects["bed"].position_offset_px)
+		assert_eq(shell._object_pixel_center(objects["bed"]), bed_center, "ROTATE_%d bed must remain floor-anchored." % [rotation * 90])
+		var entrance_unit: Dictionary = shell._object_wall_attachment_unit(objects["entrance_door"], shell._wall_segment_by_id("entrance_wall"))
+		var entrance_edge: Dictionary = entrance_unit["edge"]
+		var entrance_from: Vector2i = entrance_edge["from_cell"]
+		var entrance_to: Vector2i = entrance_edge["to_cell"]
+		var entrance_anchor: Vector2 = (shell._iso(entrance_from.x, entrance_from.y) + shell._iso(entrance_to.x, entrance_to.y)) * 0.5
+		assert_eq(shell._object_pixel_center(objects["entrance_door"]), entrance_anchor + Vector2(objects["entrance_door"].position_offset_px), "ROTATE_%d door must remain wall-edge anchored." % [rotation * 90])
+		assert_eq(shell._object_pixel_center(objects["microwave"]), shell._object_pixel_center(objects["sink_counter"]) + Vector2(objects["microwave"].position_offset_px), "ROTATE_%d microwave must follow sink_counter." % [rotation * 90])
 		var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 		assert_true(shell._object_wall_attachment_is_doorway(objects["entrance_door"], entrance_wall), "ROTATE_%d entrance door must stay on its doorway unit." % [rotation * 90])
 		assert_eq(shell._object_placement_warnings(), [], "ROTATE_%d should preserve placement invariants." % [rotation * 90])
@@ -174,13 +232,16 @@ func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
 
 func test_shell_debug_key_smoke() -> void:
 	var shell = _make_shell()
-	for keycode in [KEY_G, KEY_W, KEY_E, KEY_O, KEY_I, KEY_L, KEY_J, KEY_H]:
+	for keycode in [KEY_G, KEY_W, KEY_E, KEY_O, KEY_V, KEY_L, KEY_J, KEY_H]:
 		shell._unhandled_input(_key_event(keycode))
 	assert_true(shell.show_floor_grid_coords)
 	assert_true(shell.show_wall_ids)
 	assert_true(shell.show_wall_edge_coords)
 	assert_true(shell.show_occlusion_wall_debug)
 	assert_true(shell.show_debug_labels)
+	assert_true(shell.wall_inspection_transparency)
+	_assert_canvas_items_alpha(shell.get_node("OcclusionStubLayer"), "living_front_cutaway", 0.12)
+	_assert_canvas_items_alpha(shell.get_node("OcclusionStubLayer"), "living_right_wall", 0.12)
 	assert_false(shell.show_navigation_debug)
 	assert_false(shell.show_object_placeholders)
 	assert_false(shell.show_room_measurements)
@@ -190,9 +251,11 @@ func test_shell_debug_key_smoke() -> void:
 	shell._unhandled_input(_key_event(KEY_P))
 	assert_true(shell.show_object_placeholders)
 	assert_false(shell.show_room_measurements)
+	assert_true(shell._object_legend_label.visible)
 	shell._unhandled_input(_key_event(KEY_N))
 	assert_true(shell.show_navigation_debug)
 	assert_false(shell.show_object_placeholders)
+	assert_false(shell._object_legend_label.visible)
 
 
 func test_primary_debug_modes_are_exclusive_and_same_key_returns_to_none() -> void:
@@ -227,6 +290,7 @@ func test_navigation_mode_hides_all_object_placement_details() -> void:
 	shell._unhandled_input(_key_event(KEY_N))
 	assert_false(shell.get_node("ObjectPlacementDebugLayer").visible)
 	assert_false(shell.get_node("DebugSelectionLayer").visible)
+	assert_false(shell._object_legend_label.visible)
 	assert_false(shell._debug_detail_label.text.contains("anchor:"))
 	assert_true(shell._debug_detail_label.text.contains("이동·충돌"))
 
@@ -236,6 +300,7 @@ func test_measurement_mode_has_room_summary_without_object_details() -> void:
 	shell._unhandled_input(_key_event(KEY_M))
 	assert_true(shell.get_node("RoomMeasurementDebugLayer").visible)
 	assert_false(shell.get_node("ObjectPlacementDebugLayer").visible)
+	assert_false(shell._object_legend_label.visible)
 	assert_false(shell.get_node("DebugLabelLayer").visible, "M should use its single per-room labels instead of the legacy broad label set.")
 	assert_true(shell._debug_detail_label.text.contains("방 측량 요약"))
 	assert_false(shell._debug_detail_label.text.contains("bed"))
@@ -256,10 +321,16 @@ func test_object_mode_draws_four_point_floor_and_collision_polygons() -> void:
 	assert_eq(shell._object_collision_polygon_points(objects["ups_unit"]).size(), 4, "UPS keeps its floor collision despite parent metadata.")
 
 
-func test_visual_bounds_are_selected_only_and_hover_click_updates_detail() -> void:
+func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_P))
 	shell.show_object_visual_bounds = true
+	assert_true(shell._object_legend_label.visible)
+	assert_true(shell._object_legend_label.text.contains("visual"))
+	assert_true(shell._object_legend_label.text.contains("collision"))
+	assert_true(shell._object_legend_label.text.contains("interaction"))
+	assert_true(shell._object_legend_label.text.contains("WALL_EDGE / PARENT_OBJECT"))
+	assert_gt(shell._debug_detail_panel.get_global_rect().position.x, 0.0, "P detail panel must stay inside the viewport.")
 	var bed: Dictionary = _dictionary_map(shell._object_footprints())["bed"]
 	var bed_viewport_position: Vector2 = shell.get_viewport().get_canvas_transform() * shell._object_pixel_center(bed)
 	shell._unhandled_input(_mouse_motion_event(bed_viewport_position))
@@ -268,10 +339,41 @@ func test_visual_bounds_are_selected_only_and_hover_click_updates_detail() -> vo
 	shell._unhandled_input(_mouse_click_event(bed_viewport_position))
 	assert_eq(shell._selected_object_id, "bed")
 	assert_true(shell._debug_detail_label.text.contains("id: bed"))
+	assert_true(shell._debug_detail_label.text.contains("anchor resolved: FLOOR"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_visual_bounds"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_occupancy_bounds"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_collision_outline"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_interaction_bounds"))
 	shell._update_object_hover_at(Vector2(-10000, -10000))
 	assert_eq(shell._hovered_object_id, "")
 	assert_eq(shell._selected_object_id, "bed", "Moving hover away must preserve click selection.")
+	var board: Dictionary = _dictionary_map(shell._object_footprints())["power_module_board"]
+	shell._select_object_for_debug("power_module_board")
+	assert_true(shell._debug_detail_label.text.contains("work_right_wall"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_wall_edge"))
+	assert_ne(shell._object_anchor_world_position(board), shell._cell_center(board.anchor_cell), "Wall anchor must resolve from its wall edge, not a fake floor center.")
+
+
+func test_wall_transparency_toggle_is_visual_only() -> void:
+	var shell = _make_shell()
+	var blocked_before: Array[Vector2i] = shell._object_blocked_cells()
+	var edges_before: Dictionary = shell._navigation_edge_sets()
+	var wall_count_before: int = shell._wall_segments().size()
+	shell._unhandled_input(_key_event(KEY_V))
+	assert_true(shell.wall_inspection_transparency)
+	_assert_canvas_items_alpha(shell.get_node("OcclusionStubLayer"), "living_front_cutaway", 0.12)
+	_assert_canvas_items_alpha(shell.get_node("OcclusionStubLayer"), "living_right_wall", 0.12)
+	assert_eq(shell._wall_segments().size(), wall_count_before)
+	assert_eq(shell._object_blocked_cells(), blocked_before)
+	assert_eq(shell._navigation_edge_sets()["blocked"].keys().size(), edges_before["blocked"].keys().size())
+	assert_true(shell._compact_help_label.text.contains("시야벽=반투명"))
+	shell.preview_revealed_walls = true
+	shell._redraw_reveal_sensitive_layers()
+	_assert_canvas_items_alpha(shell.get_node("WallLayer"), "living_right_wall", 0.12)
+	assert_eq(shell._navigation_edge_sets()["blocked"].keys().size(), edges_before["blocked"].keys().size())
+	shell._unhandled_input(_key_event(KEY_V))
+	assert_false(shell.wall_inspection_transparency)
+	_assert_canvas_items_alpha(shell.get_node("WallLayer"), "living_right_wall", 1.0)
 
 
 func test_inspector_mode_initialization_preserves_legacy_exports_and_combined_policy() -> void:
@@ -310,6 +412,12 @@ func test_f1_help_and_j_h_escape_priority_do_not_overlap() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_F1))
 	assert_true(shell._debug_help_panel.visible)
+	var help_labels: Array[Node] = shell._debug_help_panel.find_children("*", "Label", true, false)
+	var help_text := ""
+	for label in help_labels:
+		help_text += String(label.text)
+	assert_true(help_text.contains("V  생활공간 앞·오른쪽 시야벽 반투명"))
+	assert_true(help_text.contains("ROTATE_90 / full_map"))
 	shell._unhandled_input(_key_event(KEY_ESCAPE))
 	assert_false(shell._debug_help_panel.visible)
 	shell._unhandled_input(_key_event(KEY_F1))
@@ -380,6 +488,16 @@ func _has_child_prefix(parent: Node, prefix: String) -> bool:
 		if String(child.name).begins_with(prefix):
 			return true
 	return false
+
+
+func _assert_canvas_items_alpha(parent: Node, prefix: String, expected_alpha: float) -> void:
+	var matched: Array[CanvasItem] = []
+	for child in parent.get_children():
+		if child is CanvasItem and String(child.name).begins_with(prefix):
+			matched.append(child)
+	assert_gt(matched.size(), 0, "%s must produce visual wall items." % prefix)
+	for item in matched:
+		assert_true(is_equal_approx(item.modulate.a, expected_alpha), "%s alpha must be %.2f." % [item.name, expected_alpha])
 
 
 func _assert_collision_polygon_contract(shell, object_data: Dictionary, rotation_degrees: int) -> void:
