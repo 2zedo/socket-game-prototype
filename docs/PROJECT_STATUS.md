@@ -32,7 +32,7 @@
 - Added and refined `QuarterviewApartmentShellCandidate` as a coordinate-based Godot scene under `godot/scenes/quarterview/`.
 - The scene draws the apartment shell with placeholder floor tiles, Axis A/B walls, wall caps, baseboards, door/window placeholders, debug labels, camera presets, and a foreground no-large-object zone.
 - Wall segments are now editable through named `ApartmentWallSegmentConfig` entries, with `W` for wall ID markers and `I` for a console wall inventory / edit-hint table.
-- The former service area is folded into the bathroom shell region; legacy service wall segments remain disabled in the inventory for reference.
+- The former service area remains removed; room-area debug now separates the external-door entry at `(0,7)->(2,10)` from the bathroom at `(0,4)->(2,7)`, while legacy service wall segments remain disabled for reference.
 - Floor grid coordinate debugging is available with `G`, including tile labels, origin / axis markers, hover cell display, click-to-print cell output, and `from_cell -> to_cell` wall inventory.
 - Wall edge coordinate debugging is available with `E`, separating wall grid-line / vertex coordinates from floor cell coordinates; `G` click output now prints a cell's four wall edges, and `E` click output prints the nearest edge `from/to` pair.
 - Bathroom / entrance shell walls now follow the specified grid-line coordinates: bathroom boundary `(0,7)->(2,7)`, bathroom doorway wall `(2,4)->(2,7)`, entrance inner wall `(2,7)->(2,10)`, and entrance doorway `(0,8)->(0,9)`.
@@ -45,6 +45,7 @@
 - Object footprint defaults have a first coordinate tune: doorway-adjacent placeholders avoid passable entrances, interaction cells stay walkable, and blocking placeholders stay within their intended room areas.
 - Object footprint defaults are now Resource-backed through `godot/resources/quarterview/apartment_shell_object_footprints.tres`, with script fallback and additive Inspector custom entries preserved.
 - Shell-only interaction UI is available with `J`, and shell-only Phone debug overlay is available with `H`; both are mock overlays and do not call production object / Phone systems.
+- Room measurement debugging is available with `M`; it corrects the shell-only entrance/bathroom area labels and reports room bounds, walkable/placement-reference cells, doorway clearance, required paths, wall-mount spans, and existing placeholder warnings without changing geometry or footprint coordinates.
 - Apartment shell debug overlays are now Korean-first for screen labels: `G` shows `칸`, `E` shows `벽선`, `W` shows Korean wall names plus ids, `N` shows movement/collision states, `P` shows Korean object names, and `O` labels hidden / revealable walls.
 - Third-party selected asset inventory is now tracked in `docs/reference/TECHNICAL_MAP.md`, and `test_asset_smoke.gd` reads that current reference location instead of the archived old root document path.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.

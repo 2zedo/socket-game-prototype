@@ -84,6 +84,7 @@ Do not modify by default:
 | Show wall edge / vertex coordinates | Press `E` in the shell scene; wall labels use `벽선 from -> to` / `축=A/B` |
 | Show navigation / collision debug | Press `N` in the shell scene; labels use `이동 가능`, `막힘`, and `통과 가능` |
 | Show object footprint placeholders | Press `P` in the shell scene; object labels prioritize Korean names with `id` as secondary info |
+| Show room measurements / placement reference | Press `M`; displays room bounds, walkable and placement-reference cells, doorway clearance, required paths, and wall-mount spans |
 | Open shell interaction debug menu | Press `J`; choose a mock object to test use / inspect / cancel panel flow |
 | Open shell Phone debug overlay | Press `H`; switch mock Messages / Power / Jobs / Settings tabs |
 | Close top shell debug UI | Press `ESC`; closes Phone overlay, then interaction panel, then interaction menu |
@@ -99,6 +100,22 @@ Do not modify by default:
 Wall inventory columns: `id`, `name_ko`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `current_state`, `state_ko`, `doorway`, `doorway_ko`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 
 Object footprint summary columns, printed after `I`: `id`, `name_ko`, `enabled`, `source`, `room_area_id`, `room_name_ko`, `anchor_cell`, `size_cells`, `occupied_cells`, `blocks_movement`, `interaction_cells`, and `edit_hint`.
+
+Room measurement summary is printed after the existing `I` inventories. It reports room floor bounds, cell dimensions, assigned floor cells, current walkable cells, advisory placement cells, screen-space pixel bounds, center coordinates, doorways, windows, walls, wall-mount availability, and current footprint warnings. `doorway_clearance_cells` and `main_path_clearance_cells` are Inspector-tunable review margins; they do not change collision or snap object art to tiles.
+
+Current room-area boundaries follow the existing wall shell without moving geometry:
+
+- `entrance_area`: floor cells inside `(0,7) -> (2,10)`, the left external-door entry compartment
+- `bathroom`: floor cells inside `(0,4) -> (2,7)`, the small enclosed room beyond the internal doorway
+- `living_area`: the remaining assigned cells inside the large `(0,4) -> (11,10)` living bounds
+- `work_power_area`: floor cells inside `(1,0) -> (9,4)`
+
+Measurement coordinate roles:
+
+- floor cell: approximate floor position, room membership, movement, and placement-reference unit
+- wall edge: grid-line boundary used by walls, doors, windows, and wall-mount spans
+- screen pixel: final sprite dimensions, collision dimensions, and per-object position offsets
+- placement area: advisory free space after doorway clearance, required movement paths, current footprints, and the no-large-object zone are excluded; it is not a tile-snap rule
 
 Debug overlay language policy:
 

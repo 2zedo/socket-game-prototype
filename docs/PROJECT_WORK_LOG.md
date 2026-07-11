@@ -183,3 +183,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 - Changed: `QuarterviewApartmentShellCandidate.gd` and current room-object/technical/status docs.
 - Not changed: object click movement, production PhoneUI, production object system, hunger/power/time state, save-load, assets/atlas/fonts, room structure, footprint coordinates, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
 - Next: Manually inspect Korean label readability and button flow in the shell scene before promoting any interaction UX to a real candidate scene.
+
+### Apartment room measurement overlay
+
+- Commit: pending in this task.
+- Result: Corrected shell-only entrance/bathroom room-area labels and added `M` room measurement display plus the post-`I` room/wall/placement report.
+- Measurement: Reports floor and screen bounds, walkable/advisory placement cells, doorway clearance, required movement paths, wall-mount spans, and non-mutating footprint warnings.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/room-object/status docs.
+- Not changed: wall/door/window coordinates, room footprint size, object footprint Resource coordinates, assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Use `M` with `G`, `E`, `N`, and `P` to choose final pixel-sized object positions without treating floor cells as mandatory sprite sizes.

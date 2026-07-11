@@ -53,8 +53,10 @@ const DEFAULT_WORK_ROOM_ORIGIN := Vector2i(1, 0)
 const DEFAULT_WORK_ROOM_SIZE := Vector2i(8, 4)
 const DEFAULT_LIVING_ROOM_ORIGIN := Vector2i(0, 4)
 const DEFAULT_LIVING_ROOM_SIZE := Vector2i(11, 6)
-const DEFAULT_BATHROOM_ROOM_ORIGIN := Vector2i(0, 7)
+const DEFAULT_BATHROOM_ROOM_ORIGIN := Vector2i(0, 4)
 const DEFAULT_BATHROOM_ROOM_SIZE := Vector2i(2, 3)
+const DEFAULT_ENTRANCE_ROOM_ORIGIN := Vector2i(0, 7)
+const DEFAULT_ENTRANCE_ROOM_SIZE := Vector2i(2, 3)
 const DEFAULT_SERVICE_ROOM_ORIGIN := Vector2i(0, 9)
 const DEFAULT_SERVICE_ROOM_SIZE := Vector2i(2, 1)
 const DEFAULT_NO_LARGE_OBJECT_ZONE_ORIGIN := Vector2i(2, 8)
@@ -134,6 +136,18 @@ const COLOR_DEBUG_PANEL_BORDER := Color(0.46, 0.66, 0.70, 0.70)
 const COLOR_DEBUG_PANEL_BACKDROP := Color(0.0, 0.0, 0.0, 0.48)
 const COLOR_DEBUG_TEXT := Color(0.92, 0.94, 0.90, 1.0)
 const COLOR_DEBUG_MUTED_TEXT := Color(0.68, 0.76, 0.78, 1.0)
+const COLOR_MEASUREMENT_ENTRANCE := Color(0.96, 0.72, 0.26, 0.18)
+const COLOR_MEASUREMENT_BATHROOM := Color(0.32, 0.72, 0.96, 0.18)
+const COLOR_MEASUREMENT_LIVING := Color(0.34, 0.88, 0.58, 0.13)
+const COLOR_MEASUREMENT_WORK := Color(0.48, 0.54, 1.0, 0.16)
+const COLOR_MEASUREMENT_WALKABLE := Color(0.30, 1.0, 0.72, 0.72)
+const COLOR_MEASUREMENT_PLACEMENT := Color(0.36, 0.78, 1.0, 0.34)
+const COLOR_MEASUREMENT_DOOR_CLEARANCE := Color(1.0, 0.82, 0.24, 0.46)
+const COLOR_MEASUREMENT_MAIN_PATH := Color(0.94, 0.48, 1.0, 0.34)
+const COLOR_MEASUREMENT_WALL_AVAILABLE := Color(0.28, 1.0, 0.56, 0.96)
+const COLOR_MEASUREMENT_WALL_UNAVAILABLE := Color(1.0, 0.32, 0.26, 0.90)
+const COLOR_MEASUREMENT_WALL_LOGICAL := Color(0.30, 0.90, 1.0, 0.96)
+const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 
 @export_group("View Orientation")
 # view_orientation controls the isometric projection basis / mirroring only.
@@ -171,6 +185,8 @@ const COLOR_DEBUG_MUTED_TEXT := Color(0.68, 0.76, 0.78, 1.0)
 @export var living_room_size := DEFAULT_LIVING_ROOM_SIZE
 @export var bathroom_room_origin := DEFAULT_BATHROOM_ROOM_ORIGIN
 @export var bathroom_room_size := DEFAULT_BATHROOM_ROOM_SIZE
+@export var entrance_room_origin := DEFAULT_ENTRANCE_ROOM_ORIGIN
+@export var entrance_room_size := DEFAULT_ENTRANCE_ROOM_SIZE
 @export var service_room_origin := DEFAULT_SERVICE_ROOM_ORIGIN
 @export var service_room_size := DEFAULT_SERVICE_ROOM_SIZE
 @export var no_large_object_zone_origin := DEFAULT_NO_LARGE_OBJECT_ZONE_ORIGIN
@@ -219,6 +235,10 @@ const COLOR_DEBUG_MUTED_TEXT := Color(0.68, 0.76, 0.78, 1.0)
 @export var show_nonblocking_object_cells := true
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
 @export var show_occlusion_wall_debug := false
+# Shows room dimensions, placement reference cells, doorway clearance, and wall-mount spans.
+@export var show_room_measurements := false
+@export_range(0, 3, 1) var doorway_clearance_cells := 1
+@export_range(0, 3, 1) var main_path_clearance_cells := 1
 # Preview helper only: draw REVEALABLE walls at full height without adding character/area logic.
 @export var preview_revealed_walls := false
 # Shell-only reveal test. When true, REVEALABLE walls can become full walls for the active room area.
@@ -244,6 +264,7 @@ var _wall_edge_coord_layer: Node2D
 var _hover_edge_highlight_layer: Node2D
 var _wall_id_layer: Node2D
 var _occlusion_debug_layer: Node2D
+var _room_measurement_layer: Node2D
 var _debug_overlay_layer: CanvasLayer
 var _hover_coord_label: Label
 var _hover_coord_background: ColorRect
@@ -251,6 +272,10 @@ var _hover_edge_label: Label
 var _hover_edge_background: ColorRect
 var _active_room_label: Label
 var _active_room_background: ColorRect
+var _measurement_legend_label: Label
+var _measurement_legend_background: ColorRect
+var _measurement_summary_label: Label
+var _measurement_summary_background: ColorRect
 var _player_debug_marker: Polygon2D
 var _player_debug_label: Label
 var _interaction_menu_panel: PanelContainer
@@ -312,6 +337,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if event.keycode == KEY_O:
 			show_occlusion_wall_debug = not show_occlusion_wall_debug
+			_update_label_visibility()
+			get_viewport().set_input_as_handled()
+			return
+		if event.keycode == KEY_M:
+			show_room_measurements = not show_room_measurements
 			_update_label_visibility()
 			get_viewport().set_input_as_handled()
 			return
@@ -385,6 +415,7 @@ func _create_layers() -> void:
 	_hover_edge_highlight_layer = _add_layer("WallEdgeHoverHighlightLayer", 89)
 	_wall_id_layer = _add_layer("WallIdLayer", 90)
 	_occlusion_debug_layer = _add_layer("OcclusionWallDebugLayer", 95)
+	_room_measurement_layer = _add_layer("RoomMeasurementLayer", 98)
 	_debug_overlay_layer = CanvasLayer.new()
 	_debug_overlay_layer.name = "DebugOverlayLayer"
 	add_child(_debug_overlay_layer)
@@ -404,6 +435,7 @@ func _build_shell() -> void:
 	_draw_navigation_overlay()
 	_draw_floor_grid_overlay()
 	_draw_wall_edge_overlay()
+	_draw_room_measurement_overlay()
 	_draw_control_hint()
 
 
@@ -617,14 +649,14 @@ func _default_wall_segment_configs() -> Array[Resource]:
 		_make_wall_segment_config(
 			&"bathroom_wall",
 			ApartmentWallSegmentConfigScript.Axis.AXIS_A,
-			bathroom_room.position,
-			bathroom_room.size.x,
+			Vector2i(0, 7),
+			2,
 		),
 		_make_wall_segment_config(
 			&"bathroom_left_wall",
 			ApartmentWallSegmentConfigScript.Axis.AXIS_B,
-			bathroom_room.position,
-			bathroom_room.size.y,
+			Vector2i(0, 7),
+			3,
 			ApartmentWallSegmentConfigScript.WallType.DOORWAY_FRAME,
 			1,
 			DEFAULT_BATHROOM_DOOR_WIDTH,
@@ -985,6 +1017,8 @@ func _object_config_interaction_cells(config: Resource) -> Array[Vector2i]:
 func _validate_object_footprints() -> void:
 	for warning in _object_placement_warnings():
 		push_warning(warning)
+	for warning in _room_measurement_object_warnings():
+		push_warning(warning)
 
 
 func _object_placement_warnings() -> Array[String]:
@@ -1073,6 +1107,7 @@ func print_wall_segment_inventory() -> void:
 	print("=== End Wall Segment Inventory ===")
 	_print_navigation_summary()
 	_print_object_footprint_summary()
+	_print_room_measurement_summary()
 
 
 func _wall_segment_inventory_rows() -> Array[Dictionary]:
@@ -1170,6 +1205,207 @@ func _print_interaction_debug_summary() -> void:
 	print("=== End Interaction / Phone Debug Summary ===")
 
 
+func _print_room_measurement_summary() -> void:
+	print("=== Apartment Room Measurement Summary ===")
+	print("floor cell=space reference; wall edge=door/window boundary; screen px=art/collision/offset tuning. Placement cells are advisory and do not force tile snapping.")
+	print("room_id | name_ko | floor_bounds | size_cells | area_floor_cells | bounds_cells | walkable_cells | placement_cells | screen_bounds_px | center_grid | center_screen | doorways | windows | walls")
+	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
+	for definition in _room_measurement_definitions():
+		var data := _room_measurement_data(String(definition["room_id"]))
+		var rect: Rect2i = data["rect"]
+		var screen_bounds: Rect2 = data["screen_bounds"]
+		var center_grid: Vector2 = data["center_grid"]
+		var center_screen: Vector2 = data["center_screen"]
+		print("%s | %s | %s->%s | %s | %d | %d | %d | %d | %dx%d | (%.1f,%.1f) | (%.1f,%.1f) | %s | %s | %s" % [
+			data["room_id"],
+			data["name_ko"],
+			_format_cell(rect.position),
+			_format_cell(rect.end),
+			_format_cell(rect.size),
+			int(data["floor_cells"].size()),
+			int(data["bounds_cell_count"]),
+			int(data["walkable_cells"].size()),
+			int(data["placement_cells"].size()),
+			roundi(screen_bounds.size.x),
+			roundi(screen_bounds.size.y),
+			center_grid.x,
+			center_grid.y,
+			center_screen.x,
+			center_screen.y,
+			", ".join(data["doorway_ids"]),
+			", ".join(data["window_ids"]) if not data["window_ids"].is_empty() else "-",
+			", ".join(data["wall_ids"]),
+		])
+		print("  placement floor cells: %s" % _format_cells(data["placement_cells"]))
+		print("  doorway clearance: %s" % _format_cells(data["doorway_clearance_cells"]))
+		print("  required main path: %s" % _format_cells(data["main_path_cells"]))
+		for doorway_id in data["doorway_ids"]:
+			var doorway_segment := _wall_segment_by_id(String(doorway_id))
+			if not doorway_segment.is_empty():
+				print("  doorway %s(%s): %s" % [doorway_id, _wall_display_name_ko(String(doorway_id)), _wall_doorway_text(doorway_segment)])
+		for window_id in data["window_ids"]:
+			print("  window %s: edge from=(%.1f,%.1f) to=(%.1f,%.1f)" % [
+				window_id,
+				living_window_axis_a,
+				living_window_axis_b_start,
+				living_window_axis_a,
+				living_window_axis_b_start + living_window_width,
+			])
+	print("no-large-object zone: %s->%s" % [_format_cell(_no_large_object_zone_rect().position), _format_cell(_no_large_object_zone_rect().end)])
+	_print_wall_attachment_measurement_summary()
+	_print_object_measurement_comparison()
+	print("=== End Apartment Room Measurement Summary ===")
+
+
+func _print_wall_attachment_measurement_summary() -> void:
+	print("--- Wall Attachment Availability ---")
+	var seen: Dictionary = {}
+	for definition in _room_measurement_definitions():
+		for wall_id in definition["wall_ids"]:
+			var id := String(wall_id)
+			if seen.has(id):
+				continue
+			seen[id] = true
+			var segment := _wall_segment_by_id(id)
+			if segment.is_empty() or not bool(segment.get("enabled", true)):
+				continue
+			print("%s | %s | edge %s->%s | grid=%d | screen_px=%d | state=%s | doorway=%s | window=%s | attachable=%s" % [
+				_wall_display_name_ko(id),
+				id,
+				_format_cell(segment.get("start_cell", Vector2i.ZERO)),
+				_format_cell(_segment_end_cell_i(segment)),
+				int(segment.get("length", 0)),
+				roundi(_measurement_wall_length_px(segment)),
+				_wall_render_state_ko(segment),
+				_wall_doorway_text_ko(segment),
+				"있음" if id == "living_right_wall" else "없음",
+				_measurement_wall_available_edges_text(segment),
+			])
+			for unit in _measurement_wall_unit_data(segment):
+				if bool(unit["available"]):
+					continue
+				var edge: Dictionary = unit["edge"]
+				print("  unavailable %s->%s: %s" % [
+					_format_cell(edge["from_cell"]),
+					_format_cell(edge["to_cell"]),
+					", ".join(unit["reasons"]),
+				])
+
+
+func _print_object_measurement_comparison() -> void:
+	print("--- Existing Placeholder Measurement Comparison ---")
+	for object_data in _object_footprints():
+		if not bool(object_data.get("enabled", true)):
+			continue
+		var id := String(object_data.get("id", ""))
+		var warnings := _room_measurement_object_warnings_for(object_data)
+		var adjacent_walls := _measurement_object_adjacent_wall_ids(object_data)
+		print("%s | expected_room=%s | occupied=%s | interactions=%s | wall_mount_candidate=%s | adjacent_walls=%s | result=%s" % [
+			id,
+			String(object_data.get("room_area_id", "")),
+			_format_cells(_object_occupied_cells(object_data)),
+			_format_cells(_object_interaction_cells(object_data)),
+			str(_measurement_wall_mount_candidate(id)),
+			", ".join(adjacent_walls) if not adjacent_walls.is_empty() else "-",
+			"OK" if warnings.is_empty() else "; ".join(warnings),
+		])
+
+
+func _room_measurement_object_warnings() -> Array[String]:
+	var warnings: Array[String] = []
+	for object_data in _object_footprints():
+		if not bool(object_data.get("enabled", true)):
+			continue
+		var id := String(object_data.get("id", ""))
+		for warning in _room_measurement_object_warnings_for(object_data):
+			warnings.append("measurement object %s: %s" % [id, warning])
+	return warnings
+
+
+func _room_measurement_object_warnings_for(object_data: Dictionary) -> Array[String]:
+	var warnings: Array[String] = []
+	var expected_room := String(object_data.get("room_area_id", ""))
+	var occupied_cells := _object_occupied_cells(object_data)
+	var room_data := _room_measurement_data(expected_room)
+	if room_data.is_empty():
+		warnings.append("unknown expected room %s" % expected_room)
+		return warnings
+
+	var door_clearance_keys := _cell_key_map(room_data["doorway_clearance_cells"])
+	var path_keys := _cell_key_map(room_data["main_path_cells"])
+	var room_screen_bounds: Rect2 = room_data["screen_bounds"]
+	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
+	var size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
+	var object_screen_bounds := _measurement_screen_bounds(Rect2i(anchor, size))
+	if not room_screen_bounds.encloses(object_screen_bounds):
+		warnings.append("screen bounding box extends beyond expected room bounds")
+	for cell in occupied_cells:
+		var actual_room := _room_area_for_cell(cell, false)
+		if actual_room != expected_room:
+			warnings.append("cell %s is in %s(%s), not %s(%s)" % [
+				_format_cell(cell),
+				actual_room,
+				_room_area_label(actual_room),
+				expected_room,
+				_room_area_label(expected_room),
+			])
+		if door_clearance_keys.has(_cell_key(cell)):
+			warnings.append("cell %s intrudes doorway clearance" % _format_cell(cell))
+		if path_keys.has(_cell_key(cell)):
+			warnings.append("cell %s intrudes required movement path" % _format_cell(cell))
+		if _is_cell_in_rect(cell, _no_large_object_zone_rect()):
+			warnings.append("cell %s is inside no-large-object zone" % _format_cell(cell))
+
+	for interaction_cell in _object_interaction_cells(object_data):
+		if _room_area_for_cell(interaction_cell, false) != expected_room:
+			warnings.append("interaction cell %s is outside expected room" % _format_cell(interaction_cell))
+		elif not _is_walkable_cell(interaction_cell):
+			warnings.append("interaction cell %s is not currently walkable" % _format_cell(interaction_cell))
+
+	var id := String(object_data.get("id", ""))
+	if _measurement_wall_mount_candidate(id) and _measurement_object_adjacent_wall_ids(object_data).is_empty():
+		warnings.append("wall-mount candidate is not adjacent to a measured room wall")
+	return warnings
+
+
+func _measurement_wall_mount_candidate(object_id: String) -> bool:
+	return object_id in [
+		"microwave_placeholder",
+		"power_panel_placeholder",
+		"connector_board_placeholder",
+		"comm_device_placeholder",
+	]
+
+
+func _measurement_object_adjacent_wall_ids(object_data: Dictionary) -> Array[String]:
+	var expected_room := String(object_data.get("room_area_id", ""))
+	var definition := _room_measurement_definition(expected_room)
+	var wall_ids: Array[String] = []
+	var object_edge_keys: Dictionary = {}
+	for cell in _object_occupied_cells(object_data):
+		for edge_name in ["top", "right", "bottom", "left"]:
+			var edge := _wall_edge_info_for_cell(cell, edge_name)
+			object_edge_keys[_edge_key(edge["from_cell"], edge["to_cell"])] = true
+	for wall_id in definition.get("wall_ids", []):
+		var id := String(wall_id)
+		var segment := _wall_segment_by_id(id)
+		if segment.is_empty() or not bool(segment.get("enabled", true)):
+			continue
+		for offset in range(int(segment.get("length", 0))):
+			var edge := _wall_segment_unit_edge(segment, offset)
+			if object_edge_keys.has(String(edge["key"])):
+				wall_ids.append(id)
+				break
+	return wall_ids
+
+
+func _cell_key_map(cells: Array[Vector2i]) -> Dictionary:
+	var keys: Dictionary = {}
+	for cell in cells:
+		keys[_cell_key(cell)] = true
+	return keys
+
+
 func _object_footprint_inventory_rows() -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
 	for object_data in _object_footprints():
@@ -1226,7 +1462,7 @@ func _wall_display_name_ko(id: String) -> String:
 		"living_occlusion_front_wall":
 			return "비활성 앞쪽 숨김벽"
 		"bathroom_wall":
-			return "욕실 위쪽벽"
+			return "욕실/현관 경계벽"
 		"bathroom_right_wall":
 			return "욕실 오른쪽벽"
 		"bathroom_left_wall":
@@ -1276,7 +1512,7 @@ func _room_area_label(area_id: String) -> String:
 		"living_area":
 			return "생활공간"
 		"work_power_area":
-			return "작업/전력공간"
+			return "작업공간·전력공간"
 		"bathroom":
 			return "욕실"
 		"entrance_area":
@@ -1377,10 +1613,11 @@ func _should_draw_living_window_placeholder() -> bool:
 func _draw_debug_labels() -> void:
 	var living_room := _living_room_rect()
 	_add_debug_label("living_label", "생활공간", _room_center(living_room) + Vector2(-30, 8))
-	_add_debug_label("work_label", "작업공간+전력공간", _room_center(_work_room_rect()) + Vector2(-76, -8))
+	_add_debug_label("work_label", "작업공간·전력공간", _room_center(_work_room_rect()) + Vector2(-76, -8))
 	_add_debug_label("bath_label", "욕실", _room_center(_bathroom_room_rect()) + Vector2(-18, -8))
+	_add_debug_label("entrance_area_label", "현관", _room_center(_entrance_room_rect()) + Vector2(-18, 18))
 	_add_debug_label("connection_label", "연결문", _doorway_center(&"work_front_shared_wall") + Vector2(-32, -104))
-	_add_debug_label("entrance_label", "현관문", _doorway_center(&"entrance_wall") + Vector2(-72, -84))
+	_add_debug_label("entrance_door_label", "현관문", _doorway_center(&"entrance_wall") + Vector2(-72, -84))
 	_add_debug_label("no_object_zone_label", "전경 대형 오브젝트 금지 구역", _room_center(_no_large_object_zone_rect()) + Vector2(-118, 20))
 
 
@@ -1470,10 +1707,454 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 		)
 
 
+# Room measurements are derived from the current shell rectangles, wall segments, doorway
+# edges, navigation cells, and footprint Resources. They do not move or resize shell data.
+func _room_measurement_definitions() -> Array[Dictionary]:
+	return [
+		{
+			"room_id": "entrance_area",
+			"name_ko": "현관",
+			"rect": _entrance_room_rect(),
+			"color": COLOR_MEASUREMENT_ENTRANCE,
+			"doorway_ids": ["entrance_wall", "entrance_inner_wall"],
+			"window_ids": [],
+			"wall_ids": ["entrance_wall", "entrance_inner_wall", "bathroom_wall", "living_front_cutaway"],
+		},
+		{
+			"room_id": "bathroom",
+			"name_ko": "욕실",
+			"rect": _bathroom_room_rect(),
+			"color": COLOR_MEASUREMENT_BATHROOM,
+			"doorway_ids": ["bathroom_right_wall"],
+			"window_ids": [],
+			"wall_ids": ["entrance_wall", "bathroom_right_wall", "bathroom_wall", "work_front_shared_wall"],
+		},
+		{
+			"room_id": "living_area",
+			"name_ko": "생활공간",
+			"rect": _living_room_rect(),
+			"color": COLOR_MEASUREMENT_LIVING,
+			"doorway_ids": ["work_front_shared_wall", "bathroom_right_wall", "entrance_inner_wall"],
+			"window_ids": ["living_window"],
+			"wall_ids": ["work_front_shared_wall", "bathroom_right_wall", "entrance_inner_wall", "living_right_wall", "living_front_cutaway"],
+		},
+		{
+			"room_id": "work_power_area",
+			"name_ko": "작업공간·전력공간",
+			"rect": _work_room_rect(),
+			"color": COLOR_MEASUREMENT_WORK,
+			"doorway_ids": ["work_front_shared_wall"],
+			"window_ids": [],
+			"wall_ids": ["work_back_wall", "work_left_wall", "work_right_wall", "work_front_shared_wall"],
+		},
+	]
+
+
+func _room_measurement_definition(room_id: String) -> Dictionary:
+	for definition in _room_measurement_definitions():
+		if String(definition.get("room_id", "")) == room_id:
+			return definition
+	return {}
+
+
+func _room_measurement_data(room_id: String) -> Dictionary:
+	var definition := _room_measurement_definition(room_id)
+	if definition.is_empty():
+		return {}
+	var rect: Rect2i = definition["rect"]
+	var floor_cells := _measurement_room_floor_cells(room_id)
+	var walkable_cells := _measurement_room_walkable_cells(room_id)
+	var doorway_cells := _measurement_doorway_clearance_cells(room_id)
+	var main_path_cells := _measurement_main_path_cells(room_id)
+	var placement_cells := _measurement_placement_cells(room_id, doorway_cells, main_path_cells)
+	var screen_bounds := _measurement_screen_bounds(rect)
+	return {
+		"room_id": room_id,
+		"name_ko": String(definition["name_ko"]),
+		"rect": rect,
+		"color": definition["color"],
+		"floor_cells": floor_cells,
+		"bounds_cell_count": rect.size.x * rect.size.y,
+		"walkable_cells": walkable_cells,
+		"doorway_clearance_cells": doorway_cells,
+		"main_path_cells": main_path_cells,
+		"placement_cells": placement_cells,
+		"screen_bounds": screen_bounds,
+		"center_grid": Vector2(rect.position) + Vector2(rect.size) * 0.5,
+		"center_screen": _room_center(rect),
+		"doorway_ids": definition["doorway_ids"],
+		"window_ids": definition["window_ids"],
+		"wall_ids": definition["wall_ids"],
+	}
+
+
+func _measurement_room_floor_cells(room_id: String) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for cell in _visible_floor_cells():
+		if _room_area_for_cell(cell, false) == room_id:
+			cells.append(cell)
+	_sort_cells(cells)
+	return cells
+
+
+func _measurement_room_walkable_cells(room_id: String) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for cell in _walkable_floor_cells():
+		if _room_area_for_cell(cell, false) == room_id:
+			cells.append(cell)
+	_sort_cells(cells)
+	return cells
+
+
+func _measurement_placement_cells(
+	room_id: String,
+	doorway_cells: Array[Vector2i],
+	main_path_cells: Array[Vector2i]
+) -> Array[Vector2i]:
+	var excluded: Dictionary = {}
+	for cell in doorway_cells + main_path_cells + _measurement_all_object_cells():
+		excluded[_cell_key(cell)] = true
+	for cell in _cells_in_rect(_no_large_object_zone_rect()):
+		excluded[_cell_key(cell)] = true
+
+	var cells: Array[Vector2i] = []
+	for cell in _measurement_room_floor_cells(room_id):
+		if not excluded.has(_cell_key(cell)):
+			cells.append(cell)
+	_sort_cells(cells)
+	return cells
+
+
+func _measurement_all_object_cells() -> Array[Vector2i]:
+	var cells_by_key: Dictionary = {}
+	for object_data in _object_footprints():
+		if not bool(object_data.get("enabled", true)):
+			continue
+		for cell in _object_occupied_cells(object_data):
+			cells_by_key[_cell_key(cell)] = cell
+	return _cells_from_map(cells_by_key)
+
+
+func _measurement_doorway_entry_cells(room_id: String) -> Array[Vector2i]:
+	var definition := _room_measurement_definition(room_id)
+	var cells_by_key: Dictionary = {}
+	for doorway_id in definition.get("doorway_ids", []):
+		var segment := _wall_segment_by_id(String(doorway_id))
+		if segment.is_empty() or not bool(segment.get("enabled", true)):
+			continue
+		var offset_start := int(segment.get("doorway_offset", -1))
+		var doorway_width := int(segment.get("doorway_width", 0))
+		if offset_start < 0 or doorway_width <= 0:
+			continue
+		for offset in range(offset_start, offset_start + doorway_width):
+			var edge := _wall_segment_unit_edge(segment, offset)
+			for cell in _measurement_adjacent_cells_for_edge(edge):
+				if _room_area_for_cell(cell, false) == room_id:
+					cells_by_key[_cell_key(cell)] = cell
+	return _cells_from_map(cells_by_key)
+
+
+func _measurement_doorway_clearance_cells(room_id: String) -> Array[Vector2i]:
+	var radius := maxi(0, doorway_clearance_cells - 1)
+	return _measurement_expand_room_cells(room_id, _measurement_doorway_entry_cells(room_id), radius)
+
+
+func _measurement_adjacent_cells_for_edge(edge: Dictionary) -> Array[Vector2i]:
+	var from_cell: Vector2i = edge.get("from_cell", Vector2i.ZERO)
+	var axis: WallAxis = edge.get("axis", WallAxis.AXIS_A)
+	if axis == WallAxis.AXIS_B:
+		return [from_cell + Vector2i(-1, 0), from_cell]
+	return [from_cell + Vector2i(0, -1), from_cell]
+
+
+func _measurement_main_path_cells(room_id: String) -> Array[Vector2i]:
+	var room_cells := _measurement_room_floor_cells(room_id)
+	if room_cells.is_empty():
+		return []
+	var definition := _room_measurement_definition(room_id)
+	var rect: Rect2i = definition.get("rect", Rect2i())
+	var center_grid := Vector2(rect.position) + Vector2(rect.size) * 0.5
+	var target := _measurement_nearest_cell(room_cells, center_grid)
+	var path_by_key: Dictionary = {}
+	for source in _measurement_doorway_entry_cells(room_id):
+		for cell in _measurement_cell_path(source, target, room_cells):
+			path_by_key[_cell_key(cell)] = cell
+	var radius := maxi(0, main_path_clearance_cells - 1)
+	return _measurement_expand_room_cells(room_id, _cells_from_map(path_by_key), radius)
+
+
+func _measurement_cell_path(
+	start_cell: Vector2i,
+	target_cell: Vector2i,
+	allowed_cells: Array[Vector2i]
+) -> Array[Vector2i]:
+	var allowed: Dictionary = {}
+	for cell in allowed_cells:
+		allowed[_cell_key(cell)] = true
+	if not allowed.has(_cell_key(start_cell)) or not allowed.has(_cell_key(target_cell)):
+		return []
+
+	var frontier: Array[Vector2i] = [start_cell]
+	var cursor := 0
+	var came_from: Dictionary = {_cell_key(start_cell): start_cell}
+	while cursor < frontier.size():
+		var current := frontier[cursor]
+		cursor += 1
+		if current == target_cell:
+			break
+		for edge_name in ["top", "right", "bottom", "left"]:
+			var next_cell := _neighbor_cell_for_edge(current, edge_name)
+			var next_key := _cell_key(next_cell)
+			if not allowed.has(next_key) or came_from.has(next_key):
+				continue
+			if String(_navigation_edge_status_for_cell(current, edge_name).get("status", "open")) == "blocked":
+				continue
+			came_from[next_key] = current
+			frontier.append(next_cell)
+
+	if not came_from.has(_cell_key(target_cell)):
+		return []
+	var path: Array[Vector2i] = []
+	var current := target_cell
+	while current != start_cell:
+		path.push_front(current)
+		current = came_from[_cell_key(current)]
+	path.push_front(start_cell)
+	return path
+
+
+func _measurement_expand_room_cells(
+	room_id: String,
+	source_cells: Array[Vector2i],
+	radius: int
+) -> Array[Vector2i]:
+	var cells_by_key: Dictionary = {}
+	for source in source_cells:
+		for x_offset in range(-radius, radius + 1):
+			for y_offset in range(-radius, radius + 1):
+				if abs(x_offset) + abs(y_offset) > radius:
+					continue
+				var cell := source + Vector2i(x_offset, y_offset)
+				if _room_area_for_cell(cell, false) == room_id:
+					cells_by_key[_cell_key(cell)] = cell
+	return _cells_from_map(cells_by_key)
+
+
+func _measurement_nearest_cell(cells: Array[Vector2i], target: Vector2) -> Vector2i:
+	var nearest := cells[0]
+	var nearest_distance := Vector2(nearest).distance_squared_to(target)
+	for cell in cells:
+		var distance := Vector2(cell).distance_squared_to(target)
+		if distance < nearest_distance:
+			nearest = cell
+			nearest_distance = distance
+	return nearest
+
+
+func _measurement_screen_bounds(rect: Rect2i) -> Rect2:
+	var points := _rect_points(rect)
+	var minimum := points[0]
+	var maximum := points[0]
+	for point in points:
+		minimum.x = minf(minimum.x, point.x)
+		minimum.y = minf(minimum.y, point.y)
+		maximum.x = maxf(maximum.x, point.x)
+		maximum.y = maxf(maximum.y, point.y)
+	return Rect2(minimum, maximum - minimum)
+
+
+func _cells_in_rect(rect: Rect2i) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for x in range(rect.position.x, rect.end.x):
+		for y in range(rect.position.y, rect.end.y):
+			cells.append(Vector2i(x, y))
+	return cells
+
+
+func _cells_from_map(cells_by_key: Dictionary) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for key in cells_by_key.keys():
+		cells.append(cells_by_key[key])
+	_sort_cells(cells)
+	return cells
+
+
+func _sort_cells(cells: Array[Vector2i]) -> void:
+	cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		if a.y == b.y:
+			return a.x < b.x
+		return a.y < b.y
+	)
+
+
+func _wall_segment_by_id(segment_id: String) -> Dictionary:
+	for segment in _wall_segments():
+		if String(segment.get("id", "")) == segment_id:
+			return segment
+	return {}
+
+
+func _measurement_wall_unit_data(segment: Dictionary) -> Array[Dictionary]:
+	var units: Array[Dictionary] = []
+	var length := int(segment.get("length", 0))
+	for offset in range(length):
+		var edge := _wall_segment_unit_edge(segment, offset)
+		var reasons: Array[String] = []
+		if _is_wall_segment_doorway_unit(segment, offset):
+			reasons.append("문")
+		if _measurement_wall_unit_has_window(segment, offset):
+			reasons.append("창문")
+		if length > 2 and (offset == 0 or offset == length - 1):
+			reasons.append("코너")
+		units.append({
+			"offset": offset,
+			"edge": edge,
+			"available": reasons.is_empty(),
+			"reasons": reasons,
+		})
+	return units
+
+
+func _measurement_wall_unit_has_window(segment: Dictionary, offset: int) -> bool:
+	if String(segment.get("id", "")) != "living_right_wall":
+		return false
+	var start_cell: Vector2i = segment.get("start_cell", Vector2i.ZERO)
+	var segment_start := float(start_cell.y)
+	var unit_start := segment_start + float(offset)
+	var unit_end := unit_start + 1.0
+	var window_start := living_window_axis_b_start
+	var window_end := living_window_axis_b_start + living_window_width
+	return unit_start < window_end and unit_end > window_start
+
+
+func _measurement_wall_available_edges_text(segment: Dictionary) -> String:
+	var edge_parts: Array[String] = []
+	for unit in _measurement_wall_unit_data(segment):
+		if not bool(unit.get("available", false)):
+			continue
+		var edge: Dictionary = unit["edge"]
+		edge_parts.append("%s→%s" % [
+			_format_cell(edge.get("from_cell", Vector2i.ZERO)),
+			_format_cell(edge.get("to_cell", Vector2i.ZERO)),
+		])
+	return ", ".join(edge_parts) if not edge_parts.is_empty() else "없음"
+
+
+func _measurement_wall_length_px(segment: Dictionary) -> float:
+	var start_cell := _segment_start_cell(segment)
+	var end_cell := Vector2(_segment_end_cell_i(segment))
+	return _iso(start_cell.x, start_cell.y).distance_to(_iso(end_cell.x, end_cell.y))
+
+
+func _draw_room_measurement_overlay() -> void:
+	if _room_measurement_layer == null:
+		return
+	for definition in _room_measurement_definitions():
+		var room_id := String(definition["room_id"])
+		var data := _room_measurement_data(room_id)
+		_draw_room_measurement_cells(data)
+	_draw_wall_attachment_measurements()
+
+
+func _draw_room_measurement_cells(data: Dictionary) -> void:
+	var room_color: Color = data.get("color", COLOR_MEASUREMENT_LIVING)
+	for cell in data.get("floor_cells", []):
+		_add_polygon(
+			_room_measurement_layer,
+			"measurement_room_%s_%d_%d" % [data["room_id"], cell.x, cell.y],
+			_measurement_inset_tile_points(cell, 0.04),
+			room_color
+		)
+	for cell in data.get("placement_cells", []):
+		_add_polygon(
+			_room_measurement_layer,
+			"measurement_placement_%s_%d_%d" % [data["room_id"], cell.x, cell.y],
+			_measurement_inset_tile_points(cell, 0.42),
+			COLOR_MEASUREMENT_PLACEMENT
+		)
+	for cell in data.get("walkable_cells", []):
+		var outline := _measurement_inset_tile_points(cell, 0.20)
+		_add_line(
+			_room_measurement_layer,
+			"measurement_walkable_%s_%d_%d" % [data["room_id"], cell.x, cell.y],
+			outline + [outline[0]],
+			COLOR_MEASUREMENT_WALKABLE,
+			1.5
+		)
+	for cell in data.get("main_path_cells", []):
+		_add_polygon(
+			_room_measurement_layer,
+			"measurement_path_%s_%d_%d" % [data["room_id"], cell.x, cell.y],
+			_measurement_inset_tile_points(cell, 0.31),
+			COLOR_MEASUREMENT_MAIN_PATH
+		)
+	for cell in data.get("doorway_clearance_cells", []):
+		_add_polygon(
+			_room_measurement_layer,
+			"measurement_door_clearance_%s_%d_%d" % [data["room_id"], cell.x, cell.y],
+			_measurement_inset_tile_points(cell, 0.22),
+			COLOR_MEASUREMENT_DOOR_CLEARANCE
+		)
+
+
+func _measurement_inset_tile_points(cell: Vector2i, inset_ratio: float) -> Array[Vector2]:
+	var points := _tile_points(float(cell.x), float(cell.y))
+	var center := _cell_center(cell)
+	var inset: Array[Vector2] = []
+	for point in points:
+		inset.append(point.lerp(center, inset_ratio))
+	return inset
+
+
+func _draw_wall_attachment_measurements() -> void:
+	var seen: Dictionary = {}
+	for definition in _room_measurement_definitions():
+		for wall_id in definition.get("wall_ids", []):
+			var id := String(wall_id)
+			if seen.has(id):
+				continue
+			seen[id] = true
+			var segment := _wall_segment_by_id(id)
+			if segment.is_empty() or not bool(segment.get("enabled", true)):
+				continue
+			_draw_wall_attachment_segment(segment)
+
+
+func _draw_wall_attachment_segment(segment: Dictionary) -> void:
+	var id := String(segment["id"])
+	var render_mode := int(segment.get("render_mode", WallRenderMode.FULL))
+	for unit in _measurement_wall_unit_data(segment):
+		var edge: Dictionary = unit["edge"]
+		var from_cell: Vector2i = edge["from_cell"]
+		var to_cell: Vector2i = edge["to_cell"]
+		var color := COLOR_MEASUREMENT_WALL_AVAILABLE if bool(unit["available"]) else COLOR_MEASUREMENT_WALL_UNAVAILABLE
+		if bool(unit["available"]) and render_mode != WallRenderMode.FULL:
+			color = COLOR_MEASUREMENT_WALL_LOGICAL
+		var p0 := _iso(from_cell.x, from_cell.y) + Vector2(0.0, -9.0)
+		var p1 := _iso(to_cell.x, to_cell.y) + Vector2(0.0, -9.0)
+		if bool(unit["available"]) and render_mode != WallRenderMode.FULL:
+			_draw_measurement_dashed_line("measurement_wall_%s_%d" % [id, int(unit["offset"])], p0, p1, color)
+		else:
+			_add_line(_room_measurement_layer, "measurement_wall_%s_%d" % [id, int(unit["offset"])], [p0, p1], color, 5.0)
+
+func _draw_measurement_dashed_line(line_name: String, p0: Vector2, p1: Vector2, color: Color) -> void:
+	const DASH_COUNT := 5
+	for index in range(DASH_COUNT):
+		var start_ratio := float(index) / float(DASH_COUNT)
+		var end_ratio := minf(start_ratio + 0.11, 1.0)
+		_add_line(
+			_room_measurement_layer,
+			"%s_dash_%d" % [line_name, index],
+			[p0.lerp(p1, start_ratio), p0.lerp(p1, end_ratio)],
+			color,
+			5.0
+		)
+
+
 func _draw_control_hint() -> void:
 	var label := Label.new()
 	label.name = "ShellControlHint"
-	label.text = "1/2/3: 카메라  |  L: 구역 라벨  |  G: 바닥 좌표  |  E: 벽선 좌표  |  W: 벽 정보\nN: 이동/충돌  |  P: 오브젝트  |  O: 숨김벽  |  J: 상호작용 테스트  |  H: 핸드폰\nI: 목록 출력  |  ESC: 열린 UI 닫기  |  방향키: 디버그 위치 이동"
+	label.text = "1/2/3: 카메라  |  L: 구역 라벨  |  G: 바닥 좌표  |  E: 벽선 좌표  |  W: 벽 정보\nN: 이동/충돌  |  P: 오브젝트  |  O: 숨김벽  |  M: 방 측량  |  J: 상호작용 테스트  |  H: 핸드폰\nI: 목록 출력  |  ESC: 열린 UI 닫기  |  방향키: 디버그 위치 이동"
 	label.position = Vector2(24, 20)
 	label.modulate = COLOR_LABEL
 	label.add_theme_font_size_override("font_size", 14)
@@ -1483,6 +2164,8 @@ func _draw_control_hint() -> void:
 	_debug_overlay_layer.add_child(label)
 	_create_hover_coord_overlay()
 	_create_active_room_overlay()
+	_create_measurement_legend_overlay()
+	_create_measurement_summary_overlay()
 	_create_interaction_debug_ui()
 
 
@@ -2044,7 +2727,7 @@ func _active_room_area() -> String:
 
 
 func _is_entrance_area_cell(cell: Vector2i) -> bool:
-	return cell.x >= 0 and cell.x < 2 and cell.y >= 8 and cell.y < 10
+	return _is_cell_in_rect(cell, _entrance_room_rect())
 
 
 func _is_walkable_cell(cell: Vector2i) -> bool:
@@ -2209,6 +2892,75 @@ func _create_active_room_overlay() -> void:
 	_active_room_label.add_theme_constant_override("shadow_offset_y", 2)
 	_debug_overlay_layer.add_child(_active_room_label)
 	_update_active_room_overlay()
+
+
+func _create_measurement_legend_overlay() -> void:
+	_measurement_legend_background = ColorRect.new()
+	_measurement_legend_background.name = "RoomMeasurementLegendBackground"
+	_measurement_legend_background.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_measurement_legend_background.position = Vector2(-470.0, 20.0)
+	_measurement_legend_background.size = Vector2(446.0, 154.0)
+	_measurement_legend_background.color = COLOR_MEASUREMENT_LABEL_BACKGROUND
+	_debug_overlay_layer.add_child(_measurement_legend_background)
+
+	_measurement_legend_label = Label.new()
+	_measurement_legend_label.name = "RoomMeasurementLegendLabel"
+	_measurement_legend_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_measurement_legend_label.position = Vector2(-458.0, 28.0)
+	_measurement_legend_label.text = "방 측량 범례\n방색: 현관 / 욕실 / 생활 / 작업·전력\n초록 외곽: 이동 가능  |  파랑: 배치 후보\n노랑: 문 여유  |  보라: 필수 이동선  |  주황: 대형 금지\n벽 녹색: 부착 가능  |  빨강: 문·창문·코너\n벽 청록 점선: 시야벽이지만 논리적으로 부착 가능"
+	_measurement_legend_label.modulate = COLOR_DEBUG_TEXT
+	_measurement_legend_label.add_theme_font_size_override("font_size", 13)
+	_measurement_legend_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
+	_measurement_legend_label.add_theme_constant_override("shadow_offset_x", 2)
+	_measurement_legend_label.add_theme_constant_override("shadow_offset_y", 2)
+	_debug_overlay_layer.add_child(_measurement_legend_label)
+
+
+func _create_measurement_summary_overlay() -> void:
+	_measurement_summary_background = ColorRect.new()
+	_measurement_summary_background.name = "RoomMeasurementSummaryBackground"
+	_measurement_summary_background.position = Vector2(24.0, 102.0)
+	_measurement_summary_background.size = Vector2(286.0, 360.0)
+	_measurement_summary_background.color = COLOR_MEASUREMENT_LABEL_BACKGROUND
+	_debug_overlay_layer.add_child(_measurement_summary_background)
+
+	_measurement_summary_label = Label.new()
+	_measurement_summary_label.name = "RoomMeasurementSummaryLabel"
+	_measurement_summary_label.position = Vector2(36.0, 112.0)
+	_measurement_summary_label.text = _measurement_summary_overlay_text()
+	_measurement_summary_label.modulate = COLOR_DEBUG_TEXT
+	_measurement_summary_label.add_theme_font_size_override("font_size", 12)
+	_measurement_summary_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
+	_measurement_summary_label.add_theme_constant_override("shadow_offset_x", 2)
+	_measurement_summary_label.add_theme_constant_override("shadow_offset_y", 2)
+	_debug_overlay_layer.add_child(_measurement_summary_label)
+
+
+func _measurement_summary_overlay_text() -> String:
+	var lines: Array[String] = ["방별 측량 요약"]
+	for definition in _room_measurement_definitions():
+		var data := _room_measurement_data(String(definition["room_id"]))
+		var rect: Rect2i = data["rect"]
+		var screen_bounds: Rect2 = data["screen_bounds"]
+		lines.append("")
+		lines.append("%s  %s~%s" % [data["name_ko"], _format_cell(rect.position), _format_cell(rect.end)])
+		lines.append("%d×%d칸 / 구역 %d / 이동 %d / 배치 %d" % [
+			rect.size.x,
+			rect.size.y,
+			int(data["floor_cells"].size()),
+			int(data["walkable_cells"].size()),
+			int(data["placement_cells"].size()),
+		])
+		lines.append("화면 약 %d×%dpx / 문 %d / 창 %d / 벽 %d" % [
+			roundi(screen_bounds.size.x),
+			roundi(screen_bounds.size.y),
+			int(data["doorway_ids"].size()),
+			int(data["window_ids"].size()),
+			int(data["wall_ids"].size()),
+		])
+	lines.append("")
+	lines.append("I: 방·벽·placeholder 상세 출력")
+	return "\n".join(lines)
 
 
 func _update_active_room_overlay() -> void:
@@ -2655,8 +3407,10 @@ func _redraw_reveal_sensitive_layers() -> void:
 	_clear_layer_children(_door_layer)
 	_clear_layer_children(_wall_id_layer)
 	_clear_layer_children(_occlusion_debug_layer)
+	_clear_layer_children(_room_measurement_layer)
 	_draw_walls()
 	_draw_doors_and_window_placeholders()
+	_draw_room_measurement_overlay()
 	_update_label_visibility()
 
 
@@ -3150,6 +3904,10 @@ func _bathroom_room_rect() -> Rect2i:
 	return Rect2i(bathroom_room_origin, bathroom_room_size)
 
 
+func _entrance_room_rect() -> Rect2i:
+	return Rect2i(entrance_room_origin, entrance_room_size)
+
+
 func _service_room_rect() -> Rect2i:
 	return Rect2i(service_room_origin, service_room_size)
 
@@ -3409,6 +4167,8 @@ func _update_label_visibility() -> void:
 		_hover_edge_highlight_layer.visible = show_wall_edge_coords
 	if _occlusion_debug_layer != null:
 		_occlusion_debug_layer.visible = show_occlusion_wall_debug
+	if _room_measurement_layer != null:
+		_room_measurement_layer.visible = show_room_measurements
 	if _hover_coord_label != null:
 		_hover_coord_label.visible = show_floor_grid_coords
 	if _hover_coord_background != null:
@@ -3421,6 +4181,14 @@ func _update_label_visibility() -> void:
 		_active_room_label.visible = show_navigation_debug
 	if _active_room_background != null:
 		_active_room_background.visible = show_navigation_debug
+	if _measurement_legend_label != null:
+		_measurement_legend_label.visible = show_room_measurements
+	if _measurement_legend_background != null:
+		_measurement_legend_background.visible = show_room_measurements
+	if _measurement_summary_label != null:
+		_measurement_summary_label.visible = show_room_measurements
+	if _measurement_summary_background != null:
+		_measurement_summary_background.visible = show_room_measurements
 	_update_active_room_overlay()
 	_update_hover_cell()
 

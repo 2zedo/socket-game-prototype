@@ -120,6 +120,8 @@ Do not add these as production gameplay objects without a dedicated Resource / i
 
 These are coordinate-based debug placeholders in `QuarterviewApartmentShellCandidate`, not final room objects, sprites, or production interactions.
 
+Press `M` in the shell candidate to compare these placeholders against corrected room areas and advisory placement space. The measurement report checks room containment, doorway clearance, required movement paths, the no-large-object zone, interaction-cell walkability, and likely wall-mount candidates. It only reports warnings; it never moves a placeholder or forces final art to floor-cell dimensions.
+
 Resource script:
 
 - `godot/scripts/quarterview/ApartmentObjectFootprintConfig.gd`
