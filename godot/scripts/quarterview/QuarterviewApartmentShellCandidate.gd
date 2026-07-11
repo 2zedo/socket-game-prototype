@@ -811,179 +811,94 @@ func _active_object_footprint_config_entries() -> Array[Dictionary]:
 # Edit these defaults to rough in furniture/device footprints. Coordinates are floor cells,
 # unlike wall segments, whose from/to values are wall edge grid-line coordinates.
 func _default_object_footprint_configs() -> Array[Resource]:
+	var configs: Array[Resource] = []
+	for spec in _candidate_object_footprint_specs():
+		var config: Resource = ApartmentObjectFootprintConfigScript.new()
+		for property_name in spec:
+			config.set(StringName(property_name), spec[property_name])
+		configs.append(config)
+	return configs
+
+
+func _candidate_object_footprint_specs() -> Array[Dictionary]:
 	return [
-		_make_object_footprint_config(
-			&"bed_placeholder",
-			&"living_area",
-			&"sleep",
-			Vector2i(8, 6),
-			Vector2i(2, 2),
-			true,
-			[Vector2i(7, 7)],
-			Color(0.45, 0.62, 0.95, 0.36),
-			"Bed placeholder",
-			"Sleep-area footprint candidate."
-		),
-		_make_object_footprint_config(
-			&"fridge_placeholder",
-			&"living_area",
-			&"kitchen",
-			Vector2i(10, 4),
-			Vector2i(1, 1),
-			true,
-			[Vector2i(10, 5)],
-			Color(0.82, 0.82, 0.72, 0.36),
-			"Fridge placeholder",
-			"Single-door fridge footprint candidate."
-		),
-		_make_object_footprint_config(
-			&"sink_counter_placeholder",
-			&"living_area",
-			&"kitchen",
-			Vector2i(8, 4),
-			Vector2i(1, 1),
-			true,
-			[Vector2i(8, 5)],
-			Color(0.42, 0.60, 0.62, 0.36),
-			"Sink counter placeholder",
-			"Small counter / sink footprint candidate."
-		),
-		_make_object_footprint_config(
-			&"microwave_placeholder",
-			&"living_area",
-			&"kitchen",
-			Vector2i(9, 4),
-			Vector2i(1, 1),
-			false,
-			[Vector2i(9, 5)],
-			Color(0.70, 0.70, 0.66, 0.30),
-			"Microwave placeholder",
-			"Non-blocking counter-top appliance marker."
-		),
-		_make_object_footprint_config(
-			&"small_table_placeholder",
-			&"living_area",
-			&"living",
-			Vector2i(4, 6),
-			Vector2i(2, 1),
-			true,
-			[Vector2i(4, 7), Vector2i(5, 7)],
-			Color(0.72, 0.50, 0.28, 0.34),
-			"Small table placeholder",
-			"Two-seat table footprint candidate."
-		),
-		_make_object_footprint_config(
-			&"desk_placeholder",
-			&"work_power_area",
-			&"work",
-			Vector2i(2, 0),
-			Vector2i(2, 1),
-			true,
-			[Vector2i(2, 1)],
-			Color(0.50, 0.62, 0.74, 0.34),
-			"Desk placeholder",
-			"Small work surface candidate."
-		),
-		_make_object_footprint_config(
-			&"navi_chair_placeholder",
-			&"work_power_area",
-			&"navi",
-			Vector2i(4, 1),
-			Vector2i(2, 2),
-			true,
-			[Vector2i(4, 3), Vector2i(5, 3)],
-			Color(0.55, 0.48, 0.92, 0.34),
-			"NAVI chair placeholder",
-			"NAVI LINK seat footprint candidate."
-		),
-		_make_object_footprint_config(
-			&"power_panel_placeholder",
-			&"work_power_area",
-			&"power",
-			Vector2i(8, 1),
-			Vector2i(1, 2),
-			true,
-			[Vector2i(7, 2)],
-			Color(0.18, 0.76, 0.98, 0.32),
-			"Power panel placeholder",
-			"Wall-side power panel footprint candidate."
-		),
-		_make_object_footprint_config(
-			&"connector_board_placeholder",
-			&"work_power_area",
-			&"power",
-			Vector2i(7, 1),
-			Vector2i(1, 1),
-			true,
-			[Vector2i(7, 2)],
-			Color(0.34, 0.86, 0.66, 0.32),
-			"Connector board placeholder",
-			"Compact connector-board footprint candidate."
-		),
-		_make_object_footprint_config(
-			&"comm_device_placeholder",
-			&"work_power_area",
-			&"signal",
-			Vector2i(1, 2),
-			Vector2i(1, 1),
-			false,
-			[Vector2i(2, 2)],
-			Color(0.38, 0.70, 1.0, 0.30),
-			"Comm device placeholder",
-			"Non-blocking small comm-device marker."
-		),
-		_make_object_footprint_config(
-			&"bathroom_fixture_placeholder",
-			&"bathroom",
-			&"bathroom",
-			Vector2i(0, 7),
-			Vector2i(1, 1),
-			true,
-			[Vector2i(1, 7)],
-			Color(0.42, 0.82, 0.92, 0.34),
-			"Bathroom fixture placeholder",
-			"Minimal bathroom fixture footprint candidate."
-		),
-		_make_object_footprint_config(
-			&"entrance_shoe_area_placeholder",
-			&"entrance_area",
-			&"entrance",
-			Vector2i(1, 9),
-			Vector2i(1, 1),
-			false,
-			[Vector2i(1, 8)],
-			Color(0.90, 0.76, 0.36, 0.30),
-			"Entrance shoe area placeholder",
-			"Non-blocking entry shoe/slipper marker."
-		),
+		_object_spec("entrance_door", "현관문", "entrance_area", "interaction", Vector2i(0, 8), Vector2(150, 220), false, [Vector2i(0, 8)], 1, "entrance_wall", "", Vector2(0, -6), Vector2.ZERO, Vector2(96, 56), Vector2(50, 0), "entrance_door_dl_closed.png", "objects/apartment/EntranceDoor.tscn", "audio_entrance_door", "문 안쪽 면이 생활공간 중앙을 향함", false, Vector2i.ONE, 0.75),
+		_object_spec("bed", "침대", "living_area", "interaction", Vector2i(8, 6), Vector2(260, 180), true, [Vector2i(7, 7)], 0, "", "", Vector2(10, -6), Vector2(180, 90), Vector2(120, 64), Vector2(-120, 28), "bed_dl_base.png", "objects/apartment/Bed.tscn", "", "침대 옆면과 머리맡이 보이고 왼쪽에서 접근", true, Vector2i(2, 1)),
+		_object_spec("fridge", "냉장고", "living_area", "interaction", Vector2i(10, 4), Vector2(120, 190), true, [Vector2i(10, 5)], 0, "", "", Vector2(-8, -12), Vector2(70, 70), Vector2(80, 56), Vector2(-50, 42), "fridge_dl_closed.png", "objects/apartment/Fridge.tscn", "audio_fridge", "문 앞면이 생활공간 중앙을 향함"),
+		_object_spec("microwave", "전자레인지", "living_area", "interaction", Vector2i(8, 4), Vector2(96, 72), false, [Vector2i(8, 5)], 2, "", "sink_counter", Vector2(0, -60), Vector2.ZERO, Vector2(96, 56), Vector2(0, 96), "microwave_dl_base.png", "objects/apartment/Microwave.tscn", "audio_microwave", "조작면이 주방 통로를 향함", false),
+		_object_spec("navi_link", "NAVI LINK", "work_power_area", "interaction", Vector2i(4, 1), Vector2(300, 240), true, [Vector2i(4, 3), Vector2i(5, 3)], 0, "", "", Vector2(12, -16), Vector2(210, 120), Vector2(128, 80), Vector2(0, 150), "navi_link_dl_idle_base.png", "objects/apartment/NaviLink.tscn", "audio_navi_link", "좌석 입구와 조작부가 작업공간 통로를 향함", true, Vector2i(2, 2)),
+		_object_spec("power_module_board", "전력 모듈 보드", "work_power_area", "interaction", Vector2i(8, 1), Vector2(200, 180), false, [Vector2i(7, 2)], 1, "work_right_wall", "", Vector2(0, -30), Vector2.ZERO, Vector2(120, 72), Vector2(-88, 92), "power_module_board_dl_base.png", "objects/apartment/PowerModuleBoard.tscn", "audio_power_board", "화면과 슬롯이 작업공간 안쪽을 향함", false, Vector2i.ONE, 0.375),
+		_object_spec("node_17", "NODE-17", "work_power_area", "interaction", Vector2i(1, 2), Vector2(150, 140), true, [Vector2i(2, 2)], 0, "", "", Vector2(0, -8), Vector2(90, 60), Vector2(96, 64), Vector2(84, 30), "node_17_dl_base.png", "objects/apartment/Node17.tscn", "audio_node_17", "표시 화면과 신호등이 작업공간 중앙을 향함"),
+		_object_spec("sink_counter", "싱크대·주방 카운터", "living_area", "environment", Vector2i(8, 4), Vector2(220, 150), true, [], 3, "", "", Vector2.ZERO, Vector2(160, 70), Vector2.ZERO, Vector2.ZERO, "sink_counter_dl_base.png", "objects/apartment/sink_counter.tres", "", "상판 정면이 주방 통로를 향함", true, Vector2i(2, 1)),
+		_object_spec("dining_table", "작은 식탁", "living_area", "environment", Vector2i(4, 6), Vector2(170, 120), true, [], 3, "", "", Vector2.ZERO, Vector2(130, 70), Vector2.ZERO, Vector2.ZERO, "dining_table_dl_base.png", "objects/apartment/dining_table.tres", "", "의자 접근면이 생활공간 통로를 향함"),
+		_object_spec("signal_booster", "신호 증폭기", "work_power_area", "environment", Vector2i(1, 2), Vector2(112, 96), false, [], 2, "", "node_17", Vector2(-68, -58), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "signal_booster_dl_base.png", "objects/apartment/signal_booster.tres", "audio_signal_booster", "표시등이 작업공간 중앙을 향함", false),
+		_object_spec("ups_unit", "UPS·보조전원", "work_power_area", "environment", Vector2i(8, 2), Vector2(140, 110), true, [], 2, "", "power_module_board", Vector2.ZERO, Vector2(100, 60), Vector2.ZERO, Vector2.ZERO, "ups_unit_dl_base.png", "objects/apartment/ups_unit.tres", "audio_ups_unit", "전면 패널이 작업공간 통로를 향함"),
+		_object_spec("bathroom_fixture", "욕실 통합 설비", "bathroom", "environment", Vector2i(0, 4), Vector2(200, 140), true, [], 3, "", "", Vector2.ZERO, Vector2(150, 80), Vector2.ZERO, Vector2.ZERO, "bathroom_fixture_dl_base.png", "objects/apartment/bathroom_fixture.tres", "", "욕실문에서 내부를 볼 때 정면이 보임"),
+		_object_spec("sea_horizon_poster", "바다·수평선 포스터", "living_area", "decoration", Vector2i(10, 7), Vector2(160, 80), false, [], 1, "living_right_wall", "", Vector2(0, -20), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "sea_horizon_poster_wall.png", "objects/apartment/sea_horizon_poster.tres", "", "포스터 그림이 침대와 방 안쪽을 향함", false, Vector2i.ONE, 0.58),
+		_object_spec("fluorescent_light", "형광등", "living_area", "environment", Vector2i(6, 6), Vector2(240, 40), false, [], 4, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "fluorescent_light_base.png", "objects/apartment/fluorescent_light.tres", "audio_fluorescent_light", "천장에서 생활공간 전체를 비춤", false),
+		_object_spec("shoes_slippers", "신발·슬리퍼", "entrance_area", "decoration", Vector2i(1, 9), Vector2(100, 60), false, [], 3, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "shoes_slippers_dl_base.png", "objects/apartment/shoes_slippers.tres", "", "신발 앞코가 현관 통로를 향함", false),
+		_object_spec("cable_bundle", "케이블 묶음", "work_power_area", "decoration", Vector2i(2, 2), Vector2(80, 40), false, [], 2, "", "node_17", Vector2(36, 42), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "cable_bundle_var01.png", "objects/apartment/cable_bundle.tres", "", "NODE-17에서 전력 장비 방향으로 정리됨", false),
+		_object_spec("wall_conduit", "벽면 전선관", "work_power_area", "decoration", Vector2i(7, 0), Vector2(128, 64), false, [], 1, "work_back_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "wall_conduit_axis_a_1x.png", "objects/apartment/wall_conduit.tres", "", "작업공간 뒤쪽 벽 방향을 따라 이어짐", false, Vector2i.ONE, 0.78),
+		_object_spec("power_housing", "전력 장비 외장 프레임", "work_power_area", "decoration", Vector2i(8, 1), Vector2(240, 210), false, [], 2, "work_right_wall", "power_module_board", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "power_housing_dl_base.png", "objects/apartment/power_housing.tres", "", "전력 모듈 보드와 같은 방향", false, Vector2i.ONE, 0.375),
 	]
 
 
-func _make_object_footprint_config(
-	object_id: StringName,
-	object_room_area_id: StringName,
-	object_category: StringName,
-	object_anchor_cell: Vector2i,
-	object_size_cells: Vector2i,
-	object_blocks_movement: bool,
-	object_interaction_cells: Array[Vector2i],
-	object_debug_color: Color,
-	object_display_name := "",
-	object_note := ""
-) -> Resource:
-	var config: Resource = ApartmentObjectFootprintConfigScript.new()
-	config.id = object_id
-	config.enabled = true
-	config.room_area_id = object_room_area_id
-	config.category = object_category
-	config.anchor_cell = object_anchor_cell
-	config.size_cells = object_size_cells
-	config.blocks_movement = object_blocks_movement
-	config.interaction_cells = object_interaction_cells
-	config.debug_color = object_debug_color
-	config.display_name = object_display_name
-	config.note = object_note
-	return config
+func _object_spec(
+	id: String, name_ko: String, room_id: String, category: String, anchor: Vector2i,
+	visual_size: Vector2, blocks: bool, interactions: Array[Vector2i], placement: int,
+	wall_id: String, parent_id: String, position_offset: Vector2, collision_size: Vector2,
+	interaction_size: Vector2, interaction_offset: Vector2, image_file: String,
+	scene_file: String, audio_id: String, facing_ko: String, uses_floor := true,
+	size_cells := Vector2i.ONE, wall_ratio := 0.5
+) -> Dictionary:
+	var collision_offset := Vector2.ZERO
+	match id:
+		"bed": collision_offset = Vector2(0, 30)
+		"fridge": collision_offset = Vector2(0, 38)
+		"navi_link": collision_offset = Vector2(0, 45)
+		"node_17", "bathroom_fixture": collision_offset = Vector2(0, 28)
+		"sink_counter": collision_offset = Vector2(0, 32)
+		"dining_table": collision_offset = Vector2(0, 24)
+		"ups_unit": collision_offset = Vector2(0, 22)
+	return {
+		"id": StringName(id), "enabled": true, "room_area_id": StringName(room_id),
+		"category": StringName(category), "anchor_cell": anchor, "size_cells": size_cells,
+		"position_offset_px": position_offset, "visual_size_px": visual_size,
+		"collision_shape_type": 1 if collision_size != Vector2.ZERO else 0,
+		"collision_size_px": collision_size, "collision_offset_px": collision_offset,
+		"interaction_size_px": interaction_size,
+		"interaction_offset_px": interaction_offset, "blocks_movement": blocks,
+		"uses_floor_occupancy": uses_floor, "interaction_cells": interactions,
+		"placement_type": placement, "parent_object_id": StringName(parent_id),
+		"wall_segment_id": StringName(wall_id), "wall_position_ratio": wall_ratio,
+		"facing_description_ko": facing_ko, "display_name_ko": name_ko,
+		"expected_image_file": image_file, "expected_scene_file": scene_file,
+		"expected_audio_set_id": audio_id,
+		"debug_color": _object_debug_color(id),
+	}
+
+
+func _object_debug_color(id: String) -> Color:
+	match id:
+		"entrance_door": return Color(0.42, 0.32, 0.22, 0.4)
+		"bed": return Color(0.45, 0.62, 0.95, 0.36)
+		"fridge": return Color(0.82, 0.82, 0.72, 0.36)
+		"microwave": return Color(0.7, 0.7, 0.66, 0.3)
+		"navi_link": return Color(0.55, 0.48, 0.92, 0.34)
+		"power_module_board": return Color(0.18, 0.76, 0.98, 0.32)
+		"node_17": return Color(0.38, 0.7, 1.0, 0.3)
+		"sink_counter": return Color(0.42, 0.6, 0.62, 0.36)
+		"dining_table": return Color(0.72, 0.5, 0.28, 0.34)
+		"signal_booster": return Color(0.3, 0.75, 1.0, 0.28)
+		"ups_unit": return Color(0.28, 0.68, 0.86, 0.32)
+		"bathroom_fixture": return Color(0.42, 0.82, 0.92, 0.34)
+		"sea_horizon_poster": return Color(0.28, 0.62, 0.86, 0.28)
+		"fluorescent_light": return Color(0.95, 0.9, 0.5, 0.26)
+		"shoes_slippers": return Color(0.9, 0.76, 0.36, 0.3)
+		"cable_bundle": return Color(0.42, 0.46, 0.5, 0.26)
+		"wall_conduit": return Color(0.36, 0.55, 0.66, 0.24)
+		"power_housing": return Color(0.2, 0.58, 0.72, 0.24)
+		_: return Color(0.55, 0.74, 1.0, 0.38)
 
 
 func _object_footprint_from_config(config: Resource, source: String = "default") -> Dictionary:
@@ -995,8 +910,26 @@ func _object_footprint_from_config(config: Resource, source: String = "default")
 		"category": String(config.category),
 		"anchor_cell": config.anchor_cell,
 		"size_cells": config.size_cells,
+		"position_offset_px": config.position_offset_px,
+		"visual_size_px": config.visual_size_px,
+		"collision_shape_type": config.collision_shape_type,
+		"collision_size_px": config.collision_size_px,
+		"collision_offset_px": config.collision_offset_px,
+		"interaction_size_px": config.interaction_size_px,
+		"interaction_offset_px": config.interaction_offset_px,
 		"blocks_movement": config.blocks_movement,
+		"uses_floor_occupancy": config.uses_floor_occupancy,
 		"interaction_cells": _object_config_interaction_cells(config),
+		"placement_type": config.placement_type,
+		"parent_object_id": String(config.parent_object_id),
+		"wall_segment_id": String(config.wall_segment_id),
+		"wall_position_ratio": config.wall_position_ratio,
+		"wall_offset_px": config.wall_offset_px,
+		"facing_description_ko": config.facing_description_ko,
+		"display_name_ko": config.display_name_ko,
+		"expected_image_file": config.expected_image_file,
+		"expected_scene_file": config.expected_scene_file,
+		"expected_audio_set_id": config.expected_audio_set_id,
 		"debug_color": config.debug_color,
 		"display_name": config.display_name,
 		"note": config.note,
@@ -1025,14 +958,20 @@ func _object_placement_warnings() -> Array[String]:
 	var warnings: Array[String] = []
 	var occupied_by_cell: Dictionary = {}
 	var passable_edges: Dictionary = _navigation_edge_sets()["passable"]
+	var objects_by_id: Dictionary = {}
+	for object_data in _object_footprints():
+		objects_by_id[String(object_data.get("id", ""))] = object_data
 
 	for object_data in _object_footprints():
 		if not bool(object_data.get("enabled", true)):
 			continue
 		var object_id := String(object_data.get("id", ""))
 		var blocks_movement := bool(object_data.get("blocks_movement", true))
-		var occupied_cells := _object_occupied_cells(object_data)
-		if occupied_cells.is_empty():
+		var uses_floor := _object_uses_floor_occupancy(object_data)
+		var occupied_cells: Array[Vector2i] = []
+		if uses_floor:
+			occupied_cells = _object_occupied_cells(object_data)
+		if uses_floor and occupied_cells.is_empty():
 			warnings.append("object %s has no occupied cells; check size_cells" % object_id)
 
 		for cell in occupied_cells:
@@ -1071,7 +1010,70 @@ func _object_placement_warnings() -> Array[String]:
 					_format_cell(interaction_cell),
 					", ".join(blockers),
 				])
+
+		var parent_id := String(object_data.get("parent_object_id", ""))
+		if not parent_id.is_empty() and not objects_by_id.has(parent_id):
+			warnings.append("object %s references missing parent %s" % [object_id, parent_id])
+		var wall_id := String(object_data.get("wall_segment_id", ""))
+		if _object_requires_wall(object_data):
+			var wall := _wall_segment_by_id(wall_id)
+			if wall_id.is_empty() or wall.is_empty() or not bool(wall.get("enabled", true)):
+				warnings.append("object %s references unavailable wall %s" % [object_id, wall_id])
+			elif object_id == "entrance_door" and not _object_wall_attachment_is_doorway(object_data, wall):
+				warnings.append("object %s must target the doorway unit on %s" % [object_id, wall_id])
+			elif object_id != "entrance_door" and not _object_wall_attachment_is_available(object_data, wall):
+				warnings.append("object %s targets an unavailable wall unit on %s" % [object_id, wall_id])
+		elif not wall_id.is_empty() and _wall_segment_by_id(wall_id).is_empty():
+			warnings.append("object %s references unknown related wall %s" % [object_id, wall_id])
+
+	for object_id in objects_by_id:
+		var seen: Dictionary = {}
+		var cursor := String(object_id)
+		while not cursor.is_empty() and objects_by_id.has(cursor):
+			if seen.has(cursor):
+				warnings.append("object %s has a parent cycle through %s" % [object_id, cursor])
+				break
+			seen[cursor] = true
+			cursor = String(objects_by_id[cursor].get("parent_object_id", ""))
+
+	var blocking_colliders: Array[Dictionary] = []
+	for object_data in objects_by_id.values():
+		if bool(object_data.get("blocks_movement", false)) and _object_uses_floor_occupancy(object_data) and Vector2(object_data.get("collision_size_px", Vector2.ZERO)) != Vector2.ZERO:
+			blocking_colliders.append(object_data)
+	for first_index in range(blocking_colliders.size()):
+		for second_index in range(first_index + 1, blocking_colliders.size()):
+			var first := blocking_colliders[first_index]
+			var second := blocking_colliders[second_index]
+			if _object_collision_grid_rect(first).intersects(_object_collision_grid_rect(second)):
+				warnings.append("blocking collision overlap between %s and %s" % [first.get("id", ""), second.get("id", "")])
 	return warnings
+
+
+func _object_requires_wall(object_data: Dictionary) -> bool:
+	return int(object_data.get("placement_type", 0)) == ApartmentObjectFootprintConfigScript.PlacementType.WALL
+
+
+func _object_uses_floor_occupancy(object_data: Dictionary) -> bool:
+	return bool(object_data.get("uses_floor_occupancy", true))
+
+
+func _object_wall_attachment_is_available(object_data: Dictionary, wall: Dictionary) -> bool:
+	var unit := _object_wall_attachment_unit(object_data, wall)
+	return not unit.is_empty() and bool(unit.get("available", false))
+
+
+func _object_wall_attachment_is_doorway(object_data: Dictionary, wall: Dictionary) -> bool:
+	var unit := _object_wall_attachment_unit(object_data, wall)
+	return not unit.is_empty() and bool(Dictionary(unit.get("edge", {})).get("doorway", false))
+
+
+func _object_wall_attachment_unit(object_data: Dictionary, wall: Dictionary) -> Dictionary:
+	var units := _measurement_wall_unit_data(wall)
+	if units.is_empty():
+		return {}
+	var ratio := clampf(float(object_data.get("wall_position_ratio", 0.5)), 0.0, 0.9999)
+	var unit_index := mini(floori(ratio * units.size()), units.size() - 1)
+	return units[unit_index]
 
 
 # Prints an editor-friendly inventory so the user can identify which wall segment to edit.
@@ -1171,19 +1173,23 @@ func _print_navigation_summary() -> void:
 func _print_object_footprint_summary() -> void:
 	var rows := _object_footprint_inventory_rows()
 	print("=== Apartment Object Footprint Summary ===")
-	print("Object anchor/size/occupied/interactions are floor-cell coordinates. Wall segments use edge coordinates instead.")
-	print("id | name_ko | enabled | source | room_area_id | room_name_ko | anchor_cell | size_cells | occupied_cells | blocks_movement | interaction_cells | edit_hint")
-	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
+	print("Anchor/occupied/interactions use floor cells; visual/collision/interaction sizes and offsets use screen pixels.")
+	print("id | name_ko | source | room | anchor | offset_px | visual_px | collision_px@offset | interaction_px@offset | placement | parent | wall@ratio | occupied | blocks | interactions | edit_hint")
+	print("--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---")
 	for row in rows:
-		print("%s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s" % [
+		print("%s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s" % [
 			row["id"],
 			row["name_ko"],
-			str(row["enabled"]),
 			row["source"],
-			row["room_area_id"],
 			row["room_name_ko"],
 			row["anchor_cell"],
-			row["size_cells"],
+			row["position_offset_px"],
+			row["visual_size_px"],
+			"%s@%s" % [row["collision_size_px"], row["collision_offset_px"]],
+			"%s@%s" % [row["interaction_size_px"], row["interaction_offset_px"]],
+			row["placement_type"],
+			row["parent_object_id"] if not row["parent_object_id"].is_empty() else "-",
+			"%s@%.2f" % [row["wall_segment_id"], row["wall_position_ratio"]] if not row["wall_segment_id"].is_empty() else "-",
 			row["occupied_cells"],
 			str(row["blocks_movement"]),
 			row["interaction_cells"],
@@ -1293,20 +1299,25 @@ func _print_wall_attachment_measurement_summary() -> void:
 
 
 func _print_object_measurement_comparison() -> void:
-	print("--- Existing Placeholder Measurement Comparison ---")
+	print("--- Candidate Object Measurement Comparison ---")
 	for object_data in _object_footprints():
 		if not bool(object_data.get("enabled", true)):
 			continue
 		var id := String(object_data.get("id", ""))
 		var warnings := _room_measurement_object_warnings_for(object_data)
-		var adjacent_walls := _measurement_object_adjacent_wall_ids(object_data)
-		print("%s | expected_room=%s | occupied=%s | interactions=%s | wall_mount_candidate=%s | adjacent_walls=%s | result=%s" % [
+		print("%s | expected_room=%s | anchor=%s | offset_px=%s | visual_px=%s | collision_px=%s | interaction_px=%s | placement=%s | parent=%s | wall=%s | occupied=%s | interactions=%s | result=%s" % [
 			id,
 			String(object_data.get("room_area_id", "")),
-			_format_cells(_object_occupied_cells(object_data)),
+			_format_cell(object_data.get("anchor_cell", Vector2i.ZERO)),
+			str(object_data.get("position_offset_px", Vector2.ZERO)),
+			str(object_data.get("visual_size_px", Vector2.ZERO)),
+			str(object_data.get("collision_size_px", Vector2.ZERO)),
+			str(object_data.get("interaction_size_px", Vector2.ZERO)),
+			_object_placement_type_name(object_data),
+			String(object_data.get("parent_object_id", "-")) if not String(object_data.get("parent_object_id", "")).is_empty() else "-",
+			String(object_data.get("wall_segment_id", "-")) if not String(object_data.get("wall_segment_id", "")).is_empty() else "-",
+			_format_cells(_object_floor_occupied_cells(object_data)),
 			_format_cells(_object_interaction_cells(object_data)),
-			str(_measurement_wall_mount_candidate(id)),
-			", ".join(adjacent_walls) if not adjacent_walls.is_empty() else "-",
 			"OK" if warnings.is_empty() else "; ".join(warnings),
 		])
 
@@ -1325,7 +1336,10 @@ func _room_measurement_object_warnings() -> Array[String]:
 func _room_measurement_object_warnings_for(object_data: Dictionary) -> Array[String]:
 	var warnings: Array[String] = []
 	var expected_room := String(object_data.get("room_area_id", ""))
-	var occupied_cells := _object_occupied_cells(object_data)
+	var uses_floor := _object_uses_floor_occupancy(object_data)
+	var occupied_cells: Array[Vector2i] = []
+	if uses_floor:
+		occupied_cells = _object_occupied_cells(object_data)
 	var room_data := _room_measurement_data(expected_room)
 	if room_data.is_empty():
 		warnings.append("unknown expected room %s" % expected_room)
@@ -1333,12 +1347,9 @@ func _room_measurement_object_warnings_for(object_data: Dictionary) -> Array[Str
 
 	var door_clearance_keys := _cell_key_map(room_data["doorway_clearance_cells"])
 	var path_keys := _cell_key_map(room_data["main_path_cells"])
-	var room_screen_bounds: Rect2 = room_data["screen_bounds"]
 	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
-	var size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
-	var object_screen_bounds := _measurement_screen_bounds(Rect2i(anchor, size))
-	if not room_screen_bounds.encloses(object_screen_bounds):
-		warnings.append("screen bounding box extends beyond expected room bounds")
+	if _room_area_for_cell(anchor, false) != expected_room:
+		warnings.append("anchor %s is outside expected room" % _format_cell(anchor))
 	for cell in occupied_cells:
 		var actual_room := _room_area_for_cell(cell, false)
 		if actual_room != expected_room:
@@ -1361,20 +1372,17 @@ func _room_measurement_object_warnings_for(object_data: Dictionary) -> Array[Str
 			warnings.append("interaction cell %s is outside expected room" % _format_cell(interaction_cell))
 		elif not _is_walkable_cell(interaction_cell):
 			warnings.append("interaction cell %s is not currently walkable" % _format_cell(interaction_cell))
+		elif not _measurement_interaction_is_reachable(expected_room, interaction_cell):
+			warnings.append("interaction cell %s is not reachable from a room doorway" % _format_cell(interaction_cell))
 
-	var id := String(object_data.get("id", ""))
-	if _measurement_wall_mount_candidate(id) and _measurement_object_adjacent_wall_ids(object_data).is_empty():
-		warnings.append("wall-mount candidate is not adjacent to a measured room wall")
 	return warnings
 
 
 func _measurement_wall_mount_candidate(object_id: String) -> bool:
-	return object_id in [
-		"microwave_placeholder",
-		"power_panel_placeholder",
-		"connector_board_placeholder",
-		"comm_device_placeholder",
-	]
+	for object_data in _object_footprints():
+		if String(object_data.get("id", "")) == object_id:
+			return _object_requires_wall(object_data)
+	return false
 
 
 func _measurement_object_adjacent_wall_ids(object_data: Dictionary) -> Array[String]:
@@ -1411,14 +1419,24 @@ func _object_footprint_inventory_rows() -> Array[Dictionary]:
 	for object_data in _object_footprints():
 		rows.append({
 			"id": String(object_data.get("id", "")),
-			"name_ko": _object_display_name_ko(String(object_data.get("id", ""))),
+			"name_ko": String(object_data.get("display_name_ko", _object_display_name_ko(String(object_data.get("id", ""))))),
 			"enabled": bool(object_data.get("enabled", true)),
 			"source": String(object_data.get("source", "default")),
 			"room_area_id": String(object_data.get("room_area_id", "")),
 			"room_name_ko": _room_area_label(String(object_data.get("room_area_id", ""))),
 			"anchor_cell": _format_cell(object_data.get("anchor_cell", Vector2i.ZERO)),
 			"size_cells": _format_cell(object_data.get("size_cells", Vector2i.ONE)),
-			"occupied_cells": _format_cells(_object_occupied_cells(object_data)),
+			"position_offset_px": str(object_data.get("position_offset_px", Vector2.ZERO)),
+			"visual_size_px": str(object_data.get("visual_size_px", Vector2.ZERO)),
+			"collision_size_px": str(object_data.get("collision_size_px", Vector2.ZERO)),
+			"collision_offset_px": str(object_data.get("collision_offset_px", Vector2.ZERO)),
+			"interaction_size_px": str(object_data.get("interaction_size_px", Vector2.ZERO)),
+			"interaction_offset_px": str(object_data.get("interaction_offset_px", Vector2.ZERO)),
+			"placement_type": _object_placement_type_name(object_data),
+			"parent_object_id": String(object_data.get("parent_object_id", "")),
+			"wall_segment_id": String(object_data.get("wall_segment_id", "")),
+			"wall_position_ratio": float(object_data.get("wall_position_ratio", 0.5)),
+			"occupied_cells": _format_cells(_object_floor_occupied_cells(object_data)),
 			"blocks_movement": bool(object_data.get("blocks_movement", true)),
 			"interaction_cells": _format_cells(_object_interaction_cells(object_data)),
 			"edit_hint": _object_edit_hint(object_data),
@@ -1436,7 +1454,21 @@ func _object_edit_hint(object_data: Dictionary) -> String:
 		location = "edit _default_object_footprint_configs() entry id=\"%s\"" % id
 	elif source == "custom":
 		location = "edit Inspector > custom_object_footprints entry id=\"%s\"" % id
-	return "%s; hide: enabled=false; move: anchor_cell; resize: size_cells; movement block: blocks_movement; use point: interaction_cell / interaction_cells; use G floor cell overlay for exact floor coordinates" % location
+	return "%s; anchor: anchor_cell + position_offset_px; debug sizes: visual/collision/interaction *_px; attach: placement_type + parent_object_id / wall_segment_id" % location
+
+
+func _object_placement_type_name(object_data: Dictionary) -> String:
+	match int(object_data.get("placement_type", 0)):
+		ApartmentObjectFootprintConfigScript.PlacementType.WALL:
+			return "WALL"
+		ApartmentObjectFootprintConfigScript.PlacementType.PARENT_ATTACHED:
+			return "PARENT_ATTACHED"
+		ApartmentObjectFootprintConfigScript.PlacementType.ENVIRONMENT:
+			return "ENVIRONMENT"
+		ApartmentObjectFootprintConfigScript.PlacementType.CEILING:
+			return "CEILING"
+		_:
+			return "FLOOR"
 
 
 func _wall_display_name_ko(id: String) -> String:
@@ -1477,30 +1509,42 @@ func _wall_display_name_ko(id: String) -> String:
 
 func _object_display_name_ko(id: String) -> String:
 	match id:
-		"bed_placeholder":
+		"entrance_door":
+			return "현관문"
+		"bed":
 			return "침대"
-		"fridge_placeholder":
+		"fridge":
 			return "냉장고"
-		"sink_counter_placeholder":
-			return "싱크대"
-		"microwave_placeholder":
+		"microwave":
 			return "전자레인지"
-		"small_table_placeholder":
-			return "작은 테이블"
-		"desk_placeholder":
-			return "책상"
-		"navi_chair_placeholder":
-			return "NAVI 의자"
-		"power_panel_placeholder":
-			return "전력 패널"
-		"connector_board_placeholder":
-			return "커넥터 보드"
-		"comm_device_placeholder":
-			return "통신 장비"
-		"bathroom_fixture_placeholder":
-			return "욕실 설비"
-		"entrance_shoe_area_placeholder":
-			return "신발 공간"
+		"navi_link":
+			return "NAVI LINK"
+		"power_module_board":
+			return "전력 모듈 보드"
+		"node_17":
+			return "NODE-17"
+		"sink_counter":
+			return "싱크대·주방 카운터"
+		"dining_table":
+			return "작은 식탁"
+		"signal_booster":
+			return "신호 증폭기"
+		"ups_unit":
+			return "UPS·보조전원"
+		"bathroom_fixture":
+			return "욕실 통합 설비"
+		"sea_horizon_poster":
+			return "바다·수평선 포스터"
+		"fluorescent_light":
+			return "형광등"
+		"shoes_slippers":
+			return "신발·슬리퍼"
+		"cable_bundle":
+			return "케이블 묶음"
+		"wall_conduit":
+			return "벽면 전선관"
+		"power_housing":
+			return "전력 장비 외장 프레임"
 		"phone":
 			return "핸드폰"
 		_:
@@ -1635,9 +1679,8 @@ func _draw_object_placeholders() -> void:
 
 func _draw_object_placeholder(object_data: Dictionary) -> void:
 	var id := String(object_data.get("id", ""))
-	var name_ko := _object_display_name_ko(id)
+	var name_ko := String(object_data.get("display_name_ko", _object_display_name_ko(id)))
 	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
-	var size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
 	var blocks_movement := bool(object_data.get("blocks_movement", true))
 	var color: Color = object_data.get("debug_color", Color(0.55, 0.74, 1.0, 0.38))
 	var focus_id := debug_focus_object_id.strip_edges()
@@ -1648,7 +1691,9 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 	if has_focus and not is_focused:
 		color.a *= 0.24
 
-	var points := _rect_points(Rect2i(anchor, size))
+	var visual_size: Vector2 = object_data.get("visual_size_px", Vector2.ZERO)
+	var visual_center := _object_pixel_center(object_data)
+	var points := _pixel_rect_points(visual_center, visual_size)
 	_add_polygon(_object_layer, "object_%s_footprint" % id, points, color)
 	_add_line(
 		_object_layer,
@@ -1658,8 +1703,13 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 		5.0 if has_focus and is_focused else (3.0 if blocks_movement else 2.0)
 	)
 
-	var label_position := _object_cells_center(_object_occupied_cells(object_data)) + Vector2(-58.0, -22.0)
-	if blocks_movement and is_focused:
+	var collision_size: Vector2 = object_data.get("collision_size_px", Vector2.ZERO)
+	if collision_size != Vector2.ZERO and is_focused:
+		var collision_center := visual_center + Vector2(object_data.get("collision_offset_px", Vector2.ZERO))
+		var collision_points := _pixel_rect_points(collision_center, collision_size)
+		_add_line(_object_layer, "object_%s_collision" % id, collision_points + [collision_points[0]], COLOR_OBJECT_BLOCKED_CELL, 3.0)
+	var label_position := visual_center + Vector2(-visual_size.x * 0.5, -visual_size.y * 0.5 - 76.0)
+	if blocks_movement and _object_uses_floor_occupancy(object_data) and is_focused:
 		for occupied_cell in _object_occupied_cells(object_data):
 			_add_marker(
 				_object_layer,
@@ -1672,13 +1722,20 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 		_add_label_with_background(
 			_object_layer,
 			"object_%s_label" % id,
-			"%s\nid=%s\n칸=%s 크기=%s\n이동막음=%s\nsource=%s" % [
+			"%s\nid=%s\nanchor=%s offset=%s\nvisual=%s collision=%s@%s\ninteraction=%s@%s %s\nparent=%s wall=%s@%.2f" % [
 				name_ko,
 				id,
 				_format_cell(anchor),
-				_format_cell(size),
-				_bool_ko(blocks_movement),
-				String(object_data.get("source", "fallback")),
+				str(object_data.get("position_offset_px", Vector2.ZERO)),
+				str(visual_size),
+				str(collision_size),
+				str(object_data.get("collision_offset_px", Vector2.ZERO)),
+				str(object_data.get("interaction_size_px", Vector2.ZERO)),
+				str(object_data.get("interaction_offset_px", Vector2.ZERO)),
+				_object_placement_type_name(object_data),
+				String(object_data.get("parent_object_id", "-")) if not String(object_data.get("parent_object_id", "")).is_empty() else "-",
+				String(object_data.get("wall_segment_id", "-")) if not String(object_data.get("wall_segment_id", "")).is_empty() else "-",
+				float(object_data.get("wall_position_ratio", 0.5)),
 			],
 			label_position,
 			12 if has_focus else 11,
@@ -1688,7 +1745,11 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 	if not show_object_interaction_cells or not is_focused:
 		return
 	for interaction_cell in _object_interaction_cells(object_data):
-		var center := _cell_center(interaction_cell)
+		var center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
+		var interaction_size: Vector2 = object_data.get("interaction_size_px", Vector2.ZERO)
+		if interaction_size != Vector2.ZERO:
+			var interaction_points := _pixel_rect_points(center, interaction_size)
+			_add_line(_object_layer, "object_%s_interaction_bounds_%d_%d" % [id, interaction_cell.x, interaction_cell.y], interaction_points + [interaction_points[0]], COLOR_OBJECT_INTERACTION, 2.0)
 		_add_marker(
 			_object_layer,
 			"object_%s_interaction_%d_%d" % [id, interaction_cell.x, interaction_cell.y],
@@ -1707,6 +1768,30 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 		)
 
 
+func _object_pixel_center(object_data: Dictionary) -> Vector2:
+	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
+	return _cell_center(anchor) + Vector2(object_data.get("position_offset_px", Vector2.ZERO)) + Vector2(object_data.get("wall_offset_px", Vector2.ZERO))
+
+
+func _object_collision_grid_rect(object_data: Dictionary) -> Rect2:
+	var px_size: Vector2 = object_data.get("collision_size_px", Vector2.ZERO)
+	var grid_size := Vector2(px_size.x / tile_width, px_size.y / tile_height)
+	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
+	var footprint_size: Vector2i = object_data.get("size_cells", Vector2i.ONE)
+	var center := Vector2(anchor) + Vector2(footprint_size) * 0.5
+	var offset_px: Vector2 = object_data.get("collision_offset_px", Vector2.ZERO)
+	center += Vector2(offset_px.x / tile_width, offset_px.y / tile_height)
+	return Rect2(center - grid_size * 0.5, grid_size)
+
+
+func _pixel_rect_points(center: Vector2, size: Vector2) -> Array[Vector2]:
+	var half := size * 0.5
+	return [
+		center + Vector2(-half.x, -half.y),
+		center + Vector2(half.x, -half.y),
+		center + Vector2(half.x, half.y),
+		center + Vector2(-half.x, half.y),
+	]
 # Room measurements are derived from the current shell rectangles, wall segments, doorway
 # edges, navigation cells, and footprint Resources. They do not move or resize shell data.
 func _room_measurement_definitions() -> Array[Dictionary]:
@@ -1828,7 +1913,7 @@ func _measurement_placement_cells(
 func _measurement_all_object_cells() -> Array[Vector2i]:
 	var cells_by_key: Dictionary = {}
 	for object_data in _object_footprints():
-		if not bool(object_data.get("enabled", true)):
+		if not bool(object_data.get("enabled", true)) or not _object_uses_floor_occupancy(object_data):
 			continue
 		for cell in _object_occupied_cells(object_data):
 			cells_by_key[_cell_key(cell)] = cell
@@ -1868,19 +1953,33 @@ func _measurement_adjacent_cells_for_edge(edge: Dictionary) -> Array[Vector2i]:
 
 
 func _measurement_main_path_cells(room_id: String) -> Array[Vector2i]:
-	var room_cells := _measurement_room_floor_cells(room_id)
+	var room_cells := _measurement_room_walkable_cells(room_id)
 	if room_cells.is_empty():
 		return []
-	var definition := _room_measurement_definition(room_id)
-	var rect: Rect2i = definition.get("rect", Rect2i())
-	var center_grid := Vector2(rect.position) + Vector2(rect.size) * 0.5
-	var target := _measurement_nearest_cell(room_cells, center_grid)
+	var targets := _measurement_doorway_entry_cells(room_id)
+	for object_data in _object_footprints():
+		if String(object_data.get("room_area_id", "")) != room_id:
+			continue
+		for interaction_cell in _object_interaction_cells(object_data):
+			if _is_walkable_cell(interaction_cell) and not targets.has(interaction_cell):
+				targets.append(interaction_cell)
+	if targets.is_empty():
+		return []
+	var source: Vector2i = targets[0]
 	var path_by_key: Dictionary = {}
-	for source in _measurement_doorway_entry_cells(room_id):
+	for target in targets:
 		for cell in _measurement_cell_path(source, target, room_cells):
 			path_by_key[_cell_key(cell)] = cell
 	var radius := maxi(0, main_path_clearance_cells - 1)
 	return _measurement_expand_room_cells(room_id, _cells_from_map(path_by_key), radius)
+
+
+func _measurement_interaction_is_reachable(room_id: String, interaction_cell: Vector2i) -> bool:
+	var room_cells := _measurement_room_walkable_cells(room_id)
+	for doorway_cell in _measurement_doorway_entry_cells(room_id):
+		if not _measurement_cell_path(doorway_cell, interaction_cell, room_cells).is_empty():
+			return true
+	return false
 
 
 func _measurement_cell_path(
@@ -2407,21 +2506,12 @@ func _show_phone_tab(tab: String) -> void:
 
 
 func _interaction_debug_object_ids() -> Array[String]:
-	return [
-		"bed_placeholder",
-		"fridge_placeholder",
-		"sink_counter_placeholder",
-		"microwave_placeholder",
-		"small_table_placeholder",
-		"desk_placeholder",
-		"navi_chair_placeholder",
-		"power_panel_placeholder",
-		"connector_board_placeholder",
-		"comm_device_placeholder",
-		"bathroom_fixture_placeholder",
-		"entrance_shoe_area_placeholder",
-		"phone",
-	]
+	var ids: Array[String] = []
+	for object_data in _object_footprints():
+		if bool(object_data.get("enabled", true)) and String(object_data.get("category", "")) == "interaction":
+			ids.append(String(object_data.get("id", "")))
+	ids.append("phone")
+	return ids
 
 
 func _interaction_debug_object_data(object_id: String) -> Dictionary:
@@ -2432,42 +2522,27 @@ func _interaction_debug_object_data(object_id: String) -> Dictionary:
 		"use_result": "아직 실제 효과는 연결되지 않았습니다. 나중에 허기/전력/시간 변화와 연결 예정.",
 	}
 	match object_id:
-		"bed_placeholder":
-			data["summary"] = "수면 구역의 침대 footprint 후보입니다."
+		"entrance_door":
+			data["summary"] = "현관 외벽 doorway inventory 오브젝트입니다."
+			data["inspect"] = "문 자체는 바닥 footprint를 중복 차단하지 않는다."
+		"bed":
+			data["summary"] = "수면 구역의 침대 후보입니다."
 			data["inspect"] = "정돈된 침대다. 휴식과 하루 종료 후보가 될 수 있다."
-		"fridge_placeholder":
+		"fridge":
 			data["summary"] = "생활공간 주방 쪽 소형 냉장고 후보입니다."
 			data["inspect"] = "소형 냉장고다. 배급 식품을 보관한다."
-		"sink_counter_placeholder":
-			data["summary"] = "작은 싱크대와 조리대 후보입니다."
-			data["inspect"] = "작은 싱크대다. 컵과 커피 도구를 씻는 정도의 생활 설비다."
-		"microwave_placeholder":
+		"microwave":
 			data["summary"] = "비차단 전자레인지 후보입니다."
 			data["inspect"] = "전자레인지다. 간단한 배급식을 데울 수 있을 것 같다."
-		"small_table_placeholder":
-			data["summary"] = "작은 2인용 식탁 footprint 후보입니다."
-			data["inspect"] = "작은 테이블이다. 식사, 메모 확인, Phone 충전 자리로 쓸 수 있다."
-		"desk_placeholder":
-			data["summary"] = "작업공간의 작은 책상 후보입니다."
-			data["inspect"] = "간단한 작업 표면이다. 핵심 해킹 장비의 중심은 아니다."
-		"navi_chair_placeholder":
-			data["summary"] = "NAVI LINK 진입 좌석 후보입니다."
-			data["inspect"] = "NAVI 접속과 장시간 작업에 쓰는 의자다."
-		"power_panel_placeholder":
-			data["summary"] = "작업공간 벽면 전력 패널 후보입니다."
-			data["inspect"] = "방의 전력 상태를 확인하는 패널이다."
-		"connector_board_placeholder":
-			data["summary"] = "소형 커넥터 보드 후보입니다."
-			data["inspect"] = "전력 라인과 장비 연결 상태를 점검하는 보드다."
-		"comm_device_placeholder":
-			data["summary"] = "소형 통신 장비 후보입니다."
-			data["inspect"] = "작은 통신 장비다. NODE나 브로커 접점과 이어질 수 있다."
-		"bathroom_fixture_placeholder":
-			data["summary"] = "욕실 설비 후보입니다."
-			data["inspect"] = "작은 욕실 설비다. 현재는 구조 검증용 표시다."
-		"entrance_shoe_area_placeholder":
-			data["summary"] = "현관 신발/슬리퍼 영역 후보입니다."
-			data["inspect"] = "출입 동선을 막지 않는 작은 신발 공간이다."
+		"navi_link":
+			data["summary"] = "NAVI LINK 해킹 진입 장비 후보입니다."
+			data["inspect"] = "작업공간의 가장 큰 바닥형 장비다."
+		"power_module_board":
+			data["summary"] = "통합된 벽면 전력 모듈 보드 후보입니다."
+			data["inspect"] = "전력 패널과 커넥터 보드를 하나로 통합한 장비다."
+		"node_17":
+			data["summary"] = "NODE-17 통신·스토리 장비 후보입니다."
+			data["inspect"] = "신호 증폭기와 연결된 작업공간 장비다."
 		"phone":
 			data["name"] = "핸드폰"
 			data["summary"] = "유이가 휴대하는 Phone mock 항목입니다."
@@ -2747,7 +2822,7 @@ func _is_base_walkable_cell(cell: Vector2i) -> bool:
 func _object_blocked_cells() -> Array[Vector2i]:
 	var blocked_by_key: Dictionary = {}
 	for object_data in _object_footprints():
-		if not bool(object_data.get("enabled", true)) or not bool(object_data.get("blocks_movement", true)):
+		if not bool(object_data.get("enabled", true)) or not bool(object_data.get("blocks_movement", true)) or not _object_uses_floor_occupancy(object_data):
 			continue
 		for cell in _object_occupied_cells(object_data):
 			blocked_by_key[_cell_key(cell)] = cell
@@ -2761,7 +2836,7 @@ func _object_blocked_cells() -> Array[Vector2i]:
 func _object_blocker_ids_for_cell(cell: Vector2i) -> Array[String]:
 	var ids: Array[String] = []
 	for object_data in _object_footprints():
-		if not bool(object_data.get("enabled", true)) or not bool(object_data.get("blocks_movement", true)):
+		if not bool(object_data.get("enabled", true)) or not bool(object_data.get("blocks_movement", true)) or not _object_uses_floor_occupancy(object_data):
 			continue
 		for occupied_cell in _object_occupied_cells(object_data):
 			if occupied_cell == cell:
@@ -2780,6 +2855,12 @@ func _object_occupied_cells(object_data: Dictionary) -> Array[Vector2i]:
 		for y in range(anchor.y, anchor.y + height):
 			cells.append(Vector2i(x, y))
 	return cells
+
+
+func _object_floor_occupied_cells(object_data: Dictionary) -> Array[Vector2i]:
+	if _object_uses_floor_occupancy(object_data):
+		return _object_occupied_cells(object_data)
+	return []
 
 
 func _object_interaction_cells(object_data: Dictionary) -> Array[Vector2i]:

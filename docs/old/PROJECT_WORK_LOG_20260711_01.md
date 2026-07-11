@@ -1,0 +1,198 @@
+# Project Work Log (Archived 2026-07-11)
+
+## Purpose
+
+This short active log tracks the newest completed work for `CONCENT / 전력 부족의 시대`.
+
+Long history is archived in `docs/old/`. When this file grows past about 200 lines, rotate it into `docs/old/PROJECT_WORK_LOG_<YYYYMMDD>_<NN>.md` and recreate a short active log.
+
+## Current Log
+
+### Documentation structure consolidation
+
+- Commit: `c1ffa22`
+- Result: Created `docs/GAME_INFO.md` and current `docs/reference/*.md` files, rotated previous status/work-log files, moved old root-level docs into `docs/old/`, and updated `AGENTS.md` to the new docs policy.
+- Changed: documentation only.
+- Not changed: Godot code, scenes, resources, assets, `project.godot`, Main/DAY1 production flow.
+- Next: Treat `docs/GAME_INFO.md` as the project info entry and update the relevant `docs/reference/*.md` file before reflecting top-level changes back into `GAME_INFO.md`.
+
+### Room image direction update
+
+- Commit: `23d50c8`
+- Result: Recorded the latest in-game room image requirements in `docs/reference/ART_DIRECTION.md`, including fixed `1920x1080`, pulled-back quarterview camera, Yui scale, indoor wall/floor material rules, palette diversification, living-space footprint reduction, logical door placement, and NAVI LINK-centered work / power room direction.
+- Changed: documentation only.
+- Not changed: Godot code, scenes, resources, assets, image files, `project.godot`, Main/DAY1 production flow.
+- Next: Use the updated art reference as the baseline for future room image generation or review.
+
+### Act 1 room design cues
+
+- Commit: `639b614`
+- Result: Added room-design cues for power rationing, portable Phone / Mika DM, anonymous job traces, PIP-03 support spots, NAVI LINK preparation, and NODE / signal equipment placement to current reference docs.
+- Changed: `docs/reference/ART_DIRECTION.md`, `docs/reference/STORY.md`, `docs/reference/ROOM_OBJECTS.md`, `docs/reference/CHARACTERS.md`, `docs/GAME_INFO.md`, `docs/PROJECT_STATUS.md`, `docs/PROJECT_WORK_LOG.md`.
+- Not changed: Godot code, scenes, resources, assets, image files, `project.godot`, Main/DAY1 production flow.
+- Next: Use the living-space-only prompt direction first; do not generate both living and work rooms in one pass unless explicitly requested.
+
+### Living-space sample review
+
+- Commit: pending in this task.
+- Result: Recorded that the latest living-space image is a usable base direction. The next pass should preserve layout and Yui scale while shrinking surrounding objects, related room proportions, and pulling the camera back slightly, then add a calmer chill nighttime mood.
+- Changed: documentation only.
+- Not changed: Godot code, scenes, resources, assets, image files, `project.godot`, Main/DAY1 production flow.
+- Next: Revise the living-space image as a proportion/camera/mood tuning pass, not a full redesign.
+
+### Apartment shell candidate
+
+- Commit: pending in this task.
+- Result: Added an independent coordinate-based shell scene for validating the CONCENT two-room apartment structure in Godot before final art or atlas replacement.
+- Changed: `QuarterviewApartmentShellCandidate.tscn`, `QuarterviewApartmentShellCandidate.gd`, and current project docs.
+- Not changed: generated image assets, furniture / prop placement, QuarterviewMain wiring, production Main/DAY1, `SurvivalState`, production UI, save-load, Grid Credit, `project.godot`.
+- Next: Manually inspect the shell in Godot and tune only coordinates until the living/work room connection, camera angle, and no-large-object foreground zone are accepted.
+
+### Apartment wall segment inventory
+
+- Commit: pending in this task.
+- Result: Added wall segment inventory output to `QuarterviewApartmentShellCandidate`; `I` prints id/source/start/end/edit hints, and `W` shows wall IDs with start/end markers independently from general debug labels.
+- Changed: `QuarterviewApartmentShellCandidate.gd`, `ApartmentWallSegmentConfig.gd`, and technical/status docs.
+- Not changed: shell wall positions, room size, furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Use the inventory table to identify which segment to move/hide before changing the shell layout itself.
+
+### Apartment bathroom/service merge
+
+- Commit: pending in this task.
+- Result: Merged the service area into the bathroom shell region, moved the bathroom footprint to `x=1..3`, `y=7..10`, added `bathroom_left_wall` / `bathroom_right_wall`, and left legacy service wall segments disabled in inventory.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Inspect the shell visually with `W` wall IDs enabled before further coordinate edits.
+
+### Apartment grid coordinate overlay
+
+- Commit: pending in this task.
+- Result: Added `G` floor coordinate overlay, origin / `+X` / `+Y` markers, hover/click cell readout, wall focus highlighting, and `from_cell -> to_cell` wall inventory output for apartment shell editing.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: bathroom/wall positions, room sizes, furniture/assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Use `G`, `W`, and `I` together to specify exact wall coordinate edits before moving shell walls.
+
+### Apartment bathroom / entrance wall coordinates
+
+- Commit: pending in this task.
+- Result: Repositioned the apartment shell bathroom / entrance walls to the requested grid-line coordinates, moved the bathroom doorway to `bathroom_right_wall`, added `entrance_inner_wall`, and kept legacy bathroom-left / service segments disabled in inventory.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: room scale, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, `SurvivalState`, `project.godot`.
+- Next: Inspect with `G`, `W`, and `I` enabled before any further wall coordinate edits.
+
+### Apartment logical occlusion walls
+
+- Commit: pending in this task.
+- Result: Added wall `render_mode` data, reveal metadata placeholders, and living front/right logical occlusion walls that remain enabled but display as low revealable stubs in the shell camera view.
+- Changed: `ApartmentWallSegmentConfig.gd`, `QuarterviewApartmentShellCandidate.gd`, and current technical/status docs.
+- Not changed: production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character area reveal logic, `SurvivalState`, `project.godot`.
+- Next: Hook future room/character area state to `render_mode=REVEALABLE` walls when production camera occlusion rules are designed.
+
+### Apartment occlusion wall stub display
+
+- Commit: pending in this task.
+- Result: Improved `REVEALABLE` occlusion walls so the living front/right logical walls render as visible low stubs with body, cap, and base shadow; added `O` occlusion-wall debug highlighting and `preview_revealed_walls` for temporary full-wall inspection.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: wall coordinates, room scale, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character area reveal logic, `SurvivalState`, `project.godot`.
+- Next: Manually inspect the shell with `O` and `W` enabled before deciding whether any occlusion wall coordinates need movement.
+
+### Apartment occlusion wall outer-grid alignment
+
+- Commit: pending in this task.
+- Result: Moved occlusion responsibility to the actual living-room outer grid-line walls: `living_right_wall` is now revealable at `(11,4)->(11,10)`, `living_front_cutaway` remains the front cutaway at `(0,10)->(11,10)`, and the earlier one-cell-inward `living_occlusion_*` segments are disabled legacy references.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: room scale, bathroom/entrance coordinates, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character area reveal logic, `SurvivalState`, `project.godot`.
+- Next: Use `G`, `W`, and `I` to verify future wall requests against wall grid-line coordinates rather than interior floor cell coordinates.
+
+### Apartment wall edge coordinate overlay
+
+- Commit: pending in this task.
+- Result: Added `E` wall edge / vertex coordinate overlay to the apartment shell, separated it from `G` floor cell coordinates, and added click logging for exact wall edge `from/to` pairs.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: shell wall coordinates, room scale, bathroom/entrance structure, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, `SurvivalState`, `project.godot`.
+- Next: Use `G` to identify floor cells and `E` to pick exact wall grid-line edges before requesting wall movement.
+
+### Apartment entrance inner wall extension
+
+- Commit: pending in this task.
+- Result: Extended `entrance_inner_wall` from `(2,7)->(2,9)` to `(2,7)->(2,10)` while keeping the doorway opening at `(2,8)->(2,9)`.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: room scale, bathroom wall coordinates, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, `SurvivalState`, `project.godot`.
+- Next: Inspect with `W` wall IDs and `E` wall edge coordinates to confirm the new lower solid segment is visually in the intended place.
+
+### Apartment navigation debug overlay
+
+- Commit: pending in this task.
+- Result: Added `N` navigation / collision debug display to the apartment shell, including walkable cells, room areas, blocked wall edges, passable doorway edges, and a shell-only marker at `player_debug_cell`.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: wall coordinates, room scale, production Main/DAY1, QuarterviewMain wiring, furniture/assets/atlas, actual character movement/pathfinding, `SurvivalState`, `project.godot`.
+- Next: Use `N` with `G`, `E`, `W`, and `I` to verify exact walkable cells and blocked/passable edge behavior before adding any production movement logic.
+
+### Apartment room-area reveal debug
+
+- Commit: `7276acc`
+- Result: Added shell-only active room tracking and `debug_auto_reveal_walls` so matching `REVEALABLE` walls can switch from stub to full-wall display when the debug marker enters a configured room area.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: production player movement, QuarterviewMain wiring, room scale, wall coordinates, furniture/assets/atlas, `SurvivalState`, `project.godot`.
+- Next: Use `N`, `O`, `W`, and `I` with `debug_auto_reveal_walls=true` to decide which future occlusion walls should reveal for each room area.
+
+### Apartment object footprint placeholders
+
+- Commit: `d7bde63`
+- Result: Added shell-only object footprint placeholder data, `P` object display, interaction markers, object-aware navigation blocking, and object summary output after the wall inventory.
+- Changed: `QuarterviewApartmentShellCandidate.gd`, `ApartmentObjectFootprintConfig.gd`, and current technical/room-object/status docs.
+- Not changed: final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, pathfinding, `SurvivalState`, `project.godot`.
+- Next: Use `G`, `P`, `N`, and `I` together to tune furniture/device footprint coordinates before any final art or production interaction work.
+
+### Apartment object footprint coordinate tune
+
+- Commit: `ae815d8`
+- Result: Tuned the first-pass default object footprint coordinates so entrance/shared doorway paths stay open, interaction cells remain walkable, blocking objects stay in their intended room areas, and non-blocking shoe / comm / microwave markers do not remove walkable cells.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current room-object/status docs.
+- Not changed: final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, pathfinding, `SurvivalState`, `project.godot`.
+- Next: Inspect the shell manually with `G`, `P`, and `N` enabled before deciding whether any footprint needs another coordinate pass.
+
+### Apartment debug overlay Korean labels
+
+- Commit: `a8c77d4`
+- Result: Localized the shell debug overlays so `G`, `E`, `W`, `N`, `P`, and `O` are visually distinct and Korean-first while retaining ids / coordinates for editing.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/status docs.
+- Not changed: wall coordinates, room rects, object footprint coordinates, movement / collision logic, production Main/DAY1, QuarterviewMain wiring, assets, atlas files, `SurvivalState`, `project.godot`.
+- Next: Open the shell scene and visually check Korean font rendering and label overlap with multiple debug toggles enabled.
+
+### Asset inventory smoke test cleanup
+
+- Commit: pending in this task.
+- Result: Moved the asset inventory smoke-test reference from the archived `docs/THIRD_PARTY_ASSET_INVENTORY.md` path to the current `docs/reference/TECHNICAL_MAP.md` structure, and recorded the selected Kenney third-party asset groups that the test validates.
+- Changed: `test_asset_smoke.gd`, `docs/reference/TECHNICAL_MAP.md`, and current status/work-log docs.
+- Not changed: production Main/DAY1, QuarterviewMain wiring, shell geometry/debug logic, assets, atlas files, import files, `SurvivalState`, `project.godot`.
+- Next: Keep future third-party selected-copy tracking in the current reference docs unless a dedicated asset inventory reference file is explicitly approved.
+
+### Apartment object footprint Resource set
+
+- Commit: pending in this task.
+- Result: Moved the shell object footprint baseline into `godot/resources/quarterview/apartment_shell_object_footprints.tres`, added `ApartmentObjectFootprintSetConfig`, kept script fallback defaults, and preserved additive Inspector custom entries.
+- Changed: `QuarterviewApartmentShellCandidate.gd`, object footprint Resource scripts/resources, shell scene Resource assignment, and current room-object/technical/status docs.
+- Not changed: footprint coordinates, final furniture sprites, image assets, atlas wiring, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Use `debug_focus_object_id` and the P overlay detail toggles to inspect individual footprints before any further coordinate tuning.
+
+### Apartment shell interaction / Phone debug UI
+
+- Commit: pending in this task.
+- Result: Added shell-only `J` interaction debug menu, mock object interaction panel, `H` Phone overlay, mock Phone tabs, and `ESC` top-overlay close behavior.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current room-object/technical/status docs.
+- Not changed: object click movement, production PhoneUI, production object system, hunger/power/time state, save-load, assets/atlas/fonts, room structure, footprint coordinates, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Manually inspect Korean label readability and button flow in the shell scene before promoting any interaction UX to a real candidate scene.
+
+### Apartment room measurement overlay
+
+- Commit: pending in this task.
+- Result: Corrected shell-only entrance/bathroom room-area labels and added `M` room measurement display plus the post-`I` room/wall/placement report.
+- Measurement: Reports floor and screen bounds, walkable/advisory placement cells, doorway clearance, required movement paths, wall-mount spans, and non-mutating footprint warnings.
+- Changed: `QuarterviewApartmentShellCandidate.gd` and current technical/room-object/status docs.
+- Not changed: wall/door/window coordinates, room footprint size, object footprint Resource coordinates, assets/atlas, production Main/DAY1, QuarterviewMain wiring, `SurvivalState`, `project.godot`.
+- Next: Use `M` with `G`, `E`, `N`, and `P` to choose final pixel-sized object positions without treating floor cells as mandatory sprite sizes.
+
+### Quarterview candidate interaction and boundary tests
+- Result: Added deterministic Room interaction, Main panel/modal/Phone gating, input-lock recovery, and candidate executable-dependency boundary coverage.
+- Changed: three `godot/test/unit/test_quarterview_*.gd` files plus current technical/status/work-log docs; no candidate or production gameplay code.

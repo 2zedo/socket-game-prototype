@@ -49,6 +49,7 @@
 - Apartment shell debug overlays are now Korean-first for screen labels: `G` shows `칸`, `E` shows `벽선`, `W` shows Korean wall names plus ids, `N` shows movement/collision states, `P` shows Korean object names, and `O` labels hidden / revealable walls.
 - Third-party selected asset inventory is now tracked in `docs/reference/TECHNICAL_MAP.md`, and `test_asset_smoke.gd` reads that current reference location instead of the archived old root document path.
 - Quarterview candidate regression coverage now fixes the deterministic object-click/pending-focus/arrival signal flow, panel and modal routing, input-lock restoration, portable Phone gating, and executable dependency boundary without changing candidate gameplay code.
+- Apartment shell object data now uses the approved 18-object first-placement candidate with independent pixel visual/collision/interaction metadata and wall, ceiling, parent, or floor placement semantics; this remains a candidate pending manual `M + P + N` review.
 - It is independent and is not wired into `QuarterviewMain`, production `Main`, `SurvivalState`, or `project.godot`.
 - Documentation now records the shell candidate path, coordinate basis, wall editing controls, navigation / reveal / object footprint overlay controls, and validation command.
 

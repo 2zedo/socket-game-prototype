@@ -99,7 +99,7 @@ Do not modify by default:
 
 Wall inventory columns: `id`, `name_ko`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `current_state`, `state_ko`, `doorway`, `doorway_ko`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 
-Object footprint summary columns, printed after `I`: `id`, `name_ko`, `enabled`, `source`, `room_area_id`, `room_name_ko`, `anchor_cell`, `size_cells`, `occupied_cells`, `blocks_movement`, `interaction_cells`, and `edit_hint`.
+Object layout summary columns, printed after `I`: `id`, Korean name, source, room, anchor, pixel offset, visual/collision/interaction pixel sizes and offsets, placement type, parent, wall ratio, occupied cells, movement blocking, interaction cells, and edit hint.
 
 Room measurement summary is printed after the existing `I` inventories. It reports room floor bounds, cell dimensions, assigned floor cells, current walkable cells, advisory placement cells, screen-space pixel bounds, center coordinates, doorways, windows, walls, wall-mount availability, and current footprint warnings. `doorway_clearance_cells` and `main_path_clearance_cells` are Inspector-tunable review margins; they do not change collision or snap object art to tiles.
 
@@ -140,7 +140,7 @@ When `N` is enabled, the shell displays walkable floor cells, room areas, logica
 
 Navigation area ids are `living_area`, `work_power_area`, `bathroom`, and `entrance_area`. The shell-only marker starts at `player_debug_cell=(1,8)` by default. Arrow keys move the marker only when `N` is enabled; blocked wall edges and non-walkable target cells stop movement, while doorway edges allow passage.
 
-When `P` is enabled, the shell displays object footprint placeholders from `ApartmentObjectFootprintConfig` data. Footprints use floor cell coordinates: `anchor_cell` is the top-left floor cell and `size_cells` expands over floor cells. This is separate from wall segment `from_cell -> to_cell` edge coordinates. `blocks_movement=true` removes occupied floor cells from the `N` walkable-cell overlay; `blocks_movement=false` stays visible without blocking the debug marker. Interaction markers are drawn from `interaction_cell` / `interaction_cells` and are also visible when `N` is enabled.
+When `P` is enabled, the shell displays `ApartmentObjectFootprintConfig` data using independent pixel visual, collision, and interaction rectangles. Floor cells remain approximate room/navigation anchors. `uses_floor_occupancy` decides whether an object contributes floor cells; wall, ceiling, and most parent attachments do not block `N`, while the parent-related UPS explicitly retains a floor collision.
 
 Object footprint defaults now live in `godot/resources/quarterview/apartment_shell_object_footprints.tres`, assigned through `object_footprint_set` on `QuarterviewApartmentShellCandidate`. If that Resource is empty or unassigned, the script fallback `_default_object_footprint_configs()` still creates the same baseline. Add `ApartmentObjectFootprintConfig` Resources to `custom_object_footprints` in the Inspector for additive layout tests. The shell warns, without stopping scene load, when a footprint is outside base walkable cells, overlaps another footprint, blocks a doorway edge, or has an unusable interaction cell.
 
@@ -182,20 +182,11 @@ Legacy service segments remain in the inventory as disabled entries:
 - `service_wall`: `enabled=false`
 - `service_right_wall`: `enabled=false`
 
-Current shell object footprint placeholder IDs:
+Current shell object layout candidate IDs:
 
-- `bed_placeholder`
-- `fridge_placeholder`
-- `sink_counter_placeholder`
-- `microwave_placeholder`
-- `small_table_placeholder`
-- `desk_placeholder`
-- `navi_chair_placeholder`
-- `power_panel_placeholder`
-- `connector_board_placeholder`
-- `comm_device_placeholder`
-- `bathroom_fixture_placeholder`
-- `entrance_shoe_area_placeholder`
+- Interaction: `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, `node_17`
+- Environment/decoration: `sink_counter`, `dining_table`, `signal_booster`, `ups_unit`, `bathroom_fixture`, `sea_horizon_poster`, `fluorescent_light`, `shoes_slippers`, `cable_bundle`, `wall_conduit`, `power_housing`
+- Excluded from world footprints: portable `phone`, optional `air_conditioner`, and the retired desk/panel/connector placeholders
 
 ## Candidate UI Scripts
 
@@ -251,6 +242,7 @@ Current important tests:
 - `test_grid_credit_state.gd`
 - `test_living_device_definition.gd`
 - `test_asset_smoke.gd`
+- `test_apartment_object_layout_candidate.gd`
 
 The Quarterview candidate regression tests keep movement completion deterministic: they test object selection, pending focus, cancellation/replacement, and the arrival gate without waiting on long physics movement. Main candidate tests instantiate the real scene and cover panel/modal routing, room input lock restoration, close/ESC/backdrop paths, and portable Phone gating. The dependency boundary test recursively inspects candidate Resource dependencies and executable reference patterns while leaving production-wide autoload policy outside candidate ownership.
 

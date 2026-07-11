@@ -1,165 +1,362 @@
-[gd_resource type="Resource" script_class="ApartmentObjectFootprintSetConfig" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="ApartmentObjectFootprintSetConfig" load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://scripts/quarterview/ApartmentObjectFootprintSetConfig.gd" id="1_object_set"]
 [ext_resource type="Script" path="res://scripts/quarterview/ApartmentObjectFootprintConfig.gd" id="2_object"]
 
-[sub_resource type="Resource" id="ObjectFootprint_bed"]
+[sub_resource type="Resource" id="Object_entrance_door"]
 script = ExtResource("2_object")
-id = &"bed_placeholder"
-room_area_id = &"living_area"
-category = &"sleep"
-anchor_cell = Vector2i(8, 6)
-size_cells = Vector2i(2, 2)
-blocks_movement = true
-interaction_cells = Array[Vector2i]([Vector2i(7, 7)])
-debug_color = Color(0.45, 0.62, 0.95, 0.36)
-display_name = "Bed placeholder"
-note = "Sleep-area footprint candidate."
-
-[sub_resource type="Resource" id="ObjectFootprint_fridge"]
-script = ExtResource("2_object")
-id = &"fridge_placeholder"
-room_area_id = &"living_area"
-category = &"kitchen"
-anchor_cell = Vector2i(10, 4)
-size_cells = Vector2i(1, 1)
-blocks_movement = true
-interaction_cells = Array[Vector2i]([Vector2i(10, 5)])
-debug_color = Color(0.82, 0.82, 0.72, 0.36)
-display_name = "Fridge placeholder"
-note = "Single-door fridge footprint candidate."
-
-[sub_resource type="Resource" id="ObjectFootprint_sink_counter"]
-script = ExtResource("2_object")
-id = &"sink_counter_placeholder"
-room_area_id = &"living_area"
-category = &"kitchen"
-anchor_cell = Vector2i(8, 4)
-size_cells = Vector2i(1, 1)
-blocks_movement = true
-interaction_cells = Array[Vector2i]([Vector2i(8, 5)])
-debug_color = Color(0.42, 0.6, 0.62, 0.36)
-display_name = "Sink counter placeholder"
-note = "Small counter / sink footprint candidate."
-
-[sub_resource type="Resource" id="ObjectFootprint_microwave"]
-script = ExtResource("2_object")
-id = &"microwave_placeholder"
-room_area_id = &"living_area"
-category = &"kitchen"
-anchor_cell = Vector2i(9, 4)
-size_cells = Vector2i(1, 1)
+id = &"entrance_door"
+room_area_id = &"entrance_area"
+category = &"interaction"
+anchor_cell = Vector2i(0, 8)
+position_offset_px = Vector2(0, -6)
+visual_size_px = Vector2(150, 220)
+collision_shape_type = 0
+interaction_size_px = Vector2(96, 56)
+interaction_offset_px = Vector2(50, 0)
 blocks_movement = false
-interaction_cells = Array[Vector2i]([Vector2i(9, 5)])
-debug_color = Color(0.7, 0.7, 0.66, 0.3)
-display_name = "Microwave placeholder"
-note = "Non-blocking counter-top appliance marker."
+uses_floor_occupancy = false
+interaction_cells = Array[Vector2i]([Vector2i(0, 8)])
+placement_type = 1
+wall_segment_id = &"entrance_wall"
+wall_position_ratio = 0.75
+facing_description_ko = "문 안쪽 면이 생활공간 중앙을 향함"
+display_name_ko = "현관문"
+expected_image_file = "entrance_door_dl_closed.png"
+expected_scene_file = "objects/apartment/EntranceDoor.tscn"
+expected_audio_set_id = "audio_entrance_door"
+debug_color = Color(0.42, 0.32, 0.22, 0.4)
+note = "entrance_wall doorway inventory object; no duplicate floor blocker."
 
-[sub_resource type="Resource" id="ObjectFootprint_small_table"]
+[sub_resource type="Resource" id="Object_bed"]
 script = ExtResource("2_object")
-id = &"small_table_placeholder"
+id = &"bed"
 room_area_id = &"living_area"
-category = &"living"
-anchor_cell = Vector2i(4, 6)
+category = &"interaction"
+anchor_cell = Vector2i(8, 6)
 size_cells = Vector2i(2, 1)
-blocks_movement = true
-interaction_cells = Array[Vector2i]([Vector2i(4, 7), Vector2i(5, 7)])
-debug_color = Color(0.72, 0.5, 0.28, 0.34)
-display_name = "Small table placeholder"
-note = "Two-seat table footprint candidate."
+position_offset_px = Vector2(10, -6)
+visual_size_px = Vector2(260, 180)
+collision_size_px = Vector2(180, 90)
+collision_offset_px = Vector2(0, 30)
+interaction_size_px = Vector2(120, 64)
+interaction_offset_px = Vector2(-120, 28)
+interaction_cells = Array[Vector2i]([Vector2i(7, 7)])
+facing_description_ko = "침대 옆면과 머리맡이 보이고 왼쪽에서 접근"
+display_name_ko = "침대"
+expected_image_file = "bed_dl_base.png"
+expected_scene_file = "objects/apartment/Bed.tscn"
+debug_color = Color(0.45, 0.62, 0.95, 0.36)
 
-[sub_resource type="Resource" id="ObjectFootprint_desk"]
+[sub_resource type="Resource" id="Object_fridge"]
 script = ExtResource("2_object")
-id = &"desk_placeholder"
-room_area_id = &"work_power_area"
-category = &"work"
-anchor_cell = Vector2i(2, 0)
-size_cells = Vector2i(2, 1)
-blocks_movement = true
-interaction_cells = Array[Vector2i]([Vector2i(2, 1)])
-debug_color = Color(0.5, 0.62, 0.74, 0.34)
-display_name = "Desk placeholder"
-note = "Small work surface candidate."
+id = &"fridge"
+room_area_id = &"living_area"
+category = &"interaction"
+anchor_cell = Vector2i(10, 4)
+position_offset_px = Vector2(-8, -12)
+visual_size_px = Vector2(120, 190)
+collision_size_px = Vector2(70, 70)
+collision_offset_px = Vector2(0, 38)
+interaction_size_px = Vector2(80, 56)
+interaction_offset_px = Vector2(-50, 42)
+interaction_cells = Array[Vector2i]([Vector2i(10, 5)])
+facing_description_ko = "문 앞면이 생활공간 중앙을 향함"
+display_name_ko = "냉장고"
+expected_image_file = "fridge_dl_closed.png"
+expected_scene_file = "objects/apartment/Fridge.tscn"
+expected_audio_set_id = "audio_fridge"
+debug_color = Color(0.82, 0.82, 0.72, 0.36)
 
-[sub_resource type="Resource" id="ObjectFootprint_navi_chair"]
+[sub_resource type="Resource" id="Object_microwave"]
 script = ExtResource("2_object")
-id = &"navi_chair_placeholder"
+id = &"microwave"
+room_area_id = &"living_area"
+category = &"interaction"
+anchor_cell = Vector2i(8, 4)
+position_offset_px = Vector2(0, -60)
+visual_size_px = Vector2(96, 72)
+collision_shape_type = 0
+interaction_size_px = Vector2(96, 56)
+interaction_offset_px = Vector2(0, 96)
+blocks_movement = false
+uses_floor_occupancy = false
+interaction_cells = Array[Vector2i]([Vector2i(8, 5)])
+placement_type = 2
+parent_object_id = &"sink_counter"
+facing_description_ko = "조작면이 주방 통로를 향함"
+display_name_ko = "전자레인지"
+expected_image_file = "microwave_dl_base.png"
+expected_scene_file = "objects/apartment/Microwave.tscn"
+expected_audio_set_id = "audio_microwave"
+debug_color = Color(0.7, 0.7, 0.66, 0.3)
+
+[sub_resource type="Resource" id="Object_navi_link"]
+script = ExtResource("2_object")
+id = &"navi_link"
 room_area_id = &"work_power_area"
-category = &"navi"
+category = &"interaction"
 anchor_cell = Vector2i(4, 1)
 size_cells = Vector2i(2, 2)
-blocks_movement = true
+position_offset_px = Vector2(12, -16)
+visual_size_px = Vector2(300, 240)
+collision_size_px = Vector2(210, 120)
+collision_offset_px = Vector2(0, 45)
+interaction_size_px = Vector2(128, 80)
+interaction_offset_px = Vector2(0, 150)
 interaction_cells = Array[Vector2i]([Vector2i(4, 3), Vector2i(5, 3)])
+facing_description_ko = "좌석 입구와 조작부가 작업공간 통로를 향함"
+display_name_ko = "NAVI LINK"
+expected_image_file = "navi_link_dl_idle_base.png"
+expected_scene_file = "objects/apartment/NaviLink.tscn"
+expected_audio_set_id = "audio_navi_link"
 debug_color = Color(0.55, 0.48, 0.92, 0.34)
-display_name = "NAVI chair placeholder"
-note = "NAVI LINK seat footprint candidate."
 
-[sub_resource type="Resource" id="ObjectFootprint_power_panel"]
+[sub_resource type="Resource" id="Object_power_module_board"]
 script = ExtResource("2_object")
-id = &"power_panel_placeholder"
+id = &"power_module_board"
 room_area_id = &"work_power_area"
-category = &"power"
+category = &"interaction"
 anchor_cell = Vector2i(8, 1)
-size_cells = Vector2i(1, 2)
-blocks_movement = true
+position_offset_px = Vector2(0, -30)
+visual_size_px = Vector2(200, 180)
+collision_shape_type = 0
+interaction_size_px = Vector2(120, 72)
+interaction_offset_px = Vector2(-88, 92)
+blocks_movement = false
+uses_floor_occupancy = false
 interaction_cells = Array[Vector2i]([Vector2i(7, 2)])
+placement_type = 1
+wall_segment_id = &"work_right_wall"
+wall_position_ratio = 0.375
+facing_description_ko = "화면과 슬롯이 작업공간 안쪽을 향함"
+display_name_ko = "전력 모듈 보드"
+expected_image_file = "power_module_board_dl_base.png"
+expected_scene_file = "objects/apartment/PowerModuleBoard.tscn"
+expected_audio_set_id = "audio_power_board"
 debug_color = Color(0.18, 0.76, 0.98, 0.32)
-display_name = "Power panel placeholder"
-note = "Wall-side power panel footprint candidate."
 
-[sub_resource type="Resource" id="ObjectFootprint_connector_board"]
+[sub_resource type="Resource" id="Object_node_17"]
 script = ExtResource("2_object")
-id = &"connector_board_placeholder"
+id = &"node_17"
 room_area_id = &"work_power_area"
-category = &"power"
-anchor_cell = Vector2i(7, 1)
-size_cells = Vector2i(1, 1)
-blocks_movement = true
-interaction_cells = Array[Vector2i]([Vector2i(7, 2)])
-debug_color = Color(0.34, 0.86, 0.66, 0.32)
-display_name = "Connector board placeholder"
-note = "Compact connector-board footprint candidate."
-
-[sub_resource type="Resource" id="ObjectFootprint_comm_device"]
-script = ExtResource("2_object")
-id = &"comm_device_placeholder"
-room_area_id = &"work_power_area"
-category = &"signal"
+category = &"interaction"
 anchor_cell = Vector2i(1, 2)
-size_cells = Vector2i(1, 1)
-blocks_movement = false
+position_offset_px = Vector2(0, -8)
+visual_size_px = Vector2(150, 140)
+collision_size_px = Vector2(90, 60)
+collision_offset_px = Vector2(0, 28)
+interaction_size_px = Vector2(96, 64)
+interaction_offset_px = Vector2(84, 30)
 interaction_cells = Array[Vector2i]([Vector2i(2, 2)])
+facing_description_ko = "표시 화면과 신호등이 작업공간 중앙을 향함"
+display_name_ko = "NODE-17"
+expected_image_file = "node_17_dl_base.png"
+expected_scene_file = "objects/apartment/Node17.tscn"
+expected_audio_set_id = "audio_node_17"
 debug_color = Color(0.38, 0.7, 1, 0.3)
-display_name = "Comm device placeholder"
-note = "Non-blocking small comm-device marker."
 
-[sub_resource type="Resource" id="ObjectFootprint_bathroom_fixture"]
+[sub_resource type="Resource" id="Object_sink_counter"]
 script = ExtResource("2_object")
-id = &"bathroom_fixture_placeholder"
-room_area_id = &"bathroom"
-category = &"bathroom"
-anchor_cell = Vector2i(0, 7)
-size_cells = Vector2i(1, 1)
-blocks_movement = true
-interaction_cells = Array[Vector2i]([Vector2i(1, 7)])
-debug_color = Color(0.42, 0.82, 0.92, 0.34)
-display_name = "Bathroom fixture placeholder"
-note = "Minimal bathroom fixture footprint candidate."
+id = &"sink_counter"
+room_area_id = &"living_area"
+category = &"environment"
+anchor_cell = Vector2i(8, 4)
+size_cells = Vector2i(2, 1)
+visual_size_px = Vector2(220, 150)
+collision_size_px = Vector2(160, 70)
+collision_offset_px = Vector2(0, 32)
+placement_type = 3
+facing_description_ko = "상판 정면이 주방 통로를 향함"
+display_name_ko = "싱크대·주방 카운터"
+expected_image_file = "sink_counter_dl_base.png"
+expected_scene_file = "objects/apartment/sink_counter.tres"
+debug_color = Color(0.42, 0.6, 0.62, 0.36)
 
-[sub_resource type="Resource" id="ObjectFootprint_entrance_shoe_area"]
+[sub_resource type="Resource" id="Object_dining_table"]
 script = ExtResource("2_object")
-id = &"entrance_shoe_area_placeholder"
-room_area_id = &"entrance_area"
-category = &"entrance"
-anchor_cell = Vector2i(1, 9)
-size_cells = Vector2i(1, 1)
+id = &"dining_table"
+room_area_id = &"living_area"
+category = &"environment"
+anchor_cell = Vector2i(4, 6)
+visual_size_px = Vector2(170, 120)
+collision_size_px = Vector2(130, 70)
+collision_offset_px = Vector2(0, 24)
+placement_type = 3
+facing_description_ko = "의자 접근면이 생활공간 통로를 향함"
+display_name_ko = "작은 식탁"
+expected_image_file = "dining_table_dl_base.png"
+expected_scene_file = "objects/apartment/dining_table.tres"
+debug_color = Color(0.72, 0.5, 0.28, 0.34)
+
+[sub_resource type="Resource" id="Object_signal_booster"]
+script = ExtResource("2_object")
+id = &"signal_booster"
+room_area_id = &"work_power_area"
+category = &"environment"
+anchor_cell = Vector2i(1, 2)
+position_offset_px = Vector2(-68, -58)
+visual_size_px = Vector2(112, 96)
+collision_shape_type = 0
 blocks_movement = false
-interaction_cells = Array[Vector2i]([Vector2i(1, 8)])
+uses_floor_occupancy = false
+placement_type = 2
+parent_object_id = &"node_17"
+facing_description_ko = "표시등이 작업공간 중앙을 향함"
+display_name_ko = "신호 증폭기"
+expected_image_file = "signal_booster_dl_base.png"
+expected_scene_file = "objects/apartment/signal_booster.tres"
+expected_audio_set_id = "audio_signal_booster"
+debug_color = Color(0.3, 0.75, 1, 0.28)
+
+[sub_resource type="Resource" id="Object_ups_unit"]
+script = ExtResource("2_object")
+id = &"ups_unit"
+room_area_id = &"work_power_area"
+category = &"environment"
+anchor_cell = Vector2i(8, 2)
+visual_size_px = Vector2(140, 110)
+collision_size_px = Vector2(100, 60)
+collision_offset_px = Vector2(0, 22)
+placement_type = 2
+parent_object_id = &"power_module_board"
+facing_description_ko = "전면 패널이 작업공간 통로를 향함"
+display_name_ko = "UPS·보조전원"
+expected_image_file = "ups_unit_dl_base.png"
+expected_scene_file = "objects/apartment/ups_unit.tres"
+expected_audio_set_id = "audio_ups_unit"
+debug_color = Color(0.28, 0.68, 0.86, 0.32)
+
+[sub_resource type="Resource" id="Object_bathroom_fixture"]
+script = ExtResource("2_object")
+id = &"bathroom_fixture"
+room_area_id = &"bathroom"
+category = &"environment"
+anchor_cell = Vector2i(0, 4)
+visual_size_px = Vector2(200, 140)
+collision_size_px = Vector2(150, 80)
+collision_offset_px = Vector2(0, 28)
+placement_type = 3
+facing_description_ko = "욕실문에서 내부를 볼 때 정면이 보임"
+display_name_ko = "욕실 통합 설비"
+expected_image_file = "bathroom_fixture_dl_base.png"
+expected_scene_file = "objects/apartment/bathroom_fixture.tres"
+debug_color = Color(0.42, 0.82, 0.92, 0.34)
+
+[sub_resource type="Resource" id="Object_sea_horizon_poster"]
+script = ExtResource("2_object")
+id = &"sea_horizon_poster"
+room_area_id = &"living_area"
+category = &"decoration"
+anchor_cell = Vector2i(10, 7)
+position_offset_px = Vector2(0, -20)
+visual_size_px = Vector2(160, 80)
+collision_shape_type = 0
+blocks_movement = false
+uses_floor_occupancy = false
+placement_type = 1
+wall_segment_id = &"living_right_wall"
+wall_position_ratio = 0.58
+facing_description_ko = "포스터 그림이 침대와 방 안쪽을 향함"
+display_name_ko = "바다·수평선 포스터"
+expected_image_file = "sea_horizon_poster_wall.png"
+expected_scene_file = "objects/apartment/sea_horizon_poster.tres"
+debug_color = Color(0.28, 0.62, 0.86, 0.28)
+
+[sub_resource type="Resource" id="Object_fluorescent_light"]
+script = ExtResource("2_object")
+id = &"fluorescent_light"
+room_area_id = &"living_area"
+category = &"environment"
+anchor_cell = Vector2i(6, 6)
+visual_size_px = Vector2(240, 40)
+collision_shape_type = 0
+blocks_movement = false
+uses_floor_occupancy = false
+placement_type = 4
+facing_description_ko = "천장에서 생활공간 전체를 비춤"
+display_name_ko = "형광등"
+expected_image_file = "fluorescent_light_base.png"
+expected_scene_file = "objects/apartment/fluorescent_light.tres"
+expected_audio_set_id = "audio_fluorescent_light"
+debug_color = Color(0.95, 0.9, 0.5, 0.26)
+
+[sub_resource type="Resource" id="Object_shoes_slippers"]
+script = ExtResource("2_object")
+id = &"shoes_slippers"
+room_area_id = &"entrance_area"
+category = &"decoration"
+anchor_cell = Vector2i(1, 9)
+visual_size_px = Vector2(100, 60)
+collision_shape_type = 0
+blocks_movement = false
+uses_floor_occupancy = false
+placement_type = 3
+facing_description_ko = "신발 앞코가 현관 통로를 향함"
+display_name_ko = "신발·슬리퍼"
+expected_image_file = "shoes_slippers_dl_base.png"
+expected_scene_file = "objects/apartment/shoes_slippers.tres"
 debug_color = Color(0.9, 0.76, 0.36, 0.3)
-display_name = "Entrance shoe area placeholder"
-note = "Non-blocking entry shoe/slipper marker."
+
+[sub_resource type="Resource" id="Object_cable_bundle"]
+script = ExtResource("2_object")
+id = &"cable_bundle"
+room_area_id = &"work_power_area"
+category = &"decoration"
+anchor_cell = Vector2i(2, 2)
+position_offset_px = Vector2(36, 42)
+visual_size_px = Vector2(80, 40)
+collision_shape_type = 0
+blocks_movement = false
+uses_floor_occupancy = false
+placement_type = 2
+parent_object_id = &"node_17"
+facing_description_ko = "NODE-17에서 전력 장비 방향으로 정리됨"
+display_name_ko = "케이블 묶음"
+expected_image_file = "cable_bundle_var01.png"
+expected_scene_file = "objects/apartment/cable_bundle.tres"
+debug_color = Color(0.42, 0.46, 0.5, 0.26)
+
+[sub_resource type="Resource" id="Object_wall_conduit"]
+script = ExtResource("2_object")
+id = &"wall_conduit"
+room_area_id = &"work_power_area"
+category = &"decoration"
+anchor_cell = Vector2i(7, 0)
+visual_size_px = Vector2(128, 64)
+collision_shape_type = 0
+blocks_movement = false
+uses_floor_occupancy = false
+placement_type = 1
+wall_segment_id = &"work_back_wall"
+wall_position_ratio = 0.78
+facing_description_ko = "작업공간 뒤쪽 벽 방향을 따라 이어짐"
+display_name_ko = "벽면 전선관"
+expected_image_file = "wall_conduit_axis_a_1x.png"
+expected_scene_file = "objects/apartment/wall_conduit.tres"
+debug_color = Color(0.36, 0.55, 0.66, 0.24)
+
+[sub_resource type="Resource" id="Object_power_housing"]
+script = ExtResource("2_object")
+id = &"power_housing"
+room_area_id = &"work_power_area"
+category = &"decoration"
+anchor_cell = Vector2i(8, 1)
+visual_size_px = Vector2(240, 210)
+collision_shape_type = 0
+blocks_movement = false
+uses_floor_occupancy = false
+placement_type = 2
+parent_object_id = &"power_module_board"
+wall_segment_id = &"work_right_wall"
+wall_position_ratio = 0.375
+facing_description_ko = "전력 모듈 보드와 같은 방향"
+display_name_ko = "전력 장비 외장 프레임"
+expected_image_file = "power_housing_dl_base.png"
+expected_scene_file = "objects/apartment/power_housing.tres"
+debug_color = Color(0.2, 0.58, 0.72, 0.24)
 
 [resource]
 script = ExtResource("1_object_set")
-note = "Default shell-only apartment object footprint placeholders. These are not final furniture sprites or production interactions."
-objects = Array[Resource]([SubResource("ObjectFootprint_bed"), SubResource("ObjectFootprint_fridge"), SubResource("ObjectFootprint_sink_counter"), SubResource("ObjectFootprint_microwave"), SubResource("ObjectFootprint_small_table"), SubResource("ObjectFootprint_desk"), SubResource("ObjectFootprint_navi_chair"), SubResource("ObjectFootprint_power_panel"), SubResource("ObjectFootprint_connector_board"), SubResource("ObjectFootprint_comm_device"), SubResource("ObjectFootprint_bathroom_fixture"), SubResource("ObjectFootprint_entrance_shoe_area")])
+note = "First-pass measured apartment object layout candidate. Expected asset strings are future specifications only."
+objects = Array[Resource]([SubResource("Object_entrance_door"), SubResource("Object_bed"), SubResource("Object_fridge"), SubResource("Object_microwave"), SubResource("Object_navi_link"), SubResource("Object_power_module_board"), SubResource("Object_node_17"), SubResource("Object_sink_counter"), SubResource("Object_dining_table"), SubResource("Object_signal_booster"), SubResource("Object_ups_unit"), SubResource("Object_bathroom_fixture"), SubResource("Object_sea_horizon_poster"), SubResource("Object_fluorescent_light"), SubResource("Object_shoes_slippers"), SubResource("Object_cable_bundle"), SubResource("Object_wall_conduit"), SubResource("Object_power_housing")])
