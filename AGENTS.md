@@ -258,6 +258,8 @@ For implementation tasks, run `scripts/validate_concent.sh --full` before comple
 
 Use `$concent-godot-validation` to select and run the shared validator for repeated CONCENT verification when the repository Skill is available.
 
+Follow `$concent-safe-git` for selective staging, commit, and push after task validation.
+
 Common targeted GUT examples:
 
 ```bash

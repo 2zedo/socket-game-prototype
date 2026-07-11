@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### CONCENT Safe Git Skill
+
+- Commit message: `chore: add concent safe git skill`.
+- Result: Added `.agents/skills/concent-safe-git/SKILL.md` for branch/upstream checks, validation delegation, explicit-path staging, staged-diff review, conventional commits, normal upstream pushes, and final hash/status reporting.
+- Validation: Ruby YAML frontmatter and folder/name parity passed; validation delegation is present, forbidden Git operations appear only in the explicit `Never run` guardrail, and no Godot validation command is duplicated. The skill-creator Python validator could not run because `PyYAML` is unavailable and was not installed. `$concent-godot-validation` quick validation passed with Full GUT correctly skipped and the known Phone PNG warning reported once.
+- Not changed: `$concent-godot-validation`, validator logic, game code, scenes, Resources, `project.godot`, addons, generated `.import`/`.uid`, or unrelated user files.
+
 ### CONCENT Godot validation Skill
 
 - Commit message: `chore: add concent godot validation skill`.

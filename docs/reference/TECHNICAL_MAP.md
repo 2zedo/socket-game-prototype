@@ -321,6 +321,8 @@ Targeted GUT examples:
 
 ## Git / Staging Rules
 
+Codex should use the repository Skill at `.agents/skills/concent-safe-git/SKILL.md` for explicit-path staging, reviewed commit creation, normal upstream push, and final hash/status reporting. Invoke it explicitly as `$concent-safe-git`; it delegates Godot checks to `$concent-godot-validation` rather than duplicating validation commands.
+
 - Work on `main` unless user asks otherwise.
 - Before work:
 
