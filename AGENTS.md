@@ -302,3 +302,12 @@ Recommended shape:
 * Git
 
 Avoid vague claims such as "architecture improved" unless you name the actual files and behavior that changed.
+
+## 16. Custom Agent Delegation
+
+* Before changes spanning multiple domains, use `codebase_explorer` to map the impact surface.
+* Do not let two writer agents modify the same file concurrently in one checkout.
+* Run independent parallel writes only in separate worktrees.
+* After implementation, request a read-only review from `qa_reviewer`.
+* The main agent normally owns final staging, committing, and pushing.
+* Do not use subagents unnecessarily for a simple one-file change.
