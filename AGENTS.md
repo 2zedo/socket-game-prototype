@@ -256,6 +256,8 @@ Full GUT:
 
 For implementation tasks, run `scripts/validate_concent.sh --full` before completion; documentation-only or simple configuration work may use `--quick` when Godot tests are unnecessary.
 
+Use `$concent-godot-validation` to select and run the shared validator for repeated CONCENT verification when the repository Skill is available.
+
 Common targeted GUT examples:
 
 ```bash

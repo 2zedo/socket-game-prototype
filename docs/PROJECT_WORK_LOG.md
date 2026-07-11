@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### CONCENT Godot validation Skill
+
+- Commit message: `chore: add concent godot validation skill`.
+- Result: Added the repository-local `.agents/skills/concent-godot-validation/SKILL.md` to select `--full` or `--quick` for the existing `scripts/validate_concent.sh` runner, inspect failures, and summarize results without duplicating validation logic or performing Git mutation.
+- Validation: Ruby YAML frontmatter/name validation and the single-file repository Skill structure passed. The skill-creator Python validator could not run because `PyYAML` is unavailable and was not installed. `scripts/validate_concent.sh --quick` passed; Full GUT was correctly skipped and the known Phone PNG warning was reported once.
+- Not changed: validator logic, game code, scenes, Resources, `project.godot`, addons, global skills, `agents/openai.yaml`, or `.import`/`.uid` files.
+
 ### Unified CONCENT validation script
 
 - Commit message: `chore: add unified concent validation script`.

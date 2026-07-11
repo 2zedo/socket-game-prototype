@@ -296,6 +296,8 @@ Full GUT:
 
 Run `scripts/validate_concent.sh` from any directory to execute the current Git checks, Godot project parse, QuarterviewMain and apartment-shell startup checks, and the Full GUT runner without issuing Git mutation commands.
 
+Codex should use the repository Skill at `.agents/skills/concent-godot-validation/SKILL.md` to choose `--full` or `--quick`; invoke it explicitly as `$concent-godot-validation` when needed.
+
 ```bash
 scripts/validate_concent.sh --full
 scripts/validate_concent.sh --quick
