@@ -254,6 +254,8 @@ Full GUT:
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot -s res://addons/gut/gut_cmdln.gd -gdir=res://test/unit -gexit
 ```
 
+For implementation tasks, run `scripts/validate_concent.sh --full` before completion; documentation-only or simple configuration work may use `--quick` when Godot tests are unnecessary.
+
 Common targeted GUT examples:
 
 ```bash

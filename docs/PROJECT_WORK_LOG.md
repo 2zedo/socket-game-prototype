@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Unified CONCENT validation script
+
+- Commit message: `chore: add unified concent validation script`.
+- Result: Added `scripts/validate_concent.sh` for Git-non-mutating diff checks, Godot parse, QuarterviewMain and apartment-shell startup, and Full GUT. It supports `--full`, `--quick`, `--godot-bin`, `GODOT_BIN`, and `--keep-logs`, with temporary logs outside the repository; normal Godot import metadata is reported rather than deleted.
+- Validation: Passed `bash -n` on macOS Bash 3.2, help/invalid-argument checks, a subdirectory quick run, explicit `GODOT_BIN` and `--godot-bin` runs, keep-log preservation, and a Full run in 49 seconds. A fake Godot exit-7 check confirmed that later steps continue, the first failure code is returned, and failure logs are preserved. The known Phone PNG export warning remains reported but does not override process exit status.
+- Not changed: game code, scenes, Resources, `project.godot`, addons/dependencies, assets, `.import`/`.uid` files, or Git state beyond this task's explicit script/document commit. Godot may still generate its normal local import metadata during validation.
+
 ### Apartment debug overlay mode separation
 
 - Commit: `chore: improve apartment debug overlay modes`.

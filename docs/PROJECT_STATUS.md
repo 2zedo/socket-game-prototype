@@ -29,6 +29,7 @@
 
 ## Latest Work
 
+- Added `scripts/validate_concent.sh`, a unified validation wrapper that issues no Git mutation commands while running Git diff checks, Godot project parse, QuarterviewMain and apartment-shell startup, and optional Full GUT. It resolves Godot safely from an explicit argument, `GODOT_BIN`, PATH, or the macOS app path and keeps logs outside the repository; normal Godot import metadata remains reported rather than deleted.
 - Added and refined `QuarterviewApartmentShellCandidate` as a coordinate-based Godot scene under `godot/scenes/quarterview/`.
 - The scene draws the apartment shell with placeholder floor tiles, Axis A/B walls, wall caps, baseboards, door/window placeholders, debug labels, camera presets, and a foreground no-large-object zone.
 - Wall segments are now editable through named `ApartmentWallSegmentConfig` entries, with `W` for wall ID markers and `I` for a console wall inventory / edit-hint table.
