@@ -1,45 +1,14 @@
-[gd_scene load_steps=5 format=3 uid="uid://cgmly3c446law"]
+[gd_scene load_steps=4 format=3 uid="uid://cgmly3c446law"]
 
 [ext_resource type="Script" path="res://scripts/quarterview/QuarterviewApartmentShellCandidate.gd" id="1_shell_candidate"]
 [ext_resource type="Resource" path="res://resources/quarterview/apartment_shell_object_footprints.tres" id="2_object_footprints"]
 [ext_resource type="PackedScene" path="res://scenes/quarterview/objects/ApartmentEditableObject.tscn" id="3_editable_object"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fridge_body"]
-size = Vector2(70, 70)
-
 [node name="QuarterviewApartmentShellCandidate" type="Node2D"]
 script = ExtResource("1_shell_candidate")
-view_orientation = null
-map_origin = null
-map_rotation = null
-map_rotation_pivot = null
-tile_width = null
-tile_height = null
-wall_height = null
-wall_cap_height = null
-baseboard_height = null
-cutaway_front_stub_height = null
-work_room_origin = null
-work_room_size = null
-living_room_origin = null
-living_room_size = null
-bathroom_room_origin = null
-bathroom_room_size = null
-service_room_origin = null
-service_room_size = null
-no_large_object_zone_origin = null
-no_large_object_zone_size = null
 object_footprint_set = ExtResource("2_object_footprints")
-living_window_axis_a = null
-living_window_axis_b_start = null
-living_window_width = null
 full_map_camera_center_offset = Vector2(1, 0)
 full_map_camera_zoom = Vector2(0.66, 0.66)
-living_camera_center_offset = null
-living_camera_zoom = null
-work_camera_center_offset = null
-work_camera_zoom = null
-camera_preset = null
 show_debug_labels = false
 
 [node name="EditableObjectNodes" type="Node2D" parent="."]
@@ -47,16 +16,19 @@ show_debug_labels = false
 [node name="Fridge" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
 position = Vector2(1116, 226)
 object_id = &"fridge"
-visual_size_px = Vector2(120, 190)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="EditableObjectNodes/Fridge/Body" index="0"]
+[node name="VisualPreview" parent="EditableObjectNodes/Fridge/Visual" index="1"]
+polygon = PackedVector2Array(-60, -95, 60, -95, 60, 95, -60, 95)
+
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/Fridge/Body" index="0"]
+editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 position = Vector2(0, 38)
-shape = SubResource("RectangleShape2D_fridge_body")
+polygon = PackedVector2Array(-35, -35, 35, -35, 35, 35, -35, 35)
 
 [node name="InteractionArea" parent="EditableObjectNodes/Fridge" index="2"]
 position = Vector2(-56, 44)
 
-[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="EditableObjectNodes/Fridge/InteractionArea" index="0"]
+[node name="InteractionPolygon" parent="EditableObjectNodes/Fridge/InteractionArea" index="0"]
 polygon = PackedVector2Array(-40, -28, 40, -28, 40, 28, -40, 28)
 
 [node name="UsePoint" parent="EditableObjectNodes/Fridge" index="3"]
@@ -65,15 +37,18 @@ position = Vector2(-56, 44)
 [node name="NaviLink" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
 position = Vector2(1264, 94)
 object_id = &"navi_link"
-visual_size_px = Vector2(300, 240)
 
-[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="EditableObjectNodes/NaviLink/Body" index="0"]
-polygon = PackedVector2Array(-40.2491, -28.7902, 147.58, 65.1246, 40.2491, 118.79, -147.58, 24.8754)
+[node name="VisualPreview" parent="EditableObjectNodes/NaviLink/Visual" index="1"]
+polygon = PackedVector2Array(-150, -120, 150, -120, 150, 120, -150, 120)
+
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/NaviLink/Body" index="0"]
+editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
+polygon = PackedVector2Array(-40.2491, -28.7902, 70.4386, 26.553787, 147.58, 65.1246, 40.2491, 118.79, -147.58, 24.8754)
 
 [node name="InteractionArea" parent="EditableObjectNodes/NaviLink" index="2"]
 position = Vector2(-108, 96)
 
-[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="EditableObjectNodes/NaviLink/InteractionArea" index="0"]
+[node name="InteractionPolygon" parent="EditableObjectNodes/NaviLink/InteractionArea" index="0"]
 polygon = PackedVector2Array(-96, -56, 32, -56, 32, -24, 96, -24, 96, 56, -32, 56, -32, 24, -96, 24)
 
 [node name="UsePoint" parent="EditableObjectNodes/NaviLink" index="3"]
@@ -85,12 +60,14 @@ position = Vector2(996, 174)
 [node name="Microwave" parent="EditableObjectNodes/SinkCounterParentAnchor" instance=ExtResource("3_editable_object")]
 position = Vector2(0, -60)
 object_id = &"microwave"
-visual_size_px = Vector2(96, 72)
+
+[node name="VisualPreview" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/Visual" index="1"]
+polygon = PackedVector2Array(-48, -36, 48, -36, 48, 36, -48, 36)
 
 [node name="InteractionArea" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="2"]
 position = Vector2(0, 124)
 
-[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/InteractionArea" index="0"]
+[node name="InteractionPolygon" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/InteractionArea" index="0"]
 polygon = PackedVector2Array(-48, -28, 48, -28, 48, 28, -48, 28)
 
 [node name="UsePoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="3"]
@@ -102,12 +79,14 @@ position = Vector2(1476, 126)
 [node name="PowerModuleBoard" parent="EditableObjectNodes/WorkBackWallParentAnchor" instance=ExtResource("3_editable_object")]
 position = Vector2(0, -30)
 object_id = &"power_module_board"
-visual_size_px = Vector2(200, 180)
+
+[node name="VisualPreview" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/Visual" index="1"]
+polygon = PackedVector2Array(-100, -90, 100, -90, 100, 90, -100, 90)
 
 [node name="InteractionArea" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="2"]
 position = Vector2(-96, 170)
 
-[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/InteractionArea" index="0"]
+[node name="InteractionPolygon" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/InteractionArea" index="0"]
 polygon = PackedVector2Array(-60, -36, 60, -36, 60, 36, -60, 36)
 
 [node name="UsePoint" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="3"]

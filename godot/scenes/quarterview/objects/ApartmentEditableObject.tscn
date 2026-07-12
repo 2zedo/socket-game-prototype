@@ -3,20 +3,38 @@
 [ext_resource type="Script" path="res://scripts/quarterview/ApartmentEditableObject.gd" id="1_editable_object"]
 
 [node name="ObjectRoot" type="Node2D" groups=["apartment_editable_object"]]
+editor_description = "편집형 아파트 오브젝트의 기준 위치. 이 Node를 움직이면 모든 하위 범위와 기준점이 함께 이동합니다."
 script = ExtResource("1_editable_object")
 
-[node name="VisualAnchor" type="Marker2D" parent="."]
+[node name="Visual" type="Node2D" parent="."]
+editor_description = "실제 Sprite2D와 임시 VisualPreview를 담는 화면 표시 기준입니다."
+
+[node name="Sprite2D" type="Sprite2D" parent="Visual"]
+editor_description = "실제 texture가 연결되면 이 Sprite2D의 texture rect가 visual bounds 정본입니다."
+
+[node name="VisualPreview" type="Polygon2D" parent="Visual"]
+editor_description = "실제 이미지가 없을 때만 쓰는 임시 화면 범위."
+polygon = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
+color = Color(0.32, 0.86, 1, 0.18)
 
 [node name="Body" type="StaticBody2D" parent="."]
+editor_description = "이동 충돌이 필요한 오브젝트만 BodyPolygon을 둡니다."
 collision_layer = 0
 collision_mask = 0
 
 [node name="InteractionArea" type="Area2D" parent="."]
+editor_description = "InteractionPolygon의 위치 기준. UsePoint와 독립적으로 조정합니다."
 collision_layer = 0
 collision_mask = 0
 monitoring = false
 monitorable = false
 
-[node name="UsePoint" type="Marker2D" parent="."]
+[node name="InteractionPolygon" type="CollisionPolygon2D" parent="InteractionArea"]
+editor_description = "클릭·사용 감지 범위. UsePoint와 독립적으로 조정."
+polygon = PackedVector2Array(-32, -24, 32, -24, 32, 24, -32, 24)
 
-[node name="Socket" type="Marker2D" parent="."]
+[node name="UsePoint" type="Marker2D" parent="."]
+editor_description = "오브젝트 사용 시 캐릭터가 이동해 설 위치."
+
+[node name="AttachmentSocket" type="Marker2D" parent="."]
+editor_description = "자식 장비 또는 벽·부모 부착 기준점."

@@ -141,7 +141,7 @@ Loading order:
 2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
 3. additive `custom_object_footprints` entries from the Inspector
 
-Node migration stage 1 overrides that loading order for exact ROTATE_90 geometry on four objects. `fridge`, `navi_link`, `power_module_board`, and `microwave` use `EditableObjectNodes` in the candidate Scene for ObjectRoot/VisualAnchor position, Body geometry, InteractionArea geometry, UsePoint, and wall/parent sockets. Their Resource entries retain logical identity, category, room, interaction status, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The other fourteen objects continue to use the Resource/fallback footprint path.
+Node migration stage 1 overrides that loading order for exact ROTATE_90 geometry on four objects. `fridge`, `navi_link`, `power_module_board`, and `microwave` use `EditableObjectNodes` in the candidate Scene for ObjectRoot, `Visual/Sprite2D/VisualPreview`, BodyPolygon, InteractionPolygon, UsePoint, and AttachmentSocket. Their Resource entries retain logical identity, category, room, interaction status, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The other fourteen objects continue to use the Resource/fallback footprint path.
 
 Current rotated-floorplan placement candidate:
 
@@ -149,10 +149,10 @@ Current rotated-floorplan placement candidate:
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `entrance_door` | entrance | `(0,8)` | `(0,-6)` | `150x220` | none | `(0,8)`, `96x56` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
 | `bed` | living | `(9,6)` | `(10,-6)` | `260x180` | `180x90` | `(8,7)`, `120x64` | `FLOOR` / interaction |
-| `fridge` | living | Scene `ObjectRoot` | Inspector | Scene `VisualAnchor` | `Body/CollisionShape2D` | `InteractionArea/CollisionPolygon2D` + `UsePoint` | `FLOOR` / interaction |
-| `microwave` | living | `SinkCounterParentAnchor` child | Inspector | Scene `VisualAnchor` | none | `InteractionArea/CollisionPolygon2D` + `UsePoint` | `PARENT_OBJECT`: `sink_counter` / interaction |
-| `navi_link` | work/power | Scene `ObjectRoot` | Inspector | Scene `VisualAnchor` | `Body/CollisionPolygon2D` | `InteractionArea/CollisionPolygon2D` + `UsePoint` | `FLOOR` / interaction |
-| `power_module_board` | work/power | `WorkBackWallParentAnchor` child | Inspector | Scene `VisualAnchor` | none | `InteractionArea/CollisionPolygon2D` + `UsePoint` | `WALL_EDGE`: `work_back_wall` / interaction |
+| `fridge` | living | Scene `ObjectRoot` | Inspector | `Visual/VisualPreview` until Sprite texture exists | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
+| `microwave` | living | `SinkCounterParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `PARENT_OBJECT`: `sink_counter` / interaction |
+| `navi_link` | work/power | Scene `ObjectRoot` | Inspector | `Visual/VisualPreview` until Sprite texture exists | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
+| `power_module_board` | work/power | `WorkBackWallParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `work_back_wall` / interaction |
 | `node_17` | work/power | `(1,2)` | `(0,-8)` | `150x140` | `90x60` candidate | `(2,2)`, `96x64` | `FLOOR` / interaction |
 | `sink_counter` | living | `(3,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
 | `dining_table` | living | `(4,7)` | `(0,0)` | `170x120` | `130x70` | none | `FLOOR` / environment |
@@ -180,7 +180,7 @@ Attachment policy:
 Shell editing controls:
 
 - `M`: show room measurement only; the default view does not include object detail.
-- `P`: show floor occupancy, collision, valid interaction areas, and attachment guides; white visual bounds appear only on the selected object. Equivalent floor/collision surfaces use one blue fill with a red collision outline.
+- `P`: show BodyPolygon-derived floor occupancy in blue, BodyPolygon collision in red, InteractionPolygon in orange dashes, UsePoint as an orange marker, and AttachmentSocket in pink. White Sprite2D/VisualPreview bounds appear only on the selected object. Equivalent floor/collision surfaces use one blue fill with a red collision outline.
 - `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
 - `V`: make all candidate wall, stub, door, and window visuals translucent for wall-attached and behind-wall inspection; floor edges, logical walls, navigation edges, collision, and reveal state do not change.
 - `I`: print wall inventory followed by object footprint summary.
@@ -192,8 +192,10 @@ Shell editing controls:
 
 Coordinate rule:
 
-- Migrated floor objects derive movement-blocked cells from the centers covered by their Scene `Body` geometry and derive access cells from `UsePoint`; moving those nodes changes N/P/hit-test results without a Resource coordinate edit.
-- Migrated wall/parent objects follow their Scene `ParentAnchor`; moving `UsePoint` also moves `InteractionArea`. Their logical `anchor_type`, `parent_object_id`, and `wall_segment_id` remain Resource metadata.
+- Migrated floor objects derive movement-blocked cells and P floor occupancy from `Body/BodyPolygon`; no current object has a separate PlacementFootprint. The common script supports an optional future `PlacementFootprint`, which overrides occupancy only when a real reservation area must differ from collision.
+- `InteractionArea/InteractionPolygon` controls click/use detection, while sibling `UsePoint` controls the character access cell. Moving either one never moves the other; only moving ObjectRoot or a parent anchor moves both.
+- Migrated wall/parent objects follow their Scene ParentAnchor, and `AttachmentSocket` is the exact child/wall attachment marker. Their logical `anchor_type`, `parent_object_id`, and `wall_segment_id` remain Resource metadata.
+- Sprite2D texture bounds are the visual authority when a texture exists; otherwise one editor-only VisualPreview polygon supplies the temporary visual bound. Neither visual source participates in movement collision or interaction.
 - Unmigrated floor objects continue to use `anchor_cell`, `size_cells`, occupied cells, and interaction cells. Unmigrated wall/ceiling/parent objects continue to use the existing Resource anchor fields.
 - Wall segments use wall edge coordinates: `from_cell -> to_cell`.
 - Do not treat object floor cells and wall edge coordinates as the same coordinate layer.

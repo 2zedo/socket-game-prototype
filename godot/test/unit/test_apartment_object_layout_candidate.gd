@@ -88,23 +88,35 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		var object_node: Node = shell.get_node(expected_paths[id])
 		assert_eq(String(object_node.object_id), id)
 		assert_true(object_node.is_in_group("apartment_editable_object"))
-		assert_not_null(object_node.get_node_or_null("VisualAnchor"))
+		assert_true(object_node.get_node("Visual") is Node2D)
+		assert_true(object_node.get_node("Visual/Sprite2D") is Sprite2D)
+		assert_true(object_node.get_node("Visual/VisualPreview") is Polygon2D)
 		assert_not_null(object_node.get_node_or_null("Body"))
 		assert_not_null(object_node.get_node_or_null("InteractionArea"))
+		assert_true(object_node.get_node("InteractionArea/InteractionPolygon") is CollisionPolygon2D)
 		assert_not_null(object_node.get_node_or_null("UsePoint"))
-		assert_not_null(object_node.get_node_or_null("Socket"))
+		assert_not_null(object_node.get_node_or_null("AttachmentSocket"))
+		assert_null(object_node.get_node_or_null("PlacementFootprint"), "Current four objects must derive occupancy from BodyPolygon only.")
 		assert_eq(object_node.geometry_warnings(), [])
 		assert_eq(object_node.get_node("Body").collision_layer, 0)
 		assert_eq(object_node.get_node("Body").collision_mask, 0)
 		assert_eq(object_node.get_node("InteractionArea").collision_layer, 0)
 		assert_eq(object_node.get_node("InteractionArea").collision_mask, 0)
 
-	var fridge: Node = shell.get_node(expected_paths["fridge"])
-	assert_true(fridge.get_node("Body/CollisionShape2D").shape is RectangleShape2D)
-	var navi: Node = shell.get_node(expected_paths["navi_link"])
-	assert_true(navi.get_node("Body/CollisionPolygon2D") is CollisionPolygon2D)
+	for id in ["fridge", "navi_link"]:
+		var body_polygon: CollisionPolygon2D = shell.get_node(expected_paths[id]).get_node("Body/BodyPolygon")
+		assert_eq(body_polygon.scale, Vector2.ONE)
+		assert_gt(body_polygon.polygon.size(), 3)
+		assert_true(body_polygon.editor_description.contains("꼭짓점"))
+	for id in ["microwave", "power_module_board"]:
+		assert_null(shell.get_node(expected_paths[id]).get_node_or_null("Body/BodyPolygon"))
 	for id in expected_paths:
-		assert_true(shell.get_node(expected_paths[id]).get_node("InteractionArea/CollisionPolygon2D") is CollisionPolygon2D)
+		var object_node: Node = shell.get_node(expected_paths[id])
+		assert_eq(object_node.get_node("InteractionArea/InteractionPolygon").scale, Vector2.ONE)
+		assert_true(object_node.get_node("InteractionArea/InteractionPolygon").editor_description.contains("UsePoint와 독립"))
+		assert_true(object_node.get_node("UsePoint").editor_description.contains("캐릭터가 이동"))
+		assert_true(object_node.get_node("AttachmentSocket").editor_description.contains("부착 기준점"))
+		assert_true(object_node.get_node("Visual/VisualPreview").editor_description.contains("실제 이미지가 없을 때"))
 
 	var objects := _dictionary_map(shell._object_footprints())
 	var expected_centers := {
@@ -118,13 +130,19 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 	for id in EDITABLE_NODE_IDS:
 		assert_true(objects[id].node_backed)
 		assert_eq(objects[id].source, "scene_node")
+		assert_eq(objects[id].visual_source, "VISUAL_PREVIEW")
 		assert_eq(shell._object_pixel_center(objects[id]), expected_centers[id])
 		assert_eq(shell._object_interaction_cells(objects[id]), expected_use_cells[id])
 		assert_eq(shell._object_interaction_polygons(objects[id]).size(), 1)
 	assert_eq(shell._object_collision_polygon_points(objects["fridge"]).size(), 4)
-	assert_eq(shell._object_collision_polygon_points(objects["navi_link"]).size(), 4)
+	assert_eq(shell._object_collision_polygon_points(objects["navi_link"]).size(), 5, "Preserve the user-authored NAVI fifth vertex.")
+	for id in ["fridge", "navi_link"]:
+		assert_eq(shell._object_floor_polygon_points(objects[id]), shell._object_collision_polygon_points(objects[id]))
+		assert_eq(objects[id].floor_occupancy_source, "BODY_POLYGON")
 	assert_eq(shell._object_collision_polygon_points(objects["microwave"]), [])
 	assert_eq(shell._object_collision_polygon_points(objects["power_module_board"]), [])
+	assert_eq(objects["microwave"].floor_occupancy_source, "NONE")
+	assert_eq(objects["power_module_board"].floor_occupancy_source, "NONE")
 	for id in EXPECTED_IDS:
 		if EDITABLE_NODE_IDS.has(id):
 			continue
@@ -132,7 +150,7 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		assert_eq(objects[id].source, "resource")
 
 
-func test_editable_body_use_point_and_parent_anchor_changes_drive_resolved_data() -> void:
+func test_editable_geometry_channels_are_independent_and_parent_anchors_propagate() -> void:
 	var shell = _make_shell()
 	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
 	var fridge_use_point: Node2D = fridge.get_node("UsePoint")
@@ -140,12 +158,18 @@ func test_editable_body_use_point_and_parent_anchor_changes_drive_resolved_data(
 	var before_interaction_point: Vector2 = shell._object_interaction_polygons(before["fridge"])[0][0]
 	var before_use_cell: Vector2i = shell._object_interaction_cells(before["fridge"])[0]
 	fridge_use_point.position += Vector2(64, 32)
-	fridge.call("_process", 0.0)
 	var after_use_move := _dictionary_map(shell._object_footprints())
-	assert_eq(shell._object_interaction_polygons(after_use_move["fridge"])[0][0], before_interaction_point + Vector2(64, 32))
+	assert_eq(shell._object_interaction_polygons(after_use_move["fridge"])[0][0], before_interaction_point, "UsePoint must not move InteractionPolygon.")
 	assert_ne(shell._object_interaction_cells(after_use_move["fridge"])[0], before_use_cell)
 
-	var body_shape: CollisionShape2D = fridge.get_node("Body/CollisionShape2D")
+	var interaction_area: Node2D = fridge.get_node("InteractionArea")
+	var use_cell_before_area_move: Vector2i = shell._object_interaction_cells(after_use_move["fridge"])[0]
+	interaction_area.position += Vector2(16, 8)
+	var after_area_move := _dictionary_map(shell._object_footprints())
+	assert_eq(shell._object_interaction_polygons(after_area_move["fridge"])[0][0], before_interaction_point + Vector2(16, 8))
+	assert_eq(shell._object_interaction_cells(after_area_move["fridge"])[0], use_cell_before_area_move, "InteractionArea must not move UsePoint access cell.")
+
+	var body_shape: CollisionPolygon2D = fridge.get_node("Body/BodyPolygon")
 	var collision_before: Array[Vector2] = shell._object_collision_polygon_points(after_use_move["fridge"])
 	var blocked_before: Array[Vector2i] = shell._object_blocked_cells()
 	body_shape.position += Vector2(64, 32)
@@ -166,11 +190,97 @@ func test_editable_body_use_point_and_parent_anchor_changes_drive_resolved_data(
 		assert_eq(shell._object_pixel_center(object_after), center_before + Vector2(16, 8))
 		assert_eq(shell._object_interaction_polygons(object_after)[0][0], interaction_before + Vector2(16, 8))
 
-	var board_socket: Node2D = shell.get_node("EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/Socket")
+	var board_socket: Node2D = shell.get_node("EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/AttachmentSocket")
 	var housing_before: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
 	board_socket.position += Vector2(8, 4)
 	var housing_after: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
-	assert_eq(housing_after, housing_before + Vector2(8, 4), "Resource child attachments must follow the migrated parent Socket.")
+	assert_eq(housing_after, housing_before + Vector2(8, 4), "Resource child attachments must follow AttachmentSocket.")
+
+
+func test_visual_preview_and_sprite_texture_are_independent_visual_authorities() -> void:
+	var shell = _make_shell()
+	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
+	var preview: Polygon2D = fridge.get_node("Visual/VisualPreview")
+	var before: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
+	var collision_before: Array[Vector2] = shell._object_collision_polygon_points(before)
+	preview.position += Vector2(24, -12)
+	var preview_move: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
+	assert_eq(shell._object_pixel_center(preview_move), shell._object_pixel_center(before) + Vector2(24, -12))
+	assert_eq(shell._object_collision_polygon_points(preview_move), collision_before, "VisualPreview must never drive collision.")
+
+	var image := Image.create(20, 10, false, Image.FORMAT_RGBA8)
+	image.fill(Color.WHITE)
+	var sprite: Sprite2D = fridge.get_node("Visual/Sprite2D")
+	sprite.texture = ImageTexture.create_from_image(image)
+	var sprite_data: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
+	assert_eq(sprite_data.visual_source, "SPRITE2D")
+	assert_eq(Vector2(sprite_data.visual_size_px), Vector2(20, 10))
+	assert_eq(shell._object_collision_polygon_points(sprite_data), collision_before)
+
+
+func test_optional_placement_footprint_is_supported_but_absent_from_current_four() -> void:
+	var shell = _make_shell()
+	for id in EDITABLE_NODE_IDS:
+		assert_null(shell._editable_object_node_by_id(id).get_node_or_null("PlacementFootprint"))
+	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
+	var collision_before: PackedVector2Array = fridge.call("body_world_polygon")
+	var placement := Polygon2D.new()
+	placement.name = "PlacementFootprint"
+	placement.visible = false
+	placement.polygon = PackedVector2Array([Vector2(-80, -40), Vector2(80, -40), Vector2(80, 40), Vector2(-80, 40)])
+	fridge.add_child(placement)
+	var object_data: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
+	assert_eq(object_data.floor_occupancy_source, "PLACEMENT_FOOTPRINT")
+	assert_eq(PackedVector2Array(object_data.floor_polygons[0]), PackedVector2Array(fridge.call("placement_footprint_world_polygon")))
+	assert_eq(PackedVector2Array(object_data.collision_polygons[0]), collision_before)
+
+
+func test_editable_object_configuration_warnings_cover_invalid_contracts() -> void:
+	var shell = _make_shell()
+	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
+	var interaction: CollisionPolygon2D = fridge.get_node("InteractionArea/InteractionPolygon")
+	var original_interaction := interaction.polygon
+	interaction.polygon = PackedVector2Array([Vector2.ZERO, Vector2.ONE])
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "InteractionArea/InteractionPolygon requires at least 3 points"))
+	assert_true(_strings_contain(Array(fridge.call("_get_configuration_warnings")), "InteractionArea/InteractionPolygon requires at least 3 points"))
+	interaction.polygon = original_interaction
+	interaction.disabled = true
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "interactive object requires InteractionArea/InteractionPolygon"))
+	interaction.disabled = false
+
+	var body: StaticBody2D = fridge.get_node("Body")
+	var legacy_shape := CollisionShape2D.new()
+	legacy_shape.shape = RectangleShape2D.new()
+	body.add_child(legacy_shape)
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "legacy CollisionShape2D"))
+	legacy_shape.free()
+
+	var body_polygon: CollisionPolygon2D = fridge.get_node("Body/BodyPolygon")
+	body.remove_child(body_polygon)
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "blocks_movement requires Body/BodyPolygon"))
+	body.add_child(body_polygon)
+	body_polygon.disabled = true
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "blocks_movement requires Body/BodyPolygon"))
+	body_polygon.disabled = false
+	body_polygon.scale = Vector2(1.1, 1.0)
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "scale must remain (1, 1)"))
+	body_polygon.scale = Vector2.ONE
+
+	var config = _object_map(FOOTPRINT_SET.objects)["fridge"]
+	config.visual_size_px = Vector2(1, 1)
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "Resource geometry must remain disabled"))
+	config.visual_size_px = Vector2.ZERO
+
+	var use_point: Marker2D = fridge.get_node("UsePoint")
+	fridge.remove_child(use_point)
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "required NodePath is missing: UsePoint"))
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "interactive object requires UsePoint"))
+	fridge.add_child(use_point)
+
+	var socket: Marker2D = fridge.get_node("AttachmentSocket")
+	fridge.remove_child(socket)
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "required NodePath is missing: AttachmentSocket"))
+	socket.free()
 
 
 func test_rotated_floorplan_environment_layout_values_are_preserved() -> void:
@@ -278,7 +388,7 @@ func test_priority_interaction_cells_touch_their_object_or_parent_collision() ->
 	for id in ["bed", "fridge", "node_17", "navi_link"]:
 		var object_data: Dictionary = objects[id]
 		var collision_polygon := PackedVector2Array(shell._object_collision_polygon_points(object_data))
-		assert_eq(collision_polygon.size(), 4, "%s must have collision geometry." % id)
+		assert_gt(collision_polygon.size(), 3, "%s must have collision geometry." % id)
 		for interaction_points in shell._object_interaction_polygons(object_data):
 			var interaction_polygon := PackedVector2Array(interaction_points)
 			assert_false(Geometry2D.intersect_polygons(interaction_polygon, collision_polygon).is_empty(), "%s interaction cell must touch its collision." % id)
@@ -469,10 +579,13 @@ func test_object_mode_draws_scene_node_collision_separately_from_grid_occupancy(
 	shell._unhandled_input(_key_event(KEY_P))
 	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
 	var objects := _dictionary_map(shell._object_footprints())
-	assert_false(shell._object_floor_collision_are_equivalent(objects["fridge"]))
+	assert_true(shell._object_floor_collision_are_equivalent(objects["fridge"]))
 	assert_not_null(layer.get_node_or_null("object_fridge_floor_footprint"))
-	assert_not_null(layer.get_node_or_null("object_fridge_collision_shape"), "Scene Body must draw its own red geometry.")
-	assert_not_null(layer.get_node_or_null("object_fridge_collision_outline"))
+	assert_null(layer.get_node_or_null("object_fridge_collision_shape"), "Equivalent Body occupancy/collision must not duplicate a red face.")
+	assert_not_null(layer.get_node_or_null("object_fridge_composite_collision_outline"))
+	assert_eq(layer.get_node("object_fridge_floor_footprint").polygon, PackedVector2Array(shell._object_collision_polygon_points(objects["fridge"])))
+	assert_true(shell._object_floor_collision_are_equivalent(objects["navi_link"]))
+	assert_eq(layer.get_node("object_navi_link_floor_footprint").polygon.size(), 5)
 	assert_false(shell._object_floor_collision_are_equivalent(objects["bed"]))
 	assert_not_null(layer.get_node_or_null("object_bed_collision_shape"), "Actually different geometry keeps a separate red face.")
 
@@ -485,13 +598,16 @@ func test_invalid_or_empty_interaction_data_draws_no_orange_geometry() -> void:
 		assert_false(_has_child_prefix(layer, "object_%s_interaction_" % id), "%s must not draw orange geometry." % id)
 	for id in DIRECT_INTERACTION_IDS:
 		assert_true(_has_child_prefix(layer, "object_%s_interaction_area" % id), "%s must draw its owned interaction area." % id)
+	for id in EDITABLE_NODE_IDS:
+		assert_true(_has_child_prefix(layer, "object_%s_use_point" % id), "%s must draw its independent UsePoint marker." % id)
+		assert_false(_has_child_prefix(layer, "object_%s_interaction_marker" % id), "%s must not use the polygon center as its UsePoint." % id)
 
 
 func test_interaction_priority_and_repeated_click_cycle_over_environment_overlap() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_P))
 	var objects := _dictionary_map(shell._object_footprints())
-	var fridge_interaction_center: Vector2 = shell._cell_center(Vector2i(5, 5)) + Vector2(objects["fridge"].interaction_offset_px)
+	var fridge_interaction_center: Vector2 = shell._polygon_bounds(shell._object_interaction_polygons(objects["fridge"])[0]).get_center()
 	var overlap_world_position: Vector2 = fridge_interaction_center + Vector2(-30.0, -20.0)
 	var candidates: Array[Dictionary] = shell._object_hit_candidates(overlap_world_position)
 	assert_eq(_candidate_ids(candidates).slice(0, 3), ["fridge", "microwave", "sink_counter"])
@@ -531,10 +647,11 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	shell._unhandled_input(_key_event(KEY_P))
 	shell.show_object_visual_bounds = true
 	assert_true(shell._object_legend_label.visible)
-	assert_true(shell._object_legend_label.text.contains("visual"))
 	assert_true(shell._object_legend_label.text.contains("collision"))
-	assert_true(shell._object_legend_label.text.contains("interaction"))
-	assert_true(shell._object_legend_label.text.contains("wall/parent anchor"))
+	assert_true(shell._object_legend_label.text.contains("AttachmentSocket"))
+	assert_true(shell._object_legend_label.text.contains("VisualPreview"))
+	assert_true(shell._object_legend_label.text.contains("InteractionPolygon"))
+	assert_true(shell._object_legend_label.text.contains("UsePoint"))
 	assert_true(shell._object_legend_label.text.contains("파랑 채움 + 빨강 테두리"))
 	assert_true(shell._object_legend_label.text.contains("후보 순환"))
 	assert_true(shell._object_legend_label.text.contains("전체 벽 반투명"))
@@ -559,9 +676,13 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(shell._debug_detail_label.text.contains("geometry source: SCENE_NODE"))
 	assert_true(shell._debug_detail_label.text.contains("EditableObjectNodes/Fridge"))
 	assert_true(shell._debug_detail_label.text.contains("UsePoint:"))
+	assert_true(shell._debug_detail_label.text.contains("visual source: VISUAL_PREVIEW"))
+	assert_true(shell._debug_detail_label.text.contains("floor source: BODY_POLYGON"))
+	assert_true(shell._debug_detail_label.text.contains("AttachmentSocket:"))
 	var board: Dictionary = _dictionary_map(shell._object_footprints())["power_module_board"]
 	shell._select_object_for_debug("power_module_board")
 	assert_true(shell._debug_detail_label.text.contains("work_back_wall"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_socket"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_wall_edge"))
 	assert_ne(shell._object_anchor_world_position(board), shell._cell_center(board.anchor_cell), "Wall anchor must resolve from its wall edge, not a fake floor center.")
 
@@ -711,6 +832,13 @@ func _assert_primary_mode(shell, mode: int, measurement: bool, objects: bool, na
 func _has_child_prefix(parent: Node, prefix: String) -> bool:
 	for child in parent.get_children():
 		if String(child.name).begins_with(prefix):
+			return true
+	return false
+
+
+func _strings_contain(values: Array, fragment: String) -> bool:
+	for value in values:
+		if String(value).contains(fragment):
 			return true
 	return false
 

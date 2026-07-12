@@ -8,6 +8,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment editable object common structure cleanup
+
+- Result: Replaced the stage-1 VisualAnchor/mixed-shape contract with `Visual/Sprite2D/VisualPreview`, named BodyPolygon and InteractionPolygon nodes, independent UsePoint, and AttachmentSocket for fridge, NAVI LINK, microwave, and Power Board. Microwave/Board remain non-blocking and have no BodyPolygon; no current object gained PlacementFootprint.
+- Ownership: Sprite texture or VisualPreview supplies visual bounds only, BodyPolygon supplies collision and floor occupancy, InteractionPolygon supplies click/use detection, and UsePoint supplies access position. Migrated Resource geometry remains disabled; the other fourteen objects remain Resource-backed.
+- MCP check: Godot MCP moved and added polygon vertices, separated InteractionArea and UsePoint edits, moved both parent anchors, verified the running P view, then restored and reloaded every test value. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` for user Inspector tuning.
+
 ### Apartment editable object Node migration stage 1
 
 - Result: Added a common editable object Scene/Script and migrated fridge, NAVI LINK, Power Board, and microwave to real ObjectRoot/VisualAnchor/Body/InteractionArea/UsePoint/Socket nodes in the candidate Scene. Fridge uses RectangleShape2D Body collision, NAVI uses editable CollisionPolygon2D, and all four use editable interaction polygons.
