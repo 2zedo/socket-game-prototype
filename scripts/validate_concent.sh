@@ -480,6 +480,8 @@ run_step "Git staged diff check" "git_staged_diff_check" git -C "$REPO_ROOT" dif
 run_step "Godot project parse" "godot_parse" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" --quit-after 2
 run_step "QuarterviewMain startup" "quarterview_main_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/QuarterviewMain.tscn --quit-after 2
 run_step "Apartment shell startup" "apartment_shell_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn --quit-after 2
+run_step "QuarterviewRoom startup" "quarterview_room_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/quarterview/QuarterviewRoom.tscn --quit-after 2
+run_step "Apartment playable startup" "apartment_playable_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/quarterview/QuarterviewApartmentPlayable.tscn --quit-after 2
 if [[ "$MODE" == "full" ]]; then
 	run_step "Unit test script parse" "unit_test_script_parse" --scan-godot-log check_godot_scripts "$GODOT_BIN" "$GODOT_PROJECT_ROOT" "$GODOT_PROJECT_ROOT/test/unit"
 	run_step "Full GUT" "gut_full" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" -s res://addons/gut/gut_cmdln.gd -gdir=res://test/unit -gexit

@@ -3,6 +3,9 @@ extends GutTest
 const CANDIDATE_ROOTS := [
 	"res://scenes/QuarterviewMain.tscn",
 	"res://scenes/quarterview/QuarterviewRoom.tscn",
+	"res://scenes/quarterview/QuarterviewApartmentEnvironment.tscn",
+	"res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn",
+	"res://scenes/quarterview/QuarterviewApartmentPlayable.tscn",
 	"res://scripts/QuarterviewMain.gd",
 	"res://scripts/quarterview/QuarterviewRoom.gd",
 	"res://scripts/quarterview/QuarterviewPlayer.gd",

@@ -61,12 +61,14 @@ Do not modify by default:
 | `godot/scenes/Apartment.tscn` | `godot/scripts/Apartment.gd` | protected top-view room |
 | `godot/scenes/QuarterviewMain.tscn` | `godot/scripts/QuarterviewMain.gd` | production candidate |
 | `godot/scenes/quarterview/QuarterviewRoom.tscn` | `godot/scripts/quarterview/QuarterviewRoom.gd` | candidate room |
-| `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn` | `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` | coordinate-based apartment shell candidate |
+| `godot/scenes/quarterview/QuarterviewApartmentEnvironment.tscn` | `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` | reusable apartment floor/wall/object authority |
+| `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn` | inherited Environment script | design/debug wrapper; M/P/N/V/F1 |
+| `godot/scenes/quarterview/QuarterviewApartmentPlayable.tscn` | Environment + external-provider `QuarterviewRoom` | playable apartment candidate |
 | `godot/scenes/Player.tscn` | `godot/scripts/Player.gd` | protected current Main player |
 
 ## Apartment Shell Candidate Editing
 
-`QuarterviewApartmentShellCandidate` is a coordinate-based validation scene, not production wiring.
+`QuarterviewApartmentEnvironment` is the single coordinate-based floor, wall, navigation, and object authority. `QuarterviewApartmentShellCandidate` inherits that PackedScene for design/debug review. `QuarterviewApartmentPlayable` inherits the same PackedScene and adds one `QuarterviewRoom` gameplay instance in opt-in external-environment mode. In that mode the legacy room builder stays empty and hover/click, click-to-move, UsePoint arrival, and interaction signals query the Environment's Scene-Node geometry and walkable-cell graph. Existing `QuarterviewRoom` behavior remains the default when the opt-in is off. These scenes are candidates, not production wiring.
 
 | Need | Where |
 | --- | --- |
@@ -159,6 +161,8 @@ When `P` is enabled, migrated objects draw BodyPolygon-derived occupancy in blue
 P hit testing is separate from the gameplay interaction inventory. All seven direct-interaction objects are selectable only through their explicit SelectionPolygon; being inside InteractionPolygon, BodyPolygon, or visual bounds alone does not select them. The other eleven Resource/fallback environment objects retain floor/collision, wall/parent anchor, then visual fallback ranking; ceiling and environment-only visuals remain last. Repeated clicks with the same candidate group cycle in ranked order. `DebugDetailPanel` additionally identifies `SCENE_NODE`, Inspector NodePath, visual/floor/selection sources, Selection size, BasePoint, TopPoint/height, UsePoint, AttachmentSocket, and door open/body state for migrated objects.
 
 `ApartmentEditableObject.tscn` and `ApartmentEditableObject.gd` define `ObjectRoot → Visual(Sprite2D, VisualPreview) / BasePoint / TopPoint / Body(BodyPolygon when blocking) / SelectionArea(SelectionPolygon) / InteractionArea(InteractionPolygon) / UsePoint / AttachmentSocket`. The script is `@tool`, derives visual bounds from Sprite2D or VisualPreview, exposes the 2.5D installation/height markers, keeps selection/use/access positions independent, supports but does not instantiate an optional PlacementFootprint, and reports configuration warnings for missing paths, invalid/scaled polygons, physics-enabled SelectionArea, missing required geometry, legacy CollisionShape2D, or reactivated Resource geometry. It also exposes the entrance door's minimal open state: opening disables its BodyPolygon, closing restores it, and a signal refreshes candidate navigation/debug state. At ROTATE_90, all seven direct-interaction objects resolve exact geometry from these Scene nodes. Their Resource and script fallback entries keep only logical metadata; the other eleven environment objects still use Resource/fallback geometry. Other map rotations retain inventory compatibility but do not claim Node-geometry visual support in this stage.
+
+Fridge now uses `res://assets/art/objects/fridge/fridge_dl_closed.png` through `EditableObjectNodes/Fridge/Visual/Sprite2D`. The source is imported losslessly without mipmaps, uses nearest CanvasItem filtering, and is region-scaled to the prior `90x146` visual bound with its bottom centered on BasePoint `(1124,303)`. Because the supplied RGB PNG has a baked neutral checkerboard rather than alpha, a Fridge-only CanvasItem shader removes that bright neutral background at runtime; Body, Selection, Interaction, and UsePoint geometry remains unchanged. Fridge root `z_index=303` matches BasePoint Y so `QuarterviewPlayer` moves behind it above that line and in front below it.
 
 Object placement display options:
 
@@ -297,6 +301,13 @@ Apartment shell candidate startup:
 
 ```bash
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path godot res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn --quit-after 2
+```
+
+Existing room and composed playable startup:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot res://scenes/quarterview/QuarterviewRoom.tscn --quit-after 2
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path godot res://scenes/quarterview/QuarterviewApartmentPlayable.tscn --quit-after 2
 ```
 
 Full GUT:

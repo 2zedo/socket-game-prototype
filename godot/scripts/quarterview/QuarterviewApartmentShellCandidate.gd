@@ -955,6 +955,76 @@ func _object_footprints() -> Array[Dictionary]:
 	return footprints
 
 
+# Public provider contract used by the playable wrapper. Geometry remains owned by
+# this environment; gameplay consumers receive snapshots and never rebuild room data.
+func playable_object_data(object_id: String) -> Dictionary:
+	for object_data in _object_footprints():
+		if String(object_data.get("id", "")) == object_id:
+			return object_data.duplicate(true)
+	return {}
+
+
+func playable_object_node(object_id: String) -> Node2D:
+	return _editable_object_node_by_id(object_id)
+
+
+func playable_direct_object_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for object_data in _object_footprints():
+		if String(object_data.get("category", "")) == "interaction" and bool(object_data.get("node_backed", false)):
+			ids.append(String(object_data.get("id", "")))
+	return ids
+
+
+func playable_resolve_walk_target(world_position: Vector2) -> Vector2:
+	var cell := _playable_nearest_walkable_cell(world_position)
+	if cell == Vector2i(-1, -1):
+		return world_position
+	var source_cell := _screen_to_grid_point(world_position)
+	var rounded_source := Vector2i(floori(source_cell.x), floori(source_cell.y))
+	return world_position if rounded_source == cell else _cell_center(cell)
+
+
+func playable_find_path(from_world: Vector2, to_world: Vector2) -> PackedVector2Array:
+	var start_cell := _playable_nearest_walkable_cell(from_world)
+	var target_cell := _playable_nearest_walkable_cell(to_world)
+	if start_cell == Vector2i(-1, -1) or target_cell == Vector2i(-1, -1):
+		return PackedVector2Array()
+	var allowed_cells := _walkable_floor_cells()
+	var cell_path := _measurement_cell_path(start_cell, target_cell, allowed_cells)
+	if cell_path.is_empty():
+		return PackedVector2Array()
+	var world_path := PackedVector2Array()
+	for cell in cell_path:
+		world_path.append(_cell_center(cell))
+	var resolved_target := playable_resolve_walk_target(to_world)
+	if world_path.is_empty() or not world_path[world_path.size() - 1].is_equal_approx(resolved_target):
+		world_path.append(resolved_target)
+	else:
+		world_path[world_path.size() - 1] = resolved_target
+	return world_path
+
+
+func playable_is_walkable_world_point(world_position: Vector2) -> bool:
+	var grid_point := _screen_to_grid_point(world_position)
+	return _is_walkable_cell(Vector2i(floori(grid_point.x), floori(grid_point.y)))
+
+
+func _playable_nearest_walkable_cell(world_position: Vector2) -> Vector2i:
+	var grid_point := _screen_to_grid_point(world_position)
+	var direct_cell := Vector2i(floori(grid_point.x), floori(grid_point.y))
+	if _is_walkable_cell(direct_cell):
+		return direct_cell
+	var nearest := Vector2i(-1, -1)
+	var nearest_distance := INF
+	for cell in _walkable_floor_cells():
+		var distance := _cell_center(cell).distance_squared_to(world_position)
+		if distance < nearest_distance:
+			nearest = cell
+			nearest_distance = distance
+	return nearest
+
+
 func _editable_object_node_authority_active() -> bool:
 	return map_rotation == MapRotation.ROTATE_90
 

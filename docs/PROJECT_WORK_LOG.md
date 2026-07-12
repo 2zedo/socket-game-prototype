@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Reusable apartment environment and playable composition
+
+- Scene ownership: Extracted the apartment floor, walls, navigation, camera, and 18-object authority into `QuarterviewApartmentEnvironment`. The existing ShellCandidate inherits it for design/debug; the new ApartmentPlayable inherits the same Environment and adds one opt-in external-provider `QuarterviewRoom`. Legacy `QuarterviewRoom` remains unchanged by default and does not build its old shell/placeholders/blockers inside the Playable composition.
+- Gameplay: External mode maps the seven direct interactions to Environment Scene nodes, reads SelectionPolygon/InteractionPolygon/UsePoint/Body data, and uses the Environment walkable-cell/edge graph for click movement and arrival focus.
+- Fridge art: Connected `fridge_dl_closed.png` to `EditableObjectNodes/Fridge/Visual/Sprite2D` with nearest filtering, lossless/no-mipmap import, a cropped region, and a Sprite-only checker cleanup shader. The Sprite retains the prior 90x146 bounds and BasePoint bottom alignment; Body, Selection, Interaction, and UsePoint values are unchanged. Fridge Y order uses BasePoint Y=303.
+- MCP check: Opened and ran both design and Playable scenes, verified P+V geometry alignment, Fridge hover and click movement to UsePoint, player-behind/player-in-front ordering, a single Environment authority, empty legacy gameplay render layers, and zero new game errors. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` before scene replacement or production wiring.
+
 ### Godot RichText crash isolation and strict test parsing
 
 - Crash investigation: Read the macOS native report and reproduced the Apartment A-H P/V/F1/hover/click stress sequence through Godot MCP. Candidate P detail/F1 are plain Labels, not RichTextLabels; the crash did not recur, and the report cannot distinguish godot-ai editor UI from an engine text-drawing defect. Classification: `UNRESOLVED`; no speculative game/addon RichText change was made.

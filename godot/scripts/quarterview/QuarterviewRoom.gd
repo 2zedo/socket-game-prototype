@@ -65,6 +65,15 @@ const INTERACTION_PRIORITY_BY_KEY := {
 	"small_table": 90,
 }
 const CLICK_ONLY_INTERACTABLE_KEYS := ["desk", "door"]
+const EXTERNAL_ENVIRONMENT_IDS_BY_LEGACY_KEY := {
+	"door": "entrance_door",
+	"bed": "bed",
+	"fridge": "fridge",
+	"microwave": "microwave",
+	"comm": "navi_link",
+	"power": "power_module_board",
+	"node17": "node_17",
+}
 
 const OBJECT_RESOURCE_PATHS := [
 	"res://resources/rooms/quarterview/objects/door.tres",
@@ -356,6 +365,10 @@ const VISUAL_BLOCKS := [
 ]
 
 var object_definitions: Array = []
+@export_group("External Apartment Environment")
+@export var external_environment_mode := false
+@export var external_environment_path: NodePath
+var external_environment: Node
 var nearest_key := ""
 var debug_enabled := false
 var footprint_tuning_enabled := false
@@ -418,18 +431,26 @@ var floor_points := PackedVector2Array([
 
 
 func _ready() -> void:
+	if external_environment_mode:
+		external_environment = get_node_or_null(external_environment_path)
+		if external_environment == null:
+			push_error("QuarterviewRoom external environment path is missing: %s" % external_environment_path)
 	_configure_layers()
-	_configure_background_art()
-	_build_room_shell()
-	_build_visual_details()
+	if not external_environment_mode:
+		_configure_background_art()
+		_build_room_shell()
+		_build_visual_details()
 	_build_prompt()
-	_build_reference_notice()
+	if not external_environment_mode:
+		_build_reference_notice()
 	_load_object_definitions()
-	_build_object_placeholders()
-	_build_wall_blockers()
+	if not external_environment_mode:
+		_build_object_placeholders()
+		_build_wall_blockers()
 	_rebuild_path_grid()
-	_build_object_debug_guides()
-	_build_path_debug()
+	if not external_environment_mode:
+		_build_object_debug_guides()
+		_build_path_debug()
 	_set_blockout_layers_visible(false)
 	_set_debug_enabled(false)
 
@@ -757,6 +778,8 @@ func _load_object_definitions() -> void:
 		if not definition.has_method("is_valid_definition") or not definition.is_valid_definition():
 			push_warning("QuarterviewRoom skipped invalid object definition: %s" % path)
 			continue
+		if external_environment_mode and not EXTERNAL_ENVIRONMENT_IDS_BY_LEGACY_KEY.has(String(definition.key)):
+			continue
 		object_definitions.append(definition)
 
 
@@ -1021,7 +1044,8 @@ func _update_nearest_interactable() -> void:
 		return
 
 	nearest_key = best_key
-	nearest_interactable_changed.emit(nearest_key, best_display_name)
+	var public_key := String(EXTERNAL_ENVIRONMENT_IDS_BY_LEGACY_KEY.get(nearest_key, nearest_key)) if external_environment_mode else nearest_key
+	nearest_interactable_changed.emit(public_key, best_display_name)
 	_update_prompt()
 	_update_object_debug_visibility()
 
@@ -1221,7 +1245,8 @@ func _update_hover_affordance() -> void:
 func _set_hover_target(definition: Resource) -> void:
 	hovered_key = String(definition.key)
 	_update_hover_visual(definition)
-	hover_interactable_changed.emit(hovered_key, String(definition.display_name), _make_hover_payload(definition))
+	var public_key := _external_object_id(definition) if external_environment_mode else hovered_key
+	hover_interactable_changed.emit(public_key, String(definition.display_name), _make_hover_payload(definition))
 	_update_prompt()
 	_update_object_debug_visibility()
 
@@ -1303,7 +1328,7 @@ func _update_hover_prompt_position(mouse_position: Vector2) -> void:
 
 func _make_hover_payload(definition: Resource) -> Dictionary:
 	return {
-		"key": definition.key,
+		"key": _external_object_id(definition) if external_environment_mode else definition.key,
 		"display_name": definition.display_name,
 		"hover_label": _get_object_hover_label(definition),
 		"role": definition.role,
@@ -1329,8 +1354,9 @@ func _request_nearest_interaction() -> void:
 
 
 func _emit_interaction_request(definition: Resource, action_key: String) -> void:
+	var public_key := _external_object_id(definition) if external_environment_mode else String(definition.key)
 	var payload := {
-		"key": definition.key,
+		"key": public_key,
 		"display_name": definition.display_name,
 		"role": definition.role,
 		"zone": definition.zone,
@@ -1342,7 +1368,7 @@ func _emit_interaction_request(definition: Resource, action_key: String) -> void
 		"approach_position": _get_object_approach_position(definition),
 		"click_area": _get_object_click_rect(definition),
 	}
-	interaction_requested.emit(definition.key, action_key, payload)
+	interaction_requested.emit(public_key, action_key, payload)
 
 
 func _get_definition(object_key: String) -> Resource:
@@ -1488,6 +1514,9 @@ func _move_player_to(target: Vector2) -> bool:
 
 
 func _rebuild_path_grid() -> void:
+	if external_environment_mode:
+		path_grid_size = Vector2i.ZERO
+		return
 	path_grid_size = Vector2i(
 		int(ceil(WALK_TARGET_BOUNDS.size.x / PATH_GRID_CELL_SIZE)),
 		int(ceil(WALK_TARGET_BOUNDS.size.y / PATH_GRID_CELL_SIZE))
@@ -1511,6 +1540,14 @@ func _find_path_to_target(target: Vector2) -> PackedVector2Array:
 	# Candidate-only navigation: a coarse grid is enough to test click movement around
 	# room blockers before the final room art and tuned navigation data exist.
 	path_failure_reason = ""
+	if external_environment_mode:
+		if external_environment == null or not external_environment.has_method("playable_find_path"):
+			path_failure_reason = "No path: external environment provider missing"
+			return PackedVector2Array()
+		var external_path := PackedVector2Array(external_environment.call("playable_find_path", player.global_position, target))
+		if external_path.is_empty():
+			path_failure_reason = "No path: external environment rejected target"
+		return external_path
 	if path_grid_size == Vector2i.ZERO:
 		path_failure_reason = "No path: grid not ready"
 		return PackedVector2Array()
@@ -1750,7 +1787,7 @@ func _update_pending_focus() -> void:
 		return
 
 	nearest_key = definition.key
-	nearest_interactable_changed.emit(definition.key, definition.display_name)
+	nearest_interactable_changed.emit(_external_object_id(definition) if external_environment_mode else definition.key, definition.display_name)
 	_update_prompt()
 	_emit_interaction_request(definition, ACTION_FOCUS)
 
@@ -1762,6 +1799,8 @@ func _get_definition_at_position(click_position: Vector2) -> Resource:
 
 	for definition in object_definitions:
 		if not _is_click_candidate(definition):
+			continue
+		if external_environment_mode and not _external_selection_contains(definition, click_position):
 			continue
 
 		var distance := click_position.distance_to(_get_object_interaction_position(definition))
@@ -1790,6 +1829,8 @@ func _get_hover_definition_at_position(mouse_position: Vector2) -> Resource:
 	for definition in object_definitions:
 		if not _is_click_candidate(definition):
 			continue
+		if external_environment_mode and not _external_selection_contains(definition, mouse_position):
+			continue
 
 		var distance := mouse_position.distance_to(_get_object_interaction_position(definition))
 		var object_rect := _get_object_click_rect(definition)
@@ -1810,12 +1851,19 @@ func _get_hover_definition_at_position(mouse_position: Vector2) -> Resource:
 
 
 func _get_object_approach_position(definition: Resource) -> Vector2:
+	var external_data := _external_object_data(definition)
+	if not external_data.is_empty():
+		var use_points: Array = external_data.get("use_points_world", [])
+		if not use_points.is_empty():
+			return _resolve_walkable_target(Vector2(use_points[0]))
 	var layout := _get_object_layout(definition)
 	var value: Vector2 = layout.get("approach_position", _get_object_interaction_position(definition))
 	return _resolve_walkable_target(value)
 
 
 func _resolve_walkable_target(target: Vector2) -> Vector2:
+	if external_environment_mode and external_environment != null and external_environment.has_method("playable_resolve_walk_target"):
+		return Vector2(external_environment.call("playable_resolve_walk_target", target))
 	var clamped_target := _clamp_walk_target(target)
 	if path_grid_size == Vector2i.ZERO or not _is_world_point_blocked_for_path(clamped_target):
 		return clamped_target
@@ -1827,6 +1875,8 @@ func _resolve_walkable_target(target: Vector2) -> Vector2:
 
 
 func _clamp_walk_target(target: Vector2) -> Vector2:
+	if external_environment_mode and external_environment != null and external_environment.has_method("playable_resolve_walk_target"):
+		return Vector2(external_environment.call("playable_resolve_walk_target", target))
 	return Vector2(
 		clampf(
 			target.x,
@@ -1899,13 +1949,51 @@ func _get_object_layout(definition: Resource) -> Dictionary:
 	return OBJECT_LAYOUT.get(String(definition.key), {})
 
 
+func _external_object_id(definition: Resource) -> String:
+	return String(EXTERNAL_ENVIRONMENT_IDS_BY_LEGACY_KEY.get(String(definition.key), String(definition.key)))
+
+
+func _external_object_data(definition: Resource) -> Dictionary:
+	if not external_environment_mode or external_environment == null or not external_environment.has_method("playable_object_data"):
+		return {}
+	return external_environment.call("playable_object_data", _external_object_id(definition))
+
+
+func _external_polygon_bounds(polygons: Array) -> Rect2:
+	var bounds := Rect2()
+	var has_bounds := false
+	for value in polygons:
+		var polygon := PackedVector2Array(value)
+		if polygon.size() < 3:
+			continue
+		var polygon_bounds := _get_polygon_bounds(polygon)
+		bounds = polygon_bounds if not has_bounds else bounds.merge(polygon_bounds)
+		has_bounds = true
+	return bounds
+
+
+func _external_selection_contains(definition: Resource, world_position: Vector2) -> bool:
+	var data := _external_object_data(definition)
+	for value in data.get("selection_polygons", []):
+		var polygon := PackedVector2Array(value)
+		if polygon.size() >= 3 and Geometry2D.is_point_in_polygon(world_position, polygon):
+			return true
+	return false
+
+
 func _get_object_position(definition: Resource) -> Vector2:
+	var external_data := _external_object_data(definition)
+	if not external_data.is_empty():
+		return Vector2(external_data.get("visual_center_world", Vector2.ZERO))
 	var layout := _get_object_layout(definition)
 	var value: Vector2 = layout.get("position", definition.position)
 	return value
 
 
 func _get_object_size(definition: Resource) -> Vector2:
+	var external_data := _external_object_data(definition)
+	if not external_data.is_empty():
+		return Vector2(external_data.get("visual_size_px", Vector2.ZERO))
 	var layout := _get_object_layout(definition)
 	var value: Vector2 = layout.get("size", definition.size)
 	return value
@@ -1960,10 +2048,16 @@ func _get_object_blocker_rect(definition: Resource) -> Rect2:
 
 
 func _get_object_blocker_footprint(definition: Resource) -> PackedVector2Array:
+	var external_data := _external_object_data(definition)
+	if not external_data.is_empty():
+		var polygons: Array = external_data.get("collision_polygons", [])
+		return PackedVector2Array(polygons[0]) if not polygons.is_empty() else PackedVector2Array()
 	return _get_layout_footprint(_get_object_layout(definition))
 
 
 func _is_object_footprint_enabled_for_path(definition: Resource) -> bool:
+	if not _external_object_data(definition).is_empty():
+		return true
 	return _is_layout_footprint_enabled_for_path(_get_object_layout(definition))
 
 
@@ -1981,6 +2075,9 @@ func _get_layout_footprint(layout: Dictionary) -> PackedVector2Array:
 
 
 func _get_object_click_rect(definition: Resource) -> Rect2:
+	var external_data := _external_object_data(definition)
+	if not external_data.is_empty():
+		return _external_polygon_bounds(external_data.get("selection_polygons", []))
 	var layout := _get_object_layout(definition)
 	if layout.has("click_rect"):
 		var click_rect: Rect2 = layout["click_rect"]
@@ -1993,12 +2090,20 @@ func _get_object_click_rect(definition: Resource) -> Rect2:
 
 
 func _get_object_interaction_position(definition: Resource) -> Vector2:
+	var external_data := _external_object_data(definition)
+	if not external_data.is_empty():
+		var bounds := _external_polygon_bounds(external_data.get("interaction_polygons", []))
+		return bounds.get_center() if bounds.has_area() else _get_object_position(definition)
 	var layout := _get_object_layout(definition)
 	var value: Vector2 = layout.get("interaction_position", definition.get_interaction_position())
 	return value
 
 
 func _get_object_interaction_radius(definition: Resource) -> float:
+	var external_data := _external_object_data(definition)
+	if not external_data.is_empty():
+		var bounds := _external_polygon_bounds(external_data.get("interaction_polygons", []))
+		return maxf(bounds.size.x, bounds.size.y) * 0.5 if bounds.has_area() else 0.0
 	var layout := _get_object_layout(definition)
 	return float(layout.get("interaction_radius", definition.interaction_radius))
 

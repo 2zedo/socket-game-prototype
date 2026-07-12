@@ -137,7 +137,7 @@ Fallback list location:
 
 Loading order:
 
-1. `object_footprint_set.objects` from the Resource assigned on `QuarterviewApartmentShellCandidate`
+1. `object_footprint_set.objects` from the Resource assigned on reusable `QuarterviewApartmentEnvironment`
 2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
 3. additive `custom_object_footprints` entries from the Inspector
 
@@ -149,7 +149,7 @@ Current rotated-floorplan placement candidate:
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `entrance_door` | entrance | Scene `EntranceWallParentAnchor/EntranceDoor` | Inspector | `Visual/VisualPreview` | closed-only `Body/BodyPolygon`; no floor occupancy | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
 | `bed` | living | Scene `EditableObjectNodes/Bed` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
-| `fridge` | living | Scene `ObjectRoot` | Inspector | `Visual/VisualPreview` until Sprite texture exists | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
+| `fridge` | living | Scene `EditableObjectNodes/Fridge` | Inspector | `Visual/Sprite2D` (`fridge_dl_closed.png`, 90x146 bound, BasePoint-aligned) | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `microwave` | living | `SinkCounterParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `PARENT_OBJECT`: `sink_counter` / interaction |
 | `navi_link` | work/power | Scene `ObjectRoot` | Inspector | `Visual/VisualPreview` until Sprite texture exists | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `power_module_board` | work/power | `WorkBackWallParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `work_back_wall` / interaction |

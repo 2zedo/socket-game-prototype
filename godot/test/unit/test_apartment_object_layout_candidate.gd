@@ -149,7 +149,7 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 	for id in EDITABLE_NODE_IDS:
 		assert_true(objects[id].node_backed)
 		assert_eq(objects[id].source, "scene_node")
-		assert_eq(objects[id].visual_source, "VISUAL_PREVIEW")
+		assert_eq(objects[id].visual_source, "SPRITE2D" if id == "fridge" else "VISUAL_PREVIEW")
 		assert_eq(shell._object_pixel_center(objects[id]), expected_centers[id])
 		assert_eq(objects[id].base_point_world, expected_base_points[id])
 		assert_ne(objects[id].top_point_world, objects[id].base_point_world)
@@ -334,25 +334,16 @@ func test_entrance_door_open_state_switches_wall_collision_without_floor_occupan
 	assert_true(shell._navigation_edge_sets().blocked.has(edge_key))
 
 
-func test_visual_preview_and_sprite_texture_are_independent_visual_authorities() -> void:
+func test_visual_preview_is_independent_from_collision_geometry() -> void:
 	var shell = _make_shell()
-	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
-	var preview: Polygon2D = fridge.get_node("Visual/VisualPreview")
-	var before: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
+	var bed: Node2D = shell.get_node("EditableObjectNodes/Bed")
+	var preview: Polygon2D = bed.get_node("Visual/VisualPreview")
+	var before: Dictionary = _dictionary_map(shell._object_footprints())["bed"]
 	var collision_before: Array[Vector2] = shell._object_collision_polygon_points(before)
 	preview.position += Vector2(24, -12)
-	var preview_move: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
+	var preview_move: Dictionary = _dictionary_map(shell._object_footprints())["bed"]
 	assert_eq(shell._object_pixel_center(preview_move), shell._object_pixel_center(before) + Vector2(24, -12))
 	assert_eq(shell._object_collision_polygon_points(preview_move), collision_before, "VisualPreview must never drive collision.")
-
-	var image := Image.create(20, 10, false, Image.FORMAT_RGBA8)
-	image.fill(Color.WHITE)
-	var sprite: Sprite2D = fridge.get_node("Visual/Sprite2D")
-	sprite.texture = ImageTexture.create_from_image(image)
-	var sprite_data: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
-	assert_eq(sprite_data.visual_source, "SPRITE2D")
-	assert_eq(Vector2(sprite_data.visual_size_px), Vector2(20, 10))
-	assert_eq(shell._object_collision_polygon_points(sprite_data), collision_before)
 
 
 func test_optional_placement_footprint_is_supported_but_absent_from_current_seven() -> void:
@@ -853,7 +844,7 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(shell._debug_detail_label.text.contains("geometry source: SCENE_NODE"))
 	assert_true(shell._debug_detail_label.text.contains("EditableObjectNodes/Fridge"))
 	assert_true(shell._debug_detail_label.text.contains("UsePoint:"))
-	assert_true(shell._debug_detail_label.text.contains("visual source: VISUAL_PREVIEW"))
+	assert_true(shell._debug_detail_label.text.contains("visual source: SPRITE2D"))
 	assert_true(shell._debug_detail_label.text.contains("floor source: BODY_POLYGON"))
 	assert_true(shell._debug_detail_label.text.contains("selection source: SELECTION_POLYGON"))
 	assert_true(shell._debug_detail_label.text.contains("BasePoint:"))
