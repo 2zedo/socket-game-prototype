@@ -8,6 +8,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Godot RichText crash isolation and strict test parsing
+
+- Crash investigation: Read the macOS native report and reproduced the Apartment A-H P/V/F1/hover/click stress sequence through Godot MCP. Candidate P detail/F1 are plain Labels, not RichTextLabels; the crash did not recur, and the report cannot distinguish godot-ai editor UI from an engine text-drawing defect. Classification: `UNRESOLVED`; no speculative game/addon RichText change was made.
+- Parse fix: Replaced Variant inference from `Array.pop_front()` with an explicit String cast in the candidate dependency test. GUT had still passed because it disables warnings while loading tests, so the validator now runs a strict `--check-only` load for every unit-test script before Full GUT.
+- Boundary: No object placement, Polygon, interaction structure, production file, project setting, addon version, or generated metadata is changed. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` if the native crash recurs.
+
 ### Apartment direct-interaction Node migration stage 2
 
 - Result: Migrated bed, NODE-17, and entrance door into the existing 2.5D editable Scene-node contract. All seven direct-interaction objects now use `SCENE_NODE` geometry; the other eleven environment objects remain Resource-backed.

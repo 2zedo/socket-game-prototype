@@ -98,7 +98,7 @@ func _collect_dependency_graph(root_paths: Array) -> Array[String]:
 		pending.append(String(root_path))
 
 	while not pending.is_empty():
-		var path := pending.pop_front()
+		var path: String = String(pending.pop_front())
 		if visited.has(path):
 			continue
 		visited[path] = true

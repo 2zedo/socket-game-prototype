@@ -24,8 +24,8 @@ Usage: scripts/validate_concent.sh [--full|--quick] [--godot-bin PATH] [--keep-l
 
 Runs CONCENT validation from any working directory without Git mutation commands.
 
-  --full              Run Git checks, Godot parse, both candidate scene startups, and Full GUT. (default)
-  --quick             Run Git checks, Godot parse, and both candidate scene startups; skip Full GUT.
+  --full              Run Git checks, Godot/candidate parse, strict unit-test script parse, and Full GUT. (default)
+  --quick             Run Git checks, Godot parse, and candidate startups; skip unit-test parsing and Full GUT.
   --godot-bin PATH    Use this Godot executable. Takes precedence over GODOT_BIN and PATH lookup.
   --keep-logs         Preserve the temporary log directory even when validation succeeds.
   --help              Show this help text.
@@ -229,6 +229,35 @@ run_step() {
 skip_step() {
 	record_step "$1" "SKIP" "" "$2"
 	printf 'SKIP: %s (%s)\n' "$1" "$2"
+}
+
+check_godot_scripts() {
+	local godot_bin="$1"
+	local project_root="$2"
+	local scripts_root="$3"
+	local script_file
+	local resource_path
+	local command_rc
+	local final_rc=0
+	local found=0
+
+	while IFS= read -r script_file; do
+		[[ -n "$script_file" ]] || continue
+		found=1
+		resource_path="res://${script_file#"$project_root/"}"
+		printf '\n[check-only] %s\n' "$resource_path"
+		command_rc=0
+		"$godot_bin" --headless --path "$project_root" --script "$resource_path" --check-only || command_rc=$?
+		if (( command_rc != 0 )) && (( final_rc == 0 )); then
+			final_rc="$command_rc"
+		fi
+	done < <(find "$scripts_root" -type f -name '*.gd' -print | LC_ALL=C sort)
+
+	if (( found == 0 )); then
+		printf 'No GDScript files found under: %s\n' "$scripts_root" >&2
+		return 1
+	fi
+	return "$final_rc"
 }
 
 find_path_executable() {
@@ -452,8 +481,10 @@ run_step "Godot project parse" "godot_parse" --scan-godot-log "$GODOT_BIN" --hea
 run_step "QuarterviewMain startup" "quarterview_main_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/QuarterviewMain.tscn --quit-after 2
 run_step "Apartment shell startup" "apartment_shell_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn --quit-after 2
 if [[ "$MODE" == "full" ]]; then
+	run_step "Unit test script parse" "unit_test_script_parse" --scan-godot-log check_godot_scripts "$GODOT_BIN" "$GODOT_PROJECT_ROOT" "$GODOT_PROJECT_ROOT/test/unit"
 	run_step "Full GUT" "gut_full" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" -s res://addons/gut/gut_cmdln.gd -gdir=res://test/unit -gexit
 else
+	skip_step "Unit test script parse" "quick mode"
 	skip_step "Full GUT" "quick mode"
 fi
 run_step "Final Git status" "git_status_final" git -C "$REPO_ROOT" status --short

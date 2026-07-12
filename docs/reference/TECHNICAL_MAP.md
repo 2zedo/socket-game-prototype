@@ -307,7 +307,7 @@ Full GUT:
 
 ### Unified Validation Script
 
-Run `scripts/validate_concent.sh` from any directory to execute the current Git checks, Godot project parse, QuarterviewMain and apartment-shell startup checks, and the Full GUT runner without issuing Git mutation commands.
+Run `scripts/validate_concent.sh` from any directory to execute the current Git checks, Godot project parse, QuarterviewMain and apartment-shell startup checks, strict unit-test script parsing, and the Full GUT runner without issuing Git mutation commands.
 
 Codex should use the repository Skill at `.agents/skills/concent-godot-validation/SKILL.md` to choose `--full` or `--quick`; invoke it explicitly as `$concent-godot-validation` when needed.
 
@@ -336,11 +336,12 @@ GODOT_BIN=/Applications/Godot.app/Contents/MacOS/Godot scripts/validate_concent.
 scripts/validate_concent.sh --godot-bin /Applications/Godot.app/Contents/MacOS/Godot --keep-logs
 ```
 
-- `--full` is the default and includes Full GUT; `--quick` skips only Full GUT.
+- `--full` is the default and strictly parses every `godot/test/unit/*.gd` before Full GUT. `--quick` skips both test-script parsing and Full GUT.
 - Godot lookup order is `--godot-bin`, `GODOT_BIN`, `godot`/`godot4` on `PATH`, then the macOS app path above.
 - Logs are created outside the repository and are removed after a successful run unless `--keep-logs` is supplied. Failed runs preserve their logs.
 - The script only reports Git status; it never stages, commits, pushes, cleans, restores, or deletes repository files. Godot may still generate its normal `.import`, `.uid`, or `.godot` metadata, which the final Git-status comparison reports.
 - Every Godot validation step fails when its log contains `Parse Error` or `Failed to load script`, even if Godot exits with status 0. This closes the engine case where a script reload failure is logged without a failing process exit.
+- The separate unit-test parse step is required because GUT 9.5 intentionally disables GDScript warnings while loading test scripts. A warning configured as an error can therefore be skipped by discovery and still let Full GUT pass; `--script <test> --check-only` keeps the project warning policy active and exposes that failure.
 - The known Phone PNG direct-load export warning may appear during QuarterviewMain startup and remains warning-only; it does not match the fatal script-load markers.
 
 Targeted GUT examples:
