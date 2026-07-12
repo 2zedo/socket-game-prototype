@@ -20,6 +20,7 @@ const NON_INTERACTION_IDS := [
 	"bathroom_fixture", "sea_horizon_poster", "fluorescent_light",
 	"shoes_slippers", "cable_bundle", "wall_conduit", "power_housing",
 ]
+const EDITABLE_NODE_IDS := ["fridge", "navi_link", "power_module_board", "microwave"]
 const RETIRED_IDS := [
 	"phone", "air_conditioner", "desk", "bed_placeholder", "fridge_placeholder",
 	"microwave_placeholder", "sink_counter_placeholder", "small_table_placeholder",
@@ -57,23 +58,119 @@ func test_fallback_inventory_matches_resource_inventory_and_metadata() -> void:
 		assert_eq(fallback.interaction_cells, resource.interaction_cells, "%s interactions must match." % id)
 
 
-func test_rotated_floorplan_interaction_layout_values_are_preserved() -> void:
+func test_migrated_resources_keep_logic_without_duplicate_scene_geometry() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
 	_assert_pixels(objects["entrance_door"], Vector2i(0, 8), Vector2(0, -6), Vector2(150, 220), Vector2.ZERO, Vector2.ZERO, Vector2(96, 56), Vector2(50, 0))
 	_assert_pixels(objects["bed"], Vector2i(9, 6), Vector2(10, -6), Vector2(260, 180), Vector2(180, 90), Vector2(0, 30), Vector2(120, 64), Vector2.ZERO)
-	_assert_pixels(objects["fridge"], Vector2i(5, 4), Vector2(-8, -12), Vector2(120, 190), Vector2(70, 70), Vector2(0, 38), Vector2(80, 56), Vector2.ZERO)
-	_assert_pixels(objects["microwave"], Vector2i(3, 4), Vector2(0, -60), Vector2(96, 72), Vector2.ZERO, Vector2.ZERO, Vector2(96, 56), Vector2.ZERO)
-	_assert_pixels(objects["navi_link"], Vector2i(4, 1), Vector2(12, -16), Vector2(300, 240), Vector2(210, 120), Vector2(0, 45), Vector2(128, 80), Vector2.ZERO)
-	_assert_pixels(objects["power_module_board"], Vector2i(6, 0), Vector2(0, -30), Vector2(200, 180), Vector2.ZERO, Vector2.ZERO, Vector2(120, 72), Vector2(0, 92))
 	_assert_pixels(objects["node_17"], Vector2i(1, 2), Vector2(0, -8), Vector2(150, 140), Vector2(90, 60), Vector2(0, 28), Vector2(96, 64), Vector2.ZERO)
+	for id in EDITABLE_NODE_IDS:
+		_assert_pixels(objects[id], Vector2i.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+		assert_eq(objects[id].size_cells, Vector2i.ZERO, "%s Resource must not duplicate Scene occupancy size." % id)
+		assert_eq(objects[id].collision_shape_type, FOOTPRINT_CONFIG_SCRIPT.CollisionShapeType.NONE)
+		assert_eq(objects[id].interaction_cells, [], "%s Resource must not duplicate Scene use points." % id)
 	var expected_interactions := {
 		"entrance_door": [Vector2i(0, 8)], "bed": [Vector2i(8, 7)],
-		"fridge": [Vector2i(5, 5)], "microwave": [Vector2i(4, 5)],
-		"navi_link": [Vector2i(4, 3), Vector2i(5, 3)],
-		"power_module_board": [Vector2i(6, 1)], "node_17": [Vector2i(2, 2)],
+		"node_17": [Vector2i(2, 2)],
 	}
 	for id in expected_interactions:
 		assert_eq(objects[id].interaction_cells, expected_interactions[id], "%s interaction cells must remain canonical." % id)
+
+
+func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() -> void:
+	var shell = _make_shell()
+	var expected_paths := {
+		"fridge": "EditableObjectNodes/Fridge",
+		"navi_link": "EditableObjectNodes/NaviLink",
+		"microwave": "EditableObjectNodes/SinkCounterParentAnchor/Microwave",
+		"power_module_board": "EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard",
+	}
+	for id in expected_paths:
+		var object_node: Node = shell.get_node(expected_paths[id])
+		assert_eq(String(object_node.object_id), id)
+		assert_true(object_node.is_in_group("apartment_editable_object"))
+		assert_not_null(object_node.get_node_or_null("VisualAnchor"))
+		assert_not_null(object_node.get_node_or_null("Body"))
+		assert_not_null(object_node.get_node_or_null("InteractionArea"))
+		assert_not_null(object_node.get_node_or_null("UsePoint"))
+		assert_not_null(object_node.get_node_or_null("Socket"))
+		assert_eq(object_node.geometry_warnings(), [])
+		assert_eq(object_node.get_node("Body").collision_layer, 0)
+		assert_eq(object_node.get_node("Body").collision_mask, 0)
+		assert_eq(object_node.get_node("InteractionArea").collision_layer, 0)
+		assert_eq(object_node.get_node("InteractionArea").collision_mask, 0)
+
+	var fridge: Node = shell.get_node(expected_paths["fridge"])
+	assert_true(fridge.get_node("Body/CollisionShape2D").shape is RectangleShape2D)
+	var navi: Node = shell.get_node(expected_paths["navi_link"])
+	assert_true(navi.get_node("Body/CollisionPolygon2D") is CollisionPolygon2D)
+	for id in expected_paths:
+		assert_true(shell.get_node(expected_paths[id]).get_node("InteractionArea/CollisionPolygon2D") is CollisionPolygon2D)
+
+	var objects := _dictionary_map(shell._object_footprints())
+	var expected_centers := {
+		"fridge": Vector2(1116, 226), "navi_link": Vector2(1264, 94),
+		"microwave": Vector2(996, 114), "power_module_board": Vector2(1476, 96),
+	}
+	var expected_use_cells := {
+		"fridge": [Vector2i(5, 5)], "navi_link": [Vector2i(5, 3)],
+		"microwave": [Vector2i(4, 5)], "power_module_board": [Vector2i(7, 2)],
+	}
+	for id in EDITABLE_NODE_IDS:
+		assert_true(objects[id].node_backed)
+		assert_eq(objects[id].source, "scene_node")
+		assert_eq(shell._object_pixel_center(objects[id]), expected_centers[id])
+		assert_eq(shell._object_interaction_cells(objects[id]), expected_use_cells[id])
+		assert_eq(shell._object_interaction_polygons(objects[id]).size(), 1)
+	assert_eq(shell._object_collision_polygon_points(objects["fridge"]).size(), 4)
+	assert_eq(shell._object_collision_polygon_points(objects["navi_link"]).size(), 4)
+	assert_eq(shell._object_collision_polygon_points(objects["microwave"]), [])
+	assert_eq(shell._object_collision_polygon_points(objects["power_module_board"]), [])
+	for id in EXPECTED_IDS:
+		if EDITABLE_NODE_IDS.has(id):
+			continue
+		assert_false(bool(objects[id].get("node_backed", false)), "%s must keep the Resource fallback path." % id)
+		assert_eq(objects[id].source, "resource")
+
+
+func test_editable_body_use_point_and_parent_anchor_changes_drive_resolved_data() -> void:
+	var shell = _make_shell()
+	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
+	var fridge_use_point: Node2D = fridge.get_node("UsePoint")
+	var before := _dictionary_map(shell._object_footprints())
+	var before_interaction_point: Vector2 = shell._object_interaction_polygons(before["fridge"])[0][0]
+	var before_use_cell: Vector2i = shell._object_interaction_cells(before["fridge"])[0]
+	fridge_use_point.position += Vector2(64, 32)
+	fridge.call("_process", 0.0)
+	var after_use_move := _dictionary_map(shell._object_footprints())
+	assert_eq(shell._object_interaction_polygons(after_use_move["fridge"])[0][0], before_interaction_point + Vector2(64, 32))
+	assert_ne(shell._object_interaction_cells(after_use_move["fridge"])[0], before_use_cell)
+
+	var body_shape: CollisionShape2D = fridge.get_node("Body/CollisionShape2D")
+	var collision_before: Array[Vector2] = shell._object_collision_polygon_points(after_use_move["fridge"])
+	var blocked_before: Array[Vector2i] = shell._object_blocked_cells()
+	body_shape.position += Vector2(64, 32)
+	var after_body_move := _dictionary_map(shell._object_footprints())
+	assert_eq(shell._object_collision_polygon_points(after_body_move["fridge"])[0], collision_before[0] + Vector2(64, 32))
+	assert_ne(shell._object_blocked_cells(), blocked_before)
+
+	for anchor_path_and_id in [
+		["EditableObjectNodes/SinkCounterParentAnchor", "microwave"],
+		["EditableObjectNodes/WorkBackWallParentAnchor", "power_module_board"],
+	]:
+		var parent_anchor: Node2D = shell.get_node(anchor_path_and_id[0])
+		var object_before: Dictionary = _dictionary_map(shell._object_footprints())[anchor_path_and_id[1]]
+		var center_before: Vector2 = shell._object_pixel_center(object_before)
+		var interaction_before: Vector2 = shell._object_interaction_polygons(object_before)[0][0]
+		parent_anchor.position += Vector2(16, 8)
+		var object_after: Dictionary = _dictionary_map(shell._object_footprints())[anchor_path_and_id[1]]
+		assert_eq(shell._object_pixel_center(object_after), center_before + Vector2(16, 8))
+		assert_eq(shell._object_interaction_polygons(object_after)[0][0], interaction_before + Vector2(16, 8))
+
+	var board_socket: Node2D = shell.get_node("EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/Socket")
+	var housing_before: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
+	board_socket.position += Vector2(8, 4)
+	var housing_after: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
+	assert_eq(housing_after, housing_before + Vector2(8, 4), "Resource child attachments must follow the migrated parent Socket.")
 
 
 func test_rotated_floorplan_environment_layout_values_are_preserved() -> void:
@@ -126,7 +223,8 @@ func test_parent_and_wall_references_are_valid_and_acyclic() -> void:
 		assert_true(objects.has(parent_id), "%s parent must exist in the same inventory." % id)
 		assert_ne(parent_id, id, "%s must not parent itself." % id)
 	assert_eq(objects["power_housing"].wall_segment_id, objects["power_module_board"].wall_segment_id)
-	assert_eq(objects["power_housing"].wall_position_ratio, objects["power_module_board"].wall_position_ratio)
+	assert_true(String(objects["power_module_board"].node_path).contains("WorkBackWallParentAnchor"))
+	assert_true(String(objects["microwave"].node_path).contains("SinkCounterParentAnchor"))
 	var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 	var entrance_unit: Dictionary = shell._object_wall_attachment_unit(objects["entrance_door"], entrance_wall)
 	assert_eq(int(entrance_unit.get("offset", -1)), int(entrance_wall.get("doorway_offset", -2)))
@@ -181,15 +279,13 @@ func test_priority_interaction_cells_touch_their_object_or_parent_collision() ->
 		var object_data: Dictionary = objects[id]
 		var collision_polygon := PackedVector2Array(shell._object_collision_polygon_points(object_data))
 		assert_eq(collision_polygon.size(), 4, "%s must have collision geometry." % id)
-		for cell in shell._object_interaction_cells(object_data):
-			var interaction_center: Vector2 = shell._cell_center(cell) + Vector2(object_data.interaction_offset_px)
-			var interaction_polygon := PackedVector2Array(shell._pixel_rect_points(interaction_center, object_data.interaction_size_px))
+		for interaction_points in shell._object_interaction_polygons(object_data):
+			var interaction_polygon := PackedVector2Array(interaction_points)
 			assert_false(Geometry2D.intersect_polygons(interaction_polygon, collision_polygon).is_empty(), "%s interaction cell must touch its collision." % id)
 
 	var microwave: Dictionary = objects["microwave"]
 	var sink_collision_polygon := PackedVector2Array(shell._object_collision_polygon_points(objects["sink_counter"]))
-	var microwave_center: Vector2 = shell._cell_center(shell._object_interaction_cells(microwave)[0]) + Vector2(microwave.interaction_offset_px)
-	var microwave_polygon := PackedVector2Array(shell._pixel_rect_points(microwave_center, microwave.interaction_size_px))
+	var microwave_polygon := PackedVector2Array(shell._object_interaction_polygons(microwave)[0])
 	assert_false(Geometry2D.intersect_polygons(microwave_polygon, sink_collision_polygon).is_empty(), "Microwave interaction must touch its parent sink-counter collision.")
 
 
@@ -198,12 +294,8 @@ func test_rotated_floorplan_layout_invariants() -> void:
 	var expected_anchors := {
 		"entrance_door": Vector2i(0, 8),
 		"bed": Vector2i(9, 6),
-		"fridge": Vector2i(5, 4),
 		"sink_counter": Vector2i(3, 4),
-		"microwave": Vector2i(3, 4),
 		"dining_table": Vector2i(4, 7),
-		"navi_link": Vector2i(4, 1),
-		"power_module_board": Vector2i(6, 0),
 		"node_17": Vector2i(1, 2),
 		"bathroom_fixture": Vector2i(0, 4),
 	}
@@ -212,7 +304,6 @@ func test_rotated_floorplan_layout_invariants() -> void:
 	assert_eq(objects["microwave"].parent_object_id, &"sink_counter")
 	assert_eq(objects["entrance_door"].wall_segment_id, &"entrance_wall")
 	assert_eq(objects["power_module_board"].wall_segment_id, &"work_back_wall")
-	assert_eq(objects["power_module_board"].wall_position_ratio, 0.68)
 	assert_eq(objects["wall_conduit"].wall_segment_id, &"work_back_wall")
 	assert_eq(objects["wall_conduit"].wall_position_ratio, 0.31)
 	assert_eq(objects["sea_horizon_poster"].anchor_cell, Vector2i(11, 7))
@@ -264,7 +355,14 @@ func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
 		var entrance_to: Vector2i = entrance_edge["to_cell"]
 		var entrance_anchor: Vector2 = (shell._iso(entrance_from.x, entrance_from.y) + shell._iso(entrance_to.x, entrance_to.y)) * 0.5
 		assert_eq(shell._object_pixel_center(objects["entrance_door"]), entrance_anchor + Vector2(objects["entrance_door"].position_offset_px), "ROTATE_%d door must remain wall-edge anchored." % [rotation * 90])
-		assert_eq(shell._object_pixel_center(objects["microwave"]), shell._object_pixel_center(objects["sink_counter"]) + Vector2(objects["microwave"].position_offset_px), "ROTATE_%d microwave must follow sink_counter." % [rotation * 90])
+		for id in EDITABLE_NODE_IDS:
+			assert_eq(bool(objects[id].get("node_backed", false)), rotation == 1, "%s Scene geometry is authored only for ROTATE_90." % id)
+		if rotation == 1:
+			assert_eq(shell._object_pixel_center(objects["microwave"]), Vector2(996, 114))
+		else:
+			for id in EDITABLE_NODE_IDS:
+				assert_eq(shell._object_occupied_cells(objects[id]), [], "%s must not become a fallback blocker outside ROTATE_90." % id)
+				assert_false(shell._object_blocker_ids_for_cell(Vector2i.ZERO).has(id), "%s must not block fallback cell (0, 0)." % id)
 		var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 		assert_true(shell._object_wall_attachment_is_doorway(objects["entrance_door"], entrance_wall), "ROTATE_%d entrance door must stay on its doorway unit." % [rotation * 90])
 		assert_eq(shell._object_placement_warnings(), [], "ROTATE_%d should preserve placement invariants." % [rotation * 90])
@@ -366,15 +464,15 @@ func test_object_mode_draws_four_point_floor_and_collision_polygons() -> void:
 	assert_eq(shell._object_collision_polygon_points(objects["ups_unit"]).size(), 4, "UPS keeps its floor collision despite parent metadata.")
 
 
-func test_object_mode_composites_equivalent_floor_and_collision_without_duplicate_fill() -> void:
+func test_object_mode_draws_scene_node_collision_separately_from_grid_occupancy() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_P))
 	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
 	var objects := _dictionary_map(shell._object_footprints())
-	assert_true(shell._object_floor_collision_are_equivalent(objects["fridge"]))
+	assert_false(shell._object_floor_collision_are_equivalent(objects["fridge"]))
 	assert_not_null(layer.get_node_or_null("object_fridge_floor_footprint"))
-	assert_null(layer.get_node_or_null("object_fridge_collision_shape"), "Equivalent geometry must not draw a second red face.")
-	assert_not_null(layer.get_node_or_null("object_fridge_composite_collision_outline"))
+	assert_not_null(layer.get_node_or_null("object_fridge_collision_shape"), "Scene Body must draw its own red geometry.")
+	assert_not_null(layer.get_node_or_null("object_fridge_collision_outline"))
 	assert_false(shell._object_floor_collision_are_equivalent(objects["bed"]))
 	assert_not_null(layer.get_node_or_null("object_bed_collision_shape"), "Actually different geometry keeps a separate red face.")
 
@@ -457,6 +555,10 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	shell._update_object_hover_at(Vector2(-10000, -10000))
 	assert_eq(shell._hovered_object_id, "")
 	assert_eq(shell._selected_object_id, "bed", "Moving hover away must preserve click selection.")
+	shell._select_object_for_debug("fridge")
+	assert_true(shell._debug_detail_label.text.contains("geometry source: SCENE_NODE"))
+	assert_true(shell._debug_detail_label.text.contains("EditableObjectNodes/Fridge"))
+	assert_true(shell._debug_detail_label.text.contains("UsePoint:"))
 	var board: Dictionary = _dictionary_map(shell._object_footprints())["power_module_board"]
 	shell._select_object_for_debug("power_module_board")
 	assert_true(shell._debug_detail_label.text.contains("work_back_wall"))

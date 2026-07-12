@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/quarterview/ApartmentEditableObject.gd" id="1_editable_object"]
+
+[node name="ObjectRoot" type="Node2D" groups=["apartment_editable_object"]]
+script = ExtResource("1_editable_object")
+
+[node name="VisualAnchor" type="Marker2D" parent="."]
+
+[node name="Body" type="StaticBody2D" parent="."]
+collision_layer = 0
+collision_mask = 0
+
+[node name="InteractionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 0
+monitoring = false
+monitorable = false
+
+[node name="UsePoint" type="Marker2D" parent="."]
+
+[node name="Socket" type="Marker2D" parent="."]

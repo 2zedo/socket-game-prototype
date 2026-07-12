@@ -141,16 +141,18 @@ Loading order:
 2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
 3. additive `custom_object_footprints` entries from the Inspector
 
+Node migration stage 1 overrides that loading order for exact ROTATE_90 geometry on four objects. `fridge`, `navi_link`, `power_module_board`, and `microwave` use `EditableObjectNodes` in the candidate Scene for ObjectRoot/VisualAnchor position, Body geometry, InteractionArea geometry, UsePoint, and wall/parent sockets. Their Resource entries retain logical identity, category, room, interaction status, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The other fourteen objects continue to use the Resource/fallback footprint path.
+
 Current rotated-floorplan placement candidate:
 
 | Object ID | Room | Anchor | Offset px | Visual px | Collision px | Interaction | Anchor type / role |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `entrance_door` | entrance | `(0,8)` | `(0,-6)` | `150x220` | none | `(0,8)`, `96x56` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
 | `bed` | living | `(9,6)` | `(10,-6)` | `260x180` | `180x90` | `(8,7)`, `120x64` | `FLOOR` / interaction |
-| `fridge` | living | `(5,4)` | `(-8,-12)` | `120x190` | `70x70` | `(5,5)`, `80x56` | `FLOOR` / interaction |
-| `microwave` | living | `(3,4)` | `(0,-60)` | `96x72` | none | `(4,5)`, `96x56` | `PARENT_OBJECT`: `sink_counter` / interaction |
-| `navi_link` | work/power | `(4,1)` | `(12,-16)` | `300x240` | `210x120` | `(4,3)`, `(5,3)`, `128x80` | `FLOOR` / interaction |
-| `power_module_board` | work/power | `(6,0)` | `(0,-30)` | `200x180` | none | `(6,1)`, `120x72` | `WALL_EDGE`: `work_back_wall` / interaction |
+| `fridge` | living | Scene `ObjectRoot` | Inspector | Scene `VisualAnchor` | `Body/CollisionShape2D` | `InteractionArea/CollisionPolygon2D` + `UsePoint` | `FLOOR` / interaction |
+| `microwave` | living | `SinkCounterParentAnchor` child | Inspector | Scene `VisualAnchor` | none | `InteractionArea/CollisionPolygon2D` + `UsePoint` | `PARENT_OBJECT`: `sink_counter` / interaction |
+| `navi_link` | work/power | Scene `ObjectRoot` | Inspector | Scene `VisualAnchor` | `Body/CollisionPolygon2D` | `InteractionArea/CollisionPolygon2D` + `UsePoint` | `FLOOR` / interaction |
+| `power_module_board` | work/power | `WorkBackWallParentAnchor` child | Inspector | Scene `VisualAnchor` | none | `InteractionArea/CollisionPolygon2D` + `UsePoint` | `WALL_EDGE`: `work_back_wall` / interaction |
 | `node_17` | work/power | `(1,2)` | `(0,-8)` | `150x140` | `90x60` candidate | `(2,2)`, `96x64` | `FLOOR` / interaction |
 | `sink_counter` | living | `(3,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
 | `dining_table` | living | `(4,7)` | `(0,0)` | `170x120` | `130x70` | none | `FLOOR` / environment |
@@ -170,7 +172,7 @@ Attachment policy:
 - Wall, ceiling, and non-floor parent attachments do not remove navigation cells or participate in floor overlap checks.
 - `ups_unit` is floor-anchored and retains floor occupancy/collision; it has no spatial parent anchor.
 - `entrance_door` records closed-state movement blocking but aligns to the existing wall doorway unit; it does not create a duplicate floor occupancy or collision polygon.
-- Direct world interaction is limited to exactly seven objects: `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17`. Each has a non-zero interaction rectangle and at least one walkable access cell.
+- Direct world interaction is limited to exactly seven objects: `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17`. Each has valid interaction geometry and at least one walkable access point/cell.
 - `sink_counter`, `dining_table`, `signal_booster`, `ups_unit`, `bathroom_fixture`, `sea_horizon_poster`, `fluorescent_light`, `shoes_slippers`, `cable_bundle`, `wall_conduit`, and `power_housing` have no gameplay interaction geometry. They remain selectable only for P placement inspection.
 - P debug selection and direct game/mock interaction are separate contracts. A zero size, empty access-cell set, or non-interaction category never creates an orange interaction marker.
 - Expected image/scene/audio values are future logical specification strings only. Missing assets are not loaded or validated in this candidate.
@@ -190,8 +192,9 @@ Shell editing controls:
 
 Coordinate rule:
 
-- Floor objects use `anchor_cell`, `size_cells`, occupied cells, and interaction cells for room membership and navigation. Pixel offsets and visual/collision/interaction sizes remain independent.
-- Wall/ceiling/parent objects use `anchor_type`, `parent_object_id`, `wall_segment_id`, and `wall_position_ratio` without automatically occupying a floor cell.
+- Migrated floor objects derive movement-blocked cells from the centers covered by their Scene `Body` geometry and derive access cells from `UsePoint`; moving those nodes changes N/P/hit-test results without a Resource coordinate edit.
+- Migrated wall/parent objects follow their Scene `ParentAnchor`; moving `UsePoint` also moves `InteractionArea`. Their logical `anchor_type`, `parent_object_id`, and `wall_segment_id` remain Resource metadata.
+- Unmigrated floor objects continue to use `anchor_cell`, `size_cells`, occupied cells, and interaction cells. Unmigrated wall/ceiling/parent objects continue to use the existing Resource anchor fields.
 - Wall segments use wall edge coordinates: `from_cell -> to_cell`.
 - Do not treat object floor cells and wall edge coordinates as the same coordinate layer.
 

@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment editable object Node migration stage 1
+
+- Result: Added a common editable object Scene/Script and migrated fridge, NAVI LINK, Power Board, and microwave to real ObjectRoot/VisualAnchor/Body/InteractionArea/UsePoint/Socket nodes in the candidate Scene. Fridge uses RectangleShape2D Body collision, NAVI uses editable CollisionPolygon2D, and all four use editable interaction polygons.
+- Ownership: Exact ROTATE_90 transforms and pixel geometry now come from Scene nodes; the four Resource/fallback entries retain logical metadata only. The other fourteen objects keep the legacy Resource path. P hover/click/detail, Node-backed N blocking, measurement access cells, and wall/parent following use resolved Node data.
+- MCP check: Godot MCP inspected every hierarchy/property path, then moved a Shape, Polygon, UsePoint, and both ParentAnchors. The running P+V view and evaluated geometry followed each edit; test values were restored and saved to the original positions.
+- Status: `KEEP_CANDIDATE`. Manual confirmation: `REQUIRED` for user Inspector tuning and approval before more objects migrate. Production Main/DAY1/Apartment/SurvivalState, `project.godot`, and generated metadata remain unchanged.
+
 ### Apartment interaction position alignment
 
 - Result: Removed legacy pixel offsets from bed, fridge, microwave, NAVI LINK, and NODE-17 interaction geometry. Their existing access cells already represented the usable adjacent floor positions, so adding the offsets during draw/hit/detail calculations displaced the orange areas a second time.
