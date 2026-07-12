@@ -1,12 +1,11 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=4 uid="uid://co3mka307fow6"]
 
-[ext_resource type="PackedScene" path="res://scenes/quarterview/QuarterviewApartmentEnvironment.tscn" id="1_environment"]
+[ext_resource type="PackedScene" uid="uid://ckn6c2wld0xoc" path="res://scenes/quarterview/QuarterviewApartmentEnvironment.tscn" id="1_environment"]
 [ext_resource type="PackedScene" path="res://scenes/quarterview/QuarterviewRoom.tscn" id="2_gameplay"]
 
 [node name="QuarterviewApartmentPlayable" instance=ExtResource("1_environment")]
-show_debug_labels = false
 
-[node name="Gameplay" parent="." instance=ExtResource("2_gameplay")]
+[node name="Gameplay" parent="." index="7" instance=ExtResource("2_gameplay")]
 external_environment_mode = true
 external_environment_path = NodePath("..")
 

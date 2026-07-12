@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/quarterview/ApartmentWallSegment.gd" id="1_script"]
 
 [node name="ApartmentWallSegment" type="Node2D"]
-editor_description = "벽 구간 정본. StartPoint/EndPoint로 길이와 방향을, TopPoint로 높이를 직접 조정합니다."
+editor_description = "긴 벽의 의미를 묶는 WallGroup. 실제 위치·Visual·Collision 정본은 WallCells 아래 한 칸 인스턴스입니다."
 script = ExtResource("1_script")
 
 [node name="StartPoint" type="Marker2D" parent="."]
@@ -39,4 +39,7 @@ editor_description = "벽선 이동 충돌. Start/End와 개구부에서 자동 
 editor_description = "개구부 뒤쪽 벽선 이동 충돌."
 
 [node name="AttachmentSockets" type="Node2D" parent="."]
-editor_description = "전력 보드·포스터·전선관 등 벽부착 오브젝트의 실제 부모 기준점 모음."
+editor_description = "호환용 빈 컨테이너. 실제 부착 Socket은 각 WallCell/AttachmentSockets 아래에 둡니다."
+
+[node name="WallCells" type="Node2D" parent="."]
+editor_description = "실제 벽 정본. Cell00, Cell01처럼 한 칸씩 직접 선택·이동·숨김 처리합니다."

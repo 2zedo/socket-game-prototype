@@ -74,12 +74,13 @@ Do not modify by default:
 | --- | --- |
 | Paint or erase floor cells | `Floor/EntranceFloor`, `BathroomFloor`, `LivingFloor`, or `WorkFloor` (`TileMapLayer`, 128×64 isometric) |
 | Edit a logical room boundary | `RoomAreas/<Room>/Area2D/CollisionPolygon2D`; M reads this Polygon |
-| Move or resize an Environment wall | `Walls/<Wall>/StartPoint`, `EndPoint`, and `TopPoint` |
-| Change wall display/reveal metadata | Select the `ApartmentWallSegment` root and edit its Inspector properties |
-| Move a door/window opening | `Openings/<Opening>/StartPoint` and `EndPoint` |
-| Move the shared room door | `Openings/WorkRoomOpening/StartPoint` and `EndPoint` |
-| Move Power Board with its wall | `Walls/WorkBackWall/AttachmentSockets/PowerModuleBoardSocket`; the board follows by `mount_socket_path` |
-| Move Entrance Door with its wall | `Walls/EntranceWall/AttachmentSockets/EntranceDoorSocket`; the door follows by `mount_socket_path` |
+| Move one wall unit | `Walls/<WallGroup>/WallCells/CellNN`; each Cell is one 128×64 isometric edge and owns its Visual/Collision/Socket |
+| Review a long wall meaning | Select `Walls/<WallGroup>`; its Start/End summary and M/N unit edges are derived from its authored WallCells |
+| Change wall display/opening metadata | Select an `ApartmentWallCell`; Inspector shows wall id, Korean room/wall name, axis, sequence, and opening metadata |
+| Move a door/window opening | Move its Opening WallCell: Entrance `Cell04`, EntranceInner `Cell01`, BathroomRight `Cell02`, WorkFront `Cell06`, or LivingRight window `Cell05` |
+| Inspect opening semantics | `Openings/<Opening>` mirrors the owning Cell's start/end/type/passable values for tools and previews; do not edit its derived Marker positions |
+| Move Power Board with its wall | `Walls/WorkBackWall/WallCells/Cell05/AttachmentSocket`; the board follows by `mount_socket_path` |
+| Move Entrance Door with its wall | `Walls/EntranceWall/WallCells/Cell04/AttachmentSocket`; the door follows by `mount_socket_path` |
 | Move a migrated floor interaction object | Move `EditableObjectNodes/Bed`, `Fridge`, `NaviLink`, or `Node17` |
 | Move the entrance door itself without changing the wall opening | Edit `EditableObjectNodes/EntranceDoor/mount_offset` |
 | Edit installation / height references | Move each migrated object's sibling `BasePoint` and `TopPoint`; these do not move Selection, Interaction, or UsePoint |
@@ -97,6 +98,7 @@ Do not modify by default:
 | Show object placement debug | Press `P`; shows composite/separate floor-collision geometry, valid interaction owners, ranked hover candidates, and `선택 n/m` click cycling |
 | Show room measurements / placement reference | Press `M`; shows simplified room bounds, placement zones, doorway clearance, required paths, and wall-mount availability |
 | Open complete shell shortcut help | Press `F1`; press `F1` or `ESC` to close the Korean help panel |
+| Inspect walls without changing collision | Press `V` to cycle `NORMAL -> TRANSPARENT (18%) -> HIDDEN -> NORMAL`; openings, collision, navigation, sockets, and attached objects remain active |
 | Open shell interaction debug menu | Press `J`; choose a mock object to test use / inspect / cancel panel flow |
 | Open shell Phone debug overlay | Press `H`; switch mock Messages / Power / Jobs / Settings tabs |
 | Close top shell debug UI | Press `ESC`; closes Phone, interaction detail/menu, full help, then the active M/P/N mode in priority order |
@@ -109,7 +111,9 @@ Do not modify by default:
 | Emphasize one wall | Set `debug_focus_wall_id`, e.g. `bathroom_left_wall`, in the Inspector |
 | Preview revealable walls as full walls | Set `preview_revealed_walls=true` in the Inspector |
 
-The four Floor layers contain 98 authored cells: Entrance 6, Bathroom 6, Living 54, and Work 32. They share `dev_apartment_floor_tiles_128x64.svg`, a color-only development TileSet that must be replaced by final floor art later. RoomArea preview polygons and Opening preview lines are editor-only; saved CollisionPolygon/Marker positions are the runtime authority. Environment startup no longer calls the legacy floor-diamond, wall-visual, wall-collision, or door/window placeholder builders. The old rectangle/config builders remain only as regression fallback for standalone/non-ROTATE_90 paths, where the authored ROTATE_90 visuals and collisions are disabled. Eleven environment objects and `SinkCounterParentAnchor` remain the intentional Resource/proxy authority still to migrate.
+The four Floor layers contain the user's 99 authored cells: Entrance 6 (brown), Bathroom 7 (gray), Living 54 (beige), and Work 32 (blue-gray). Each TileMapLayer has a Korean `editor_description`, and `EditorGuides` shows editor-only room labels plus this color legend while hiding itself at runtime. They share `dev_apartment_floor_tiles_128x64.svg`, a color-only development TileSet that must be replaced by final floor art later. RoomArea preview polygons and Opening preview lines are editor-only; saved CollisionPolygon/Marker positions are the runtime authority.
+
+Ten local WallGroup nodes contain 58 individually selectable `ApartmentWallCell` instances: WorkBack 8, WorkLeft 4, WorkRight 4, Entrance 6, EntranceInner 3, LivingRight 6, LivingFront 11, WorkFront 11, Bathroom 2, and BathroomRight 3. Door/window Cells own opening position and passability metadata; their `OpeningMarker` nodes are synchronized mirrors. M/N use each enabled Cell's authored endpoints, so `enabled=false` removes both physical and navigation blocking. V changes Cell visuals only. Environment startup no longer calls the legacy floor-diamond, aggregate wall-visual, aggregate wall-collision, or door/window placeholder builders. The old rectangle/config builders remain only as regression fallback for standalone/non-ROTATE_90 paths, where the authored ROTATE_90 visuals and collisions are disabled. Eleven environment objects and `SinkCounterParentAnchor` remain the intentional Resource/proxy authority still to migrate.
 
 Wall inventory columns: `id`, `name_ko`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `current_state`, `state_ko`, `doorway`, `doorway_ko`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 
@@ -164,7 +168,7 @@ P hit testing is separate from the gameplay interaction inventory. All seven dir
 
 `ApartmentEditableObject.tscn` and `ApartmentEditableObject.gd` define `ObjectRoot → Visual(Sprite2D, VisualPreview) / BasePoint / TopPoint / Body(BodyPolygon when blocking) / SelectionArea(SelectionPolygon) / InteractionArea(InteractionPolygon) / UsePoint / AttachmentSocket`. The script is `@tool`, derives visual bounds from Sprite2D or VisualPreview, exposes the 2.5D installation/height markers, keeps selection/use/access positions independent, supports but does not instantiate an optional PlacementFootprint, and reports configuration warnings for missing paths, invalid/scaled polygons, physics-enabled SelectionArea, missing required geometry, legacy CollisionShape2D, or reactivated Resource geometry. It also exposes the entrance door's minimal open state: opening disables its BodyPolygon, closing restores it, and a signal refreshes candidate navigation/debug state. At ROTATE_90, all seven direct-interaction objects resolve exact geometry from these Scene nodes. Their Resource and script fallback entries keep only logical metadata; the other eleven environment objects still use Resource/fallback geometry. Other map rotations retain inventory compatibility but do not claim Node-geometry visual support in this stage.
 
-Fridge now uses `res://assets/art/objects/fridge/fridge_dl_closed.png` through `EditableObjectNodes/Fridge/Visual/Sprite2D`. The source is imported losslessly without mipmaps, uses nearest CanvasItem filtering, and is region-scaled to the prior `90x146` visual bound with its bottom centered on BasePoint `(1124,303)`. Because the supplied RGB PNG has a baked neutral checkerboard rather than alpha, a Fridge-only CanvasItem shader removes that bright neutral background at runtime; Body, Selection, Interaction, and UsePoint geometry remains unchanged. Fridge root `z_index=303` matches BasePoint Y so `QuarterviewPlayer` moves behind it above that line and in front below it.
+Fridge now uses `res://assets/art/objects/fridge/fridge_dl_closed.png` through `EditableObjectNodes/Fridge/Visual/Sprite2D`. The user's Environment root position `(1128,186)` and edited Selection/Interaction geometry are preserved; the Sprite keeps its `90x146` visual bound with its bottom centered on BasePoint `(1136,263)`. Because the supplied RGB PNG has a baked neutral checkerboard rather than alpha, a Fridge-only CanvasItem shader removes that bright neutral background at runtime. `ApartmentEditableObject` derives absolute Y-sort from BasePoint, so future Inspector position changes do not leave a second stale `z_index` authority.
 
 Object placement display options:
 

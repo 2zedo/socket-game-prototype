@@ -26,6 +26,38 @@ func test_design_and_playable_scenes_reuse_the_environment_authority() -> void:
 	var dependencies := Array(ResourceLoader.get_dependencies("res://scenes/quarterview/QuarterviewApartmentPlayable.tscn"))
 	assert_true(_dependencies_contain(dependencies, "res://scenes/quarterview/QuarterviewApartmentEnvironment.tscn"))
 	assert_true(_dependencies_contain(dependencies, "res://scenes/quarterview/QuarterviewRoom.tscn"))
+	var shell_source := FileAccess.get_file_as_string("res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn")
+	var playable_source := FileAccess.get_file_as_string("res://scenes/quarterview/QuarterviewApartmentPlayable.tscn")
+	for forbidden_parent in ["parent=\"Floor\"", "parent=\"Walls", "parent=\"EditableObjectNodes"]:
+		assert_false(shell_source.contains(forbidden_parent), "Shell must not store Environment child overrides: %s" % forbidden_parent)
+		assert_false(playable_source.contains(forbidden_parent), "Playable must not store Environment child overrides: %s" % forbidden_parent)
+
+
+func test_environment_manual_floor_fridge_and_wall_cells_propagate_to_both_wrappers() -> void:
+	var environment = ENVIRONMENT_SCENE.instantiate()
+	var candidate = CANDIDATE_SCENE.instantiate()
+	var playable = PLAYABLE_SCENE.instantiate()
+	add_child_autofree(environment)
+	add_child_autofree(candidate)
+	add_child_autofree(playable)
+	for floor_name in ["EntranceFloor", "BathroomFloor", "LivingFloor", "WorkFloor"]:
+		var expected := _tile_snapshot(environment.get_node("Floor/%s" % floor_name))
+		assert_eq(_tile_snapshot(candidate.get_node("Floor/%s" % floor_name)), expected)
+		assert_eq(_tile_snapshot(playable.get_node("Floor/%s" % floor_name)), expected)
+	assert_true(environment.get_node("Floor/EntranceFloor").get_used_cells().has(Vector2i(-1, 7)))
+	assert_true(environment.get_node("Floor/BathroomFloor").get_used_cells().has(Vector2i(-1, 3)))
+	assert_true(environment.get_node("Floor/LivingFloor").get_used_cells().has(Vector2i(1, 4)))
+	assert_true(environment.get_node("Floor/WorkFloor").get_used_cells().has(Vector2i(0, 0)))
+	var expected_fridge: Node2D = environment.get_node("EditableObjectNodes/Fridge")
+	assert_eq(expected_fridge.position, Vector2(1128, 186), "Preserve the user's Environment fridge root position.")
+	assert_eq(expected_fridge.get_node("SelectionArea/SelectionPolygon").polygon.size(), 5)
+	assert_eq(expected_fridge.get_node("InteractionArea/InteractionPolygon").position, Vector2(30, 25))
+	for wrapper in [candidate, playable]:
+		var fridge: Node2D = wrapper.get_node("EditableObjectNodes/Fridge")
+		assert_eq(fridge.position, expected_fridge.position)
+		assert_eq(fridge.get_node("SelectionArea/SelectionPolygon").polygon, expected_fridge.get_node("SelectionArea/SelectionPolygon").polygon)
+		assert_eq(fridge.get_node("InteractionArea/InteractionPolygon").position, Vector2(30, 25))
+		assert_eq(wrapper.get_node("Walls/WorkBackWall/WallCells/Cell05").position, environment.get_node("Walls/WorkBackWall/WallCells/Cell05").position)
 
 
 func test_fridge_sprite_uses_texture_bounds_without_changing_gameplay_geometry() -> void:
@@ -43,14 +75,15 @@ func test_fridge_sprite_uses_texture_bounds_without_changing_gameplay_geometry()
 	assert_eq(data.visual_source, "SPRITE2D")
 	assert_almost_eq(data.visual_size_px.x, 90.0, 0.01)
 	assert_almost_eq(data.visual_size_px.y, 146.0, 0.01)
-	assert_almost_eq(data.visual_center_world.x, 1124.0, 0.01)
-	assert_almost_eq(data.visual_center_world.y, 230.0, 0.01)
+	assert_almost_eq(data.visual_center_world.x, 1136.0, 0.01)
+	assert_almost_eq(data.visual_center_world.y, 190.0, 0.01)
 	assert_almost_eq(sprite.global_position.y + sprite.get_rect().end.y * sprite.global_scale.y, data.base_point_world.y, 0.02)
 
 	assert_eq(fridge.get_node("Body/BodyPolygon").position, Vector2(0, 38))
 	assert_eq(fridge.get_node("SelectionArea").position, Vector2(8, 4))
 	assert_eq(fridge.get_node("InteractionArea").position, Vector2(-56, 44))
-	assert_eq(fridge.get_node("UsePoint").position, Vector2(-56, 44))
+	assert_eq(fridge.get_node("InteractionArea/InteractionPolygon").position, Vector2(30, 25))
+	assert_eq(fridge.get_node("UsePoint").position, Vector2(-68, 84))
 
 
 func test_playable_fridge_click_reuses_room_movement_and_focus_flow() -> void:
@@ -95,3 +128,12 @@ func _dependencies_contain(dependencies: Array, expected_path: String) -> bool:
 		if String(raw_dependency).ends_with("::%s" % expected_path) or String(raw_dependency) == expected_path:
 			return true
 	return false
+
+
+func _tile_snapshot(layer: TileMapLayer) -> Array[String]:
+	var rows: Array[String] = []
+	for cell in layer.get_used_cells():
+		var atlas := layer.get_cell_atlas_coords(cell)
+		rows.append("%d,%d:%d:%d,%d" % [cell.x, cell.y, layer.get_cell_source_id(cell), atlas.x, atlas.y])
+	rows.sort()
+	return rows

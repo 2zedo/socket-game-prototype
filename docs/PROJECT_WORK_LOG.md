@@ -8,9 +8,16 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment Environment single authority and WallCell editing
+
+- Authority: Removed Shell/Playable floor, wall, socket, and object child overrides. Both wrappers now instance `QuarterviewApartmentEnvironment` directly, preserving the user's 99 floor cells and Fridge root `(1128,186)`; editable-object Y-sort derives from BasePoint instead of a stale stored z value.
+- Wall editing: Replaced aggregate edit authority with ten semantic WallGroups containing 58 one-edge WallCells. Each Cell exposes Korean wall/room metadata, direction, sequence, Visual, Collision, opening data, and an AttachmentSocket. Disabled Cells are omitted from physical and navigation blocking; OpeningMarker positions/passability are derived mirrors of Opening Cells. Power Board uses WorkBack Cell05, Entrance Door uses Entrance Cell04, conduit uses WorkBack Cell02, and poster uses LivingRight Cell03.
+- Editor/runtime: Added Korean descriptions to four floor layers and editor-only room/color guides. V cycles `NORMAL -> TRANSPARENT (18%) -> HIDDEN`; visual state never disables collision, navigation, openings, sockets, or wall-mounted objects.
+- MCP check: Moved/restored WorkBack Cell05 and observed the Power Board follow by the same delta; reopened Shell/Playable and confirmed identical floor/Fridge data; ran M/N/P, all V states, Playable movement, and door closed/open collision. Status: `KEEP_CANDIDATE`; Manual confirmation: `COMPLETE` for this workflow.
+
 ### Editor-authored apartment floor, rooms, walls, and openings
 
-- Scene authority: Added four 128×64 isometric TileMapLayers (98 cells), four RoomArea Polygon authorities, ten reusable WallSegment instances, and five Opening Marker instances under `QuarterviewApartmentEnvironment`. The color-only `dev_apartment_floor_tiles_128x64.svg` is explicitly development art.
+- Scene authority: Added four 128×64 isometric TileMapLayers (now 99 user-authored cells), four RoomArea Polygon authorities, ten wall groups, and five Opening Marker instances under `QuarterviewApartmentEnvironment`. The color-only `dev_apartment_floor_tiles_128x64.svg` is explicitly development art.
 - Runtime: ROTATE_90 M/N/V and Playable pathfinding now consume the authored Nodes. Environment startup skips legacy floor-diamond, wall, collision, and opening-placeholder generation; non-ROTATE_90/standalone regression paths keep the calculated fallback.
 - Attachments: Power Board and Entrance Door remain editable object instances but mount to real WorkBackWall/EntranceWall Socket Markers. Socket edits propagate through `mount_socket_path`, and door open/closed continues to switch the exact doorway navigation edge.
 - MCP check: Confirmed the complete pre-run editor view; changed/restored one floor tile, RoomArea point, wall End/Top point, and PowerBoard Socket; then ran Shell P+V/M/N and Playable movement/door-state checks with no game errors. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` before final art or production promotion.
@@ -19,7 +26,7 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 - Scene ownership: Extracted the apartment floor, walls, navigation, camera, and 18-object authority into `QuarterviewApartmentEnvironment`. The existing ShellCandidate inherits it for design/debug; the new ApartmentPlayable inherits the same Environment and adds one opt-in external-provider `QuarterviewRoom`. Legacy `QuarterviewRoom` remains unchanged by default and does not build its old shell/placeholders/blockers inside the Playable composition.
 - Gameplay: External mode maps the seven direct interactions to Environment Scene nodes, reads SelectionPolygon/InteractionPolygon/UsePoint/Body data, and uses the Environment walkable-cell/edge graph for click movement and arrival focus.
-- Fridge art: Connected `fridge_dl_closed.png` to `EditableObjectNodes/Fridge/Visual/Sprite2D` with nearest filtering, lossless/no-mipmap import, a cropped region, and a Sprite-only checker cleanup shader. The Sprite retains the prior 90x146 bounds and BasePoint bottom alignment; Body, Selection, Interaction, and UsePoint values are unchanged. Fridge Y order uses BasePoint Y=303.
+- Fridge art: Connected `fridge_dl_closed.png` to `EditableObjectNodes/Fridge/Visual/Sprite2D` with nearest filtering, lossless/no-mipmap import, a cropped region, and a Sprite-only checker cleanup shader. The Sprite retains the 90x146 bounds and BasePoint bottom alignment. The user's later Environment move places BasePoint at Y=263, and Y order now derives from that marker automatically.
 - MCP check: Opened and ran both design and Playable scenes, verified P+V geometry alignment, Fridge hover and click movement to UsePoint, player-behind/player-in-front ordering, a single Environment authority, empty legacy gameplay render layers, and zero new game errors. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` before scene replacement or production wiring.
 
 ### Godot RichText crash isolation and strict test parsing

@@ -2,130 +2,161 @@
 extends Node2D
 class_name ApartmentWallSegment
 
+const ApartmentWallCellScript := preload("res://scripts/quarterview/ApartmentWallCell.gd")
+
 enum DisplayType { FULL, CUTAWAY, OCCLUSION }
 
-@export_group("벽 구간")
+@export_group("WallGroup")
 @export var wall_id: StringName
 @export var korean_name := ""
+@export var room_name_ko := ""
 @export var display_type: DisplayType = DisplayType.FULL
 @export var enabled := true
 @export var revealable := false
 @export var logical_only := false
 @export var opening_path: NodePath
 @export var wall_color := Color(0.72, 0.68, 0.60, 1.0)
-@export var collision_half_width := 6.0
 
 @onready var start_point: Marker2D = $StartPoint
 @onready var end_point: Marker2D = $EndPoint
 @onready var base_point: Marker2D = $BasePoint
 @onready var top_point: Marker2D = $TopPoint
-@onready var visual: Polygon2D = $Visual
-@onready var visual_after_opening: Polygon2D = $VisualAfterOpening
-@onready var occlusion_visual: Polygon2D = $OcclusionVisual
-@onready var collision_polygon: CollisionPolygon2D = $CollisionBody/CollisionPolygon2D
-@onready var collision_after_opening: CollisionPolygon2D = $CollisionBody/CollisionAfterOpening
+@onready var wall_cells_root: Node2D = $WallCells
 
 var _authority_active := true
+var _inspection_mode: int = ApartmentWallCellScript.InspectionMode.NORMAL
+var _revealed := false
 
 
 func _ready() -> void:
-	if Engine.is_editor_hint():
-		_sync_geometry()
-	else:
-		_apply_collision_enabled()
+	_disable_retired_group_geometry()
+	_sync_group_from_cells()
 
 
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
-		_sync_geometry()
+		_sync_group_from_cells()
 
 
-func _sync_geometry() -> void:
-	if not is_instance_valid(start_point) or not is_instance_valid(end_point):
+func wall_cells() -> Array[Node]:
+	var cells: Array[Node] = []
+	if not is_instance_valid(wall_cells_root):
+		return cells
+	for child in wall_cells_root.get_children():
+		if child.has_method("world_start") and child.has_method("world_end"):
+			cells.append(child)
+	cells.sort_custom(func(a: Node, b: Node) -> bool:
+		return int(a.get("cell_index")) < int(b.get("cell_index"))
+	)
+	return cells
+
+
+func wall_cell(cell_index: int) -> Node2D:
+	for cell in wall_cells():
+		if int(cell.get("cell_index")) == cell_index:
+			return cell as Node2D
+	return null
+
+
+func unit_edge_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	for cell in wall_cells():
+		entries.append({
+			"cell_index": int(cell.get("cell_index")),
+			"node_path": String(cell.get_path()),
+			"from_world": cell.call("world_start"),
+			"to_world": cell.call("world_end"),
+			"opening_kind": int(cell.get("opening_kind")),
+			"opening_id": String(cell.get("opening_id")),
+			"opening_passable": bool(cell.get("opening_passable")),
+			"enabled": bool(cell.get("enabled")),
+		})
+	return entries
+
+
+func _sync_group_from_cells() -> void:
+	var cells := wall_cells()
+	if cells.is_empty():
+		_disable_retired_group_geometry()
 		return
+	start_point.position = to_local(Vector2(cells[0].call("world_start")))
+	end_point.position = to_local(Vector2(cells[-1].call("world_end")))
 	base_point.position = (start_point.position + end_point.position) * 0.5
-	var wall_height := maxf(8.0, base_point.position.y - top_point.position.y)
-	var visual_spans := _local_solid_spans(true)
-	var opening := get_node_or_null(opening_path) as ApartmentOpeningMarker
-	var split_collision := opening != null and (opening.opening_type == ApartmentOpeningMarker.OpeningType.DOOR or opening.passable)
-	var collision_spans := _local_solid_spans(split_collision)
-	_apply_visual_span(visual, visual_spans[0] if visual_spans.size() > 0 else PackedVector2Array(), wall_height)
-	_apply_visual_span(visual_after_opening, visual_spans[1] if visual_spans.size() > 1 else PackedVector2Array(), wall_height)
-	_apply_collision_span(collision_polygon, collision_spans[0] if collision_spans.size() > 0 else PackedVector2Array())
-	_apply_collision_span(collision_after_opening, collision_spans[1] if collision_spans.size() > 1 else PackedVector2Array())
-	visual.color = wall_color
-	visual_after_opening.color = wall_color
-	visual.visible = enabled and not logical_only and display_type == DisplayType.FULL
-	visual_after_opening.visible = visual.visible and not visual_after_opening.polygon.is_empty()
-	occlusion_visual.visible = enabled and display_type != DisplayType.FULL
-	if occlusion_visual.visible:
-		occlusion_visual.polygon = _wall_quad(start_point.position, end_point.position, minf(wall_height, 42.0))
-		occlusion_visual.color = Color(0.25, 0.26, 0.25, 0.9)
-	_apply_collision_enabled()
+	var group_height := maxf(8.0, base_point.position.y - top_point.position.y)
+	for cell in cells:
+		cell.set("wall_color", wall_color)
+		cell.call("set_group_context", wall_id, room_name_ko if not room_name_ko.is_empty() else korean_name, display_type, revealable, group_height)
+		cell.call("set_authority_active", _authority_active and enabled and not logical_only)
+		cell.call("set_inspection_mode", _inspection_mode)
+		cell.call("set_revealed", _revealed)
+	_sync_opening_marker_from_cells(cells)
+	_disable_retired_group_geometry()
 
 
-func _local_solid_spans(split_opening: bool) -> Array[PackedVector2Array]:
-	var spans: Array[PackedVector2Array] = []
-	var opening := get_node_or_null(opening_path) as ApartmentOpeningMarker
-	if opening == null or not split_opening:
-		spans.append(PackedVector2Array([start_point.position, end_point.position]))
-		return spans
-	var open_start := to_local(opening.world_start())
-	var open_end := to_local(opening.world_end())
-	spans.append(PackedVector2Array([start_point.position, open_start]))
-	spans.append(PackedVector2Array([open_end, end_point.position]))
-	return spans
-
-
-func _apply_visual_span(target_visual: Polygon2D, span: PackedVector2Array, wall_height: float) -> void:
-	if span.size() < 2 or span[0].distance_to(span[1]) < 1.0:
-		target_visual.polygon = PackedVector2Array()
+func _sync_opening_marker_from_cells(cells: Array[Node]) -> void:
+	if opening_path.is_empty():
 		return
-	target_visual.polygon = _wall_quad(span[0], span[1], wall_height)
-
-
-func _apply_collision_span(target_collision: CollisionPolygon2D, span: PackedVector2Array) -> void:
-	if span.size() < 2 or span[0].distance_to(span[1]) < 1.0:
-		target_collision.polygon = PackedVector2Array()
+	var opening := get_node_or_null(opening_path) as ApartmentOpeningMarker
+	if opening == null:
 		return
-	target_collision.polygon = _edge_quad(span[0], span[1], collision_half_width)
+	var opening_cells: Array[Node] = []
+	for cell in cells:
+		if int(cell.get("opening_kind")) != ApartmentWallCellScript.OpeningKind.NONE and bool(cell.get("enabled")):
+			opening_cells.append(cell)
+	if opening_cells.is_empty():
+		return
+	var first: Node = opening_cells.front()
+	var last: Node = opening_cells.back()
+	opening.opening_id = StringName(first.get("opening_id"))
+	opening.owner_wall_id = wall_id
+	opening.opening_type = ApartmentOpeningMarker.OpeningType.WINDOW if int(first.get("opening_kind")) == ApartmentWallCellScript.OpeningKind.WINDOW else ApartmentOpeningMarker.OpeningType.DOOR
+	opening.passable = bool(first.get("opening_passable"))
+	opening.start_point.position = opening.to_local(Vector2(first.call("world_start")))
+	opening.end_point.position = opening.to_local(Vector2(last.call("world_end")))
+	opening._sync_preview()
 
 
-func _apply_collision_enabled() -> void:
-	var disabled := not _authority_active or not enabled or logical_only
-	collision_polygon.disabled = disabled or collision_polygon.polygon.size() < 3
-	collision_after_opening.disabled = disabled or collision_after_opening.polygon.size() < 3
+func _disable_retired_group_geometry() -> void:
+	for path in ["Visual", "VisualAfterOpening", "OcclusionVisual"]:
+		var item := get_node_or_null(path) as CanvasItem
+		if item != null:
+			item.visible = false
+	for path in ["CollisionBody/CollisionPolygon2D", "CollisionBody/CollisionAfterOpening"]:
+		var collision := get_node_or_null(path) as CollisionPolygon2D
+		if collision != null:
+			collision.disabled = true
 
 
-func _wall_quad(from: Vector2, to: Vector2, height: float) -> PackedVector2Array:
-	return PackedVector2Array([from, to, to - Vector2(0.0, height), from - Vector2(0.0, height)])
-
-
-func _edge_quad(from: Vector2, to: Vector2, half_width: float) -> PackedVector2Array:
-	var tangent := (to - from).normalized()
-	var normal := Vector2(-tangent.y, tangent.x) * half_width
-	return PackedVector2Array([from + normal, to + normal, to - normal, from - normal])
+func set_inspection_mode(mode: int) -> void:
+	_inspection_mode = mode
+	for cell in wall_cells():
+		cell.call("set_inspection_mode", mode)
 
 
 func set_inspection_transparent(active: bool) -> void:
-	var alpha := 0.18 if active else 1.0
-	for item in [visual, visual_after_opening, occlusion_visual]:
-		if is_instance_valid(item):
-			item.modulate.a = alpha
+	set_inspection_mode(ApartmentWallCellScript.InspectionMode.TRANSPARENT if active else ApartmentWallCellScript.InspectionMode.NORMAL)
 
 
 func set_authority_active(active: bool) -> void:
 	_authority_active = active
 	visible = active
-	_apply_collision_enabled()
+	for cell in wall_cells():
+		cell.call("set_authority_active", active and enabled and not logical_only)
+	_disable_retired_group_geometry()
 
 
 func set_revealed(active: bool) -> void:
-	if not revealable:
-		return
-	visual.visible = _authority_active and enabled and active
-	visual_after_opening.visible = visual.visible and not visual_after_opening.polygon.is_empty()
-	occlusion_visual.visible = _authority_active and enabled and not active
+	_revealed = active
+	for cell in wall_cells():
+		cell.call("set_revealed", active)
+
+
+func all_collisions_disabled() -> bool:
+	for cell in wall_cells():
+		var collision := cell.get_node_or_null("CollisionBody/CollisionPolygon2D") as CollisionPolygon2D
+		if collision != null and not collision.disabled:
+			return false
+	return true
 
 
 func _get_configuration_warnings() -> PackedStringArray:
@@ -133,5 +164,13 @@ func _get_configuration_warnings() -> PackedStringArray:
 	if wall_id.is_empty():
 		warnings.append("wall_id가 비어 있습니다.")
 	if not has_node("StartPoint") or not has_node("EndPoint") or not has_node("TopPoint"):
-		warnings.append("StartPoint, EndPoint, TopPoint가 필요합니다.")
+		warnings.append("WallGroup에는 StartPoint, EndPoint, TopPoint가 필요합니다.")
+	if not has_node("WallCells") or wall_cells().is_empty():
+		warnings.append("WallGroup에는 한 칸 단위 WallCell이 필요합니다.")
+	var seen: Dictionary = {}
+	for cell in wall_cells():
+		var cell_index := int(cell.get("cell_index"))
+		if seen.has(cell_index):
+			warnings.append("WallCell cell_index %d가 중복됩니다." % cell_index)
+		seen[cell_index] = true
 	return warnings

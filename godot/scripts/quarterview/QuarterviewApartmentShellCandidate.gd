@@ -3,6 +3,7 @@ extends Node2D
 const ApartmentWallSegmentConfigScript := preload("res://scripts/quarterview/ApartmentWallSegmentConfig.gd")
 const ApartmentObjectFootprintConfigScript := preload("res://scripts/quarterview/ApartmentObjectFootprintConfig.gd")
 const ApartmentObjectFootprintSetConfigScript := preload("res://scripts/quarterview/ApartmentObjectFootprintSetConfig.gd")
+const ApartmentWallCellScript := preload("res://scripts/quarterview/ApartmentWallCell.gd")
 
 enum ViewOrientation {
 	FRONT_RIGHT,
@@ -23,6 +24,12 @@ enum DebugMode {
 	ROOM_MEASUREMENT,
 	OBJECT_PLACEMENT,
 	NAVIGATION,
+}
+
+enum WallInspectionMode {
+	NORMAL,
+	TRANSPARENT,
+	HIDDEN,
 }
 
 enum WallAxis {
@@ -155,6 +162,10 @@ const EDITABLE_NODE_OBJECT_IDS := [
 	"power_module_board", "node_17",
 ]
 const EDITABLE_OBJECT_NODES_PATH := ^"EditableObjectNodes"
+const RESOURCE_WALL_SOCKET_PATH_BY_OBJECT_ID := {
+	"wall_conduit": ^"Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket",
+	"sea_horizon_poster": ^"Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket",
+}
 const OBJECT_ANCHOR_HIT_RADIUS := 18.0
 const OBJECT_CLICK_CYCLE_RADIUS := 3.0
 const WALL_INSPECTION_ALPHA := 0.18
@@ -274,9 +285,14 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 @export_group("Debug")
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
 @export var show_occlusion_wall_debug := false
-# Visual-only inspection aid. It lowers every candidate wall/door/window visual layer opacity
-# without changing wall data, navigation edges, reveal state, or collision ownership.
-@export var wall_inspection_transparency := false
+# Visual-only inspection state. V cycles NORMAL -> TRANSPARENT -> HIDDEN without changing
+# wall collision, navigation, openings, sockets, or wall-attached objects.
+@export var wall_inspection_mode: WallInspectionMode = WallInspectionMode.NORMAL
+var wall_inspection_transparency: bool:
+	get:
+		return wall_inspection_mode == WallInspectionMode.TRANSPARENT
+	set(value):
+		wall_inspection_mode = WallInspectionMode.TRANSPARENT if value else WallInspectionMode.NORMAL
 # Shows room dimensions, placement reference cells, doorway clearance, and wall-mount spans.
 @export var show_room_measurements := false
 @export_range(0, 3, 1) var doorway_clearance_cells := 1
@@ -312,6 +328,7 @@ var _debug_overlay_layer: CanvasLayer
 var _debug_detail_panel: PanelContainer
 var _debug_detail_label: Label
 var _debug_help_panel: PanelContainer
+var _debug_help_body_label: Label
 var _compact_help_label: Label
 var _hover_coord_label: Label
 var _hover_coord_background: ColorRect
@@ -424,7 +441,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_V:
-			wall_inspection_transparency = not wall_inspection_transparency
+			wall_inspection_mode = ((wall_inspection_mode + 1) % WallInspectionMode.size()) as WallInspectionMode
 			_apply_wall_inspection_transparency()
 			_update_compact_debug_help()
 			get_viewport().set_input_as_handled()
@@ -495,14 +512,16 @@ func set_camera_preset(preset: String) -> void:
 
 
 func _apply_wall_inspection_transparency() -> void:
-	var alpha := WALL_INSPECTION_ALPHA if wall_inspection_transparency else 1.0
+	var alpha := WALL_INSPECTION_ALPHA if wall_inspection_mode == WallInspectionMode.TRANSPARENT else 1.0
+	var visuals_visible := wall_inspection_mode != WallInspectionMode.HIDDEN
 	for layer in [_occlusion_stub_layer, _wall_layer, _door_layer]:
 		if layer != null:
+			layer.visible = visuals_visible
 			layer.modulate.a = alpha
 	if _wall_node_authority_active():
 		for wall_node in $Walls.get_children():
-			if wall_node.has_method("set_inspection_transparent"):
-				wall_node.call("set_inspection_transparent", wall_inspection_transparency)
+			if wall_node.has_method("set_inspection_mode"):
+				wall_node.call("set_inspection_mode", wall_inspection_mode)
 
 
 func _initialize_debug_mode_from_legacy_flags() -> void:
@@ -713,23 +732,48 @@ func _wall_segments_from_scene_nodes() -> Array[Dictionary]:
 	for wall_node in $Walls.get_children():
 		if not (wall_node is ApartmentWallSegment):
 			continue
-		var start_grid := _screen_to_grid_point(wall_node.start_point.global_position)
-		var end_grid := _screen_to_grid_point(wall_node.end_point.global_position)
+		var authored_unit_edges: Dictionary = {}
+		for entry in wall_node.unit_edge_entries():
+			var unit_index := int(entry.get("cell_index", authored_unit_edges.size()))
+			var unit_start_grid := _screen_to_grid_point(Vector2(entry.get("from_world", Vector2.ZERO)))
+			var unit_end_grid := _screen_to_grid_point(Vector2(entry.get("to_world", Vector2.ZERO)))
+			var unit_delta := unit_end_grid - unit_start_grid
+			var unit_axis := WallAxis.AXIS_A if absf(unit_delta.x) >= absf(unit_delta.y) else WallAxis.AXIS_B
+			var from_cell := Vector2i(roundi(unit_start_grid.x), roundi(unit_start_grid.y))
+			var to_cell := Vector2i(roundi(unit_end_grid.x), roundi(unit_end_grid.y))
+			authored_unit_edges[unit_index] = {
+				"key": _edge_key(from_cell, to_cell),
+				"segment_id": String(wall_node.wall_id),
+				"from_cell": from_cell,
+				"to_cell": to_cell,
+				"axis": unit_axis,
+				"cell_path": String(entry.get("node_path", "")),
+				"opening_kind": int(entry.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE)),
+				"opening_id": String(entry.get("opening_id", "")),
+				"opening_passable": bool(entry.get("opening_passable", false)),
+				"enabled": bool(entry.get("enabled", true)),
+			}
+		if authored_unit_edges.is_empty():
+			continue
+		var first_edge: Dictionary = authored_unit_edges[authored_unit_edges.keys().min()]
+		var last_edge: Dictionary = authored_unit_edges[authored_unit_edges.keys().max()]
+		var start_grid := Vector2(first_edge.get("from_cell", Vector2i.ZERO))
+		var end_grid := Vector2(last_edge.get("to_cell", Vector2i.ZERO))
 		var delta := end_grid - start_grid
 		var axis := WallAxis.AXIS_A if absf(delta.x) >= absf(delta.y) else WallAxis.AXIS_B
-		var length := maxi(1, roundi(absf(delta.x) if axis == WallAxis.AXIS_A else absf(delta.y)))
+		var length := int(authored_unit_edges.keys().max()) + 1
+		var doorway_indices: Array[int] = []
+		var wall_type := WallType.NORMAL
+		for unit_index in authored_unit_edges:
+			var unit_edge: Dictionary = authored_unit_edges[unit_index]
+			if bool(unit_edge.get("enabled", true)) and int(unit_edge.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE)) == ApartmentWallCellScript.OpeningKind.DOOR:
+				doorway_indices.append(int(unit_index))
 		var doorway_offset := -1
 		var doorway_width := 0
-		var wall_type := WallType.NORMAL
-		var opening := wall_node.get_node_or_null(wall_node.opening_path) as ApartmentOpeningMarker
-		if opening != null and opening.opening_type == ApartmentOpeningMarker.OpeningType.DOOR:
-			var opening_start := _screen_to_grid_point(opening.world_start())
-			var opening_end := _screen_to_grid_point(opening.world_end())
-			var start_axis_value := start_grid.x if axis == WallAxis.AXIS_A else start_grid.y
-			var open_a := opening_start.x if axis == WallAxis.AXIS_A else opening_start.y
-			var open_b := opening_end.x if axis == WallAxis.AXIS_A else opening_end.y
-			doorway_offset = roundi(minf(absf(open_a - start_axis_value), absf(open_b - start_axis_value)))
-			doorway_width = maxi(1, roundi(absf(open_b - open_a)))
+		if not doorway_indices.is_empty():
+			doorway_indices.sort()
+			doorway_offset = doorway_indices.front()
+			doorway_width = doorway_indices.back() - doorway_offset + 1
 			wall_type = WallType.DOORWAY_FRAME
 		var render_mode := WallRenderMode.FULL
 		if wall_node.display_type == ApartmentWallSegment.DisplayType.CUTAWAY:
@@ -753,6 +797,7 @@ func _wall_segments_from_scene_nodes() -> Array[Dictionary]:
 			"reveal_when_area_active": wall_node.revealable,
 			"height": maxf(8.0, wall_node.base_point.global_position.y - wall_node.top_point.global_position.y),
 			"doorway_color": doorway_debug_color,
+			"unit_edges": authored_unit_edges,
 		})
 	return segments
 
@@ -1501,6 +1546,7 @@ func _object_placement_warnings() -> Array[String]:
 			continue
 		var blocks_movement := bool(object_data.get("blocks_movement", true))
 		var uses_floor := _object_uses_floor_occupancy(object_data)
+		var hard_geometry_authority := _object_geometry_is_hard_authority(object_data)
 		var category := String(object_data.get("category", ""))
 		var contract_interaction := DIRECT_INTERACTION_OBJECT_IDS.has(object_id)
 		var raw_interaction_cells := _object_raw_interaction_cells(object_data)
@@ -1514,9 +1560,9 @@ func _object_placement_warnings() -> Array[String]:
 		elif not contract_interaction and (not raw_interaction_cells.is_empty() or interaction_size != Vector2.ZERO):
 			warnings.append("object %s must not define gameplay interaction geometry" % object_id)
 		var occupied_cells: Array[Vector2i] = []
-		if uses_floor:
+		if uses_floor and hard_geometry_authority:
 			occupied_cells = _object_occupied_cells(object_data)
-		if uses_floor and occupied_cells.is_empty():
+		if uses_floor and hard_geometry_authority and occupied_cells.is_empty():
 			warnings.append("object %s has no occupied cells; check size_cells" % object_id)
 
 		for cell in occupied_cells:
@@ -1599,6 +1645,13 @@ func _object_placement_warnings() -> Array[String]:
 			if _object_collision_grid_rect(first).intersects(_object_collision_grid_rect(second)):
 				warnings.append("blocking collision overlap between %s and %s" % [first.get("id", ""), second.get("id", "")])
 	return warnings
+
+
+func _object_geometry_is_hard_authority(object_data: Dictionary) -> bool:
+	# In the editable Environment, exact placement validation follows authored Scene Nodes.
+	# The remaining Resource-only environment props stay as legacy debug references while the
+	# user paints the authoritative TileMaps; they must not force those manual floor edits back.
+	return bool(object_data.get("node_backed", false)) or not _environment_node_authority_active()
 
 
 func _editable_object_node_warnings() -> Array[String]:
@@ -1951,12 +2004,15 @@ func _room_measurement_object_warnings_for(object_data: Dictionary) -> Array[Str
 	if room_data.is_empty():
 		warnings.append("unknown expected room %s" % expected_room)
 		return warnings
+	if not _object_geometry_is_hard_authority(object_data):
+		return warnings
 
 	var door_clearance_keys := _cell_key_map(room_data["doorway_clearance_cells"])
 	var path_keys := _cell_key_map(room_data["main_path_cells"])
 	var anchor: Vector2i = object_data.get("anchor_cell", Vector2i.ZERO)
 	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
-	if anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT and _room_area_for_cell(anchor, false) != expected_room:
+	var node_backed := bool(object_data.get("node_backed", false))
+	if not node_backed and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT and _room_area_for_cell(anchor, false) != expected_room:
 		warnings.append("anchor %s is outside expected room" % _format_cell(anchor))
 	for cell in occupied_cells:
 		var actual_room := _room_area_for_cell(cell, false)
@@ -2606,6 +2662,10 @@ func _object_anchor_world_position(object_data: Dictionary, resolving: Dictionar
 
 	match int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR)):
 		ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE:
+			var socket_path: NodePath = RESOURCE_WALL_SOCKET_PATH_BY_OBJECT_ID.get(object_id, NodePath())
+			var wall_socket := get_node_or_null(socket_path) as Marker2D
+			if wall_socket != null:
+				return wall_socket.global_position
 			var wall := _wall_segment_by_id(String(object_data.get("wall_segment_id", "")))
 			var unit := _object_wall_attachment_unit(object_data, wall)
 			var edge: Dictionary = unit.get("edge", {})
@@ -3286,6 +3346,9 @@ func _measurement_wall_unit_data(segment: Dictionary) -> Array[Dictionary]:
 
 
 func _measurement_wall_unit_has_window(segment: Dictionary, offset: int) -> bool:
+	var authored_edge: Dictionary = Dictionary(segment.get("unit_edges", {})).get(offset, {})
+	if bool(authored_edge.get("enabled", true)) and int(authored_edge.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE)) == ApartmentWallCellScript.OpeningKind.WINDOW:
+		return true
 	if String(segment.get("id", "")) != "living_right_wall":
 		return false
 	var start_cell: Vector2i = segment.get("start_cell", Vector2i.ZERO)
@@ -3317,6 +3380,14 @@ func _measurement_wall_available_edges_text(segment: Dictionary) -> String:
 
 
 func _measurement_wall_length_px(segment: Dictionary) -> float:
+	if not Dictionary(segment.get("unit_edges", {})).is_empty():
+		var total := 0.0
+		for offset in range(int(segment.get("length", 0))):
+			var edge := _wall_segment_unit_edge(segment, offset)
+			total += _iso(Vector2i(edge.get("from_cell", Vector2i.ZERO)).x, Vector2i(edge.get("from_cell", Vector2i.ZERO)).y).distance_to(
+				_iso(Vector2i(edge.get("to_cell", Vector2i.ZERO)).x, Vector2i(edge.get("to_cell", Vector2i.ZERO)).y)
+			)
+		return total
 	var start_cell := _segment_start_cell(segment)
 	var end_cell := Vector2(_segment_end_cell_i(segment))
 	return _iso(start_cell.x, start_cell.y).distance_to(_iso(end_cell.x, end_cell.y))
@@ -3482,7 +3553,7 @@ func _create_object_legend_overlay() -> void:
 	_object_legend_label.name = "ObjectPlacementLegendLabel"
 	_object_legend_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_object_legend_label.position = Vector2(-418.0, 28.0)
-	_object_legend_label.text = "오브젝트 배치 범례\n파랑 면: BodyPolygon 기반 floor occupancy  |  빨강: BodyPolygon collision\n같은 면: 파랑 채움 + 빨강 테두리  |  PlacementFootprint는 선택 사항\n청록 점선: SelectionPolygon (hover/click 전용)\n주황 점선: InteractionPolygon  |  주황 마커: UsePoint\n흰 점선: 선택된 Sprite2D/VisualPreview bounds  |  분홍: AttachmentSocket\n초록: BasePoint  |  노랑: TopPoint/높이 가이드\n같은 위치 반복 클릭: 후보 순환  |  V: 전체 벽 반투명"
+	_object_legend_label.text = "오브젝트 배치 범례\n파랑 면: BodyPolygon 기반 floor occupancy  |  빨강: BodyPolygon collision\n같은 면: 파랑 채움 + 빨강 테두리  |  PlacementFootprint는 선택 사항\n청록 점선: SelectionPolygon (hover/click 전용)\n주황 점선: InteractionPolygon  |  주황 마커: UsePoint\n흰 점선: 선택된 Sprite2D/VisualPreview bounds  |  분홍: AttachmentSocket\n초록: BasePoint  |  노랑: TopPoint/높이 가이드\n같은 위치 반복 클릭: 후보 순환  |  V: 기본→반투명→숨김"
 	_object_legend_label.modulate = COLOR_DEBUG_TEXT
 	_object_legend_label.add_theme_font_size_override("font_size", 12)
 	_object_legend_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
@@ -3508,11 +3579,9 @@ func _create_full_debug_help_panel() -> void:
 	_debug_overlay_layer.add_child(_debug_help_panel)
 	var box := _make_panel_vbox(_debug_help_panel)
 	box.add_child(_make_debug_label_control("아파트 shell 디버그 단축키", 20, COLOR_DEBUG_TEXT))
-	box.add_child(_make_debug_label_control(
-		"기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 측량 모드\nP  오브젝트 배치 모드 (같은 위치 반복 클릭: 후보 순환)\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nV  전체 candidate 벽·문·창 반투명\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽 논리선  /  L  구역 라벨  /  I  inventory 출력\nJ  7개 직접 상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기",
-		15,
-		COLOR_DEBUG_TEXT
-	))
+	_debug_help_body_label = _make_debug_label_control("", 15, COLOR_DEBUG_TEXT)
+	box.add_child(_debug_help_body_label)
+	_update_debug_help_wall_state()
 	_debug_help_panel.visible = false
 
 
@@ -3529,8 +3598,25 @@ func _toggle_full_debug_help() -> void:
 func _update_compact_debug_help() -> void:
 	if _compact_help_label == null:
 		return
-	var wall_state := "반투명" if wall_inspection_transparency else "기본"
+	var wall_state := _wall_inspection_mode_name_ko()
 	_compact_help_label.text = "기준 시점 ROTATE_90  |  현재 모드: %s  |  M 측량  P 오브젝트  N 이동·충돌  |  V 전체벽=%s  |  F1 도움말" % [_debug_mode_display_name(), wall_state]
+	_update_debug_help_wall_state()
+
+
+func _wall_inspection_mode_name_ko() -> String:
+	match wall_inspection_mode:
+		WallInspectionMode.TRANSPARENT:
+			return "반투명"
+		WallInspectionMode.HIDDEN:
+			return "숨김"
+		_:
+			return "기본"
+
+
+func _update_debug_help_wall_state() -> void:
+	if _debug_help_body_label == null:
+		return
+	_debug_help_body_label.text = "기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 측량 모드\nP  오브젝트 배치 모드 (같은 위치 반복 클릭: 후보 순환)\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nV  전체 벽 표시 순환: 기본 → 반투명 → 숨김 (현재: %s)\n   모든 상태에서 충돌·내비게이션·개구부·Socket 유지\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽 논리선  /  L  구역 라벨  /  I  inventory 출력\nJ  7개 직접 상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기" % _wall_inspection_mode_name_ko()
 
 
 func _update_debug_detail_panel() -> void:
@@ -4639,6 +4725,8 @@ func _navigation_edge_sets() -> Dictionary:
 		var length := int(segment.get("length", 0))
 		for offset in range(length):
 			var edge_data := _wall_segment_unit_edge(segment, offset)
+			if not bool(edge_data.get("enabled", true)):
+				continue
 			var key := String(edge_data["key"])
 			if _is_wall_segment_doorway_unit(segment, offset) and not _scene_door_blocks_doorway(segment, offset):
 				passable[key] = edge_data
@@ -4652,14 +4740,22 @@ func _navigation_edge_sets() -> Dictionary:
 
 
 func _scene_door_blocks_doorway(segment: Dictionary, unit_offset: int) -> bool:
-	if String(segment.get("id", "")) != "entrance_wall":
+	var edge_data := _wall_segment_unit_edge(segment, unit_offset)
+	if int(edge_data.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE)) != ApartmentWallCellScript.OpeningKind.DOOR:
 		return false
-	if not _editable_object_node_authority_active() or unit_offset != int(segment.get("doorway_offset", -1)):
-		return false
-	return not _entrance_door_is_open()
+	if String(segment.get("id", "")) == "entrance_wall" and _editable_object_node_authority_active():
+		return not _entrance_door_is_open()
+	return not bool(edge_data.get("opening_passable", false))
 
 
 func _wall_segment_unit_edge(segment: Dictionary, unit_offset: int) -> Dictionary:
+	var authored_edges: Dictionary = segment.get("unit_edges", {})
+	if authored_edges.has(unit_offset):
+		var authored: Dictionary = Dictionary(authored_edges[unit_offset]).duplicate(true)
+		authored["wall_type"] = int(segment.get("wall_type", WallType.NORMAL))
+		authored["render_mode"] = int(segment.get("render_mode", WallRenderMode.FULL))
+		authored["doorway"] = _is_wall_segment_doorway_unit(segment, unit_offset)
+		return authored
 	var axis: WallAxis = segment.get("axis", WallAxis.AXIS_A)
 	var start_cell := _segment_start_cell(segment)
 	var from_cell := Vector2i(_offset_cell(start_cell, axis, float(unit_offset)))
@@ -4677,6 +4773,10 @@ func _wall_segment_unit_edge(segment: Dictionary, unit_offset: int) -> Dictionar
 
 
 func _is_wall_segment_doorway_unit(segment: Dictionary, unit_offset: int) -> bool:
+	var authored_edges: Dictionary = segment.get("unit_edges", {})
+	if authored_edges.has(unit_offset):
+		var authored_edge: Dictionary = authored_edges[unit_offset]
+		return bool(authored_edge.get("enabled", true)) and int(authored_edge.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE)) == ApartmentWallCellScript.OpeningKind.DOOR
 	var wall_type := int(segment.get("wall_type", WallType.NORMAL))
 	if wall_type != WallType.DOORWAY_FRAME and wall_type != WallType.DOORWAY_EMPTY:
 		return false
@@ -5094,6 +5194,10 @@ func _segment_start_cell(segment: Dictionary) -> Vector2:
 
 
 func _segment_end_cell_i(segment: Dictionary) -> Vector2i:
+	var authored_edges: Dictionary = segment.get("unit_edges", {})
+	if not authored_edges.is_empty():
+		var last_index := int(authored_edges.keys().max())
+		return Dictionary(authored_edges[last_index]).get("to_cell", Vector2i.ZERO)
 	var start_cell: Vector2i = segment.get("start_cell", Vector2i.ZERO)
 	var length := int(segment.get("length", 0))
 	var axis: WallAxis = segment.get("axis", WallAxis.AXIS_A)

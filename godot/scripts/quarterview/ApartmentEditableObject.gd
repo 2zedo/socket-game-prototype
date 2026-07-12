@@ -36,6 +36,7 @@ signal open_state_changed(is_open: bool)
 
 func _ready() -> void:
 	_sync_mount_socket()
+	_sync_sort_from_base_point()
 	_sync_body_open_state()
 	if not Engine.is_editor_hint():
 		set_process(not mount_socket_path.is_empty())
@@ -54,6 +55,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if not mount_socket_path.is_empty():
 		_sync_mount_socket()
+	_sync_sort_from_base_point()
 	if Engine.is_editor_hint():
 		_sync_editor_visual_preview()
 
@@ -106,6 +108,14 @@ func _sync_mount_socket() -> void:
 func base_point_world() -> Vector2:
 	var base_point := get_node_or_null(BASE_POINT_PATH) as Marker2D
 	return base_point.global_position if base_point != null else global_position
+
+
+func _sync_sort_from_base_point() -> void:
+	var base_point := get_node_or_null(BASE_POINT_PATH) as Marker2D
+	if base_point == null:
+		return
+	z_as_relative = false
+	z_index = int(round(base_point.global_position.y))
 
 
 func top_point_world() -> Vector2:

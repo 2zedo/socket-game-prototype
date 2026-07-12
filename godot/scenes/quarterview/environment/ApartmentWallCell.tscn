@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/quarterview/ApartmentWallCell.gd" id="1_script"]
+
+[node name="ApartmentWallCell" type="Node2D"]
+editor_description = "128×64 이소메트릭 바닥 셀의 벽선 한 칸. Root를 직접 선택·이동·숨김 처리합니다."
+script = ExtResource("1_script")
+
+[node name="StartPoint" type="Marker2D" parent="."]
+editor_description = "이 WallCell의 시작점. Root position이 실제 정본입니다."
+
+[node name="EndPoint" type="Marker2D" parent="."]
+editor_description = "이 WallCell의 끝점. end_offset에서 파생됩니다."
+position = Vector2(64, 32)
+
+[node name="BasePoint" type="Marker2D" parent="."]
+editor_description = "벽 한 칸의 바닥 중앙 기준점."
+position = Vector2(32, 16)
+
+[node name="TopPoint" type="Marker2D" parent="."]
+editor_description = "벽 한 칸의 높이 확인 기준점. WallGroup TopPoint에서 파생됩니다."
+position = Vector2(32, -160)
+
+[node name="Visual" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0, 0, 64, 32, 64, -144, 0, -176)
+color = Color(0.72, 0.68, 0.6, 1)
+
+[node name="OcclusionVisual" type="Polygon2D" parent="."]
+visible = false
+z_index = 1
+polygon = PackedVector2Array(0, 0, 64, 32, 64, -10, 0, -42)
+color = Color(0.25, 0.26, 0.25, 0.9)
+
+[node name="CollisionBody" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="CollisionBody"]
+editor_description = "이 벽 한 칸의 이동 충돌. Cell Root 이동을 그대로 따릅니다."
+polygon = PackedVector2Array(-2.683282, 5.366563, 61.31672, 37.366562, 66.68328, 26.633438, 2.683282, -5.366563)
+
+[node name="AttachmentSocket" type="Marker2D" parent="."]
+editor_description = "이 벽 한 칸에 붙는 장비·포스터·전선관의 선택적 Socket. Cell 이동을 함께 따릅니다."
+
+[node name="EditorOpeningPreview" type="Line2D" parent="."]
+visible = false
+width = 8.0
+points = PackedVector2Array(0, 0, 64, 32)
+default_color = Color(1, 0.72, 0.22, 0.95)

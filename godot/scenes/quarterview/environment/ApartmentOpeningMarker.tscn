@@ -3,14 +3,14 @@
 [ext_resource type="Script" path="res://scripts/quarterview/ApartmentOpeningMarker.gd" id="1_script"]
 
 [node name="ApartmentOpeningMarker" type="Node2D"]
-editor_description = "문·창문 개구부 정본. StartPoint와 EndPoint를 2D 화면에서 직접 조정합니다."
+editor_description = "문·창문 의미/미리보기 Node. 위치와 통과 기본값은 소유 WallCell의 Opening 메타데이터에서 자동 파생됩니다."
 script = ExtResource("1_script")
 
 [node name="StartPoint" type="Marker2D" parent="."]
-editor_description = "개구부 시작점."
+editor_description = "개구부 시작점 미러. 위치를 바꾸려면 소유 WallCell Root/end_offset을 조정합니다."
 
 [node name="EndPoint" type="Marker2D" parent="."]
-editor_description = "개구부 끝점."
+editor_description = "개구부 끝점 미러. 위치를 바꾸려면 소유 WallCell Root/end_offset을 조정합니다."
 
 [node name="EditorPreview" type="Line2D" parent="."]
 editor_description = "실행 전 개구부 위치를 보여주는 에디터 전용 선."

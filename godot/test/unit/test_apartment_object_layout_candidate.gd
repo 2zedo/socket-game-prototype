@@ -130,13 +130,13 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 	var objects := _dictionary_map(shell._object_footprints())
 	var expected_centers := {
 		"entrance_door": Vector2(516, 184), "bed": Vector2(1262, 424),
-		"fridge": Vector2(1124, 230), "navi_link": Vector2(1264, 94),
+		"fridge": Vector2(1136, 190), "navi_link": Vector2(1264, 94),
 		"microwave": Vector2(996, 114), "power_module_board": Vector2(1476, 96),
 		"node_17": Vector2(996, 38),
 	}
 	var expected_base_points := {
 		"entrance_door": Vector2(516, 190), "bed": Vector2(1262, 514),
-		"fridge": Vector2(1124, 303), "navi_link": Vector2(1264, 214),
+		"fridge": Vector2(1136, 263), "navi_link": Vector2(1264, 214),
 		"microwave": Vector2(996, 174), "power_module_board": Vector2(1476, 126),
 		"node_17": Vector2(996, 108),
 	}
@@ -226,7 +226,7 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 
 	for anchor_path_and_id in [
 		["EditableObjectNodes/SinkCounterParentAnchor", "microwave"],
-		["Walls/WorkBackWall/AttachmentSockets/PowerModuleBoardSocket", "power_module_board"],
+		["Walls/WorkBackWall/WallCells/Cell05/AttachmentSocket", "power_module_board"],
 	]:
 		var parent_anchor: Node2D = shell.get_node(anchor_path_and_id[0])
 		var object_before: Dictionary = _dictionary_map(shell._object_footprints())[anchor_path_and_id[1]]
@@ -481,7 +481,7 @@ func test_parent_and_wall_references_are_valid_and_acyclic() -> void:
 		assert_true(objects.has(parent_id), "%s parent must exist in the same inventory." % id)
 		assert_ne(parent_id, id, "%s must not parent itself." % id)
 	assert_eq(objects["power_housing"].wall_segment_id, objects["power_module_board"].wall_segment_id)
-	assert_true(String(shell.get_node("EditableObjectNodes/PowerModuleBoard").mount_socket_path).contains("PowerModuleBoardSocket"))
+	assert_true(String(shell.get_node("EditableObjectNodes/PowerModuleBoard").mount_socket_path).contains("Cell05/AttachmentSocket"))
 	assert_true(String(objects["microwave"].node_path).contains("SinkCounterParentAnchor"))
 	var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 	var entrance_unit: Dictionary = shell._object_wall_attachment_unit(objects["entrance_door"], entrance_wall)
@@ -774,12 +774,15 @@ func test_scene_selection_priority_and_repeated_click_cycle_over_environment_ove
 	assert_true(shell._debug_detail_label.text.contains("selection owner: fridge"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
 	assert_eq(shell._selected_object_id, "fridge")
-	assert_true(shell._debug_detail_label.text.contains("선택 1/2"))
+	assert_true(shell._debug_detail_label.text.contains("선택 1/3"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
 	assert_eq(shell._selected_object_id, "microwave")
-	assert_true(shell._debug_detail_label.text.contains("선택 2/2"))
+	assert_true(shell._debug_detail_label.text.contains("선택 2/3"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
-	assert_eq(shell._selected_object_id, "fridge", "Third click must wrap to the first ranked candidate.")
+	assert_eq(shell._selected_object_id, "navi_link")
+	assert_true(shell._debug_detail_label.text.contains("선택 3/3"))
+	assert_true(shell._select_hovered_object(overlap_world_position))
+	assert_eq(shell._selected_object_id, "fridge", "Fourth click must wrap to the first ranked candidate.")
 
 
 func test_scene_selection_polygon_is_independent_from_interaction_polygon() -> void:
@@ -822,7 +825,7 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(shell._object_legend_label.text.contains("UsePoint"))
 	assert_true(shell._object_legend_label.text.contains("파랑 채움 + 빨강 테두리"))
 	assert_true(shell._object_legend_label.text.contains("후보 순환"))
-	assert_true(shell._object_legend_label.text.contains("전체 벽 반투명"))
+	assert_true(shell._object_legend_label.text.contains("기본→반투명→숨김"))
 	assert_gt(shell._debug_detail_panel.get_global_rect().position.x, 0.0, "P detail panel must stay inside the viewport.")
 	var bed: Dictionary = _dictionary_map(shell._object_footprints())["bed"]
 	var bed_viewport_position: Vector2 = shell.get_viewport().get_canvas_transform() * shell._object_pixel_center(bed)
@@ -874,6 +877,7 @@ func test_wall_transparency_toggle_is_visual_only() -> void:
 	var wall_count_before: int = shell._wall_segments().size()
 	shell._unhandled_input(_key_event(KEY_V))
 	assert_true(shell.wall_inspection_transparency)
+	assert_eq(shell.wall_inspection_mode, shell.WallInspectionMode.TRANSPARENT)
 	_assert_layer_alpha(shell.get_node("WallLayer"), 0.18)
 	_assert_layer_alpha(shell.get_node("OcclusionStubLayer"), 0.18)
 	_assert_layer_alpha(shell.get_node("DoorAndWindowLayer"), 0.18)
@@ -890,9 +894,22 @@ func test_wall_transparency_toggle_is_visual_only() -> void:
 	assert_eq(shell._navigation_edge_sets()["blocked"].keys().size(), edges_before["blocked"].keys().size())
 	shell._unhandled_input(_key_event(KEY_V))
 	assert_false(shell.wall_inspection_transparency)
+	assert_eq(shell.wall_inspection_mode, shell.WallInspectionMode.HIDDEN)
+	assert_false(shell.get_node("WallLayer").visible)
+	assert_false(shell.get_node("Walls/WorkBackWall/WallCells/Cell00/Visual").visible)
+	assert_false(shell.get_node("Walls/WorkBackWall/WallCells/Cell00/CollisionBody/CollisionPolygon2D").disabled)
+	assert_false(shell.get_node("EditableObjectNodes/EntranceDoor/Body/BodyPolygon").disabled, "HIDDEN must keep the closed door collision active.")
+	assert_eq(shell._navigation_edge_sets()["blocked"].keys().size(), edges_before["blocked"].keys().size())
+	assert_true(shell._compact_help_label.text.contains("전체벽=숨김"))
+	assert_true(shell._debug_help_body_label.text.contains("현재: 숨김"))
+	shell._redraw_reveal_sensitive_layers()
+	assert_false(shell.get_node("Walls/LivingRightWall/WallCells/Cell00/Visual").visible, "Reveal refresh must not escape HIDDEN inspection mode.")
+	shell._unhandled_input(_key_event(KEY_V))
+	assert_eq(shell.wall_inspection_mode, shell.WallInspectionMode.NORMAL)
 	_assert_layer_alpha(shell.get_node("WallLayer"), 1.0)
 	_assert_layer_alpha(shell.get_node("OcclusionStubLayer"), 1.0)
 	_assert_layer_alpha(shell.get_node("DoorAndWindowLayer"), 1.0)
+	assert_true(shell.get_node("WallLayer").visible)
 
 
 func test_inspector_mode_initialization_preserves_legacy_exports_and_combined_policy() -> void:
@@ -935,7 +952,7 @@ func test_f1_help_and_j_h_escape_priority_do_not_overlap() -> void:
 	var help_text := ""
 	for label in help_labels:
 		help_text += String(label.text)
-	assert_true(help_text.contains("V  전체 candidate 벽·문·창 반투명"))
+	assert_true(help_text.contains("V  전체 벽 표시 순환: 기본 → 반투명 → 숨김"))
 	assert_true(help_text.contains("ROTATE_90 / full_map"))
 	shell._unhandled_input(_key_event(KEY_ESCAPE))
 	assert_false(shell._debug_help_panel.visible)
@@ -956,7 +973,7 @@ func test_environment_floor_room_wall_and_opening_nodes_are_scene_authority() ->
 	assert_true(shell._environment_node_authority_active())
 	var expected_floor_counts := {
 		"EntranceFloor": 6,
-		"BathroomFloor": 6,
+		"BathroomFloor": 7,
 		"LivingFloor": 54,
 		"WorkFloor": 32,
 	}
@@ -964,7 +981,7 @@ func test_environment_floor_room_wall_and_opening_nodes_are_scene_authority() ->
 		var floor_layer: TileMapLayer = shell.get_node("Floor/%s" % floor_name)
 		assert_eq(floor_layer.get_used_cells().size(), expected_floor_counts[floor_name])
 		assert_true(floor_layer.editor_description.contains("TileMap"))
-	assert_eq(shell._visible_floor_cells().size(), 98)
+	assert_eq(shell._visible_floor_cells().size(), 99)
 	assert_eq(shell.get_node("FloorTileLayer").get_child_count(), 0, "Environment must not rebuild floor diamonds at runtime.")
 
 	var expected_room_points := {
@@ -982,6 +999,12 @@ func test_environment_floor_room_wall_and_opening_nodes_are_scene_authority() ->
 	assert_eq(shell._room_area_for_cell(Vector2i(0, 8), false), "entrance_area")
 
 	assert_eq(shell.get_node("Walls").get_child_count(), 10)
+	var total_wall_cells := 0
+	for wall_group in shell.get_node("Walls").get_children():
+		total_wall_cells += wall_group.wall_cells().size()
+		for cell in wall_group.wall_cells():
+			assert_true(cell.editor_description.contains("Cell"))
+	assert_eq(total_wall_cells, 58)
 	assert_eq(shell.get_node("Openings").get_child_count(), 5)
 	for segment in shell._wall_segments():
 		assert_eq(segment.source, "SCENE_NODE")
@@ -996,10 +1019,11 @@ func test_environment_floor_room_wall_and_opening_nodes_are_scene_authority() ->
 
 	var board = shell.get_node("EditableObjectNodes/PowerModuleBoard")
 	var door = shell.get_node("EditableObjectNodes/EntranceDoor")
-	assert_true(String(board.mount_socket_path).contains("PowerModuleBoardSocket"))
-	assert_true(String(door.mount_socket_path).contains("EntranceDoorSocket"))
-	assert_eq(board.attachment_anchor_world(), shell.get_node("Walls/WorkBackWall/AttachmentSockets/PowerModuleBoardSocket").global_position)
-	assert_eq(door.attachment_anchor_world(), shell.get_node("Walls/EntranceWall/AttachmentSockets/EntranceDoorSocket").global_position)
+	assert_true(String(board.mount_socket_path).contains("Cell05/AttachmentSocket"))
+	assert_true(String(door.mount_socket_path).contains("Cell04/AttachmentSocket"))
+	assert_eq(board.attachment_anchor_world(), shell.get_node("Walls/WorkBackWall/WallCells/Cell05/AttachmentSocket").global_position)
+	assert_eq(door.attachment_anchor_world(), shell.get_node("Walls/EntranceWall/WallCells/Cell04/AttachmentSocket").global_position)
+	assert_false(shell.get_node("EditorGuides").visible, "Editor floor labels and legend must stay hidden at runtime.")
 
 
 func test_non_rotated_fallback_disables_authored_rotated_visuals_and_collisions() -> void:
@@ -1013,7 +1037,7 @@ func test_non_rotated_fallback_disables_authored_rotated_visuals_and_collisions(
 	assert_gt(shell.get_node("FloorTileLayer").get_child_count(), 0)
 	assert_gt(shell.get_node("WallLayer").get_child_count(), 0)
 	for wall_node in shell.get_node("Walls").get_children():
-		assert_true(wall_node.get_node("CollisionBody/CollisionPolygon2D").disabled)
+		assert_true(wall_node.all_collisions_disabled())
 
 
 func test_custom_wall_override_disables_authored_wall_nodes_and_uses_legacy_renderer() -> void:
@@ -1030,29 +1054,129 @@ func test_custom_wall_override_disables_authored_wall_nodes_and_uses_legacy_rend
 	for segment in shell._wall_segments():
 		assert_eq(segment.source, "custom_wall_segments")
 	for wall_node in shell.get_node("Walls").get_children():
-		assert_true(wall_node.get_node("CollisionBody/CollisionPolygon2D").disabled)
+		assert_true(wall_node.all_collisions_disabled())
 
 
 func test_wall_node_collision_keeps_non_passable_window_solid_and_honors_enabled_state() -> void:
 	var shell = _make_shell()
 	var wall = shell.get_node("Walls/LivingRightWall")
 	var opening = shell.get_node("Openings/LivingWindowOpening")
-	var collision: CollisionPolygon2D = wall.get_node("CollisionBody/CollisionPolygon2D")
-	var collision_after: CollisionPolygon2D = wall.get_node("CollisionBody/CollisionAfterOpening")
+	var window_cell = wall.get_node("WallCells/Cell05")
+	var collision: CollisionPolygon2D = window_cell.get_node("CollisionBody/CollisionPolygon2D")
 	assert_false(opening.passable)
+	assert_eq(window_cell.opening_kind, 2)
 	assert_false(collision.disabled)
-	assert_true(collision_after.disabled)
-	var window_midpoint: Vector2 = (Vector2(opening.world_start()) + Vector2(opening.world_end())) * 0.5
-	var collision_bounds := Rect2(collision.polygon[0], Vector2.ZERO)
-	for point in collision.polygon:
-		collision_bounds = collision_bounds.expand(point)
-	assert_true(collision_bounds.grow(0.1).has_point(collision.to_local(window_midpoint)), "A non-passable window must not punch a physical wall gap.")
 	wall.enabled = false
-	wall._apply_collision_enabled()
+	wall._sync_group_from_cells()
 	assert_true(collision.disabled)
 	wall.enabled = true
-	wall._apply_collision_enabled()
+	wall._sync_group_from_cells()
 	assert_false(collision.disabled)
+
+
+func test_wall_cell_move_visibility_openings_and_socket_tracking_use_cell_authority() -> void:
+	var shell = _make_shell()
+	var wall = shell.get_node("Walls/WorkBackWall")
+	var cell: Node2D = wall.get_node("WallCells/Cell05")
+	var collision: CollisionPolygon2D = cell.get_node("CollisionBody/CollisionPolygon2D")
+	var board: Node2D = shell.get_node("EditableObjectNodes/PowerModuleBoard")
+	var edge_before: Dictionary = shell._wall_segment_unit_edge(shell._wall_segment_by_id("work_back_wall"), 5)
+	var board_before := board.global_position
+	var cell_before := cell.position
+	cell.position += Vector2(64, -32)
+	wall._sync_group_from_cells()
+	board._sync_mount_socket()
+	var edge_after: Dictionary = shell._wall_segment_unit_edge(shell._wall_segment_by_id("work_back_wall"), 5)
+	assert_ne(edge_after.key, edge_before.key, "M/N wall edge data must follow the authored WallCell position.")
+	assert_eq(board.global_position, board_before + Vector2(64, -32), "Wall-attached equipment must follow its WallCell Socket.")
+	cell.visible = false
+	assert_false(collision.disabled, "Hiding one Cell visual must not silently remove its collision.")
+	cell.visible = true
+	cell.position = cell_before
+	wall._sync_group_from_cells()
+	board._sync_mount_socket()
+	assert_eq(board.global_position, board_before)
+
+	var disabled_cell: Node2D = wall.get_node("WallCells/Cell00")
+	var disabled_collision: CollisionPolygon2D = disabled_cell.get_node("CollisionBody/CollisionPolygon2D")
+	var disabled_edge: Dictionary = shell._wall_segment_unit_edge(shell._wall_segment_by_id("work_back_wall"), 0)
+	assert_true(shell._navigation_edge_sets().blocked.has(disabled_edge.key))
+	disabled_cell.enabled = false
+	wall._sync_group_from_cells()
+	var disabled_navigation: Dictionary = shell._navigation_edge_sets()
+	assert_true(disabled_collision.disabled)
+	assert_false(disabled_navigation.blocked.has(disabled_edge.key), "A disabled WallCell must not remain blocked in N/Playable navigation.")
+	assert_false(disabled_navigation.passable.has(disabled_edge.key))
+	disabled_cell.enabled = true
+	wall._sync_group_from_cells()
+	assert_false(disabled_collision.disabled)
+
+	var opening_wall = shell.get_node("Walls/WorkFrontSharedWall")
+	var work_opening_cell: Node2D = opening_wall.get_node("WallCells/Cell06")
+	var opening_marker = shell.get_node("Openings/WorkRoomOpening")
+	var opening_cell_before := work_opening_cell.position
+	var opening_start_before: Vector2 = opening_marker.world_start()
+	var opening_end_before: Vector2 = opening_marker.world_end()
+	var opening_delta := Vector2(16, 8)
+	work_opening_cell.position += opening_delta
+	opening_wall._sync_group_from_cells()
+	assert_eq(opening_marker.world_start(), opening_start_before + opening_delta)
+	assert_eq(opening_marker.world_end(), opening_end_before + opening_delta)
+	var moved_opening_segment: Dictionary = shell._wall_segment_by_id("work_front_shared_wall")
+	assert_eq(moved_opening_segment.doorway_offset, 6, "Doorway indexing must come from Cell opening metadata, not marker coordinates.")
+	var moved_opening_edge: Dictionary = shell._wall_segment_unit_edge(moved_opening_segment, 6)
+	assert_true(shell._navigation_edge_sets().passable.has(moved_opening_edge.key))
+	work_opening_cell.opening_passable = false
+	opening_wall._sync_group_from_cells()
+	var closed_static_navigation: Dictionary = shell._navigation_edge_sets()
+	assert_true(closed_static_navigation.blocked.has(moved_opening_edge.key))
+	assert_false(closed_static_navigation.passable.has(moved_opening_edge.key))
+	work_opening_cell.opening_passable = true
+	work_opening_cell.position = opening_cell_before
+	opening_wall._sync_group_from_cells()
+	assert_eq(opening_marker.world_start(), opening_start_before)
+	assert_eq(opening_marker.world_end(), opening_end_before)
+
+	for socket_case in [
+		{
+			"object_id": "wall_conduit",
+			"wall_path": "Walls/WorkBackWall",
+			"cell_path": "WallCells/Cell02",
+		},
+		{
+			"object_id": "sea_horizon_poster",
+			"wall_path": "Walls/LivingRightWall",
+			"cell_path": "WallCells/Cell03",
+		},
+	]:
+		var socket_wall = shell.get_node(socket_case.wall_path)
+		var socket_cell: Node2D = socket_wall.get_node(socket_case.cell_path)
+		var object_data: Dictionary = shell._object_data_by_id(socket_case.object_id)
+		var anchor_before: Vector2 = shell._object_anchor_world_position(object_data)
+		var socket_before: Vector2 = socket_cell.get_node("AttachmentSocket").global_position
+		var socket_cell_before := socket_cell.position
+		var test_delta := Vector2(16, 8)
+		socket_cell.position += test_delta
+		socket_wall._sync_group_from_cells()
+		assert_eq(socket_cell.get_node("AttachmentSocket").global_position, socket_before + test_delta)
+		assert_eq(shell._object_anchor_world_position(object_data), anchor_before + test_delta, "%s must read its WallCell Socket directly." % socket_case.object_id)
+		socket_cell.position = socket_cell_before
+		socket_wall._sync_group_from_cells()
+		assert_eq(shell._object_anchor_world_position(object_data), anchor_before)
+
+	for opening_path in [
+		"Walls/EntranceWall/WallCells/Cell04",
+		"Walls/EntranceInnerWall/WallCells/Cell01",
+		"Walls/WorkFrontSharedWall/WallCells/Cell06",
+		"Walls/BathroomRightWall/WallCells/Cell02",
+	]:
+		var opening_cell = shell.get_node(opening_path)
+		assert_eq(opening_cell.opening_kind, 1)
+		assert_true(opening_cell.get_node("CollisionBody/CollisionPolygon2D").disabled)
+	var window_cell = shell.get_node("Walls/LivingRightWall/WallCells/Cell05")
+	assert_eq(window_cell.opening_kind, 2)
+	assert_false(window_cell.opening_passable)
+	assert_false(window_cell.get_node("CollisionBody/CollisionPolygon2D").disabled)
 
 
 func _make_shell():
