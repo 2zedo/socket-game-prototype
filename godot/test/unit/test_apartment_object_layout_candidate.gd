@@ -20,7 +20,7 @@ const NON_INTERACTION_IDS := [
 	"bathroom_fixture", "sea_horizon_poster", "fluorescent_light",
 	"shoes_slippers", "cable_bundle", "wall_conduit", "power_housing",
 ]
-const EDITABLE_NODE_IDS := ["fridge", "navi_link", "power_module_board", "microwave"]
+const EDITABLE_NODE_IDS := DIRECT_INTERACTION_IDS
 const RETIRED_IDS := [
 	"phone", "air_conditioner", "desk", "bed_placeholder", "fridge_placeholder",
 	"microwave_placeholder", "sink_counter_placeholder", "small_table_placeholder",
@@ -60,29 +60,24 @@ func test_fallback_inventory_matches_resource_inventory_and_metadata() -> void:
 
 func test_migrated_resources_keep_logic_without_duplicate_scene_geometry() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
-	_assert_pixels(objects["entrance_door"], Vector2i(0, 8), Vector2(0, -6), Vector2(150, 220), Vector2.ZERO, Vector2.ZERO, Vector2(96, 56), Vector2(50, 0))
-	_assert_pixels(objects["bed"], Vector2i(9, 6), Vector2(10, -6), Vector2(260, 180), Vector2(180, 90), Vector2(0, 30), Vector2(120, 64), Vector2.ZERO)
-	_assert_pixels(objects["node_17"], Vector2i(1, 2), Vector2(0, -8), Vector2(150, 140), Vector2(90, 60), Vector2(0, 28), Vector2(96, 64), Vector2.ZERO)
 	for id in EDITABLE_NODE_IDS:
 		_assert_pixels(objects[id], Vector2i.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 		assert_eq(objects[id].size_cells, Vector2i.ZERO, "%s Resource must not duplicate Scene occupancy size." % id)
 		assert_eq(objects[id].collision_shape_type, FOOTPRINT_CONFIG_SCRIPT.CollisionShapeType.NONE)
 		assert_eq(objects[id].interaction_cells, [], "%s Resource must not duplicate Scene use points." % id)
-	var expected_interactions := {
-		"entrance_door": [Vector2i(0, 8)], "bed": [Vector2i(8, 7)],
-		"node_17": [Vector2i(2, 2)],
-	}
-	for id in expected_interactions:
-		assert_eq(objects[id].interaction_cells, expected_interactions[id], "%s interaction cells must remain canonical." % id)
+		assert_eq(objects[id].interaction_cell, Vector2i(-1, -1))
 
 
 func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() -> void:
 	var shell = _make_shell()
 	var expected_paths := {
+		"entrance_door": "EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor",
+		"bed": "EditableObjectNodes/Bed",
 		"fridge": "EditableObjectNodes/Fridge",
 		"navi_link": "EditableObjectNodes/NaviLink",
 		"microwave": "EditableObjectNodes/SinkCounterParentAnchor/Microwave",
 		"power_module_board": "EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard",
+		"node_17": "EditableObjectNodes/Node17",
 	}
 	for id in expected_paths:
 		var object_node: Node = shell.get_node(expected_paths[id])
@@ -100,7 +95,7 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		assert_true(object_node.get_node("InteractionArea/InteractionPolygon") is CollisionPolygon2D)
 		assert_not_null(object_node.get_node_or_null("UsePoint"))
 		assert_not_null(object_node.get_node_or_null("AttachmentSocket"))
-		assert_null(object_node.get_node_or_null("PlacementFootprint"), "Current four objects must derive occupancy from BodyPolygon only.")
+		assert_null(object_node.get_node_or_null("PlacementFootprint"), "Current seven interaction objects must not duplicate Body occupancy.")
 		assert_eq(object_node.geometry_warnings(), [])
 		assert_eq(object_node.get_node("Body").collision_layer, 0)
 		assert_eq(object_node.get_node("Body").collision_mask, 0)
@@ -111,7 +106,7 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		assert_eq(object_node.get_node("InteractionArea").collision_layer, 0)
 		assert_eq(object_node.get_node("InteractionArea").collision_mask, 0)
 
-	for id in ["fridge", "navi_link"]:
+	for id in ["entrance_door", "bed", "fridge", "navi_link", "node_17"]:
 		var body_polygon: CollisionPolygon2D = shell.get_node(expected_paths[id]).get_node("Body/BodyPolygon")
 		assert_eq(body_polygon.scale, Vector2.ONE)
 		assert_gt(body_polygon.polygon.size(), 3)
@@ -134,16 +129,22 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 
 	var objects := _dictionary_map(shell._object_footprints())
 	var expected_centers := {
+		"entrance_door": Vector2(516, 184), "bed": Vector2(1262, 424),
 		"fridge": Vector2(1124, 230), "navi_link": Vector2(1264, 94),
 		"microwave": Vector2(996, 114), "power_module_board": Vector2(1476, 96),
+		"node_17": Vector2(996, 38),
 	}
 	var expected_base_points := {
+		"entrance_door": Vector2(516, 190), "bed": Vector2(1262, 514),
 		"fridge": Vector2(1124, 303), "navi_link": Vector2(1264, 214),
 		"microwave": Vector2(996, 174), "power_module_board": Vector2(1476, 126),
+		"node_17": Vector2(996, 108),
 	}
 	var expected_use_cells := {
+		"entrance_door": [Vector2i(0, 8)], "bed": [Vector2i(8, 7)],
 		"fridge": [Vector2i(5, 5)], "navi_link": [Vector2i(5, 3)],
 		"microwave": [Vector2i(4, 5)], "power_module_board": [Vector2i(7, 2)],
+		"node_17": [Vector2i(2, 2)],
 	}
 	for id in EDITABLE_NODE_IDS:
 		assert_true(objects[id].node_backed)
@@ -159,9 +160,12 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		assert_eq(shell._object_interaction_polygons(objects[id]).size(), 1)
 	assert_eq(shell._object_collision_polygon_points(objects["fridge"]).size(), 4)
 	assert_eq(shell._object_collision_polygon_points(objects["navi_link"]).size(), 5, "Preserve the user-authored NAVI fifth vertex.")
-	for id in ["fridge", "navi_link"]:
+	for id in ["bed", "fridge", "navi_link", "node_17"]:
 		assert_eq(shell._object_floor_polygon_points(objects[id]), shell._object_collision_polygon_points(objects[id]))
 		assert_eq(objects[id].floor_occupancy_source, "BODY_POLYGON")
+	assert_eq(shell._object_collision_polygon_points(objects["entrance_door"]).size(), 4)
+	assert_eq(shell._object_floor_polygon_points(objects["entrance_door"]), [])
+	assert_eq(objects["entrance_door"].floor_occupancy_source, "NONE")
 	assert_eq(shell._object_collision_polygon_points(objects["microwave"]), [])
 	assert_eq(shell._object_collision_polygon_points(objects["power_module_board"]), [])
 	assert_eq(objects["microwave"].floor_occupancy_source, "NONE")
@@ -244,6 +248,92 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 	assert_eq(housing_after, housing_before + Vector2(8, 4), "Resource child attachments must follow AttachmentSocket.")
 
 
+func test_new_interaction_nodes_keep_selection_interaction_and_use_independent() -> void:
+	var shell = _make_shell()
+	for path_and_id in [
+		["EditableObjectNodes/Bed", "bed"],
+		["EditableObjectNodes/Node17", "node_17"],
+		["EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor", "entrance_door"],
+	]:
+		var object_node: Node2D = shell.get_node(path_and_id[0])
+		var object_id := String(path_and_id[1])
+		var before: Dictionary = _dictionary_map(shell._object_footprints())[object_id]
+		var selection_before: Vector2 = shell._object_selection_polygons(before)[0][0]
+		var interaction_before: Vector2 = shell._object_interaction_polygons(before)[0][0]
+		var use_before: Vector2 = Vector2(before.use_points_world[0])
+		object_node.get_node("SelectionArea").position += Vector2(18, -9)
+		var after_selection: Dictionary = _dictionary_map(shell._object_footprints())[object_id]
+		assert_eq(shell._object_selection_polygons(after_selection)[0][0], selection_before + Vector2(18, -9))
+		assert_eq(shell._object_interaction_polygons(after_selection)[0][0], interaction_before)
+		assert_eq(Vector2(after_selection.use_points_world[0]), use_before)
+		object_node.get_node("InteractionArea").position += Vector2(-12, 6)
+		var after_interaction: Dictionary = _dictionary_map(shell._object_footprints())[object_id]
+		assert_eq(shell._object_selection_polygons(after_interaction)[0][0], selection_before + Vector2(18, -9))
+		assert_eq(shell._object_interaction_polygons(after_interaction)[0][0], interaction_before + Vector2(-12, 6))
+		assert_eq(Vector2(after_interaction.use_points_world[0]), use_before)
+		object_node.get_node("UsePoint").position += Vector2(10, 5)
+		var after_use: Dictionary = _dictionary_map(shell._object_footprints())[object_id]
+		assert_eq(shell._object_interaction_polygons(after_use)[0][0], interaction_before + Vector2(-12, 6))
+		assert_eq(Vector2(after_use.use_points_world[0]), use_before + Vector2(10, 5))
+
+
+func test_node_17_attachment_socket_keeps_resource_children_attached() -> void:
+	var shell = _make_shell()
+	var objects_before := _dictionary_map(shell._object_footprints())
+	assert_eq(objects_before["signal_booster"].parent_object_id, "node_17")
+	assert_eq(objects_before["cable_bundle"].parent_object_id, "node_17")
+	var booster_before: Vector2 = shell._object_pixel_center(objects_before["signal_booster"])
+	var cable_before: Vector2 = shell._object_pixel_center(objects_before["cable_bundle"])
+	var node_center_before: Vector2 = shell._object_pixel_center(objects_before["node_17"])
+	var socket: Marker2D = shell.get_node("EditableObjectNodes/Node17/AttachmentSocket")
+	socket.position += Vector2(14, 7)
+	var objects_after := _dictionary_map(shell._object_footprints())
+	assert_eq(shell._object_pixel_center(objects_after["signal_booster"]), booster_before + Vector2(14, 7))
+	assert_eq(shell._object_pixel_center(objects_after["cable_bundle"]), cable_before + Vector2(14, 7))
+	assert_eq(shell._object_pixel_center(objects_after["node_17"]), node_center_before, "Socket edits must not move NODE-17 itself.")
+
+
+func test_entrance_door_open_state_switches_wall_collision_without_floor_occupancy() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_P))
+	var door_node: Node2D = shell.get_node("EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor")
+	var body_polygon: CollisionPolygon2D = door_node.get_node("Body/BodyPolygon")
+	var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
+	var closed_door: Dictionary = _dictionary_map(shell._object_footprints())["entrance_door"]
+	var doorway_edge: Dictionary = shell._object_wall_attachment_unit(closed_door, entrance_wall).edge
+	var edge_key: String = shell._edge_key(doorway_edge.from_cell, doorway_edge.to_cell)
+	var doorway_from_world: Vector2 = shell._iso(float(doorway_edge.from_cell.x), float(doorway_edge.from_cell.y))
+	var doorway_to_world: Vector2 = shell._iso(float(doorway_edge.to_cell.x), float(doorway_edge.to_cell.y))
+	var closed_collision := PackedVector2Array(shell._object_collision_polygon_points(closed_door))
+	assert_false(door_node.is_open)
+	assert_false(body_polygon.disabled)
+	assert_eq(closed_collision.size(), 4)
+	assert_true(Geometry2D.is_point_in_polygon(doorway_from_world, closed_collision), "Closed door BodyPolygon must cover doorway start %s; polygon=%s." % [doorway_from_world, closed_collision])
+	assert_true(Geometry2D.is_point_in_polygon(doorway_to_world, closed_collision), "Closed door BodyPolygon must cover doorway end %s; polygon=%s." % [doorway_to_world, closed_collision])
+	assert_eq(shell._object_floor_polygon_points(closed_door), [])
+	assert_true(shell._navigation_edge_sets().blocked.has(edge_key))
+	assert_false(shell._navigation_edge_sets().passable.has(edge_key))
+	assert_not_null(shell.get_node("ObjectPlacementDebugLayer").get_node_or_null("object_entrance_door_collision_shape"))
+	shell._select_object_for_debug("entrance_door")
+	assert_true(shell._debug_detail_label.text.contains("open state: CLOSED / BodyPolygon: ACTIVE"))
+
+	shell.set_entrance_door_open(true)
+	var open_door: Dictionary = _dictionary_map(shell._object_footprints())["entrance_door"]
+	assert_true(door_node.is_open)
+	assert_true(body_polygon.disabled)
+	assert_eq(shell._object_collision_polygon_points(open_door), [])
+	assert_eq(shell._object_floor_polygon_points(open_door), [])
+	assert_false(shell._navigation_edge_sets().blocked.has(edge_key))
+	assert_true(shell._navigation_edge_sets().passable.has(edge_key))
+	assert_null(shell.get_node("ObjectPlacementDebugLayer").get_node_or_null("object_entrance_door_collision_shape"))
+	assert_eq(door_node.geometry_warnings(), [])
+	assert_true(shell._debug_detail_label.text.contains("open state: OPEN / BodyPolygon: DISABLED"))
+
+	shell.set_entrance_door_open(false)
+	assert_false(body_polygon.disabled)
+	assert_true(shell._navigation_edge_sets().blocked.has(edge_key))
+
+
 func test_visual_preview_and_sprite_texture_are_independent_visual_authorities() -> void:
 	var shell = _make_shell()
 	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
@@ -265,7 +355,7 @@ func test_visual_preview_and_sprite_texture_are_independent_visual_authorities()
 	assert_eq(shell._object_collision_polygon_points(sprite_data), collision_before)
 
 
-func test_optional_placement_footprint_is_supported_but_absent_from_current_four() -> void:
+func test_optional_placement_footprint_is_supported_but_absent_from_current_seven() -> void:
 	var shell = _make_shell()
 	for id in EDITABLE_NODE_IDS:
 		assert_null(shell._editable_object_node_by_id(id).get_node_or_null("PlacementFootprint"))
@@ -376,7 +466,8 @@ func test_attachment_and_floor_occupancy_policy() -> void:
 	assert_true(shell._object_blocked_cells().has(objects["ups_unit"].anchor_cell))
 	assert_false(objects["entrance_door"].uses_floor_occupancy)
 	assert_true(objects["entrance_door"].blocks_movement, "Door contract records closed-state wall blocking without adding a floor blocker.")
-	assert_eq(objects["entrance_door"].collision_size_px, Vector2.ZERO)
+	assert_gt(Vector2(objects["entrance_door"].collision_size_px).x, 0.0)
+	assert_eq(shell._object_floor_polygon_points(objects["entrance_door"]), [])
 	assert_false(objects["power_module_board"].uses_floor_occupancy)
 
 
@@ -431,6 +522,8 @@ func test_direct_interaction_contract_contains_exactly_seven_world_objects() -> 
 	assert_true(shell._interaction_debug_object_ids().has("phone"))
 	for id in DIRECT_INTERACTION_IDS:
 		assert_eq(objects[id].category, &"interaction")
+		assert_true(objects[id].node_backed, "%s must use Scene Node geometry." % id)
+		assert_eq(objects[id].source, "scene_node")
 		assert_true(shell._object_has_valid_interaction_area(objects[id]), "%s needs a valid interaction area." % id)
 		assert_gt(Vector2(objects[id].interaction_size_px).x, 0.0)
 		assert_gt(Vector2(objects[id].interaction_size_px).y, 0.0)
@@ -442,6 +535,8 @@ func test_environment_and_decoration_objects_have_no_gameplay_interaction_geomet
 	var objects := _dictionary_map(shell._object_footprints())
 	for id in NON_INTERACTION_IDS:
 		assert_ne(String(objects[id].category), "interaction", "%s must remain P-debug-only, not directly usable." % id)
+		assert_false(bool(objects[id].get("node_backed", false)), "%s must stay Resource-backed in stage 2." % id)
+		assert_eq(objects[id].source, "resource")
 		assert_eq(Vector2(objects[id].interaction_size_px), Vector2.ZERO)
 		assert_eq(shell._object_raw_interaction_cells(objects[id]), [])
 		assert_eq(shell._object_interaction_cells(objects[id]), [])
@@ -468,11 +563,8 @@ func test_priority_interaction_cells_touch_their_object_or_parent_collision() ->
 func test_rotated_floorplan_layout_invariants() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
 	var expected_anchors := {
-		"entrance_door": Vector2i(0, 8),
-		"bed": Vector2i(9, 6),
 		"sink_counter": Vector2i(3, 4),
 		"dining_table": Vector2i(4, 7),
-		"node_17": Vector2i(1, 2),
 		"bathroom_fixture": Vector2i(0, 4),
 	}
 	for id in expected_anchors:
@@ -483,7 +575,9 @@ func test_rotated_floorplan_layout_invariants() -> void:
 	assert_eq(objects["wall_conduit"].wall_segment_id, &"work_back_wall")
 	assert_eq(objects["wall_conduit"].wall_position_ratio, 0.31)
 	assert_eq(objects["sea_horizon_poster"].anchor_cell, Vector2i(11, 7))
-	assert_eq(objects["bed"].size_cells, Vector2i(2, 1))
+	for id in DIRECT_INTERACTION_IDS:
+		assert_eq(objects[id].anchor_cell, Vector2i.ZERO)
+		assert_eq(objects[id].size_cells, Vector2i.ZERO)
 
 
 func test_candidate_layout_has_no_placement_or_measurement_warnings() -> void:
@@ -512,29 +606,26 @@ func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
 		add_child_autoqfree(shell)
 		assert_eq(shell._object_footprints().size(), 18, "ROTATE_%d should instantiate all objects." % [rotation * 90])
 		var objects := _dictionary_map(shell._object_footprints())
-		var bed_floor: Array[Vector2] = shell._object_floor_polygon_points(objects["bed"])
-		var bed_anchor: Vector2i = objects["bed"].anchor_cell
-		var bed_size: Vector2i = objects["bed"].size_cells
+		var fallback_floor: Array[Vector2] = shell._object_floor_polygon_points(objects["sink_counter"])
+		var fallback_anchor: Vector2i = objects["sink_counter"].anchor_cell
+		var fallback_size: Vector2i = objects["sink_counter"].size_cells
 		var expected_floor := [
-			shell._iso(bed_anchor.x, bed_anchor.y),
-			shell._iso(bed_anchor.x + bed_size.x, bed_anchor.y),
-			shell._iso(bed_anchor.x + bed_size.x, bed_anchor.y + bed_size.y),
-			shell._iso(bed_anchor.x, bed_anchor.y + bed_size.y),
+			shell._iso(fallback_anchor.x, fallback_anchor.y),
+			shell._iso(fallback_anchor.x + fallback_size.x, fallback_anchor.y),
+			shell._iso(fallback_anchor.x + fallback_size.x, fallback_anchor.y + fallback_size.y),
+			shell._iso(fallback_anchor.x, fallback_anchor.y + fallback_size.y),
 		]
-		assert_eq(bed_floor, expected_floor, "ROTATE_%d floor footprint must use the rotated grid corners." % [rotation * 90])
-		_assert_collision_polygon_contract(shell, objects["bed"], rotation * 90)
-		var bed_center: Vector2 = shell._cell_center(objects["bed"].anchor_cell) + Vector2(objects["bed"].position_offset_px)
-		assert_eq(shell._object_pixel_center(objects["bed"]), bed_center, "ROTATE_%d bed must remain floor-anchored." % [rotation * 90])
-		var entrance_unit: Dictionary = shell._object_wall_attachment_unit(objects["entrance_door"], shell._wall_segment_by_id("entrance_wall"))
-		var entrance_edge: Dictionary = entrance_unit["edge"]
-		var entrance_from: Vector2i = entrance_edge["from_cell"]
-		var entrance_to: Vector2i = entrance_edge["to_cell"]
-		var entrance_anchor: Vector2 = (shell._iso(entrance_from.x, entrance_from.y) + shell._iso(entrance_to.x, entrance_to.y)) * 0.5
-		assert_eq(shell._object_pixel_center(objects["entrance_door"]), entrance_anchor + Vector2(objects["entrance_door"].position_offset_px), "ROTATE_%d door must remain wall-edge anchored." % [rotation * 90])
+		assert_eq(fallback_floor, expected_floor, "ROTATE_%d Resource fallback floor must use rotated grid corners." % [rotation * 90])
+		_assert_collision_polygon_contract(shell, objects["sink_counter"], rotation * 90)
+		var fallback_center: Vector2 = shell._cell_center(objects["sink_counter"].anchor_cell) + Vector2(objects["sink_counter"].position_offset_px)
+		assert_eq(shell._object_pixel_center(objects["sink_counter"]), fallback_center)
 		for id in EDITABLE_NODE_IDS:
 			assert_eq(bool(objects[id].get("node_backed", false)), rotation == 1, "%s Scene geometry is authored only for ROTATE_90." % id)
 		if rotation == 1:
 			assert_eq(shell._object_pixel_center(objects["microwave"]), Vector2(996, 114))
+			assert_eq(shell._object_pixel_center(objects["bed"]), Vector2(1262, 424))
+			assert_eq(shell._object_pixel_center(objects["node_17"]), Vector2(996, 38))
+			assert_eq(shell._object_pixel_center(objects["entrance_door"]), Vector2(516, 184))
 		else:
 			for id in EDITABLE_NODE_IDS:
 				assert_eq(shell._object_occupied_cells(objects[id]), [], "%s must not become a fallback blocker outside ROTATE_90." % id)
@@ -542,10 +633,10 @@ func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
 		var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 		assert_true(shell._object_wall_attachment_is_doorway(objects["entrance_door"], entrance_wall), "ROTATE_%d entrance door must stay on its doorway unit." % [rotation * 90])
 		assert_eq(shell._object_placement_warnings(), [], "ROTATE_%d should preserve placement invariants." % [rotation * 90])
-		centers_by_rotation.append(shell._object_pixel_center(objects["bed"]))
+		centers_by_rotation.append(shell._object_pixel_center(objects["sink_counter"]))
 	for first in range(centers_by_rotation.size()):
 		for second in range(first + 1, centers_by_rotation.size()):
-			assert_ne(centers_by_rotation[first], centers_by_rotation[second], "Each map rotation should project Bed to a distinct screen center.")
+			assert_ne(centers_by_rotation[first], centers_by_rotation[second], "Each map rotation should project fallback geometry to a distinct screen center.")
 
 
 func test_shell_debug_key_smoke() -> void:
@@ -630,11 +721,14 @@ func test_object_mode_draws_four_point_floor_and_collision_polygons() -> void:
 	shell._unhandled_input(_key_event(KEY_P))
 	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
 	var floor_polygon: Polygon2D = layer.get_node("object_bed_floor_footprint")
-	var collision_polygon: Polygon2D = layer.get_node("object_bed_collision_shape")
 	assert_eq(floor_polygon.polygon.size(), 4)
-	assert_eq(collision_polygon.polygon.size(), 4)
+	assert_not_null(layer.get_node_or_null("object_bed_composite_collision_outline"))
 	var objects := _dictionary_map(shell._object_footprints())
-	for id in ["entrance_door", "microwave", "power_module_board", "signal_booster", "sea_horizon_poster", "fluorescent_light", "cable_bundle", "wall_conduit", "power_housing"]:
+	assert_eq(shell._object_collision_polygon_points(objects["entrance_door"]).size(), 4)
+	assert_eq(shell._object_floor_polygon_points(objects["entrance_door"]), [])
+	assert_not_null(layer.get_node_or_null("object_entrance_door_collision_shape"))
+	assert_null(layer.get_node_or_null("object_entrance_door_floor_footprint"))
+	for id in ["microwave", "power_module_board", "signal_booster", "sea_horizon_poster", "fluorescent_light", "cable_bundle", "wall_conduit", "power_housing"]:
 		assert_null(layer.get_node_or_null("object_%s_collision_shape" % id), "%s must not gain fake floor collision geometry." % id)
 		assert_eq(shell._object_collision_polygon_points(objects[id]), [], "%s must not project a floor collision polygon." % id)
 	assert_eq(shell._object_collision_polygon_points(objects["ups_unit"]).size(), 4, "UPS keeps its floor collision despite parent metadata.")
@@ -652,8 +746,11 @@ func test_object_mode_draws_scene_node_collision_separately_from_grid_occupancy(
 	assert_eq(layer.get_node("object_fridge_floor_footprint").polygon, PackedVector2Array(shell._object_collision_polygon_points(objects["fridge"])))
 	assert_true(shell._object_floor_collision_are_equivalent(objects["navi_link"]))
 	assert_eq(layer.get_node("object_navi_link_floor_footprint").polygon.size(), 5)
-	assert_false(shell._object_floor_collision_are_equivalent(objects["bed"]))
-	assert_not_null(layer.get_node_or_null("object_bed_collision_shape"), "Actually different geometry keeps a separate red face.")
+	for id in ["bed", "node_17"]:
+		assert_true(shell._object_floor_collision_are_equivalent(objects[id]))
+		assert_not_null(layer.get_node_or_null("object_%s_floor_footprint" % id))
+		assert_null(layer.get_node_or_null("object_%s_collision_shape" % id))
+		assert_not_null(layer.get_node_or_null("object_%s_composite_collision_outline" % id))
 
 
 func test_invalid_or_empty_interaction_data_draws_no_orange_geometry() -> void:
@@ -747,7 +844,7 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(shell._debug_detail_label.text.contains("anchor resolved: FLOOR"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_visual_bounds"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_occupancy_bounds"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_collision_outline"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_composite_collision_outline"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_interaction_bounds"))
 	shell._update_object_hover_at(Vector2(-10000, -10000))
 	assert_eq(shell._hovered_object_id, "")
@@ -768,6 +865,9 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_height_guide"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_selection_area"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_base_point"))
+	shell._select_object_for_debug("bed")
+	assert_true(shell._debug_detail_label.text.contains("geometry source: SCENE_NODE"))
+	assert_true(shell._debug_detail_label.text.contains("EditableObjectNodes/Bed"))
 	var board: Dictionary = _dictionary_map(shell._object_footprints())["power_module_board"]
 	shell._select_object_for_debug("power_module_board")
 	assert_true(shell._debug_detail_label.text.contains("work_back_wall"))

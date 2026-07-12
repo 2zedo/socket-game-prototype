@@ -141,19 +141,19 @@ Loading order:
 2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
 3. additive `custom_object_footprints` entries from the Inspector
 
-Node migration stage 1 overrides that loading order for exact ROTATE_90 geometry on four objects. `fridge`, `navi_link`, `power_module_board`, and `microwave` use `EditableObjectNodes` in the candidate Scene for ObjectRoot, `Visual/Sprite2D/VisualPreview`, BasePoint, TopPoint, BodyPolygon when blocking, SelectionPolygon, InteractionPolygon, UsePoint, and AttachmentSocket. BasePoint is the installation/ground reference and TopPoint is the independent height reference. SelectionPolygon owns P hover/click only; InteractionPolygon remains the game-use range. Their Resource entries retain logical identity, category, room, interaction status, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The other fourteen objects continue to use the Resource/fallback footprint path.
+Node migration stage 2 overrides that loading order for exact ROTATE_90 geometry on all seven direct-interaction objects. `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17` use `EditableObjectNodes` in the candidate Scene for ObjectRoot, `Visual/Sprite2D/VisualPreview`, BasePoint, TopPoint, BodyPolygon when blocking, SelectionPolygon, InteractionPolygon, UsePoint, and AttachmentSocket. BasePoint is the installation/ground reference and TopPoint is the independent height reference. SelectionPolygon owns P hover/click only; InteractionPolygon remains the game-use range. Their Resource entries retain logical identity, category, room, interaction status, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The other eleven environment objects continue to use the Resource/fallback footprint path.
 
 Current rotated-floorplan placement candidate:
 
 | Object ID | Room | Anchor | Offset px | Visual px | Collision px | Interaction | Anchor type / role |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `entrance_door` | entrance | `(0,8)` | `(0,-6)` | `150x220` | none | `(0,8)`, `96x56` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
-| `bed` | living | `(9,6)` | `(10,-6)` | `260x180` | `180x90` | `(8,7)`, `120x64` | `FLOOR` / interaction |
+| `entrance_door` | entrance | Scene `EntranceWallParentAnchor/EntranceDoor` | Inspector | `Visual/VisualPreview` | closed-only `Body/BodyPolygon`; no floor occupancy | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
+| `bed` | living | Scene `EditableObjectNodes/Bed` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `fridge` | living | Scene `ObjectRoot` | Inspector | `Visual/VisualPreview` until Sprite texture exists | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `microwave` | living | `SinkCounterParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `PARENT_OBJECT`: `sink_counter` / interaction |
 | `navi_link` | work/power | Scene `ObjectRoot` | Inspector | `Visual/VisualPreview` until Sprite texture exists | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `power_module_board` | work/power | `WorkBackWallParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `work_back_wall` / interaction |
-| `node_17` | work/power | `(1,2)` | `(0,-8)` | `150x140` | `90x60` candidate | `(2,2)`, `96x64` | `FLOOR` / interaction |
+| `node_17` | work/power | Scene `EditableObjectNodes/Node17` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `sink_counter` | living | `(3,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
 | `dining_table` | living | `(4,7)` | `(0,0)` | `170x120` | `130x70` | none | `FLOOR` / environment |
 | `signal_booster` | work/power | `(1,2)` | `(-68,-58)` | `112x96` | none | none | parent: `node_17` |
@@ -171,7 +171,7 @@ Attachment policy:
 - Candidate Resources expose `anchor_type` as `FLOOR`, `WALL_EDGE`, `CEILING`, or `PARENT_OBJECT`; object category remains independently `interaction`, `environment`, or `decoration`.
 - Wall, ceiling, and non-floor parent attachments do not remove navigation cells or participate in floor overlap checks.
 - `ups_unit` is floor-anchored and retains floor occupancy/collision; it has no spatial parent anchor.
-- `entrance_door` records closed-state movement blocking but aligns to the existing wall doorway unit; it does not create a duplicate floor occupancy or collision polygon.
+- `entrance_door` is parented to `EntranceWallParentAnchor`. Its BodyPolygon blocks the exact doorway edge while closed and is disabled while open; it never creates floor occupancy.
 - Direct world interaction is limited to exactly seven objects: `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17`. Each has valid interaction geometry and at least one walkable access point/cell.
 - `sink_counter`, `dining_table`, `signal_booster`, `ups_unit`, `bathroom_fixture`, `sea_horizon_poster`, `fluorescent_light`, `shoes_slippers`, `cable_bundle`, `wall_conduit`, and `power_housing` have no gameplay interaction geometry. They remain selectable only for P placement inspection.
 - P debug selection and direct game/mock interaction are separate contracts. A zero size, empty access-cell set, or non-interaction category never creates an orange interaction marker.
@@ -188,11 +188,11 @@ Shell editing controls:
 - `H`: open shell-only Phone debug overlay; this does not call production `PhoneUI`.
 - `ESC`: close the topmost shell debug overlay.
 - `debug_focus_object_id`: emphasize one object id, for example `bed`.
-- For the four migrated objects, SelectionPolygon is the only P hover/click authority and hover labels identify its owner; InteractionPolygon is not reused for selection. The other fourteen retain interaction, floor/collision, wall/parent anchor, then visual fallback priority. Repeated clicks at one location still cycle candidates and show `선택 n/m`.
+- For the seven migrated objects, SelectionPolygon is the only P hover/click authority and hover labels identify its owner; InteractionPolygon is not reused for selection. The other eleven retain floor/collision, wall/parent anchor, then visual fallback priority. Repeated clicks at one location still cycle candidates and show `선택 n/m`.
 
 Coordinate rule:
 
-- Migrated floor objects derive movement-blocked cells and P floor occupancy from `Body/BodyPolygon`; no current object has a separate PlacementFootprint. The common script supports an optional future `PlacementFootprint`, which overrides occupancy only when a real reservation area must differ from collision.
+- Migrated floor objects derive movement-blocked cells and P floor occupancy from `Body/BodyPolygon`; no current object has a separate PlacementFootprint. The wall-mounted entrance door uses its BodyPolygon only for closed-state edge blocking and never derives floor occupancy. The common script supports an optional future `PlacementFootprint`, which overrides occupancy only when a real reservation area must differ from collision.
 - ObjectRoot position plus BasePoint and authored polygons are the exact Scene geometry authority. BasePoint supplies the installation reference and auxiliary floor-cell calculation; TopPoint supplies only the 2.5D height guide. Neither marker replaces Body, Selection, Interaction, UsePoint, or AttachmentSocket.
 - `SelectionArea/SelectionPolygon` controls candidate P hover/click. `InteractionArea/InteractionPolygon` controls game-use range, while sibling `UsePoint` controls the character access cell. Moving any one of those three channels never moves the others; only moving ObjectRoot or a parent anchor moves all of them.
 - Migrated wall/parent objects follow their Scene ParentAnchor, and `AttachmentSocket` is the exact child/wall attachment marker. Their logical `anchor_type`, `parent_object_id`, and `wall_segment_id` remain Resource metadata.

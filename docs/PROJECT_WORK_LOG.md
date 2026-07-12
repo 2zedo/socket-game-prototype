@@ -8,6 +8,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment direct-interaction Node migration stage 2
+
+- Result: Migrated bed, NODE-17, and entrance door into the existing 2.5D editable Scene-node contract. All seven direct-interaction objects now use `SCENE_NODE` geometry; the other eleven environment objects remain Resource-backed.
+- Contracts: Bed/NODE-17 derive movement and floor occupancy from BodyPolygon. NODE-17's Resource-backed signal booster and cable bundle follow AttachmentSocket. Entrance Door is parented to `EntranceWallParentAnchor`; its BodyPolygon blocks only the doorway edge while closed, disables while open, and never becomes floor occupancy.
+- MCP check: Inspected the complete Scene tree and Korean descriptions, added/moved/restored polygon points and independent Selection/Interaction/Use positions, verified NODE-17 socket child following and door closed/open navigation, then ran P+V with zero placement/measurement warnings. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` before production wiring.
+
 ### Apartment editable object 2.5D reference and selection split
 
 - Result: Added BasePoint, TopPoint, and debug-only SelectionArea/SelectionPolygon to fridge, NAVI LINK, microwave, and Power Board. Body remains movement collision/floor occupancy, Selection owns P hover/click, Interaction owns game-use range, UsePoint owns the access position, Visual owns screen bounds, and AttachmentSocket owns child/wall attachment.

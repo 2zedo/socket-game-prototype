@@ -150,7 +150,10 @@ const DIRECT_INTERACTION_OBJECT_IDS := [
 	"entrance_door", "bed", "fridge", "microwave", "navi_link",
 	"power_module_board", "node_17",
 ]
-const EDITABLE_NODE_OBJECT_IDS := ["fridge", "navi_link", "power_module_board", "microwave"]
+const EDITABLE_NODE_OBJECT_IDS := [
+	"entrance_door", "bed", "fridge", "microwave", "navi_link",
+	"power_module_board", "node_17",
+]
 const EDITABLE_OBJECT_NODES_PATH := ^"EditableObjectNodes"
 const OBJECT_ANCHOR_HIT_RADIUS := 18.0
 const OBJECT_CLICK_CYCLE_RADIUS := 3.0
@@ -224,8 +227,8 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 @export var custom_wall_segments: Array[Resource] = []
 
 @export_group("Object Footprint Editing")
-# Fridge, NAVI LINK, Power Board, and Microwave use EditableObjectNodes as the exact ROTATE_90
-# pixel-geometry authority. This Resource set remains logical/grid data for the other objects.
+# All seven direct-interaction objects use EditableObjectNodes as the exact ROTATE_90
+# pixel-geometry authority. This Resource set remains logical/grid data for the other eleven.
 @export var object_footprint_set: ApartmentObjectFootprintSetConfig
 # Custom entries are additive shell tests. Keep ids unique unless you intentionally want overlap
 # warnings while comparing a custom footprint against the Resource-backed baseline.
@@ -347,6 +350,7 @@ var _last_selection_world_position := Vector2(INF, INF)
 func _ready() -> void:
 	_initialize_debug_mode_from_legacy_flags()
 	_create_layers()
+	_connect_editable_object_signals()
 	_build_shell()
 	_apply_wall_inspection_transparency()
 	_validate_object_footprints()
@@ -935,8 +939,8 @@ func _wall_height_from_config(config: Resource) -> float:
 			return -1.0
 
 
-# Four ROTATE_90 objects use Scene nodes as their exact pixel-geometry authority. The remaining
-# candidate objects keep the Resource footprint path until a later migration pass.
+# All seven direct-interaction objects use Scene nodes as their exact ROTATE_90 geometry authority.
+# The eleven environment/decoration objects keep the Resource path until deliberately migrated.
 func _object_footprints() -> Array[Dictionary]:
 	var footprints: Array[Dictionary] = []
 	for entry in _active_object_footprint_config_entries():
@@ -1048,9 +1052,49 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	object_data["interaction_cells"] = [use_cell]
 	object_data["floor_polygons"] = floor_polygons
 	object_data["placement_polygons"] = [placement_polygon] if placement_polygon.size() >= 3 else []
-	object_data["floor_occupancy_source"] = "PLACEMENT_FOOTPRINT" if placement_polygon.size() >= 3 else ("BODY_POLYGON" if body_polygon.size() >= 3 else "NONE")
+	object_data["floor_occupancy_source"] = (
+		"NONE" if not bool(object_data.get("uses_floor_occupancy", true))
+		else ("PLACEMENT_FOOTPRINT" if placement_polygon.size() >= 3 else ("BODY_POLYGON" if body_polygon.size() >= 3 else "NONE"))
+	)
 	object_data["occupied_cells"] = occupied_cells
+	if object_node.has_method("body_collision_active"):
+		object_data["body_collision_active"] = bool(object_node.call("body_collision_active"))
+		object_data["open_state_supported"] = bool(object_node.get("supports_open_state"))
+		object_data["is_open"] = bool(object_node.get("is_open"))
 	return object_data
+
+
+func _connect_editable_object_signals() -> void:
+	var door_node := _editable_object_node_by_id("entrance_door")
+	if door_node == null or not door_node.has_signal("open_state_changed"):
+		return
+	var callback := Callable(self, "_on_entrance_door_open_state_changed")
+	if not door_node.is_connected("open_state_changed", callback):
+		door_node.connect("open_state_changed", callback)
+
+
+func set_entrance_door_open(value: bool) -> void:
+	var door_node := _editable_object_node_by_id("entrance_door")
+	if door_node != null and door_node.has_method("set_open"):
+		door_node.call("set_open", value)
+
+
+func _entrance_door_is_open() -> bool:
+	var door_node := _editable_object_node_by_id("entrance_door")
+	return door_node != null and bool(door_node.get("is_open"))
+
+
+func _on_entrance_door_open_state_changed(_is_open: bool) -> void:
+	if _object_layer == null:
+		return
+	_clear_layer_children(_object_layer)
+	_clear_layer_children(_debug_selection_layer)
+	_clear_layer_children(_navigation_layer)
+	_draw_object_placeholders()
+	_draw_navigation_overlay()
+	_redraw_object_selection_overlay()
+	_update_debug_detail_panel()
+	_update_label_visibility()
 
 
 func _polygons_bounds(polygons: Array[PackedVector2Array]) -> Rect2:
@@ -1134,13 +1178,13 @@ func _default_object_footprint_configs() -> Array[Resource]:
 
 func _candidate_object_footprint_specs() -> Array[Dictionary]:
 	return [
-		_object_spec("entrance_door", "현관문", "entrance_area", "interaction", Vector2i(0, 8), Vector2(150, 220), true, [Vector2i(0, 8)], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "entrance_wall", "", Vector2(0, -6), Vector2.ZERO, Vector2(96, 56), Vector2(50, 0), "entrance_door_dl_closed.png", "objects/apartment/EntranceDoor.tscn", "audio_entrance_door", "문 안쪽 면이 생활공간 중앙을 향함", false, Vector2i.ONE, 0.75),
-		_object_spec("bed", "침대", "living_area", "interaction", Vector2i(9, 6), Vector2(260, 180), true, [Vector2i(8, 7)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(10, -6), Vector2(180, 90), Vector2(120, 64), Vector2.ZERO, "bed_dl_base.png", "objects/apartment/Bed.tscn", "", "침대 옆면과 머리맡이 보이고 왼쪽에서 접근", true, Vector2i(2, 1)),
+		_object_spec("entrance_door", "현관문", "entrance_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "entrance_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "entrance_door_dl_closed.png", "objects/apartment/EntranceDoor.tscn", "audio_entrance_door", "문 안쪽 면이 생활공간 중앙을 향함", false, Vector2i.ZERO, 0.75),
+		_object_spec("bed", "침대", "living_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "bed_dl_base.png", "objects/apartment/Bed.tscn", "", "침대 옆면과 머리맡이 보이고 왼쪽에서 접근", true, Vector2i.ZERO),
 		_object_spec("fridge", "냉장고", "living_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "fridge_dl_closed.png", "objects/apartment/Fridge.tscn", "audio_fridge", "문 앞면이 생활공간 중앙을 향함", true, Vector2i.ZERO),
 		_object_spec("microwave", "전자레인지", "living_area", "interaction", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "sink_counter", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "microwave_dl_base.png", "objects/apartment/Microwave.tscn", "audio_microwave", "조작면이 주방 통로를 향함", false, Vector2i.ZERO),
 		_object_spec("navi_link", "NAVI LINK", "work_power_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "navi_link_dl_idle_base.png", "objects/apartment/NaviLink.tscn", "audio_navi_link", "좌석 입구와 조작부가 작업공간 통로를 향함", true, Vector2i.ZERO),
 		_object_spec("power_module_board", "전력 모듈 보드", "work_power_area", "interaction", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_back_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "power_module_board_dl_base.png", "objects/apartment/PowerModuleBoard.tscn", "audio_power_board", "화면과 슬롯이 작업공간 안쪽을 향함", false, Vector2i.ZERO),
-		_object_spec("node_17", "NODE-17", "work_power_area", "interaction", Vector2i(1, 2), Vector2(150, 140), true, [Vector2i(2, 2)], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2(0, -8), Vector2(90, 60), Vector2(96, 64), Vector2.ZERO, "node_17_dl_base.png", "objects/apartment/Node17.tscn", "audio_node_17", "표시 화면과 신호등이 작업공간 중앙을 향함"),
+		_object_spec("node_17", "NODE-17", "work_power_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "node_17_dl_base.png", "objects/apartment/Node17.tscn", "audio_node_17", "표시 화면과 신호등이 작업공간 중앙을 향함", true, Vector2i.ZERO),
 		_object_spec("sink_counter", "싱크대·주방 카운터", "living_area", "environment", Vector2i(3, 4), Vector2(220, 150), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(160, 70), Vector2.ZERO, Vector2.ZERO, "sink_counter_dl_base.png", "objects/apartment/sink_counter.tres", "", "상판 정면이 주방 통로를 향함", true, Vector2i(2, 1)),
 		_object_spec("dining_table", "작은 식탁", "living_area", "environment", Vector2i(4, 7), Vector2(170, 120), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(130, 70), Vector2.ZERO, Vector2.ZERO, "dining_table_dl_base.png", "objects/apartment/dining_table.tres", "", "의자 접근면이 생활공간 통로를 향함"),
 		_object_spec("signal_booster", "신호 증폭기", "work_power_area", "environment", Vector2i(1, 2), Vector2(112, 96), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2(-68, -58), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "signal_booster_dl_base.png", "objects/apartment/signal_booster.tres", "audio_signal_booster", "표시등이 작업공간 중앙을 향함", false),
@@ -3307,6 +3351,11 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 			str(Array(object_data.get("use_points_world", []))),
 			str(object_data.get("socket_world_position", Vector2.ZERO)),
 		]
+		if bool(object_data.get("open_state_supported", false)):
+			detail += "\nopen state: %s / BodyPolygon: %s" % [
+				"OPEN" if bool(object_data.get("is_open", false)) else "CLOSED",
+				"ACTIVE" if bool(object_data.get("body_collision_active", false)) else "DISABLED",
+			]
 	return detail
 
 
@@ -4335,7 +4384,7 @@ func _navigation_edge_sets() -> Dictionary:
 		for offset in range(length):
 			var edge_data := _wall_segment_unit_edge(segment, offset)
 			var key := String(edge_data["key"])
-			if _is_wall_segment_doorway_unit(segment, offset):
+			if _is_wall_segment_doorway_unit(segment, offset) and not _scene_door_blocks_doorway(segment, offset):
 				passable[key] = edge_data
 				blocked.erase(key)
 			elif not passable.has(key):
@@ -4344,6 +4393,14 @@ func _navigation_edge_sets() -> Dictionary:
 		"blocked": blocked,
 		"passable": passable,
 	}
+
+
+func _scene_door_blocks_doorway(segment: Dictionary, unit_offset: int) -> bool:
+	if String(segment.get("id", "")) != "entrance_wall":
+		return false
+	if not _editable_object_node_authority_active() or unit_offset != int(segment.get("doorway_offset", -1)):
+		return false
+	return not _entrance_door_is_open()
 
 
 func _wall_segment_unit_edge(segment: Dictionary, unit_offset: int) -> Dictionary:

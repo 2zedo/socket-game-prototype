@@ -18,9 +18,21 @@ const ATTACHMENT_SOCKET_PATH := NodePath("AttachmentSocket")
 const PLACEMENT_FOOTPRINT_PATH := NodePath("PlacementFootprint")
 
 @export var object_id: StringName = &""
+@export_group("Optional Open State")
+@export var supports_open_state := false
+@export var is_open := false:
+	set(value):
+		if is_open == value:
+			return
+		is_open = value
+		_sync_body_open_state()
+		open_state_changed.emit(is_open)
+
+signal open_state_changed(is_open: bool)
 
 
 func _ready() -> void:
+	_sync_body_open_state()
 	if not Engine.is_editor_hint():
 		set_process(false)
 		var preview := get_node_or_null(VISUAL_PREVIEW_PATH) as Polygon2D
@@ -94,6 +106,15 @@ func body_world_polygon() -> PackedVector2Array:
 	return _collision_polygon_world(BODY_POLYGON_PATH)
 
 
+func set_open(value: bool) -> void:
+	is_open = value
+
+
+func body_collision_active() -> bool:
+	var body_polygon := get_node_or_null(BODY_POLYGON_PATH) as CollisionPolygon2D
+	return body_polygon != null and not body_polygon.disabled and body_polygon.polygon.size() >= 3
+
+
 func selection_world_polygon() -> PackedVector2Array:
 	return _collision_polygon_world(SELECTION_POLYGON_PATH)
 
@@ -140,7 +161,8 @@ func geometry_warnings() -> Array[String]:
 	var body_polygon := get_node_or_null(BODY_POLYGON_PATH) as CollisionPolygon2D
 	var selection_polygon := get_node_or_null(SELECTION_POLYGON_PATH) as CollisionPolygon2D
 	var interaction_polygon := get_node_or_null(INTERACTION_POLYGON_PATH) as CollisionPolygon2D
-	if body_required and (body_polygon == null or body_polygon.disabled):
+	var expected_runtime_disabled_body := supports_open_state and is_open
+	if body_required and (body_polygon == null or (body_polygon.disabled and not expected_runtime_disabled_body)):
 		warnings.append("blocks_movement requires Body/BodyPolygon")
 	if body_polygon != null:
 		_append_polygon_warning(warnings, "Body/BodyPolygon", body_polygon.polygon, body_polygon.scale)
@@ -220,6 +242,14 @@ func _sync_editor_visual_preview() -> void:
 	var preview := get_node_or_null(VISUAL_PREVIEW_PATH) as Polygon2D
 	if preview != null:
 		preview.visible = sprite == null or sprite.texture == null
+
+
+func _sync_body_open_state() -> void:
+	if not supports_open_state:
+		return
+	var body_polygon := get_node_or_null(BODY_POLYGON_PATH) as CollisionPolygon2D
+	if body_polygon != null:
+		body_polygon.disabled = is_open
 
 
 func _rect_to_world(owner_node: Node2D, rect: Rect2) -> PackedVector2Array:
