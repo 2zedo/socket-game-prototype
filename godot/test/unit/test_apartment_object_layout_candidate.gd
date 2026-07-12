@@ -71,12 +71,12 @@ func test_migrated_resources_keep_logic_without_duplicate_scene_geometry() -> vo
 func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() -> void:
 	var shell = _make_shell()
 	var expected_paths := {
-		"entrance_door": "EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor",
+		"entrance_door": "EditableObjectNodes/EntranceDoor",
 		"bed": "EditableObjectNodes/Bed",
 		"fridge": "EditableObjectNodes/Fridge",
 		"navi_link": "EditableObjectNodes/NaviLink",
 		"microwave": "EditableObjectNodes/SinkCounterParentAnchor/Microwave",
-		"power_module_board": "EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard",
+		"power_module_board": "EditableObjectNodes/PowerModuleBoard",
 		"node_17": "EditableObjectNodes/Node17",
 	}
 	for id in expected_paths:
@@ -226,7 +226,7 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 
 	for anchor_path_and_id in [
 		["EditableObjectNodes/SinkCounterParentAnchor", "microwave"],
-		["EditableObjectNodes/WorkBackWallParentAnchor", "power_module_board"],
+		["Walls/WorkBackWall/AttachmentSockets/PowerModuleBoardSocket", "power_module_board"],
 	]:
 		var parent_anchor: Node2D = shell.get_node(anchor_path_and_id[0])
 		var object_before: Dictionary = _dictionary_map(shell._object_footprints())[anchor_path_and_id[1]]
@@ -241,7 +241,7 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 		assert_eq(shell._object_selection_polygons(object_after)[0][0], selection_before + Vector2(16, 8))
 		assert_eq(object_after.base_point_world, base_before + Vector2(16, 8))
 
-	var board_socket: Node2D = shell.get_node("EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/AttachmentSocket")
+	var board_socket: Node2D = shell.get_node("EditableObjectNodes/PowerModuleBoard/AttachmentSocket")
 	var housing_before: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
 	board_socket.position += Vector2(8, 4)
 	var housing_after: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
@@ -253,7 +253,7 @@ func test_new_interaction_nodes_keep_selection_interaction_and_use_independent()
 	for path_and_id in [
 		["EditableObjectNodes/Bed", "bed"],
 		["EditableObjectNodes/Node17", "node_17"],
-		["EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor", "entrance_door"],
+		["EditableObjectNodes/EntranceDoor", "entrance_door"],
 	]:
 		var object_node: Node2D = shell.get_node(path_and_id[0])
 		var object_id := String(path_and_id[1])
@@ -296,7 +296,7 @@ func test_node_17_attachment_socket_keeps_resource_children_attached() -> void:
 func test_entrance_door_open_state_switches_wall_collision_without_floor_occupancy() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_P))
-	var door_node: Node2D = shell.get_node("EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor")
+	var door_node: Node2D = shell.get_node("EditableObjectNodes/EntranceDoor")
 	var body_polygon: CollisionPolygon2D = door_node.get_node("Body/BodyPolygon")
 	var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 	var closed_door: Dictionary = _dictionary_map(shell._object_footprints())["entrance_door"]
@@ -481,7 +481,7 @@ func test_parent_and_wall_references_are_valid_and_acyclic() -> void:
 		assert_true(objects.has(parent_id), "%s parent must exist in the same inventory." % id)
 		assert_ne(parent_id, id, "%s must not parent itself." % id)
 	assert_eq(objects["power_housing"].wall_segment_id, objects["power_module_board"].wall_segment_id)
-	assert_true(String(objects["power_module_board"].node_path).contains("WorkBackWallParentAnchor"))
+	assert_true(String(shell.get_node("EditableObjectNodes/PowerModuleBoard").mount_socket_path).contains("PowerModuleBoardSocket"))
 	assert_true(String(objects["microwave"].node_path).contains("SinkCounterParentAnchor"))
 	var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 	var entrance_unit: Dictionary = shell._object_wall_attachment_unit(objects["entrance_door"], entrance_wall)
@@ -949,6 +949,110 @@ func test_f1_help_and_j_h_escape_priority_do_not_overlap() -> void:
 	shell._unhandled_input(_key_event(KEY_ESCAPE))
 	assert_false(shell._phone_overlay_root.visible)
 	assert_false(shell._debug_help_panel.visible)
+
+
+func test_environment_floor_room_wall_and_opening_nodes_are_scene_authority() -> void:
+	var shell = _make_shell()
+	assert_true(shell._environment_node_authority_active())
+	var expected_floor_counts := {
+		"EntranceFloor": 6,
+		"BathroomFloor": 6,
+		"LivingFloor": 54,
+		"WorkFloor": 32,
+	}
+	for floor_name in expected_floor_counts:
+		var floor_layer: TileMapLayer = shell.get_node("Floor/%s" % floor_name)
+		assert_eq(floor_layer.get_used_cells().size(), expected_floor_counts[floor_name])
+		assert_true(floor_layer.editor_description.contains("TileMap"))
+	assert_eq(shell._visible_floor_cells().size(), 98)
+	assert_eq(shell.get_node("FloorTileLayer").get_child_count(), 0, "Environment must not rebuild floor diamonds at runtime.")
+
+	var expected_room_points := {
+		"EntranceArea": 4,
+		"BathroomArea": 4,
+		"LivingArea": 4,
+		"WorkArea": 4,
+	}
+	for room_name in expected_room_points:
+		var room_node = shell.get_node("RoomAreas/%s" % room_name)
+		assert_eq(room_node.world_polygon().size(), expected_room_points[room_name])
+		assert_true(room_node.get_node("Area2D/CollisionPolygon2D").editor_description.contains("논리 구역"))
+	assert_eq(shell._room_measurement_data("bathroom").source, "SCENE_NODE")
+	assert_eq(shell._room_area_for_cell(Vector2i(0, 4), false), "bathroom")
+	assert_eq(shell._room_area_for_cell(Vector2i(0, 8), false), "entrance_area")
+
+	assert_eq(shell.get_node("Walls").get_child_count(), 10)
+	assert_eq(shell.get_node("Openings").get_child_count(), 5)
+	for segment in shell._wall_segments():
+		assert_eq(segment.source, "SCENE_NODE")
+		assert_true(String(segment.node_path).contains("/Walls/"))
+	assert_eq(shell.get_node("WallLayer").get_child_count(), 0, "Environment must not rebuild wall visuals at runtime.")
+	assert_eq(shell.get_node("DoorAndWindowLayer").get_child_count(), 0, "Environment openings must remain Scene nodes.")
+	assert_eq(shell.get_node("Openings/EntranceDoorOpening/StartPoint").position, Vector2(548, 174))
+	assert_eq(shell.get_node("Openings/WorkRoomOpening/EndPoint").position, Vector2(1252, 270))
+	assert_eq(shell.get_node("Walls/WorkBackWall/StartPoint").position, Vector2(1124, -50))
+	assert_eq(shell.get_node("Walls/WorkBackWall/EndPoint").position, Vector2(1636, 206))
+	assert_eq(shell.get_node("Walls/WorkBackWall/TopPoint").position, Vector2(1380, -98))
+
+	var board = shell.get_node("EditableObjectNodes/PowerModuleBoard")
+	var door = shell.get_node("EditableObjectNodes/EntranceDoor")
+	assert_true(String(board.mount_socket_path).contains("PowerModuleBoardSocket"))
+	assert_true(String(door.mount_socket_path).contains("EntranceDoorSocket"))
+	assert_eq(board.attachment_anchor_world(), shell.get_node("Walls/WorkBackWall/AttachmentSockets/PowerModuleBoardSocket").global_position)
+	assert_eq(door.attachment_anchor_world(), shell.get_node("Walls/EntranceWall/AttachmentSockets/EntranceDoorSocket").global_position)
+
+
+func test_non_rotated_fallback_disables_authored_rotated_visuals_and_collisions() -> void:
+	var shell = SHELL_SCENE.instantiate()
+	shell.map_rotation = 0
+	add_child_autoqfree(shell)
+	assert_false(shell._environment_node_authority_active())
+	assert_false(shell.get_node("Floor").visible)
+	assert_false(shell.get_node("Walls").visible)
+	assert_false(shell.get_node("EditableObjectNodes").visible)
+	assert_gt(shell.get_node("FloorTileLayer").get_child_count(), 0)
+	assert_gt(shell.get_node("WallLayer").get_child_count(), 0)
+	for wall_node in shell.get_node("Walls").get_children():
+		assert_true(wall_node.get_node("CollisionBody/CollisionPolygon2D").disabled)
+
+
+func test_custom_wall_override_disables_authored_wall_nodes_and_uses_legacy_renderer() -> void:
+	var shell = SHELL_SCENE.instantiate()
+	var custom_segments: Array[Resource] = shell._default_wall_segment_configs()
+	shell.custom_wall_segments = custom_segments
+	add_child_autoqfree(shell)
+	assert_true(shell._environment_node_authority_active())
+	assert_false(shell._wall_node_authority_active())
+	assert_true(shell.get_node("Floor").visible)
+	assert_false(shell.get_node("Walls").visible)
+	assert_gt(shell.get_node("WallLayer").get_child_count(), 0)
+	assert_eq(shell._wall_segments().size(), custom_segments.size())
+	for segment in shell._wall_segments():
+		assert_eq(segment.source, "custom_wall_segments")
+	for wall_node in shell.get_node("Walls").get_children():
+		assert_true(wall_node.get_node("CollisionBody/CollisionPolygon2D").disabled)
+
+
+func test_wall_node_collision_keeps_non_passable_window_solid_and_honors_enabled_state() -> void:
+	var shell = _make_shell()
+	var wall = shell.get_node("Walls/LivingRightWall")
+	var opening = shell.get_node("Openings/LivingWindowOpening")
+	var collision: CollisionPolygon2D = wall.get_node("CollisionBody/CollisionPolygon2D")
+	var collision_after: CollisionPolygon2D = wall.get_node("CollisionBody/CollisionAfterOpening")
+	assert_false(opening.passable)
+	assert_false(collision.disabled)
+	assert_true(collision_after.disabled)
+	var window_midpoint: Vector2 = (Vector2(opening.world_start()) + Vector2(opening.world_end())) * 0.5
+	var collision_bounds := Rect2(collision.polygon[0], Vector2.ZERO)
+	for point in collision.polygon:
+		collision_bounds = collision_bounds.expand(point)
+	assert_true(collision_bounds.grow(0.1).has_point(collision.to_local(window_midpoint)), "A non-passable window must not punch a physical wall gap.")
+	wall.enabled = false
+	wall._apply_collision_enabled()
+	assert_true(collision.disabled)
+	wall.enabled = true
+	wall._apply_collision_enabled()
+	assert_false(collision.disabled)
 
 
 func _make_shell():

@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Editor-authored apartment floor, rooms, walls, and openings
+
+- Scene authority: Added four 128×64 isometric TileMapLayers (98 cells), four RoomArea Polygon authorities, ten reusable WallSegment instances, and five Opening Marker instances under `QuarterviewApartmentEnvironment`. The color-only `dev_apartment_floor_tiles_128x64.svg` is explicitly development art.
+- Runtime: ROTATE_90 M/N/V and Playable pathfinding now consume the authored Nodes. Environment startup skips legacy floor-diamond, wall, collision, and opening-placeholder generation; non-ROTATE_90/standalone regression paths keep the calculated fallback.
+- Attachments: Power Board and Entrance Door remain editable object instances but mount to real WorkBackWall/EntranceWall Socket Markers. Socket edits propagate through `mount_socket_path`, and door open/closed continues to switch the exact doorway navigation edge.
+- MCP check: Confirmed the complete pre-run editor view; changed/restored one floor tile, RoomArea point, wall End/Top point, and PowerBoard Socket; then ran Shell P+V/M/N and Playable movement/door-state checks with no game errors. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` before final art or production promotion.
+
 ### Reusable apartment environment and playable composition
 
 - Scene ownership: Extracted the apartment floor, walls, navigation, camera, and 18-object authority into `QuarterviewApartmentEnvironment`. The existing ShellCandidate inherits it for design/debug; the new ApartmentPlayable inherits the same Environment and adds one opt-in external-provider `QuarterviewRoom`. Legacy `QuarterviewRoom` remains unchanged by default and does not build its old shell/placeholders/blockers inside the Playable composition.
@@ -24,7 +31,7 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 ### Apartment direct-interaction Node migration stage 2
 
 - Result: Migrated bed, NODE-17, and entrance door into the existing 2.5D editable Scene-node contract. All seven direct-interaction objects now use `SCENE_NODE` geometry; the other eleven environment objects remain Resource-backed.
-- Contracts: Bed/NODE-17 derive movement and floor occupancy from BodyPolygon. NODE-17's Resource-backed signal booster and cable bundle follow AttachmentSocket. Entrance Door is parented to `EntranceWallParentAnchor`; its BodyPolygon blocks only the doorway edge while closed, disables while open, and never becomes floor occupancy.
+- Contracts: Bed/NODE-17 derive movement and floor occupancy from BodyPolygon. NODE-17's Resource-backed signal booster and cable bundle follow AttachmentSocket. Entrance Door's BodyPolygon blocks only the doorway edge while closed, disables while open, and never becomes floor occupancy; the later Environment pass replaced its temporary proxy anchor with the real EntranceWall Socket.
 - MCP check: Inspected the complete Scene tree and Korean descriptions, added/moved/restored polygon points and independent Selection/Interaction/Use positions, verified NODE-17 socket child following and door closed/open navigation, then ran P+V with zero placement/measurement warnings. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` before production wiring.
 
 ### Apartment editable object 2.5D reference and selection split

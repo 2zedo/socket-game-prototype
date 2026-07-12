@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/quarterview/ApartmentOpeningMarker.gd" id="1_script"]
+
+[node name="ApartmentOpeningMarker" type="Node2D"]
+editor_description = "문·창문 개구부 정본. StartPoint와 EndPoint를 2D 화면에서 직접 조정합니다."
+script = ExtResource("1_script")
+
+[node name="StartPoint" type="Marker2D" parent="."]
+editor_description = "개구부 시작점."
+
+[node name="EndPoint" type="Marker2D" parent="."]
+editor_description = "개구부 끝점."
+
+[node name="EditorPreview" type="Line2D" parent="."]
+editor_description = "실행 전 개구부 위치를 보여주는 에디터 전용 선."
+width = 8.0

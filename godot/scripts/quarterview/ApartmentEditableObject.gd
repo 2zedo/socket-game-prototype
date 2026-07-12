@@ -18,6 +18,9 @@ const ATTACHMENT_SOCKET_PATH := NodePath("AttachmentSocket")
 const PLACEMENT_FOOTPRINT_PATH := NodePath("PlacementFootprint")
 
 @export var object_id: StringName = &""
+@export_group("설치 Socket")
+@export var mount_socket_path: NodePath
+@export var mount_offset := Vector2.ZERO
 @export_group("Optional Open State")
 @export var supports_open_state := false
 @export var is_open := false:
@@ -32,9 +35,10 @@ signal open_state_changed(is_open: bool)
 
 
 func _ready() -> void:
+	_sync_mount_socket()
 	_sync_body_open_state()
 	if not Engine.is_editor_hint():
-		set_process(false)
+		set_process(not mount_socket_path.is_empty())
 		var preview := get_node_or_null(VISUAL_PREVIEW_PATH) as Polygon2D
 		if preview != null:
 			preview.visible = false
@@ -48,6 +52,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if not mount_socket_path.is_empty():
+		_sync_mount_socket()
 	if Engine.is_editor_hint():
 		_sync_editor_visual_preview()
 
@@ -78,8 +84,23 @@ func visual_source() -> StringName:
 
 
 func attachment_anchor_world() -> Vector2:
+	var mount_socket := get_node_or_null(mount_socket_path) as Node2D
+	if mount_socket != null:
+		return mount_socket.global_position
 	var parent_anchor := get_parent() as Node2D
 	return parent_anchor.global_position if parent_anchor != null else global_position
+
+
+func _sync_mount_socket() -> void:
+	if mount_socket_path.is_empty():
+		return
+	var mount_socket := get_node_or_null(mount_socket_path) as Node2D
+	var parent_node := get_parent() as Node2D
+	if mount_socket == null or parent_node == null:
+		return
+	var target_position := parent_node.to_local(mount_socket.global_position) + mount_offset
+	if not position.is_equal_approx(target_position):
+		position = target_position
 
 
 func base_point_world() -> Vector2:

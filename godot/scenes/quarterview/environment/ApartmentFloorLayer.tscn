@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/quarterview/ApartmentFloorLayer.gd" id="1_script"]
+[ext_resource type="TileSet" path="res://resources/quarterview/dev_apartment_floor_tileset.tres" id="2_tileset"]
+
+[node name="ApartmentFloorLayer" type="TileMapLayer"]
+editor_description = "실제 바닥 셀 정본. TileMap 편집 도구로 128×64 이소메트릭 셀을 직접 칠하고 지웁니다."
+position = Vector2(1060, -50)
+z_index = -20
+tile_set = ExtResource("2_tileset")
+script = ExtResource("1_script")

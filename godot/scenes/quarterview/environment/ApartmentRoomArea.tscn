@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/quarterview/ApartmentRoomArea.gd" id="1_script"]
+
+[node name="ApartmentRoomArea" type="Node2D"]
+editor_description = "논리 방 구역 정본. Area2D/CollisionPolygon2D 꼭짓점을 직접 조정합니다. TileMap 바닥과 역할이 다릅니다."
+script = ExtResource("1_script")
+
+[node name="Area2D" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D"]
+editor_description = "M 측량과 방 판정에 쓰는 논리 구역. 꼭짓점을 직접 조정."
+
+[node name="EditorPreview" type="Polygon2D" parent="."]
+editor_description = "실행 전 방 구역을 보여주는 에디터 전용 반투명 미리보기."
+z_index = -12

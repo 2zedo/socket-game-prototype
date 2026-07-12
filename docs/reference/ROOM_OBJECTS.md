@@ -147,12 +147,12 @@ Current rotated-floorplan placement candidate:
 
 | Object ID | Room | Anchor | Offset px | Visual px | Collision px | Interaction | Anchor type / role |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `entrance_door` | entrance | Scene `EntranceWallParentAnchor/EntranceDoor` | Inspector | `Visual/VisualPreview` | closed-only `Body/BodyPolygon`; no floor occupancy | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
+| `entrance_door` | entrance | Scene `EditableObjectNodes/EntranceDoor`, mounted to `Walls/EntranceWall/.../EntranceDoorSocket` | Inspector | `Visual/VisualPreview` | closed-only `Body/BodyPolygon`; no floor occupancy | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
 | `bed` | living | Scene `EditableObjectNodes/Bed` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `fridge` | living | Scene `EditableObjectNodes/Fridge` | Inspector | `Visual/Sprite2D` (`fridge_dl_closed.png`, 90x146 bound, BasePoint-aligned) | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `microwave` | living | `SinkCounterParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `PARENT_OBJECT`: `sink_counter` / interaction |
 | `navi_link` | work/power | Scene `ObjectRoot` | Inspector | `Visual/VisualPreview` until Sprite texture exists | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
-| `power_module_board` | work/power | `WorkBackWallParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `work_back_wall` / interaction |
+| `power_module_board` | work/power | Scene `EditableObjectNodes/PowerModuleBoard`, mounted to `Walls/WorkBackWall/.../PowerModuleBoardSocket` | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `work_back_wall` / interaction |
 | `node_17` | work/power | Scene `EditableObjectNodes/Node17` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `sink_counter` | living | `(3,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
 | `dining_table` | living | `(4,7)` | `(0,0)` | `170x120` | `130x70` | none | `FLOOR` / environment |
@@ -171,7 +171,7 @@ Attachment policy:
 - Candidate Resources expose `anchor_type` as `FLOOR`, `WALL_EDGE`, `CEILING`, or `PARENT_OBJECT`; object category remains independently `interaction`, `environment`, or `decoration`.
 - Wall, ceiling, and non-floor parent attachments do not remove navigation cells or participate in floor overlap checks.
 - `ups_unit` is floor-anchored and retains floor occupancy/collision; it has no spatial parent anchor.
-- `entrance_door` is parented to `EntranceWallParentAnchor`. Its BodyPolygon blocks the exact doorway edge while closed and is disabled while open; it never creates floor occupancy.
+- `entrance_door` and `power_module_board` resolve installation from actual WallSegment Socket Marker nodes through `mount_socket_path`; moving a Socket moves the complete object while preserving editable local `mount_offset`. The door BodyPolygon blocks the exact doorway edge while closed and is disabled while open; it never creates floor occupancy.
 - Direct world interaction is limited to exactly seven objects: `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17`. Each has valid interaction geometry and at least one walkable access point/cell.
 - `sink_counter`, `dining_table`, `signal_booster`, `ups_unit`, `bathroom_fixture`, `sea_horizon_poster`, `fluorescent_light`, `shoes_slippers`, `cable_bundle`, `wall_conduit`, and `power_housing` have no gameplay interaction geometry. They remain selectable only for P placement inspection.
 - P debug selection and direct game/mock interaction are separate contracts. A zero size, empty access-cell set, or non-interaction category never creates an orange interaction marker.

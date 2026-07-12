@@ -1,12 +1,27 @@
-[gd_scene load_steps=7 format=3 uid="uid://ckn6c2wld0xoc"]
+[gd_scene load_steps=11 format=4 uid="uid://ckn6c2wld0xoc"]
 
-[ext_resource type="Script" path="res://scripts/quarterview/QuarterviewApartmentShellCandidate.gd" id="1_shell_candidate"]
-[ext_resource type="Resource" path="res://resources/quarterview/apartment_shell_object_footprints.tres" id="2_object_footprints"]
+[ext_resource type="Script" uid="uid://d1bjksuh03jij" path="res://scripts/quarterview/QuarterviewApartmentShellCandidate.gd" id="1_shell_candidate"]
+[ext_resource type="Resource" uid="uid://bvlebudmvyhsg" path="res://resources/quarterview/apartment_shell_object_footprints.tres" id="2_object_footprints"]
 [ext_resource type="PackedScene" path="res://scenes/quarterview/objects/ApartmentEditableObject.tscn" id="3_editable_object"]
-[ext_resource type="Texture2D" path="res://assets/art/objects/fridge/fridge_dl_closed.png" id="4_fridge_texture"]
+[ext_resource type="Texture2D" uid="uid://bm6tq14n5rks0" path="res://assets/art/objects/fridge/fridge_dl_closed.png" id="4_fridge_texture"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentFloorLayer.tscn" id="5_floor_layer"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentRoomArea.tscn" id="6_room_area"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentWallSegment.tscn" id="7_wall_segment"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentOpeningMarker.tscn" id="8_opening"]
 
 [sub_resource type="Shader" id="Shader_fridge_checker_cleanup"]
-code = "shader_type canvas_item;\n\nvoid fragment() {\n\tvec4 source = texture(TEXTURE, UV);\n\tfloat high = max(source.r, max(source.g, source.b));\n\tfloat low = min(source.r, min(source.g, source.b));\n\tfloat chroma = high - low;\n\tfloat neutral_bright_background = smoothstep(0.88, 0.96, high) * (1.0 - smoothstep(0.015, 0.055, chroma));\n\tsource.a *= 1.0 - neutral_bright_background;\n\tCOLOR = source;\n}\n"
+code = "shader_type canvas_item;
+
+void fragment() {
+	vec4 source = texture(TEXTURE, UV);
+	float high = max(source.r, max(source.g, source.b));
+	float low = min(source.r, min(source.g, source.b));
+	float chroma = high - low;
+	float neutral_bright_background = smoothstep(0.88, 0.96, high) * (1.0 - smoothstep(0.015, 0.055, chroma));
+	source.a *= 1.0 - neutral_bright_background;
+	COLOR = source;
+}
+"
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fridge_checker_cleanup"]
 shader = SubResource("Shader_fridge_checker_cleanup")
@@ -18,17 +33,551 @@ full_map_camera_center_offset = Vector2(1, 0)
 full_map_camera_zoom = Vector2(0.66, 0.66)
 show_debug_labels = false
 
+[node name="Floor" type="Node2D" parent="."]
+editor_description = "실제 바닥 셀 정본. 아래 네 TileMapLayer를 선택해 셀을 직접 칠하고 지웁니다."
+
+[node name="EntranceFloor" parent="Floor" instance=ExtResource("5_floor_layer")]
+tile_map_data = PackedByteArray("AAAAAAcAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAkAAAAAAAAAAAABAAcAAAAAAAAAAAABAAgAAAAAAAAAAAABAAkAAAAAAAAAAAA=")
+floor_id = &"entrance_area"
+korean_name = "현관"
+
+[node name="BathroomFloor" parent="Floor" instance=ExtResource("5_floor_layer")]
+tile_map_data = PackedByteArray("AAAAAAQAAAABAAAAAAAAAAUAAAABAAAAAAAAAAYAAAABAAAAAAABAAQAAAABAAAAAAABAAUAAAABAAAAAAABAAYAAAABAAAAAAA=")
+floor_id = &"bathroom"
+korean_name = "욕실"
+
+[node name="LivingFloor" parent="Floor" instance=ExtResource("5_floor_layer")]
+tile_map_data = PackedByteArray("AAACAAQAAAACAAAAAAACAAUAAAACAAAAAAACAAYAAAACAAAAAAACAAcAAAACAAAAAAACAAgAAAACAAAAAAACAAkAAAACAAAAAAADAAQAAAACAAAAAAADAAUAAAACAAAAAAADAAYAAAACAAAAAAADAAcAAAACAAAAAAADAAgAAAACAAAAAAADAAkAAAACAAAAAAAEAAQAAAACAAAAAAAEAAUAAAACAAAAAAAEAAYAAAACAAAAAAAEAAcAAAACAAAAAAAEAAgAAAACAAAAAAAEAAkAAAACAAAAAAAFAAQAAAACAAAAAAAFAAUAAAACAAAAAAAFAAYAAAACAAAAAAAFAAcAAAACAAAAAAAFAAgAAAACAAAAAAAFAAkAAAACAAAAAAAGAAQAAAACAAAAAAAGAAUAAAACAAAAAAAGAAYAAAACAAAAAAAGAAcAAAACAAAAAAAGAAgAAAACAAAAAAAGAAkAAAACAAAAAAAHAAQAAAACAAAAAAAHAAUAAAACAAAAAAAHAAYAAAACAAAAAAAHAAcAAAACAAAAAAAHAAgAAAACAAAAAAAHAAkAAAACAAAAAAAIAAQAAAACAAAAAAAIAAUAAAACAAAAAAAIAAYAAAACAAAAAAAIAAcAAAACAAAAAAAIAAgAAAACAAAAAAAIAAkAAAACAAAAAAAJAAQAAAACAAAAAAAJAAUAAAACAAAAAAAJAAYAAAACAAAAAAAJAAcAAAACAAAAAAAJAAgAAAACAAAAAAAJAAkAAAACAAAAAAAKAAQAAAACAAAAAAAKAAUAAAACAAAAAAAKAAYAAAACAAAAAAAKAAcAAAACAAAAAAAKAAgAAAACAAAAAAAKAAkAAAACAAAAAAA=")
+floor_id = &"living_area"
+korean_name = "생활공간"
+
+[node name="WorkFloor" parent="Floor" instance=ExtResource("5_floor_layer")]
+tile_map_data = PackedByteArray("AAABAAAAAAADAAAAAAABAAEAAAADAAAAAAABAAIAAAADAAAAAAABAAMAAAADAAAAAAACAAAAAAADAAAAAAACAAEAAAADAAAAAAACAAIAAAADAAAAAAACAAMAAAADAAAAAAADAAAAAAADAAAAAAADAAEAAAADAAAAAAADAAIAAAADAAAAAAADAAMAAAADAAAAAAAEAAAAAAADAAAAAAAEAAEAAAADAAAAAAAEAAIAAAADAAAAAAAEAAMAAAADAAAAAAAFAAAAAAADAAAAAAAFAAEAAAADAAAAAAAFAAIAAAADAAAAAAAFAAMAAAADAAAAAAAGAAAAAAADAAAAAAAGAAEAAAADAAAAAAAGAAIAAAADAAAAAAAGAAMAAAADAAAAAAAHAAAAAAADAAAAAAAHAAEAAAADAAAAAAAHAAIAAAADAAAAAAAHAAMAAAADAAAAAAAIAAAAAAADAAAAAAAIAAEAAAADAAAAAAAIAAIAAAADAAAAAAAIAAMAAAADAAAAAAA=")
+floor_id = &"work_power_area"
+korean_name = "작업·전력 공간"
+
+[node name="RoomAreas" type="Node2D" parent="."]
+editor_description = "M 측량과 방 판정의 논리 Polygon 정본. 바닥 TileMap과 별도로 편집합니다."
+
+[node name="EntranceArea" parent="RoomAreas" instance=ExtResource("6_room_area")]
+room_id = &"entrance_area"
+korean_name = "현관"
+selection_priority = 40
+preview_color = Color(0.96, 0.72, 0.26, 0.13)
+
+[node name="CollisionPolygon2D" parent="RoomAreas/EntranceArea/Area2D" index="0"]
+polygon = PackedVector2Array(612, 142, 740, 206, 548, 302, 420, 238)
+
+[node name="EditorPreview" parent="RoomAreas/EntranceArea" index="1"]
+color = Color(0.96, 0.72, 0.26, 0.13)
+polygon = PackedVector2Array(612, 142, 740, 206, 548, 302, 420, 238)
+
+[node name="BathroomArea" parent="RoomAreas" instance=ExtResource("6_room_area")]
+room_id = &"bathroom"
+korean_name = "욕실"
+selection_priority = 30
+preview_color = Color(0.32, 0.72, 0.96, 0.12)
+
+[node name="CollisionPolygon2D" parent="RoomAreas/BathroomArea/Area2D" index="0"]
+polygon = PackedVector2Array(804, 46, 932, 110, 740, 206, 612, 142)
+
+[node name="EditorPreview" parent="RoomAreas/BathroomArea" index="1"]
+color = Color(0.32, 0.72, 0.96, 0.12)
+polygon = PackedVector2Array(804, 46, 932, 110, 740, 206, 612, 142)
+
+[node name="LivingArea" parent="RoomAreas" instance=ExtResource("6_room_area")]
+room_id = &"living_area"
+korean_name = "생활공간"
+selection_priority = 10
+preview_color = Color(0.34, 0.88, 0.58, 0.1)
+
+[node name="CollisionPolygon2D" parent="RoomAreas/LivingArea/Area2D" index="0"]
+polygon = PackedVector2Array(804, 46, 1508, 398, 1124, 590, 420, 238)
+
+[node name="EditorPreview" parent="RoomAreas/LivingArea" index="1"]
+color = Color(0.34, 0.88, 0.58, 0.1)
+polygon = PackedVector2Array(804, 46, 1508, 398, 1124, 590, 420, 238)
+
+[node name="WorkArea" parent="RoomAreas" instance=ExtResource("6_room_area")]
+room_id = &"work_power_area"
+korean_name = "작업·전력 공간"
+selection_priority = 20
+preview_color = Color(0.48, 0.54, 1, 0.11)
+
+[node name="CollisionPolygon2D" parent="RoomAreas/WorkArea/Area2D" index="0"]
+polygon = PackedVector2Array(1124, -50, 1636, 206, 1380, 334, 868, 78)
+
+[node name="EditorPreview" parent="RoomAreas/WorkArea" index="1"]
+color = Color(0.48, 0.54, 1, 0.11)
+polygon = PackedVector2Array(1124, -50, 1636, 206, 1380, 334, 868, 78)
+
+[node name="Openings" type="Node2D" parent="."]
+editor_description = "문·창문 개구부 정본. StartPoint/EndPoint를 직접 조정합니다."
+
+[node name="EntranceDoorOpening" parent="Openings" instance=ExtResource("8_opening")]
+opening_id = &"entrance_door"
+korean_name = "현관문 개구부"
+owner_wall_id = &"entrance_wall"
+passable = false
+
+[node name="StartPoint" parent="Openings/EntranceDoorOpening" index="0"]
+position = Vector2(548, 174)
+
+[node name="EndPoint" parent="Openings/EntranceDoorOpening" index="1"]
+position = Vector2(484, 206)
+
+[node name="EditorPreview" parent="Openings/EntranceDoorOpening" index="2"]
+points = PackedVector2Array(548, 174, 484, 206)
+default_color = Color(1, 0.72, 0.22, 0.95)
+
+[node name="EntranceInnerOpening" parent="Openings" instance=ExtResource("8_opening")]
+opening_id = &"entrance_inner"
+korean_name = "현관 내부 개구부"
+owner_wall_id = &"entrance_inner_wall"
+
+[node name="StartPoint" parent="Openings/EntranceInnerOpening" index="0"]
+position = Vector2(676, 238)
+
+[node name="EndPoint" parent="Openings/EntranceInnerOpening" index="1"]
+position = Vector2(612, 270)
+
+[node name="EditorPreview" parent="Openings/EntranceInnerOpening" index="2"]
+points = PackedVector2Array(676, 238, 612, 270)
+default_color = Color(1, 0.72, 0.22, 0.95)
+
+[node name="BathroomDoorOpening" parent="Openings" instance=ExtResource("8_opening")]
+opening_id = &"bathroom_door"
+korean_name = "욕실문 개구부"
+owner_wall_id = &"bathroom_right_wall"
+
+[node name="StartPoint" parent="Openings/BathroomDoorOpening" index="0"]
+position = Vector2(804, 174)
+
+[node name="EndPoint" parent="Openings/BathroomDoorOpening" index="1"]
+position = Vector2(740, 206)
+
+[node name="EditorPreview" parent="Openings/BathroomDoorOpening" index="2"]
+points = PackedVector2Array(804, 174, 740, 206)
+default_color = Color(1, 0.72, 0.22, 0.95)
+
+[node name="WorkRoomOpening" parent="Openings" instance=ExtResource("8_opening")]
+opening_id = &"work_room"
+korean_name = "작업실 개구부"
+owner_wall_id = &"work_front_shared_wall"
+
+[node name="StartPoint" parent="Openings/WorkRoomOpening" index="0"]
+position = Vector2(1188, 238)
+
+[node name="EndPoint" parent="Openings/WorkRoomOpening" index="1"]
+position = Vector2(1252, 270)
+
+[node name="EditorPreview" parent="Openings/WorkRoomOpening" index="2"]
+points = PackedVector2Array(1188, 238, 1252, 270)
+default_color = Color(1, 0.72, 0.22, 0.95)
+
+[node name="LivingWindowOpening" parent="Openings" instance=ExtResource("8_opening")]
+opening_id = &"living_window"
+korean_name = "생활공간 창문"
+opening_type = 1
+owner_wall_id = &"living_right_wall"
+passable = false
+
+[node name="StartPoint" parent="Openings/LivingWindowOpening" index="0"]
+position = Vector2(1175.2, 564.4)
+
+[node name="EndPoint" parent="Openings/LivingWindowOpening" index="1"]
+position = Vector2(1069.6, 617.2)
+
+[node name="EditorPreview" parent="Openings/LivingWindowOpening" index="2"]
+points = PackedVector2Array(1175.2, 564.4, 1069.6, 617.2)
+default_color = Color(0.2, 0.95, 1, 0.95)
+
+[node name="Walls" type="Node2D" parent="."]
+editor_description = "벽 Visual·가림·충돌 정본. 각 WallSegment의 Start/End/Top과 Socket을 직접 조정합니다."
+
+[node name="WorkBackWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"work_back_wall"
+korean_name = "작업실 뒤 벽"
+
+[node name="StartPoint" parent="Walls/WorkBackWall" index="0"]
+position = Vector2(1124, -50)
+
+[node name="EndPoint" parent="Walls/WorkBackWall" index="1"]
+position = Vector2(1636, 206)
+
+[node name="BasePoint" parent="Walls/WorkBackWall" index="2"]
+position = Vector2(1380, 78)
+
+[node name="TopPoint" parent="Walls/WorkBackWall" index="3"]
+position = Vector2(1380, -98)
+
+[node name="Visual" parent="Walls/WorkBackWall" index="4"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(1124, -50, 1636, 206, 1636, 30, 1124, -226)
+
+[node name="VisualAfterOpening" parent="Walls/WorkBackWall" index="5"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+
+[node name="OcclusionVisual" parent="Walls/WorkBackWall" index="6"]
+visible = false
+
+[node name="CollisionPolygon2D" parent="Walls/WorkBackWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(1121.3168, -44.63344, 1633.3168, 211.36656, 1638.6832, 200.63344, 1126.6832, -55.36656)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/WorkBackWall/CollisionBody" index="1"]
+disabled = true
+
+[node name="PowerModuleBoardSocket" type="Marker2D" parent="Walls/WorkBackWall/AttachmentSockets" index="0"]
+editor_description = "전력 모듈 보드의 실제 벽부착 기준점. 이동하면 PowerModuleBoard 전체가 따라갑니다."
+position = Vector2(1476, 126)
+
+[node name="WallConduitSocket" type="Marker2D" parent="Walls/WorkBackWall/AttachmentSockets" index="1"]
+editor_description = "전선관 환경 오브젝트가 사용할 작업실 뒤 벽 기준점."
+position = Vector2(1282.72, 29.36)
+
+[node name="WorkLeftWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"work_left_wall"
+korean_name = "작업실 왼쪽 벽"
+
+[node name="StartPoint" parent="Walls/WorkLeftWall" index="0"]
+position = Vector2(1124, -50)
+
+[node name="EndPoint" parent="Walls/WorkLeftWall" index="1"]
+position = Vector2(868, 78)
+
+[node name="BasePoint" parent="Walls/WorkLeftWall" index="2"]
+position = Vector2(996, 14)
+
+[node name="TopPoint" parent="Walls/WorkLeftWall" index="3"]
+position = Vector2(996, -162)
+
+[node name="Visual" parent="Walls/WorkLeftWall" index="4"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(1124, -50, 868, 78, 868, -98, 1124, -226)
+
+[node name="VisualAfterOpening" parent="Walls/WorkLeftWall" index="5"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+
+[node name="OcclusionVisual" parent="Walls/WorkLeftWall" index="6"]
+visible = false
+
+[node name="CollisionPolygon2D" parent="Walls/WorkLeftWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(1121.3168, -55.36656, 865.3167, 72.63344, 870.6833, 83.36656, 1126.6832, -44.63344)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/WorkLeftWall/CollisionBody" index="1"]
+disabled = true
+
+[node name="WorkRightWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"work_right_wall"
+korean_name = "작업실 오른쪽 벽"
+
+[node name="StartPoint" parent="Walls/WorkRightWall" index="0"]
+position = Vector2(1636, 206)
+
+[node name="EndPoint" parent="Walls/WorkRightWall" index="1"]
+position = Vector2(1380, 334)
+
+[node name="BasePoint" parent="Walls/WorkRightWall" index="2"]
+position = Vector2(1508, 270)
+
+[node name="TopPoint" parent="Walls/WorkRightWall" index="3"]
+position = Vector2(1508, 94)
+
+[node name="Visual" parent="Walls/WorkRightWall" index="4"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(1636, 206, 1380, 334, 1380, 158, 1636, 30)
+
+[node name="VisualAfterOpening" parent="Walls/WorkRightWall" index="5"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+
+[node name="OcclusionVisual" parent="Walls/WorkRightWall" index="6"]
+visible = false
+
+[node name="CollisionPolygon2D" parent="Walls/WorkRightWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(1633.3168, 200.63344, 1377.3168, 328.63342, 1382.6832, 339.36658, 1638.6832, 211.36656)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/WorkRightWall/CollisionBody" index="1"]
+disabled = true
+
+[node name="EntranceWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"entrance_wall"
+korean_name = "현관 외벽"
+opening_path = NodePath("../../Openings/EntranceDoorOpening")
+
+[node name="StartPoint" parent="Walls/EntranceWall" index="0"]
+position = Vector2(804, 46)
+
+[node name="EndPoint" parent="Walls/EntranceWall" index="1"]
+position = Vector2(420, 238)
+
+[node name="BasePoint" parent="Walls/EntranceWall" index="2"]
+position = Vector2(612, 142)
+
+[node name="TopPoint" parent="Walls/EntranceWall" index="3"]
+position = Vector2(612, -34)
+
+[node name="Visual" parent="Walls/EntranceWall" index="4"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(804, 46, 548, 174, 548, -2, 804, -130)
+
+[node name="VisualAfterOpening" parent="Walls/EntranceWall" index="5"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(484, 206, 420, 238, 420, 62, 484, 30)
+
+[node name="OcclusionVisual" parent="Walls/EntranceWall" index="6"]
+visible = false
+
+[node name="CollisionPolygon2D" parent="Walls/EntranceWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(801.3167, 40.63344, 545.3167, 168.63344, 550.6833, 179.36656, 806.6833, 51.36656)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/EntranceWall/CollisionBody" index="1"]
+polygon = PackedVector2Array(481.3167, 200.63344, 417.3167, 232.63344, 422.6833, 243.36656, 486.6833, 211.36656)
+disabled = true
+
+[node name="EntranceDoorSocket" type="Marker2D" parent="Walls/EntranceWall/AttachmentSockets" index="0"]
+editor_description = "현관문의 실제 벽부착 기준점. 이동하면 EntranceDoor 전체가 따라갑니다."
+position = Vector2(516, 190)
+
+[node name="EntranceInnerWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"entrance_inner_wall"
+korean_name = "현관 내부 벽"
+opening_path = NodePath("../../Openings/EntranceInnerOpening")
+
+[node name="StartPoint" parent="Walls/EntranceInnerWall" index="0"]
+position = Vector2(740, 206)
+
+[node name="EndPoint" parent="Walls/EntranceInnerWall" index="1"]
+position = Vector2(548, 302)
+
+[node name="BasePoint" parent="Walls/EntranceInnerWall" index="2"]
+position = Vector2(644, 254)
+
+[node name="TopPoint" parent="Walls/EntranceInnerWall" index="3"]
+position = Vector2(644, 78)
+
+[node name="Visual" parent="Walls/EntranceInnerWall" index="4"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(740, 206, 676, 238, 676, 62, 740, 30)
+
+[node name="VisualAfterOpening" parent="Walls/EntranceInnerWall" index="5"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(612, 270, 548, 302, 548, 126, 612, 94)
+
+[node name="OcclusionVisual" parent="Walls/EntranceInnerWall" index="6"]
+visible = false
+
+[node name="CollisionPolygon2D" parent="Walls/EntranceInnerWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(737.3167, 200.63344, 673.3167, 232.63344, 678.6833, 243.36656, 742.6833, 211.36656)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/EntranceInnerWall/CollisionBody" index="1"]
+polygon = PackedVector2Array(609.3167, 264.63342, 545.3167, 296.63342, 550.6833, 307.36658, 614.6833, 275.36658)
+disabled = true
+
+[node name="LivingRightWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"living_right_wall"
+korean_name = "생활공간 오른쪽 가림벽"
+display_type = 2
+revealable = true
+opening_path = NodePath("../../Openings/LivingWindowOpening")
+
+[node name="StartPoint" parent="Walls/LivingRightWall" index="0"]
+position = Vector2(1508, 398)
+
+[node name="EndPoint" parent="Walls/LivingRightWall" index="1"]
+position = Vector2(1124, 590)
+
+[node name="BasePoint" parent="Walls/LivingRightWall" index="2"]
+position = Vector2(1316, 494)
+
+[node name="TopPoint" parent="Walls/LivingRightWall" index="3"]
+position = Vector2(1316, 318)
+
+[node name="Visual" parent="Walls/LivingRightWall" index="4"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(1508, 398, 1175.2, 564.4, 1175.2, 388.40002, 1508, 222)
+
+[node name="VisualAfterOpening" parent="Walls/LivingRightWall" index="5"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(1069.6, 617.2, 1124, 590, 1124, 414, 1069.6, 441.2)
+
+[node name="OcclusionVisual" parent="Walls/LivingRightWall" index="6"]
+color = Color(0.25, 0.26, 0.25, 0.9)
+polygon = PackedVector2Array(1508, 398, 1124, 590, 1124, 548, 1508, 356)
+
+[node name="CollisionPolygon2D" parent="Walls/LivingRightWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(1505.3168, 392.63342, 1121.3168, 584.6334, 1126.6832, 595.3666, 1510.6832, 403.36658)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/LivingRightWall/CollisionBody" index="1"]
+disabled = true
+
+[node name="SeaHorizonPosterSocket" type="Marker2D" parent="Walls/LivingRightWall/AttachmentSockets" index="0"]
+editor_description = "바다 수평선 포스터 환경 오브젝트가 사용할 생활공간 오른쪽 벽 기준점."
+position = Vector2(1285.28, 509.36)
+
+[node name="LivingFrontCutaway" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"living_front_cutaway"
+korean_name = "생활공간 앞 잘린벽"
+display_type = 1
+
+[node name="StartPoint" parent="Walls/LivingFrontCutaway" index="0"]
+position = Vector2(420, 238)
+
+[node name="EndPoint" parent="Walls/LivingFrontCutaway" index="1"]
+position = Vector2(1124, 590)
+
+[node name="BasePoint" parent="Walls/LivingFrontCutaway" index="2"]
+position = Vector2(772, 414)
+
+[node name="TopPoint" parent="Walls/LivingFrontCutaway" index="3"]
+position = Vector2(772, 372)
+
+[node name="Visual" parent="Walls/LivingFrontCutaway" index="4"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(420, 238, 1124, 590, 1124, 548, 420, 196)
+
+[node name="VisualAfterOpening" parent="Walls/LivingFrontCutaway" index="5"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+
+[node name="OcclusionVisual" parent="Walls/LivingFrontCutaway" index="6"]
+color = Color(0.25, 0.26, 0.25, 0.9)
+polygon = PackedVector2Array(420, 238, 1124, 590, 1124, 548, 420, 196)
+
+[node name="CollisionPolygon2D" parent="Walls/LivingFrontCutaway/CollisionBody" index="0"]
+polygon = PackedVector2Array(417.3167, 243.36656, 1121.3168, 595.3666, 1126.6832, 584.6334, 422.6833, 232.63344)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/LivingFrontCutaway/CollisionBody" index="1"]
+disabled = true
+
+[node name="WorkFrontSharedWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"work_front_shared_wall"
+korean_name = "작업실·생활공간 공용벽"
+opening_path = NodePath("../../Openings/WorkRoomOpening")
+
+[node name="StartPoint" parent="Walls/WorkFrontSharedWall" index="0"]
+position = Vector2(804, 46)
+
+[node name="EndPoint" parent="Walls/WorkFrontSharedWall" index="1"]
+position = Vector2(1508, 398)
+
+[node name="BasePoint" parent="Walls/WorkFrontSharedWall" index="2"]
+position = Vector2(1156, 222)
+
+[node name="TopPoint" parent="Walls/WorkFrontSharedWall" index="3"]
+position = Vector2(1156, 46)
+
+[node name="Visual" parent="Walls/WorkFrontSharedWall" index="4"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(804, 46, 1188, 238, 1188, 62, 804, -130)
+
+[node name="VisualAfterOpening" parent="Walls/WorkFrontSharedWall" index="5"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(1252, 270, 1508, 398, 1508, 222, 1252, 94)
+
+[node name="OcclusionVisual" parent="Walls/WorkFrontSharedWall" index="6"]
+visible = false
+
+[node name="CollisionPolygon2D" parent="Walls/WorkFrontSharedWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(801.3167, 51.36656, 1185.3168, 243.36656, 1190.6832, 232.63344, 806.6833, 40.63344)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/WorkFrontSharedWall/CollisionBody" index="1"]
+polygon = PackedVector2Array(1249.3168, 275.36658, 1505.3168, 403.36658, 1510.6832, 392.63342, 1254.6832, 264.63342)
+disabled = true
+
+[node name="BathroomWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"bathroom_wall"
+korean_name = "욕실 앞 벽"
+
+[node name="StartPoint" parent="Walls/BathroomWall" index="0"]
+position = Vector2(612, 142)
+
+[node name="EndPoint" parent="Walls/BathroomWall" index="1"]
+position = Vector2(740, 206)
+
+[node name="BasePoint" parent="Walls/BathroomWall" index="2"]
+position = Vector2(676, 174)
+
+[node name="TopPoint" parent="Walls/BathroomWall" index="3"]
+position = Vector2(676, -2)
+
+[node name="Visual" parent="Walls/BathroomWall" index="4"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(612, 142, 740, 206, 740, 30, 612, -34)
+
+[node name="VisualAfterOpening" parent="Walls/BathroomWall" index="5"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+
+[node name="OcclusionVisual" parent="Walls/BathroomWall" index="6"]
+visible = false
+
+[node name="CollisionPolygon2D" parent="Walls/BathroomWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(609.3167, 147.36656, 737.3167, 211.36656, 742.6833, 200.63344, 614.6833, 136.63344)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/BathroomWall/CollisionBody" index="1"]
+disabled = true
+
+[node name="BathroomRightWall" parent="Walls" instance=ExtResource("7_wall_segment")]
+wall_id = &"bathroom_right_wall"
+korean_name = "욕실 오른쪽 벽"
+opening_path = NodePath("../../Openings/BathroomDoorOpening")
+
+[node name="StartPoint" parent="Walls/BathroomRightWall" index="0"]
+position = Vector2(932, 110)
+
+[node name="EndPoint" parent="Walls/BathroomRightWall" index="1"]
+position = Vector2(740, 206)
+
+[node name="BasePoint" parent="Walls/BathroomRightWall" index="2"]
+position = Vector2(836, 158)
+
+[node name="TopPoint" parent="Walls/BathroomRightWall" index="3"]
+position = Vector2(836, -18)
+
+[node name="Visual" parent="Walls/BathroomRightWall" index="4"]
+color = Color(0.72, 0.68, 0.6, 1)
+polygon = PackedVector2Array(932, 110, 804, 174, 804, -2, 932, -66)
+
+[node name="VisualAfterOpening" parent="Walls/BathroomRightWall" index="5"]
+visible = false
+color = Color(0.72, 0.68, 0.6, 1)
+
+[node name="OcclusionVisual" parent="Walls/BathroomRightWall" index="6"]
+visible = false
+
+[node name="CollisionPolygon2D" parent="Walls/BathroomRightWall/CollisionBody" index="0"]
+polygon = PackedVector2Array(929.3167, 104.63344, 801.3167, 168.63344, 806.6833, 179.36656, 934.6833, 115.36656)
+disabled = true
+
+[node name="CollisionAfterOpening" parent="Walls/BathroomRightWall/CollisionBody" index="1"]
+disabled = true
+
 [node name="EditableObjectNodes" type="Node2D" parent="."]
 
 [node name="Fridge" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
-z_as_relative = false
 z_index = 303
+z_as_relative = false
 position = Vector2(1116, 226)
 object_id = &"fridge"
 
 [node name="Sprite2D" parent="EditableObjectNodes/Fridge/Visual" index="0"]
-material = SubResource("ShaderMaterial_fridge_checker_cleanup")
 texture_filter = 1
+material = SubResource("ShaderMaterial_fridge_checker_cleanup")
 position = Vector2(8, 4)
 scale = Vector2(0.160714, 0.139048)
 texture = ExtResource("4_fridge_texture")
@@ -36,6 +585,7 @@ region_enabled = true
 region_rect = Rect2(260, 205, 560, 1050)
 
 [node name="VisualPreview" parent="EditableObjectNodes/Fridge/Visual" index="1"]
+visible = false
 position = Vector2(8, 4)
 polygon = PackedVector2Array(-45, -73, 45, -73, 45, 73, -45, 73)
 
@@ -82,8 +632,6 @@ position = Vector2(0, -90)
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-40.2492, -30.3738, 120.7477, 50.1246, 40.2492, 90.3738, -120.7477, 9.8754)
 
-[node name="SelectionArea" parent="EditableObjectNodes/Bed" index="4"]
-
 [node name="SelectionPolygon" parent="EditableObjectNodes/Bed/SelectionArea" index="0"]
 polygon = PackedVector2Array(-130, -90, 130, -90, 130, 90, -130, 90)
 
@@ -112,8 +660,6 @@ position = Vector2(0, -120)
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/NaviLink/Body" index="0"]
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-40.2491, -28.7902, 70.4386, 26.553787, 147.58, 65.1246, 40.2491, 118.79, -147.58, 24.8754)
-
-[node name="SelectionArea" parent="EditableObjectNodes/NaviLink" index="4"]
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/NaviLink/SelectionArea" index="0"]
 polygon = PackedVector2Array(-150, -120, 150, -120, 150, 120, -150, 120)
@@ -144,8 +690,6 @@ position = Vector2(0, -70)
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-13.4164, -5.541, 67.082, 34.7082, 13.4164, 61.541, -67.082, 21.2918)
 
-[node name="SelectionArea" parent="EditableObjectNodes/Node17" index="4"]
-
 [node name="SelectionPolygon" parent="EditableObjectNodes/Node17/SelectionArea" index="0"]
 polygon = PackedVector2Array(-75, -70, 75, -70, 75, 70, -75, 70)
 
@@ -174,8 +718,6 @@ position = Vector2(0, 60)
 [node name="TopPoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="2"]
 position = Vector2(0, -36)
 
-[node name="SelectionArea" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="4"]
-
 [node name="SelectionPolygon" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/SelectionArea" index="0"]
 polygon = PackedVector2Array(-48, -36, 48, -36, 48, 36, -48, 36)
 
@@ -188,83 +730,96 @@ polygon = PackedVector2Array(-48, -28, 48, -28, 48, 28, -48, 28)
 [node name="UsePoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="6"]
 position = Vector2(0, 124)
 
-[node name="WorkBackWallParentAnchor" type="Node2D" parent="EditableObjectNodes"]
-position = Vector2(1476, 126)
-
-[node name="PowerModuleBoard" parent="EditableObjectNodes/WorkBackWallParentAnchor" instance=ExtResource("3_editable_object")]
-position = Vector2(0, -30)
+[node name="PowerModuleBoard" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
+position = Vector2(1476, 96)
 object_id = &"power_module_board"
+mount_socket_path = NodePath("../../Walls/WorkBackWall/AttachmentSockets/PowerModuleBoardSocket")
+mount_offset = Vector2(0, -30)
 
-[node name="VisualPreview" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/Visual" index="1"]
+[node name="VisualPreview" parent="EditableObjectNodes/PowerModuleBoard/Visual" index="1"]
 polygon = PackedVector2Array(-100, -90, 100, -90, 100, 90, -100, 90)
 
-[node name="BasePoint" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="1"]
+[node name="BasePoint" parent="EditableObjectNodes/PowerModuleBoard" index="1"]
 position = Vector2(0, 30)
 
-[node name="TopPoint" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="2"]
+[node name="TopPoint" parent="EditableObjectNodes/PowerModuleBoard" index="2"]
 position = Vector2(0, -90)
 
-[node name="SelectionArea" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="4"]
-
-[node name="SelectionPolygon" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/SelectionArea" index="0"]
+[node name="SelectionPolygon" parent="EditableObjectNodes/PowerModuleBoard/SelectionArea" index="0"]
 polygon = PackedVector2Array(-100, -90, 100, -90, 100, 90, -100, 90)
 
-[node name="InteractionArea" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="5"]
+[node name="InteractionArea" parent="EditableObjectNodes/PowerModuleBoard" index="5"]
 position = Vector2(-96, 170)
 
-[node name="InteractionPolygon" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/InteractionArea" index="0"]
+[node name="InteractionPolygon" parent="EditableObjectNodes/PowerModuleBoard/InteractionArea" index="0"]
 polygon = PackedVector2Array(-60, -36, 60, -36, 60, 36, -60, 36)
 
-[node name="UsePoint" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="6"]
+[node name="UsePoint" parent="EditableObjectNodes/PowerModuleBoard" index="6"]
 position = Vector2(-96, 170)
 
-[node name="EntranceWallParentAnchor" type="Node2D" parent="EditableObjectNodes"]
-position = Vector2(516, 190)
-
-[node name="EntranceDoor" parent="EditableObjectNodes/EntranceWallParentAnchor" instance=ExtResource("3_editable_object")]
-position = Vector2(0, -6)
+[node name="EntranceDoor" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
+position = Vector2(516, 184)
 object_id = &"entrance_door"
+mount_socket_path = NodePath("../../Walls/EntranceWall/AttachmentSockets/EntranceDoorSocket")
+mount_offset = Vector2(0, -6)
 supports_open_state = true
 
-[node name="VisualPreview" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor/Visual" index="1"]
+[node name="VisualPreview" parent="EditableObjectNodes/EntranceDoor/Visual" index="1"]
 polygon = PackedVector2Array(-75, -110, 75, -110, 75, 110, -75, 110)
 
-[node name="BasePoint" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor" index="1"]
+[node name="BasePoint" parent="EditableObjectNodes/EntranceDoor" index="1"]
 position = Vector2(0, 6)
 
-[node name="TopPoint" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor" index="2"]
+[node name="TopPoint" parent="EditableObjectNodes/EntranceDoor" index="2"]
 position = Vector2(0, -214)
 
-[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor/Body" index="0"]
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/EntranceDoor/Body" index="0"]
 editor_description = "닫힌 문이 이동을 막는 벽선 충돌 범위. 바닥 점유로 사용하지 않으며 꼭짓점을 직접 조정."
 position = Vector2(0, 6)
 polygon = PackedVector2Array(31.1056, -22.261, 36.4722, -11.5279, -31.1056, 22.261, -36.4722, 11.5279)
 
-[node name="SelectionArea" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor" index="4"]
-
-[node name="SelectionPolygon" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor/SelectionArea" index="0"]
+[node name="SelectionPolygon" parent="EditableObjectNodes/EntranceDoor/SelectionArea" index="0"]
 polygon = PackedVector2Array(-75, -110, 75, -110, 75, 110, -75, 110)
 
-[node name="InteractionArea" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor" index="5"]
+[node name="InteractionArea" parent="EditableObjectNodes/EntranceDoor" index="5"]
 position = Vector2(82, 22)
 
-[node name="InteractionPolygon" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor/InteractionArea" index="0"]
+[node name="InteractionPolygon" parent="EditableObjectNodes/EntranceDoor/InteractionArea" index="0"]
 polygon = PackedVector2Array(-48, -28, 48, -28, 48, 28, -48, 28)
 
-[node name="UsePoint" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor" index="6"]
+[node name="UsePoint" parent="EditableObjectNodes/EntranceDoor" index="6"]
 position = Vector2(32, 22)
 
-[node name="AttachmentSocket" parent="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor" index="7"]
+[node name="AttachmentSocket" parent="EditableObjectNodes/EntranceDoor" index="7"]
 position = Vector2(0, 6)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(770, 380)
 zoom = Vector2(0.58, 0.58)
 
+[editable path="RoomAreas/EntranceArea"]
+[editable path="RoomAreas/BathroomArea"]
+[editable path="RoomAreas/LivingArea"]
+[editable path="RoomAreas/WorkArea"]
+[editable path="Openings/EntranceDoorOpening"]
+[editable path="Openings/EntranceInnerOpening"]
+[editable path="Openings/BathroomDoorOpening"]
+[editable path="Openings/WorkRoomOpening"]
+[editable path="Openings/LivingWindowOpening"]
+[editable path="Walls/WorkBackWall"]
+[editable path="Walls/WorkLeftWall"]
+[editable path="Walls/WorkRightWall"]
+[editable path="Walls/EntranceWall"]
+[editable path="Walls/EntranceInnerWall"]
+[editable path="Walls/LivingRightWall"]
+[editable path="Walls/LivingFrontCutaway"]
+[editable path="Walls/WorkFrontSharedWall"]
+[editable path="Walls/BathroomWall"]
+[editable path="Walls/BathroomRightWall"]
 [editable path="EditableObjectNodes/Fridge"]
 [editable path="EditableObjectNodes/Bed"]
 [editable path="EditableObjectNodes/NaviLink"]
 [editable path="EditableObjectNodes/Node17"]
 [editable path="EditableObjectNodes/SinkCounterParentAnchor/Microwave"]
-[editable path="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard"]
-[editable path="EditableObjectNodes/EntranceWallParentAnchor/EntranceDoor"]
+[editable path="EditableObjectNodes/PowerModuleBoard"]
+[editable path="EditableObjectNodes/EntranceDoor"]

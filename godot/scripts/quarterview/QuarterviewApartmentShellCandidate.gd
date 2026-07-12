@@ -349,6 +349,7 @@ var _last_selection_world_position := Vector2(INF, INF)
 
 func _ready() -> void:
 	_initialize_debug_mode_from_legacy_flags()
+	_apply_environment_node_authority_state()
 	_create_layers()
 	_connect_editable_object_signals()
 	_build_shell()
@@ -356,6 +357,21 @@ func _ready() -> void:
 	_validate_object_footprints()
 	_apply_camera_preset(camera_preset)
 	_update_label_visibility()
+
+
+func _apply_environment_node_authority_state() -> void:
+	if not has_node("Floor") or not has_node("Walls"):
+		return
+	var active := _environment_node_authority_active()
+	var wall_active := _wall_node_authority_active()
+	$Floor.visible = active
+	$RoomAreas.visible = active
+	$Openings.visible = active
+	$Walls.visible = wall_active
+	$EditableObjectNodes.visible = active
+	for wall_node in $Walls.get_children():
+		if wall_node.has_method("set_authority_active"):
+			wall_node.call("set_authority_active", wall_active)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -483,6 +499,10 @@ func _apply_wall_inspection_transparency() -> void:
 	for layer in [_occlusion_stub_layer, _wall_layer, _door_layer]:
 		if layer != null:
 			layer.modulate.a = alpha
+	if _wall_node_authority_active():
+		for wall_node in $Walls.get_children():
+			if wall_node.has_method("set_inspection_transparent"):
+				wall_node.call("set_inspection_transparent", wall_inspection_transparency)
 
 
 func _initialize_debug_mode_from_legacy_flags() -> void:
@@ -590,11 +610,13 @@ func _create_layers() -> void:
 
 func _build_shell() -> void:
 	_draw_background()
-	_draw_floor_tiles(_living_room_rect(), COLOR_FLOOR, "living")
-	_draw_floor_tiles(_work_room_rect(), COLOR_FLOOR_WORK, "work_power")
-	_draw_floor_tiles(_bathroom_room_rect(), COLOR_FLOOR_BATH, "bathroom")
+	if not _environment_node_authority_active():
+		_draw_floor_tiles(_living_room_rect(), COLOR_FLOOR, "living")
+		_draw_floor_tiles(_work_room_rect(), COLOR_FLOOR_WORK, "work_power")
+		_draw_floor_tiles(_bathroom_room_rect(), COLOR_FLOOR_BATH, "bathroom")
 	_draw_no_large_object_zone()
-	_draw_floor_edges()
+	if not _environment_node_authority_active():
+		_draw_floor_edges()
 	_draw_walls()
 	_draw_doors_and_window_placeholders()
 	_draw_debug_labels()
@@ -649,6 +671,9 @@ func _draw_floor_edges() -> void:
 
 
 func _draw_walls() -> void:
+	if _wall_node_authority_active():
+		_update_scene_wall_reveal_state()
+		return
 	for segment in _wall_segments():
 		_draw_wall_segment_data(segment)
 
@@ -656,6 +681,8 @@ func _draw_walls() -> void:
 # Wall segment data keeps shell structure edits near the layout settings instead of hiding them
 # inside drawing calls. start_cell and doorway_offset are in grid coordinates before map rotation.
 func _wall_segments() -> Array[Dictionary]:
+	if _wall_node_authority_active():
+		return _wall_segments_from_scene_nodes()
 	var segments: Array[Dictionary] = []
 	for entry in _active_wall_segment_config_entries():
 		var config: Resource = entry.get("config")
@@ -663,6 +690,80 @@ func _wall_segments() -> Array[Dictionary]:
 			continue
 		segments.append(_wall_segment_from_config(config, String(entry.get("source", "default"))))
 	return segments
+
+
+func _environment_node_authority_active() -> bool:
+	return (
+		map_rotation == MapRotation.ROTATE_90
+		and has_node("Floor")
+		and has_node("RoomAreas")
+		and has_node("Walls")
+		and has_node("Openings")
+	)
+
+
+func _wall_node_authority_active() -> bool:
+	# Inspector custom walls are an explicit legacy preview override. Keep their runtime
+	# visual/collision source aligned by disabling authored Wall nodes for that run only.
+	return _environment_node_authority_active() and custom_wall_segments.is_empty()
+
+
+func _wall_segments_from_scene_nodes() -> Array[Dictionary]:
+	var segments: Array[Dictionary] = []
+	for wall_node in $Walls.get_children():
+		if not (wall_node is ApartmentWallSegment):
+			continue
+		var start_grid := _screen_to_grid_point(wall_node.start_point.global_position)
+		var end_grid := _screen_to_grid_point(wall_node.end_point.global_position)
+		var delta := end_grid - start_grid
+		var axis := WallAxis.AXIS_A if absf(delta.x) >= absf(delta.y) else WallAxis.AXIS_B
+		var length := maxi(1, roundi(absf(delta.x) if axis == WallAxis.AXIS_A else absf(delta.y)))
+		var doorway_offset := -1
+		var doorway_width := 0
+		var wall_type := WallType.NORMAL
+		var opening := wall_node.get_node_or_null(wall_node.opening_path) as ApartmentOpeningMarker
+		if opening != null and opening.opening_type == ApartmentOpeningMarker.OpeningType.DOOR:
+			var opening_start := _screen_to_grid_point(opening.world_start())
+			var opening_end := _screen_to_grid_point(opening.world_end())
+			var start_axis_value := start_grid.x if axis == WallAxis.AXIS_A else start_grid.y
+			var open_a := opening_start.x if axis == WallAxis.AXIS_A else opening_start.y
+			var open_b := opening_end.x if axis == WallAxis.AXIS_A else opening_end.y
+			doorway_offset = roundi(minf(absf(open_a - start_axis_value), absf(open_b - start_axis_value)))
+			doorway_width = maxi(1, roundi(absf(open_b - open_a)))
+			wall_type = WallType.DOORWAY_FRAME
+		var render_mode := WallRenderMode.FULL
+		if wall_node.display_type == ApartmentWallSegment.DisplayType.CUTAWAY:
+			render_mode = WallRenderMode.CUTAWAY_STUB
+		elif wall_node.display_type == ApartmentWallSegment.DisplayType.OCCLUSION:
+			render_mode = WallRenderMode.REVEALABLE if wall_node.revealable else WallRenderMode.HIDDEN_STUB
+		segments.append({
+			"id": String(wall_node.wall_id),
+			"enabled": wall_node.enabled,
+			"source": "SCENE_NODE",
+			"node_path": String(wall_node.get_path()),
+			"axis": axis,
+			"start_cell": Vector2i(roundi(start_grid.x), roundi(start_grid.y)),
+			"length": length,
+			"wall_type": wall_type,
+			"doorway_offset": doorway_offset,
+			"doorway_width": doorway_width,
+			"height_mode": ApartmentWallSegmentConfigScript.HeightMode.DEFAULT,
+			"render_mode": render_mode,
+			"reveal_area_id": "living_area" if wall_node.revealable else "",
+			"reveal_when_area_active": wall_node.revealable,
+			"height": maxf(8.0, wall_node.base_point.global_position.y - wall_node.top_point.global_position.y),
+			"doorway_color": doorway_debug_color,
+		})
+	return segments
+
+
+func _update_scene_wall_reveal_state() -> void:
+	if not _wall_node_authority_active():
+		return
+	for wall_node in $Walls.get_children():
+		if wall_node.has_method("set_revealed"):
+			var active := preview_revealed_walls or (debug_auto_reveal_walls and _active_room_area() == "living_area")
+			wall_node.call("set_revealed", active)
 
 
 func _active_wall_segment_configs() -> Array[Resource]:
@@ -755,7 +856,7 @@ func _default_wall_segment_configs() -> Array[Resource]:
 			Vector2i(living_left, living_bottom),
 			living_room.size.x,
 			ApartmentWallSegmentConfigScript.WallType.CUTAWAY_STUB,
-			-1.0,
+			-1,
 			0,
 			ApartmentWallSegmentConfigScript.HeightMode.CUTAWAY,
 			-1.0,
@@ -1032,10 +1133,9 @@ func _editable_object_node_authority_active() -> bool:
 func _editable_object_node_by_id(object_id: String) -> Node2D:
 	if not EDITABLE_NODE_OBJECT_IDS.has(object_id):
 		return null
-	var nodes_root := get_node_or_null(EDITABLE_OBJECT_NODES_PATH)
-	if nodes_root == null:
-		return null
-	for candidate in nodes_root.find_children("*", "", true, false):
+	for candidate in get_tree().get_nodes_in_group("apartment_editable_object"):
+		if not is_ancestor_of(candidate):
+			continue
 		if candidate is Node2D and candidate.has_method("body_world_polygon") and String(candidate.get("object_id")) == object_id:
 			return candidate as Node2D
 	return null
@@ -1046,6 +1146,8 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var object_node := _editable_object_node_by_id(object_id)
 	if object_node == null:
 		return resource_data
+	if object_node.has_method("_sync_mount_socket"):
+		object_node.call("_sync_mount_socket")
 	if not object_node.has_method("body_world_polygon") or not object_node.has_method("selection_world_polygon") or not object_node.has_method("interaction_world_polygon"):
 		return resource_data
 
@@ -1078,7 +1180,6 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var collision_bounds := _polygons_bounds(collision_polygons)
 	var selection_bounds := _polygons_bounds(selection_polygons)
 	var interaction_bounds := _polygons_bounds(interaction_polygons)
-	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
 	var anchor_world := base_point
 	var occupied_cells: Array[Vector2i] = []
 	if not floor_polygons.is_empty():
@@ -1155,6 +1256,9 @@ func _entrance_door_is_open() -> bool:
 
 
 func _on_entrance_door_open_state_changed(_is_open: bool) -> void:
+	var opening := _opening_node_by_id("entrance_door")
+	if opening != null:
+		opening.passable = _entrance_door_is_open()
 	if _object_layer == null:
 		return
 	_clear_layer_children(_object_layer)
@@ -1502,10 +1606,9 @@ func _editable_object_node_warnings() -> Array[String]:
 	if not _editable_object_node_authority_active():
 		return warnings
 	var seen_ids: Dictionary = {}
-	var nodes_root := get_node_or_null(EDITABLE_OBJECT_NODES_PATH)
-	if nodes_root == null:
-		return ["EditableObjectNodes is missing"]
-	for candidate in nodes_root.find_children("*", "", true, false):
+	for candidate in get_tree().get_nodes_in_group("apartment_editable_object"):
+		if not is_ancestor_of(candidate):
+			continue
 		if not (candidate is Node2D) or not candidate.has_method("body_world_polygon"):
 			continue
 		var object_id := String(candidate.get("object_id"))
@@ -1518,6 +1621,15 @@ func _editable_object_node_warnings() -> Array[String]:
 		if not seen_ids.has(object_id):
 			warnings.append("editable object node %s is missing" % object_id)
 	return warnings
+
+
+func _opening_node_by_id(opening_id: String) -> ApartmentOpeningMarker:
+	if not _environment_node_authority_active():
+		return null
+	for opening in $Openings.get_children():
+		if opening is ApartmentOpeningMarker and String(opening.opening_id) == opening_id:
+			return opening
+	return null
 
 
 func _object_requires_wall(object_data: Dictionary) -> bool:
@@ -2150,6 +2262,8 @@ func _wall_edit_hint(segment: Dictionary) -> String:
 
 
 func _draw_doors_and_window_placeholders() -> void:
+	if _wall_node_authority_active():
+		return
 	if _should_draw_living_window_placeholder():
 		_draw_window_axis_b(living_window_axis_a, living_window_axis_b_start, living_window_width, "LivingWindowPlaceholder")
 
@@ -2818,7 +2932,7 @@ func _pixel_rect_points(center: Vector2, size: Vector2) -> Array[Vector2]:
 # Room measurements are derived from the current shell rectangles, wall segments, doorway
 # edges, navigation cells, and footprint Resources. They do not move or resize shell data.
 func _room_measurement_definitions() -> Array[Dictionary]:
-	return [
+	var definitions: Array[Dictionary] = [
 		{
 			"room_id": "entrance_area",
 			"name_ko": "현관",
@@ -2856,6 +2970,38 @@ func _room_measurement_definitions() -> Array[Dictionary]:
 			"wall_ids": ["work_back_wall", "work_left_wall", "work_right_wall", "work_front_shared_wall"],
 		},
 	]
+	if _environment_node_authority_active():
+		for definition in definitions:
+			var room_node := _room_area_node_by_id(String(definition["room_id"]))
+			if room_node != null:
+				definition["rect"] = _room_area_grid_rect(room_node)
+				definition["screen_polygon"] = room_node.world_polygon()
+				definition["source"] = "SCENE_NODE"
+	return definitions
+
+
+func _room_area_node_by_id(room_id: String) -> ApartmentRoomArea:
+	if not _environment_node_authority_active():
+		return null
+	for room_node in $RoomAreas.get_children():
+		if room_node is ApartmentRoomArea and String(room_node.room_id) == room_id:
+			return room_node
+	return null
+
+
+func _room_area_grid_rect(room_node: ApartmentRoomArea) -> Rect2i:
+	var polygon := room_node.world_polygon()
+	if polygon.is_empty():
+		return Rect2i()
+	var min_grid := Vector2(INF, INF)
+	var max_grid := Vector2(-INF, -INF)
+	for point in polygon:
+		var grid_point := _screen_to_grid_point(point)
+		min_grid = min_grid.min(grid_point)
+		max_grid = max_grid.max(grid_point)
+	var room_position := Vector2i(roundi(min_grid.x), roundi(min_grid.y))
+	var end := Vector2i(roundi(max_grid.x), roundi(max_grid.y))
+	return Rect2i(room_position, end - room_position)
 
 
 func _room_measurement_definition(room_id: String) -> Dictionary:
@@ -2888,6 +3034,8 @@ func _room_measurement_data(room_id: String) -> Dictionary:
 		"main_path_cells": main_path_cells,
 		"placement_cells": placement_cells,
 		"screen_bounds": screen_bounds,
+		"screen_polygon": definition.get("screen_polygon", PackedVector2Array()),
+		"source": String(definition.get("source", "RESOURCE_FALLBACK")),
 		"center_grid": Vector2(rect.position) + Vector2(rect.size) * 0.5,
 		"center_screen": _room_center(rect),
 		"doorway_ids": definition["doorway_ids"],
@@ -3146,6 +3294,12 @@ func _measurement_wall_unit_has_window(segment: Dictionary, offset: int) -> bool
 	var unit_end := unit_start + 1.0
 	var window_start := living_window_axis_b_start
 	var window_end := living_window_axis_b_start + living_window_width
+	var opening := _opening_node_by_id("living_window")
+	if opening != null:
+		var a := _screen_to_grid_point(opening.world_start()).y
+		var b := _screen_to_grid_point(opening.world_end()).y
+		window_start = minf(a, b)
+		window_end = maxf(a, b)
 	return unit_start < window_end and unit_end > window_start
 
 
@@ -3195,7 +3349,11 @@ func _draw_room_measurement_cells(data: Dictionary) -> void:
 			_measurement_inset_tile_points(cell, 0.42),
 			COLOR_MEASUREMENT_PLACEMENT
 		)
-	var bounds_points := _rect_points(room_rect)
+	var bounds_points: Array[Vector2] = []
+	for point in data.get("screen_polygon", PackedVector2Array()):
+		bounds_points.append(point)
+	if bounds_points.size() < 3:
+		bounds_points = _rect_points(room_rect)
 	_add_line(
 		_room_measurement_layer,
 		"measurement_room_%s_bounds" % data["room_id"],
@@ -3207,7 +3365,7 @@ func _draw_room_measurement_cells(data: Dictionary) -> void:
 		_room_measurement_layer,
 		"measurement_room_%s_name" % data["room_id"],
 		String(data.get("name_ko", data["room_id"])),
-		_room_center(room_rect) + Vector2(-44.0, -18.0),
+		_polygon_center(bounds_points) + Vector2(-44.0, -18.0),
 		13,
 		COLOR_MEASUREMENT_LABEL_BACKGROUND,
 		COLOR_DEBUG_TEXT
@@ -3226,6 +3384,15 @@ func _draw_room_measurement_cells(data: Dictionary) -> void:
 			_measurement_inset_tile_points(cell, 0.22),
 			COLOR_MEASUREMENT_DOOR_CLEARANCE
 		)
+
+
+func _polygon_center(points: Array[Vector2]) -> Vector2:
+	if points.is_empty():
+		return Vector2.ZERO
+	var total := Vector2.ZERO
+	for point in points:
+		total += point
+	return total / float(points.size())
 
 
 func _measurement_inset_tile_points(cell: Vector2i, inset_ratio: float) -> Array[Vector2]:
@@ -3908,9 +4075,15 @@ func _visible_wall_vertices() -> Array[Vector2i]:
 
 func _visible_floor_cells() -> Array[Vector2i]:
 	var cells_by_key: Dictionary = {}
-	_append_floor_cells(cells_by_key, _living_room_rect())
-	_append_floor_cells(cells_by_key, _work_room_rect())
-	_append_floor_cells(cells_by_key, _bathroom_room_rect())
+	if _environment_node_authority_active():
+		for floor_layer in $Floor.get_children():
+			if floor_layer is TileMapLayer:
+				for cell in floor_layer.get_used_cells():
+					cells_by_key[_cell_key(cell)] = cell
+	else:
+		_append_floor_cells(cells_by_key, _living_room_rect())
+		_append_floor_cells(cells_by_key, _work_room_rect())
+		_append_floor_cells(cells_by_key, _bathroom_room_rect())
 	var cells: Array[Vector2i] = []
 	for key in cells_by_key.keys():
 		cells.append(cells_by_key[key])
@@ -3980,6 +4153,19 @@ func _room_area_for_cell(cell: Vector2i, include_object_blocks := true) -> Strin
 		if not _is_walkable_cell(cell):
 			return "none"
 	elif not _is_base_walkable_cell(cell):
+		return "none"
+	if _environment_node_authority_active():
+		var world_point := _cell_center(cell)
+		var candidates: Array[ApartmentRoomArea] = []
+		for room_node in $RoomAreas.get_children():
+			if room_node is ApartmentRoomArea:
+				candidates.append(room_node)
+		candidates.sort_custom(func(a: ApartmentRoomArea, b: ApartmentRoomArea) -> bool:
+			return a.selection_priority > b.selection_priority
+		)
+		for room_node in candidates:
+			if room_node.contains_world_point(world_point):
+				return String(room_node.room_id)
 		return "none"
 	if _is_entrance_area_cell(cell):
 		return "entrance_area"

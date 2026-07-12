@@ -68,23 +68,23 @@ Do not modify by default:
 
 ## Apartment Shell Candidate Editing
 
-`QuarterviewApartmentEnvironment` is the single coordinate-based floor, wall, navigation, and object authority. `QuarterviewApartmentShellCandidate` inherits that PackedScene for design/debug review. `QuarterviewApartmentPlayable` inherits the same PackedScene and adds one `QuarterviewRoom` gameplay instance in opt-in external-environment mode. In that mode the legacy room builder stays empty and hover/click, click-to-move, UsePoint arrival, and interaction signals query the Environment's Scene-Node geometry and walkable-cell graph. Existing `QuarterviewRoom` behavior remains the default when the opt-in is off. These scenes are candidates, not production wiring.
+`QuarterviewApartmentEnvironment` is the single ROTATE_90 Scene-Node authority for floor cells, logical room polygons, wall/opening geometry, navigation, and objects. `QuarterviewApartmentShellCandidate` inherits that PackedScene for design/debug review. `QuarterviewApartmentPlayable` inherits the same PackedScene and adds one `QuarterviewRoom` gameplay instance in opt-in external-environment mode. In that mode the legacy room builder stays empty and hover/click, click-to-move, UsePoint arrival, and interaction signals query the Environment's Scene-Node geometry and walkable-cell graph. Existing `QuarterviewRoom` behavior and non-ROTATE_90 candidate checks retain the legacy calculated fallback. These scenes are candidates, not production wiring.
 
 | Need | Where |
 | --- | --- |
-| Move or resize a default wall | Edit `_default_wall_segment_configs()` in `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` |
-| Hide a default wall | Set that segment's `enabled=false` |
-| Test custom wall layout in Inspector | Add `ApartmentWallSegmentConfig` items to `custom_wall_segments` |
-| Move a wall | Change `start_cell` |
-| Change wall direction | Change `axis` |
-| Change wall length | Change `length` |
-| Move the shared room door | Change `work_front_shared_wall` `doorway_offset` / `doorway_width` |
-| Change how a wall is displayed | Change `render_mode` on the wall segment |
+| Paint or erase floor cells | `Floor/EntranceFloor`, `BathroomFloor`, `LivingFloor`, or `WorkFloor` (`TileMapLayer`, 128×64 isometric) |
+| Edit a logical room boundary | `RoomAreas/<Room>/Area2D/CollisionPolygon2D`; M reads this Polygon |
+| Move or resize an Environment wall | `Walls/<Wall>/StartPoint`, `EndPoint`, and `TopPoint` |
+| Change wall display/reveal metadata | Select the `ApartmentWallSegment` root and edit its Inspector properties |
+| Move a door/window opening | `Openings/<Opening>/StartPoint` and `EndPoint` |
+| Move the shared room door | `Openings/WorkRoomOpening/StartPoint` and `EndPoint` |
+| Move Power Board with its wall | `Walls/WorkBackWall/AttachmentSockets/PowerModuleBoardSocket`; the board follows by `mount_socket_path` |
+| Move Entrance Door with its wall | `Walls/EntranceWall/AttachmentSockets/EntranceDoorSocket`; the door follows by `mount_socket_path` |
 | Move a migrated floor interaction object | Move `EditableObjectNodes/Bed`, `Fridge`, `NaviLink`, or `Node17` |
-| Move the entrance door with its wall anchor | Move `EditableObjectNodes/EntranceWallParentAnchor`; keep `EntranceDoor` as its child |
+| Move the entrance door itself without changing the wall opening | Edit `EditableObjectNodes/EntranceDoor/mount_offset` |
 | Edit installation / height references | Move each migrated object's sibling `BasePoint` and `TopPoint`; these do not move Selection, Interaction, or UsePoint |
 | Edit migrated movement collision | Edit Bed/Fridge/NAVI/NODE-17 `Body/BodyPolygon` vertices; the door BodyPolygon is closed-state wall blocking, not floor occupancy |
-| Move Power Board / Microwave with their attachment | Move `WorkBackWallParentAnchor` or `SinkCounterParentAnchor` |
+| Move Power Board / Microwave with their attachment | Move the WorkBackWall Socket or `SinkCounterParentAnchor` respectively |
 | Edit migrated P hover/click selection | Edit `SelectionArea/SelectionPolygon`; it is independent from game-use geometry |
 | Edit a migrated interaction range/access point | Edit `InteractionArea/InteractionPolygon` and sibling `UsePoint` independently |
 | Edit a migrated temporary visual bound | Edit `Visual/VisualPreview`; once `Visual/Sprite2D` has a texture, its texture rect takes priority |
@@ -108,6 +108,8 @@ Do not modify by default:
 | Test room-area reveal walls | Set `debug_auto_reveal_walls=true`, enable `N`, and move the shell marker between room areas |
 | Emphasize one wall | Set `debug_focus_wall_id`, e.g. `bathroom_left_wall`, in the Inspector |
 | Preview revealable walls as full walls | Set `preview_revealed_walls=true` in the Inspector |
+
+The four Floor layers contain 98 authored cells: Entrance 6, Bathroom 6, Living 54, and Work 32. They share `dev_apartment_floor_tiles_128x64.svg`, a color-only development TileSet that must be replaced by final floor art later. RoomArea preview polygons and Opening preview lines are editor-only; saved CollisionPolygon/Marker positions are the runtime authority. Environment startup no longer calls the legacy floor-diamond, wall-visual, wall-collision, or door/window placeholder builders. The old rectangle/config builders remain only as regression fallback for standalone/non-ROTATE_90 paths, where the authored ROTATE_90 visuals and collisions are disabled. Eleven environment objects and `SinkCounterParentAnchor` remain the intentional Resource/proxy authority still to migrate.
 
 Wall inventory columns: `id`, `name_ko`, `enabled`, `source`, `axis`, `edge_from_cell`, `edge_to_cell`, `length`, `wall_type`, `render_mode`, `current_state`, `state_ko`, `doorway`, `doorway_ko`, `reveal`, `logical`, `height_mode`, and `edit_hint`.
 

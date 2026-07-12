@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/quarterview/ApartmentWallSegment.gd" id="1_script"]
+
+[node name="ApartmentWallSegment" type="Node2D"]
+editor_description = "벽 구간 정본. StartPoint/EndPoint로 길이와 방향을, TopPoint로 높이를 직접 조정합니다."
+script = ExtResource("1_script")
+
+[node name="StartPoint" type="Marker2D" parent="."]
+editor_description = "벽선 시작점."
+
+[node name="EndPoint" type="Marker2D" parent="."]
+editor_description = "벽선 끝점."
+
+[node name="BasePoint" type="Marker2D" parent="."]
+editor_description = "벽 바닥 기준점. Start/End 중간으로 자동 갱신됩니다."
+
+[node name="TopPoint" type="Marker2D" parent="."]
+editor_description = "벽 높이 기준점. 세로 위치를 직접 조정합니다."
+position = Vector2(0, -176)
+
+[node name="Visual" type="Polygon2D" parent="."]
+z_index = 0
+
+[node name="VisualAfterOpening" type="Polygon2D" parent="."]
+z_index = 0
+
+[node name="OcclusionVisual" type="Polygon2D" parent="."]
+z_index = 1
+
+[node name="CollisionBody" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="CollisionBody"]
+editor_description = "벽선 이동 충돌. Start/End와 개구부에서 자동 산출됩니다."
+
+[node name="CollisionAfterOpening" type="CollisionPolygon2D" parent="CollisionBody"]
+editor_description = "개구부 뒤쪽 벽선 이동 충돌."
+
+[node name="AttachmentSockets" type="Node2D" parent="."]
+editor_description = "전력 보드·포스터·전선관 등 벽부착 오브젝트의 실제 부모 기준점 모음."
