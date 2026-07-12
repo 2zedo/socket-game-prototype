@@ -18,20 +18,33 @@ position = Vector2(1116, 226)
 object_id = &"fridge"
 
 [node name="VisualPreview" parent="EditableObjectNodes/Fridge/Visual" index="1"]
-polygon = PackedVector2Array(-60, -95, 60, -95, 60, 95, -60, 95)
+position = Vector2(8, 4)
+polygon = PackedVector2Array(-45, -73, 45, -73, 45, 73, -45, 73)
+
+[node name="BasePoint" parent="EditableObjectNodes/Fridge" index="1"]
+position = Vector2(8, 77)
+
+[node name="TopPoint" parent="EditableObjectNodes/Fridge" index="2"]
+position = Vector2(8, -69)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/Fridge/Body" index="0"]
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 position = Vector2(0, 38)
-polygon = PackedVector2Array(-35, -35, 35, -35, 35, 35, -35, 35)
+polygon = PackedVector2Array(1, -38, 52, -4, 11, 41, -40, 3)
 
-[node name="InteractionArea" parent="EditableObjectNodes/Fridge" index="2"]
+[node name="SelectionArea" parent="EditableObjectNodes/Fridge" index="4"]
+position = Vector2(8, 4)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/Fridge/SelectionArea" index="0"]
+polygon = PackedVector2Array(-45, -73, 45, -73, 45, 73, -45, 73)
+
+[node name="InteractionArea" parent="EditableObjectNodes/Fridge" index="5"]
 position = Vector2(-56, 44)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/Fridge/InteractionArea" index="0"]
 polygon = PackedVector2Array(-40, -28, 40, -28, 40, 28, -40, 28)
 
-[node name="UsePoint" parent="EditableObjectNodes/Fridge" index="3"]
+[node name="UsePoint" parent="EditableObjectNodes/Fridge" index="6"]
 position = Vector2(-56, 44)
 
 [node name="NaviLink" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
@@ -41,17 +54,28 @@ object_id = &"navi_link"
 [node name="VisualPreview" parent="EditableObjectNodes/NaviLink/Visual" index="1"]
 polygon = PackedVector2Array(-150, -120, 150, -120, 150, 120, -150, 120)
 
+[node name="BasePoint" parent="EditableObjectNodes/NaviLink" index="1"]
+position = Vector2(0, 120)
+
+[node name="TopPoint" parent="EditableObjectNodes/NaviLink" index="2"]
+position = Vector2(0, -120)
+
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/NaviLink/Body" index="0"]
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-40.2491, -28.7902, 70.4386, 26.553787, 147.58, 65.1246, 40.2491, 118.79, -147.58, 24.8754)
 
-[node name="InteractionArea" parent="EditableObjectNodes/NaviLink" index="2"]
+[node name="SelectionArea" parent="EditableObjectNodes/NaviLink" index="4"]
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/NaviLink/SelectionArea" index="0"]
+polygon = PackedVector2Array(-150, -120, 150, -120, 150, 120, -150, 120)
+
+[node name="InteractionArea" parent="EditableObjectNodes/NaviLink" index="5"]
 position = Vector2(-108, 96)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/NaviLink/InteractionArea" index="0"]
 polygon = PackedVector2Array(-96, -56, 32, -56, 32, -24, 96, -24, 96, 56, -32, 56, -32, 24, -96, 24)
 
-[node name="UsePoint" parent="EditableObjectNodes/NaviLink" index="3"]
+[node name="UsePoint" parent="EditableObjectNodes/NaviLink" index="6"]
 position = Vector2(-108, 96)
 
 [node name="SinkCounterParentAnchor" type="Node2D" parent="EditableObjectNodes"]
@@ -64,13 +88,24 @@ object_id = &"microwave"
 [node name="VisualPreview" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/Visual" index="1"]
 polygon = PackedVector2Array(-48, -36, 48, -36, 48, 36, -48, 36)
 
-[node name="InteractionArea" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="2"]
+[node name="BasePoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="1"]
+position = Vector2(0, 60)
+
+[node name="TopPoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="2"]
+position = Vector2(0, -36)
+
+[node name="SelectionArea" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="4"]
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/SelectionArea" index="0"]
+polygon = PackedVector2Array(-48, -36, 48, -36, 48, 36, -48, 36)
+
+[node name="InteractionArea" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="5"]
 position = Vector2(0, 124)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/InteractionArea" index="0"]
 polygon = PackedVector2Array(-48, -28, 48, -28, 48, 28, -48, 28)
 
-[node name="UsePoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="3"]
+[node name="UsePoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="6"]
 position = Vector2(0, 124)
 
 [node name="WorkBackWallParentAnchor" type="Node2D" parent="EditableObjectNodes"]
@@ -83,13 +118,24 @@ object_id = &"power_module_board"
 [node name="VisualPreview" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/Visual" index="1"]
 polygon = PackedVector2Array(-100, -90, 100, -90, 100, 90, -100, 90)
 
-[node name="InteractionArea" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="2"]
+[node name="BasePoint" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="1"]
+position = Vector2(0, 30)
+
+[node name="TopPoint" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="2"]
+position = Vector2(0, -90)
+
+[node name="SelectionArea" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="4"]
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/SelectionArea" index="0"]
+polygon = PackedVector2Array(-100, -90, 100, -90, 100, 90, -100, 90)
+
+[node name="InteractionArea" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="5"]
 position = Vector2(-96, 170)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/InteractionArea" index="0"]
 polygon = PackedVector2Array(-60, -36, 60, -36, 60, 36, -60, 36)
 
-[node name="UsePoint" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="3"]
+[node name="UsePoint" parent="EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard" index="6"]
 position = Vector2(-96, 170)
 
 [node name="Camera2D" type="Camera2D" parent="."]

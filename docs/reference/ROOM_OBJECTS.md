@@ -141,7 +141,7 @@ Loading order:
 2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
 3. additive `custom_object_footprints` entries from the Inspector
 
-Node migration stage 1 overrides that loading order for exact ROTATE_90 geometry on four objects. `fridge`, `navi_link`, `power_module_board`, and `microwave` use `EditableObjectNodes` in the candidate Scene for ObjectRoot, `Visual/Sprite2D/VisualPreview`, BodyPolygon, InteractionPolygon, UsePoint, and AttachmentSocket. Their Resource entries retain logical identity, category, room, interaction status, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The other fourteen objects continue to use the Resource/fallback footprint path.
+Node migration stage 1 overrides that loading order for exact ROTATE_90 geometry on four objects. `fridge`, `navi_link`, `power_module_board`, and `microwave` use `EditableObjectNodes` in the candidate Scene for ObjectRoot, `Visual/Sprite2D/VisualPreview`, BasePoint, TopPoint, BodyPolygon when blocking, SelectionPolygon, InteractionPolygon, UsePoint, and AttachmentSocket. BasePoint is the installation/ground reference and TopPoint is the independent height reference. SelectionPolygon owns P hover/click only; InteractionPolygon remains the game-use range. Their Resource entries retain logical identity, category, room, interaction status, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The other fourteen objects continue to use the Resource/fallback footprint path.
 
 Current rotated-floorplan placement candidate:
 
@@ -180,7 +180,7 @@ Attachment policy:
 Shell editing controls:
 
 - `M`: show room measurement only; the default view does not include object detail.
-- `P`: show BodyPolygon-derived floor occupancy in blue, BodyPolygon collision in red, InteractionPolygon in orange dashes, UsePoint as an orange marker, and AttachmentSocket in pink. White Sprite2D/VisualPreview bounds appear only on the selected object. Equivalent floor/collision surfaces use one blue fill with a red collision outline.
+- `P`: show BodyPolygon-derived floor occupancy in blue, BodyPolygon collision in red, SelectionPolygon in cyan dashes, InteractionPolygon in orange dashes, UsePoint as an orange marker, AttachmentSocket in pink, BasePoint in green, and TopPoint/height guide in yellow. White Sprite2D/VisualPreview bounds appear only on the selected object. Equivalent floor/collision surfaces use one blue fill with a red collision outline.
 - `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
 - `V`: make all candidate wall, stub, door, and window visuals translucent for wall-attached and behind-wall inspection; floor edges, logical walls, navigation edges, collision, and reveal state do not change.
 - `I`: print wall inventory followed by object footprint summary.
@@ -188,12 +188,13 @@ Shell editing controls:
 - `H`: open shell-only Phone debug overlay; this does not call production `PhoneUI`.
 - `ESC`: close the topmost shell debug overlay.
 - `debug_focus_object_id`: emphasize one object id, for example `bed`.
-- Hover labels include the hit owner for interaction geometry or the anchor type/reference otherwise. Hit priority is interaction, floor/collision, wall/parent anchor, then visual fallback; repeated clicks at one location cycle candidates and show `선택 n/m`.
+- For the four migrated objects, SelectionPolygon is the only P hover/click authority and hover labels identify its owner; InteractionPolygon is not reused for selection. The other fourteen retain interaction, floor/collision, wall/parent anchor, then visual fallback priority. Repeated clicks at one location still cycle candidates and show `선택 n/m`.
 
 Coordinate rule:
 
 - Migrated floor objects derive movement-blocked cells and P floor occupancy from `Body/BodyPolygon`; no current object has a separate PlacementFootprint. The common script supports an optional future `PlacementFootprint`, which overrides occupancy only when a real reservation area must differ from collision.
-- `InteractionArea/InteractionPolygon` controls click/use detection, while sibling `UsePoint` controls the character access cell. Moving either one never moves the other; only moving ObjectRoot or a parent anchor moves both.
+- ObjectRoot position plus BasePoint and authored polygons are the exact Scene geometry authority. BasePoint supplies the installation reference and auxiliary floor-cell calculation; TopPoint supplies only the 2.5D height guide. Neither marker replaces Body, Selection, Interaction, UsePoint, or AttachmentSocket.
+- `SelectionArea/SelectionPolygon` controls candidate P hover/click. `InteractionArea/InteractionPolygon` controls game-use range, while sibling `UsePoint` controls the character access cell. Moving any one of those three channels never moves the others; only moving ObjectRoot or a parent anchor moves all of them.
 - Migrated wall/parent objects follow their Scene ParentAnchor, and `AttachmentSocket` is the exact child/wall attachment marker. Their logical `anchor_type`, `parent_object_id`, and `wall_segment_id` remain Resource metadata.
 - Sprite2D texture bounds are the visual authority when a texture exists; otherwise one editor-only VisualPreview polygon supplies the temporary visual bound. Neither visual source participates in movement collision or interaction.
 - Unmigrated floor objects continue to use `anchor_cell`, `size_cells`, occupied cells, and interaction cells. Unmigrated wall/ceiling/parent objects continue to use the existing Resource anchor fields.

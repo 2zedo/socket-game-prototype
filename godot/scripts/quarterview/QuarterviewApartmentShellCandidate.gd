@@ -137,6 +137,9 @@ const COLOR_OCCLUSION_STUB_SHADOW := Color(0.03, 0.035, 0.04, 0.58)
 const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 const COLOR_OBJECT_INTERACTION := Color(1.0, 0.58, 0.16, 0.96)
 const COLOR_OBJECT_INTERACTION_AREA := Color(1.0, 0.50, 0.10, 0.94)
+const COLOR_OBJECT_SELECTION_AREA := Color(0.18, 0.92, 0.92, 0.96)
+const COLOR_OBJECT_BASE_POINT := Color(0.28, 1.0, 0.46, 0.98)
+const COLOR_OBJECT_TOP_POINT := Color(1.0, 0.88, 0.24, 0.98)
 const COLOR_OBJECT_BLOCKED_CELL := Color(1.0, 0.28, 0.20, 0.92)
 const COLOR_OBJECT_VISUAL_BOUNDS := Color(0.82, 0.95, 1.0, 0.88)
 const COLOR_OBJECT_OCCUPANCY := Color(0.38, 0.36, 1.0, 0.26)
@@ -969,20 +972,24 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var object_node := _editable_object_node_by_id(object_id)
 	if object_node == null:
 		return resource_data
-	if not object_node.has_method("body_world_polygon") or not object_node.has_method("interaction_world_polygon"):
+	if not object_node.has_method("body_world_polygon") or not object_node.has_method("selection_world_polygon") or not object_node.has_method("interaction_world_polygon"):
 		return resource_data
 
 	var object_data := resource_data.duplicate(true)
 	var body_polygon: PackedVector2Array = object_node.call("body_world_polygon")
+	var selection_polygon: PackedVector2Array = object_node.call("selection_world_polygon")
 	var interaction_polygon: PackedVector2Array = object_node.call("interaction_world_polygon")
 	var placement_polygon: PackedVector2Array = object_node.call("placement_footprint_world_polygon")
 	var occupancy_polygon: PackedVector2Array = object_node.call("floor_occupancy_world_polygon")
 	var visual_polygon: PackedVector2Array = object_node.call("visual_world_polygon")
 	var collision_polygons: Array[PackedVector2Array] = []
+	var selection_polygons: Array[PackedVector2Array] = []
 	var interaction_polygons: Array[PackedVector2Array] = []
 	var floor_polygons: Array[PackedVector2Array] = []
 	if body_polygon.size() >= 3:
 		collision_polygons.append(body_polygon)
+	if selection_polygon.size() >= 3:
+		selection_polygons.append(selection_polygon)
 	if interaction_polygon.size() >= 3:
 		interaction_polygons.append(interaction_polygon)
 	if occupancy_polygon.size() >= 3 and bool(object_data.get("uses_floor_occupancy", true)):
@@ -991,19 +998,20 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var visual_bounds: Rect2 = object_node.call("visual_bounds_world")
 	var root_position: Vector2 = object_node.global_position
 	var attachment_anchor: Vector2 = object_node.call("attachment_anchor_world")
+	var base_point: Vector2 = object_node.call("base_point_world")
+	var top_point: Vector2 = object_node.call("top_point_world")
 	var use_point: Vector2 = object_node.call("use_point_world")
 	var collision_bounds := _polygons_bounds(collision_polygons)
+	var selection_bounds := _polygons_bounds(selection_polygons)
 	var interaction_bounds := _polygons_bounds(interaction_polygons)
 	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
-	var anchor_world := root_position if anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.FLOOR else attachment_anchor
+	var anchor_world := base_point
 	var occupied_cells: Array[Vector2i] = []
 	if not floor_polygons.is_empty():
 		occupied_cells = _cells_overlapped_by_polygons(floor_polygons)
 	var use_cell := Vector2i(floori(_screen_to_grid_point(use_point).x), floori(_screen_to_grid_point(use_point).y))
-	var root_grid := _screen_to_grid_point(root_position)
+	var root_grid := _screen_to_grid_point(base_point)
 	var anchor_cell := Vector2i(floori(root_grid.x), floori(root_grid.y))
-	if not occupied_cells.is_empty():
-		anchor_cell = _cells_minimum(occupied_cells)
 	var footprint_size := _cells_bounds_size(occupied_cells)
 
 	object_data["source"] = "scene_node"
@@ -1012,7 +1020,12 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	object_data["node_path"] = String(object_node.get_path())
 	object_data["object_node"] = object_node
 	object_data["object_root_world"] = root_position
+	object_data["attachment_anchor_world"] = attachment_anchor
 	object_data["anchor_world_position"] = anchor_world
+	object_data["base_point_world"] = base_point
+	object_data["top_point_world"] = top_point
+	object_data["height_vector"] = top_point - base_point
+	object_data["height_px"] = base_point.distance_to(top_point)
 	object_data["socket_world_position"] = object_node.call("attachment_socket_world")
 	object_data["anchor_cell"] = anchor_cell
 	object_data["size_cells"] = footprint_size
@@ -1024,6 +1037,10 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	object_data["collision_polygons"] = collision_polygons
 	object_data["collision_size_px"] = collision_bounds.size
 	object_data["collision_offset_px"] = collision_bounds.get_center() - visual_center if collision_bounds.has_area() else Vector2.ZERO
+	object_data["selection_polygons"] = selection_polygons
+	object_data["selection_size_px"] = selection_bounds.size
+	object_data["selection_offset_px"] = selection_bounds.get_center() - base_point if selection_bounds.has_area() else Vector2.ZERO
+	object_data["selection_source"] = "SELECTION_POLYGON"
 	object_data["interaction_polygons"] = interaction_polygons
 	object_data["interaction_size_px"] = interaction_bounds.size
 	object_data["interaction_offset_px"] = interaction_bounds.get_center() - use_point if interaction_bounds.has_area() else Vector2.ZERO
@@ -2103,6 +2120,19 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 				3.0
 			)
 
+	if bool(object_data.get("node_backed", false)):
+		var selection_polygons := _object_selection_polygons(object_data)
+		for selection_index in range(selection_polygons.size()):
+			_draw_dashed_polygon(
+				_object_layer,
+				"object_%s_selection_area_%d" % [id, selection_index],
+				selection_polygons[selection_index],
+				COLOR_OBJECT_SELECTION_AREA,
+				2.0,
+				8
+			)
+		_draw_object_height_guide(_object_layer, "object_%s" % id, object_data, 2.0)
+
 	if show_object_interaction_areas and _object_has_valid_interaction_area(object_data):
 		var interaction_polygons := _object_interaction_polygons(object_data)
 		for polygon_index in range(interaction_polygons.size()):
@@ -2199,6 +2229,25 @@ func _object_interaction_polygons(object_data: Dictionary) -> Array[Array]:
 		var interaction_center := _cell_center(interaction_cell) + Vector2(object_data.get("interaction_offset_px", Vector2.ZERO))
 		result.append(_pixel_rect_points(interaction_center, interaction_size))
 	return result
+
+
+func _object_selection_polygons(object_data: Dictionary) -> Array[Array]:
+	var result: Array[Array] = []
+	if not bool(object_data.get("node_backed", false)):
+		return result
+	for polygon in object_data.get("selection_polygons", []):
+		result.append(_packed_points_to_array(polygon))
+	return result
+
+
+func _draw_object_height_guide(parent: Node, prefix: String, object_data: Dictionary, thickness: float) -> void:
+	if not bool(object_data.get("node_backed", false)):
+		return
+	var base_point := Vector2(object_data.get("base_point_world", Vector2.ZERO))
+	var top_point := Vector2(object_data.get("top_point_world", Vector2.ZERO))
+	_draw_dashed_line(parent, "%s_height_guide" % prefix, base_point, top_point, COLOR_OBJECT_TOP_POINT, thickness, 8)
+	_add_marker(parent, "%s_base_point" % prefix, base_point, COLOR_OBJECT_BASE_POINT, 7.0 if thickness <= 2.0 else 11.0)
+	_add_marker(parent, "%s_top_point" % prefix, top_point, COLOR_OBJECT_TOP_POINT, 7.0 if thickness <= 2.0 else 11.0)
 
 
 func _packed_points_to_array(points: PackedVector2Array) -> Array[Vector2]:
@@ -2403,6 +2452,15 @@ func _object_hit_candidates(world_position: Vector2) -> Array[Dictionary]:
 
 func _object_hit_candidate(object_data: Dictionary, world_position: Vector2) -> Dictionary:
 	var id := String(object_data.get("id", ""))
+	if bool(object_data.get("node_backed", false)):
+		for selection_points in _object_selection_polygons(object_data):
+			if _point_in_object_polygon(world_position, selection_points):
+				var selection_center := _polygon_bounds(selection_points).get_center()
+				return {
+					"id": id, "priority": 0, "hit_kind": "selection",
+					"distance": selection_center.distance_squared_to(world_position),
+				}
+		return {}
 	if _object_has_valid_interaction_area(object_data):
 		for interaction_points in _object_interaction_polygons(object_data):
 			if _point_in_object_polygon(world_position, interaction_points):
@@ -2539,6 +2597,17 @@ func _redraw_object_selection_overlay() -> void:
 		var composite_surface := _object_floor_collision_are_equivalent(object_data)
 		if is_selected and visual_points.size() >= 3:
 			_draw_dashed_polygon(_debug_selection_layer, "object_%s_visual_bounds" % object_id, visual_points, COLOR_OBJECT_VISUAL_BOUNDS, 3.5, 10)
+		if is_selected and bool(object_data.get("node_backed", false)):
+			for selection_index in range(_object_selection_polygons(object_data).size()):
+				_draw_dashed_polygon(
+					_debug_selection_layer,
+					"object_%s_selected_selection_area_%d" % [object_id, selection_index],
+					_object_selection_polygons(object_data)[selection_index],
+					COLOR_OBJECT_SELECTION_AREA,
+					4.0,
+					8
+				)
+			_draw_object_height_guide(_debug_selection_layer, "object_%s_selected" % object_id, object_data, 4.0)
 		if is_selected and show_object_floor_footprints and _object_uses_floor_occupancy(object_data):
 			var floor_points := _object_floor_polygon_points(object_data)
 			if floor_points.size() >= 3:
@@ -2584,7 +2653,7 @@ func _redraw_object_selection_overlay() -> void:
 		if show_object_names and show_object_labels:
 			var name_ko := String(object_data.get("display_name_ko", _object_display_name_ko(object_id)))
 			var hit_kind := _object_selection_hit_kind(object_id)
-			var context_text := "interaction owner: %s" % object_id if hit_kind == "interaction" else _object_anchor_short_text(object_data)
+			var context_text := "%s owner: %s" % [hit_kind, object_id] if hit_kind == "interaction" or hit_kind == "selection" else _object_anchor_short_text(object_data)
 			_add_label_with_background(
 				_debug_selection_layer,
 				"object_%s_short_name" % object_id,
@@ -3124,7 +3193,7 @@ func _create_object_legend_overlay() -> void:
 	_object_legend_background.name = "ObjectPlacementLegendBackground"
 	_object_legend_background.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_object_legend_background.position = Vector2(-430.0, 20.0)
-	_object_legend_background.size = Vector2(406.0, 148.0)
+	_object_legend_background.size = Vector2(406.0, 184.0)
 	_object_legend_background.color = COLOR_OBJECT_LEGEND_BACKGROUND
 	_debug_overlay_layer.add_child(_object_legend_background)
 
@@ -3132,7 +3201,7 @@ func _create_object_legend_overlay() -> void:
 	_object_legend_label.name = "ObjectPlacementLegendLabel"
 	_object_legend_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_object_legend_label.position = Vector2(-418.0, 28.0)
-	_object_legend_label.text = "오브젝트 배치 범례\n파랑 면: BodyPolygon 기반 floor occupancy  |  빨강: BodyPolygon collision\n같은 면: 파랑 채움 + 빨강 테두리  |  다른 면: PlacementFootprint 별도 도형\n주황 점선: InteractionPolygon  |  주황 마커: UsePoint\n선택 흰색 점선: Sprite2D/VisualPreview bounds  |  분홍: AttachmentSocket\n같은 위치 반복 클릭: 후보 순환  |  V: 전체 벽 반투명"
+	_object_legend_label.text = "오브젝트 배치 범례\n파랑 면: BodyPolygon 기반 floor occupancy  |  빨강: BodyPolygon collision\n같은 면: 파랑 채움 + 빨강 테두리  |  PlacementFootprint는 선택 사항\n청록 점선: SelectionPolygon (hover/click 전용)\n주황 점선: InteractionPolygon  |  주황 마커: UsePoint\n흰 점선: 선택된 Sprite2D/VisualPreview bounds  |  분홍: AttachmentSocket\n초록: BasePoint  |  노랑: TopPoint/높이 가이드\n같은 위치 반복 클릭: 후보 순환  |  V: 전체 벽 반투명"
 	_object_legend_label.modulate = COLOR_DEBUG_TEXT
 	_object_legend_label.add_theme_font_size_override("font_size", 12)
 	_object_legend_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
@@ -3144,7 +3213,7 @@ func _create_object_legend_overlay() -> void:
 func _create_debug_detail_panel() -> void:
 	_debug_detail_panel = _make_debug_panel("DebugDetailPanel", Vector2.ZERO, Vector2(410.0, 470.0))
 	_debug_detail_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_debug_detail_panel.position = Vector2(-430.0, 164.0)
+	_debug_detail_panel.position = Vector2(-430.0, 200.0)
 	_debug_overlay_layer.add_child(_debug_detail_panel)
 	var box := _make_panel_vbox(_debug_detail_panel)
 	_debug_detail_label = _make_debug_label_control("", 12, COLOR_DEBUG_TEXT)
@@ -3210,6 +3279,8 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 		selection_text = "선택 %d/%d · 판정: %s" % [candidate_position, candidate_count, hit_kind]
 	if hit_kind == "interaction":
 		selection_text += " · interaction owner: %s" % id
+	elif hit_kind == "selection":
+		selection_text += " · selection owner: %s" % id
 	var detail := "%s\n%s\nid: %s\ncategory: %s\nroom: %s\nanchor type: %s\nanchor resolved: %s\nposition offset: %s\nvisual: %s\ncollision: %s @ %s\ninteraction: %s @ %s\ninteraction cells: %s\nmovement block: %s / floor occupancy: %s\nparent: %s\nwall: %s @ %.2f" % [
 		selection_text,
 		String(object_data.get("display_name_ko", _object_display_name_ko(id))), id,
@@ -3224,10 +3295,15 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 		float(object_data.get("wall_position_ratio", 0.5)),
 	]
 	if bool(object_data.get("node_backed", false)):
-		detail += "\ngeometry source: SCENE_NODE\nnode: %s\nvisual source: %s\nfloor source: %s\nUsePoint: %s\nAttachmentSocket: %s" % [
+		detail += "\ngeometry source: SCENE_NODE\nnode: %s\nvisual source: %s\nfloor source: %s\nselection source: %s / size: %s\nBasePoint: %s\nTopPoint: %s / height: %.1f px\nUsePoint: %s\nAttachmentSocket: %s" % [
 			String(object_data.get("node_path", "-")),
 			String(object_data.get("visual_source", "-")),
 			String(object_data.get("floor_occupancy_source", "NONE")),
+			String(object_data.get("selection_source", "-")),
+			str(object_data.get("selection_size_px", Vector2.ZERO)),
+			str(object_data.get("base_point_world", Vector2.ZERO)),
+			str(object_data.get("top_point_world", Vector2.ZERO)),
+			float(object_data.get("height_px", 0.0)),
 			str(Array(object_data.get("use_points_world", []))),
 			str(object_data.get("socket_world_position", Vector2.ZERO)),
 		]

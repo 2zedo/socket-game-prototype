@@ -91,7 +91,11 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		assert_true(object_node.get_node("Visual") is Node2D)
 		assert_true(object_node.get_node("Visual/Sprite2D") is Sprite2D)
 		assert_true(object_node.get_node("Visual/VisualPreview") is Polygon2D)
+		assert_true(object_node.get_node("BasePoint") is Marker2D)
+		assert_true(object_node.get_node("TopPoint") is Marker2D)
 		assert_not_null(object_node.get_node_or_null("Body"))
+		assert_true(object_node.get_node("SelectionArea") is Area2D)
+		assert_true(object_node.get_node("SelectionArea/SelectionPolygon") is CollisionPolygon2D)
 		assert_not_null(object_node.get_node_or_null("InteractionArea"))
 		assert_true(object_node.get_node("InteractionArea/InteractionPolygon") is CollisionPolygon2D)
 		assert_not_null(object_node.get_node_or_null("UsePoint"))
@@ -100,6 +104,10 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		assert_eq(object_node.geometry_warnings(), [])
 		assert_eq(object_node.get_node("Body").collision_layer, 0)
 		assert_eq(object_node.get_node("Body").collision_mask, 0)
+		assert_eq(object_node.get_node("SelectionArea").collision_layer, 0)
+		assert_eq(object_node.get_node("SelectionArea").collision_mask, 0)
+		assert_false(object_node.get_node("SelectionArea").monitoring)
+		assert_false(object_node.get_node("SelectionArea").monitorable)
 		assert_eq(object_node.get_node("InteractionArea").collision_layer, 0)
 		assert_eq(object_node.get_node("InteractionArea").collision_mask, 0)
 
@@ -112,16 +120,26 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		assert_null(shell.get_node(expected_paths[id]).get_node_or_null("Body/BodyPolygon"))
 	for id in expected_paths:
 		var object_node: Node = shell.get_node(expected_paths[id])
+		assert_eq(object_node.get_node("SelectionArea/SelectionPolygon").scale, Vector2.ONE)
+		assert_gt(object_node.get_node("SelectionArea/SelectionPolygon").polygon.size(), 3)
+		assert_true(object_node.get_node("SelectionArea/SelectionPolygon").editor_description.contains("hover/click"))
 		assert_eq(object_node.get_node("InteractionArea/InteractionPolygon").scale, Vector2.ONE)
 		assert_true(object_node.get_node("InteractionArea/InteractionPolygon").editor_description.contains("UsePoint와 독립"))
 		assert_true(object_node.get_node("UsePoint").editor_description.contains("캐릭터가 이동"))
 		assert_true(object_node.get_node("AttachmentSocket").editor_description.contains("부착 기준점"))
+		assert_true(object_node.get_node("BasePoint").editor_description.contains("설치되는 기준점"))
+		assert_true(object_node.get_node("TopPoint").editor_description.contains("높이"))
 		assert_true(object_node.get_node("Visual/VisualPreview").editor_description.contains("실제 이미지가 없을 때"))
+		assert_ne(object_node.get_node("BasePoint").position, object_node.get_node("TopPoint").position)
 
 	var objects := _dictionary_map(shell._object_footprints())
 	var expected_centers := {
-		"fridge": Vector2(1116, 226), "navi_link": Vector2(1264, 94),
+		"fridge": Vector2(1124, 230), "navi_link": Vector2(1264, 94),
 		"microwave": Vector2(996, 114), "power_module_board": Vector2(1476, 96),
+	}
+	var expected_base_points := {
+		"fridge": Vector2(1124, 303), "navi_link": Vector2(1264, 214),
+		"microwave": Vector2(996, 174), "power_module_board": Vector2(1476, 126),
 	}
 	var expected_use_cells := {
 		"fridge": [Vector2i(5, 5)], "navi_link": [Vector2i(5, 3)],
@@ -132,6 +150,11 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		assert_eq(objects[id].source, "scene_node")
 		assert_eq(objects[id].visual_source, "VISUAL_PREVIEW")
 		assert_eq(shell._object_pixel_center(objects[id]), expected_centers[id])
+		assert_eq(objects[id].base_point_world, expected_base_points[id])
+		assert_ne(objects[id].top_point_world, objects[id].base_point_world)
+		assert_gt(float(objects[id].height_px), 0.0)
+		assert_eq(objects[id].selection_source, "SELECTION_POLYGON")
+		assert_eq(shell._object_selection_polygons(objects[id]).size(), 1)
 		assert_eq(shell._object_interaction_cells(objects[id]), expected_use_cells[id])
 		assert_eq(shell._object_interaction_polygons(objects[id]).size(), 1)
 	assert_eq(shell._object_collision_polygon_points(objects["fridge"]).size(), 4)
@@ -157,10 +180,29 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 	var before := _dictionary_map(shell._object_footprints())
 	var before_interaction_point: Vector2 = shell._object_interaction_polygons(before["fridge"])[0][0]
 	var before_use_cell: Vector2i = shell._object_interaction_cells(before["fridge"])[0]
+	var before_selection_point: Vector2 = shell._object_selection_polygons(before["fridge"])[0][0]
+	var before_base_point: Vector2 = before["fridge"].base_point_world
+	var before_top_point: Vector2 = before["fridge"].top_point_world
 	fridge_use_point.position += Vector2(64, 32)
 	var after_use_move := _dictionary_map(shell._object_footprints())
 	assert_eq(shell._object_interaction_polygons(after_use_move["fridge"])[0][0], before_interaction_point, "UsePoint must not move InteractionPolygon.")
 	assert_ne(shell._object_interaction_cells(after_use_move["fridge"])[0], before_use_cell)
+	assert_eq(shell._object_selection_polygons(after_use_move["fridge"])[0][0], before_selection_point)
+	assert_eq(after_use_move["fridge"].base_point_world, before_base_point)
+
+	var selection_area: Node2D = fridge.get_node("SelectionArea")
+	selection_area.position += Vector2(24, -12)
+	var after_selection_move := _dictionary_map(shell._object_footprints())
+	assert_eq(shell._object_selection_polygons(after_selection_move["fridge"])[0][0], before_selection_point + Vector2(24, -12))
+	assert_eq(shell._object_interaction_polygons(after_selection_move["fridge"])[0][0], before_interaction_point)
+	assert_eq(shell._object_interaction_cells(after_selection_move["fridge"])[0], shell._object_interaction_cells(after_use_move["fridge"])[0])
+
+	var base_point: Marker2D = fridge.get_node("BasePoint")
+	base_point.position += Vector2(12, 6)
+	var after_base_move := _dictionary_map(shell._object_footprints())
+	assert_eq(after_base_move["fridge"].base_point_world, before_base_point + Vector2(12, 6))
+	assert_eq(after_base_move["fridge"].top_point_world, before_top_point)
+	assert_eq(shell._object_selection_polygons(after_base_move["fridge"])[0][0], before_selection_point + Vector2(24, -12))
 
 	var interaction_area: Node2D = fridge.get_node("InteractionArea")
 	var use_cell_before_area_move: Vector2i = shell._object_interaction_cells(after_use_move["fridge"])[0]
@@ -168,6 +210,7 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 	var after_area_move := _dictionary_map(shell._object_footprints())
 	assert_eq(shell._object_interaction_polygons(after_area_move["fridge"])[0][0], before_interaction_point + Vector2(16, 8))
 	assert_eq(shell._object_interaction_cells(after_area_move["fridge"])[0], use_cell_before_area_move, "InteractionArea must not move UsePoint access cell.")
+	assert_eq(shell._object_selection_polygons(after_area_move["fridge"])[0][0], before_selection_point + Vector2(24, -12))
 
 	var body_shape: CollisionPolygon2D = fridge.get_node("Body/BodyPolygon")
 	var collision_before: Array[Vector2] = shell._object_collision_polygon_points(after_use_move["fridge"])
@@ -185,10 +228,14 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 		var object_before: Dictionary = _dictionary_map(shell._object_footprints())[anchor_path_and_id[1]]
 		var center_before: Vector2 = shell._object_pixel_center(object_before)
 		var interaction_before: Vector2 = shell._object_interaction_polygons(object_before)[0][0]
+		var selection_before: Vector2 = shell._object_selection_polygons(object_before)[0][0]
+		var base_before: Vector2 = object_before.base_point_world
 		parent_anchor.position += Vector2(16, 8)
 		var object_after: Dictionary = _dictionary_map(shell._object_footprints())[anchor_path_and_id[1]]
 		assert_eq(shell._object_pixel_center(object_after), center_before + Vector2(16, 8))
 		assert_eq(shell._object_interaction_polygons(object_after)[0][0], interaction_before + Vector2(16, 8))
+		assert_eq(shell._object_selection_polygons(object_after)[0][0], selection_before + Vector2(16, 8))
+		assert_eq(object_after.base_point_world, base_before + Vector2(16, 8))
 
 	var board_socket: Node2D = shell.get_node("EditableObjectNodes/WorkBackWallParentAnchor/PowerModuleBoard/AttachmentSocket")
 	var housing_before: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
@@ -248,6 +295,19 @@ func test_editable_object_configuration_warnings_cover_invalid_contracts() -> vo
 	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "interactive object requires InteractionArea/InteractionPolygon"))
 	interaction.disabled = false
 
+	var selection: CollisionPolygon2D = fridge.get_node("SelectionArea/SelectionPolygon")
+	var original_selection := selection.polygon
+	selection.polygon = PackedVector2Array([Vector2.ZERO, Vector2.ONE])
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "SelectionArea/SelectionPolygon requires at least 3 points"))
+	selection.polygon = original_selection
+	selection.scale = Vector2(1.1, 1.0)
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "SelectionArea/SelectionPolygon scale must remain (1, 1)"))
+	selection.scale = Vector2.ONE
+	var selection_area: Area2D = fridge.get_node("SelectionArea")
+	selection_area.monitoring = true
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "SelectionArea must remain debug-only"))
+	selection_area.monitoring = false
+
 	var body: StaticBody2D = fridge.get_node("Body")
 	var legacy_shape := CollisionShape2D.new()
 	legacy_shape.shape = RectangleShape2D.new()
@@ -276,6 +336,12 @@ func test_editable_object_configuration_warnings_cover_invalid_contracts() -> vo
 	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "required NodePath is missing: UsePoint"))
 	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "interactive object requires UsePoint"))
 	fridge.add_child(use_point)
+
+	var top_point: Marker2D = fridge.get_node("TopPoint")
+	var top_position := top_point.position
+	top_point.position = fridge.get_node("BasePoint").position
+	assert_true(_strings_contain(Array(fridge.call("geometry_warnings")), "BasePoint and TopPoint must identify different"))
+	top_point.position = top_position
 
 	var socket: Marker2D = fridge.get_node("AttachmentSocket")
 	fridge.remove_child(socket)
@@ -603,32 +669,43 @@ func test_invalid_or_empty_interaction_data_draws_no_orange_geometry() -> void:
 		assert_false(_has_child_prefix(layer, "object_%s_interaction_marker" % id), "%s must not use the polygon center as its UsePoint." % id)
 
 
-func test_interaction_priority_and_repeated_click_cycle_over_environment_overlap() -> void:
+func test_scene_selection_priority_and_repeated_click_cycle_over_environment_overlap() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_P))
 	var objects := _dictionary_map(shell._object_footprints())
-	var fridge_interaction_center: Vector2 = shell._polygon_bounds(shell._object_interaction_polygons(objects["fridge"])[0]).get_center()
-	var overlap_world_position: Vector2 = fridge_interaction_center + Vector2(-30.0, -20.0)
+	var overlap_world_position: Vector2 = shell._polygon_bounds(shell._object_selection_polygons(objects["fridge"])[0]).get_center()
+	var microwave: Node2D = shell.get_node("EditableObjectNodes/SinkCounterParentAnchor/Microwave")
+	microwave.get_node("SelectionArea").global_position = overlap_world_position
 	var candidates: Array[Dictionary] = shell._object_hit_candidates(overlap_world_position)
-	assert_eq(_candidate_ids(candidates).slice(0, 3), ["fridge", "microwave", "sink_counter"])
-	assert_eq(candidates[0].hit_kind, "interaction")
-	assert_eq(candidates[1].hit_kind, "interaction")
-	assert_eq(candidates[2].hit_kind, "collision")
+	assert_eq(_candidate_ids(candidates).slice(0, 2), ["fridge", "microwave"])
+	assert_eq(candidates[0].hit_kind, "selection")
+	assert_eq(candidates[1].hit_kind, "selection")
 
 	shell._update_object_hover_at(overlap_world_position)
-	assert_eq(shell._hovered_object_id, "fridge", "Interaction must beat overlapping environment geometry.")
-	assert_true(shell._debug_detail_label.text.contains("interaction owner: fridge"))
+	assert_eq(shell._hovered_object_id, "fridge", "SelectionPolygon must beat overlapping environment geometry.")
+	assert_true(shell._debug_detail_label.text.contains("selection owner: fridge"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
 	assert_eq(shell._selected_object_id, "fridge")
-	assert_true(shell._debug_detail_label.text.contains("선택 1/3"))
+	assert_true(shell._debug_detail_label.text.contains("선택 1/2"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
 	assert_eq(shell._selected_object_id, "microwave")
-	assert_true(shell._debug_detail_label.text.contains("선택 2/3"))
+	assert_true(shell._debug_detail_label.text.contains("선택 2/2"))
 	assert_true(shell._select_hovered_object(overlap_world_position))
-	assert_eq(shell._selected_object_id, "sink_counter")
-	assert_true(shell._debug_detail_label.text.contains("선택 3/3"))
-	assert_true(shell._select_hovered_object(overlap_world_position))
-	assert_eq(shell._selected_object_id, "fridge", "Fourth click must wrap to the first ranked candidate.")
+	assert_eq(shell._selected_object_id, "fridge", "Third click must wrap to the first ranked candidate.")
+
+
+func test_scene_selection_polygon_is_independent_from_interaction_polygon() -> void:
+	var shell = _make_shell()
+	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
+	var selection_area: Node2D = fridge.get_node("SelectionArea")
+	var interaction_area: Node2D = fridge.get_node("InteractionArea")
+	selection_area.position = Vector2(400, 400)
+	interaction_area.position = Vector2(-400, -400)
+	var objects := _dictionary_map(shell._object_footprints())
+	var selection_center: Vector2 = shell._polygon_bounds(shell._object_selection_polygons(objects["fridge"])[0]).get_center()
+	var interaction_center: Vector2 = shell._polygon_bounds(shell._object_interaction_polygons(objects["fridge"])[0]).get_center()
+	assert_eq(shell._object_hit_candidate(objects["fridge"], selection_center).hit_kind, "selection")
+	assert_eq(shell._object_hit_candidate(objects["fridge"], interaction_center), {}, "InteractionPolygon must not act as the debug selection area for node-backed objects.")
 
 
 func test_visual_bounds_are_created_only_for_selected_object() -> void:
@@ -651,6 +728,9 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(shell._object_legend_label.text.contains("AttachmentSocket"))
 	assert_true(shell._object_legend_label.text.contains("VisualPreview"))
 	assert_true(shell._object_legend_label.text.contains("InteractionPolygon"))
+	assert_true(shell._object_legend_label.text.contains("SelectionPolygon"))
+	assert_true(shell._object_legend_label.text.contains("BasePoint"))
+	assert_true(shell._object_legend_label.text.contains("TopPoint"))
 	assert_true(shell._object_legend_label.text.contains("UsePoint"))
 	assert_true(shell._object_legend_label.text.contains("파랑 채움 + 빨강 테두리"))
 	assert_true(shell._object_legend_label.text.contains("후보 순환"))
@@ -678,7 +758,16 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(shell._debug_detail_label.text.contains("UsePoint:"))
 	assert_true(shell._debug_detail_label.text.contains("visual source: VISUAL_PREVIEW"))
 	assert_true(shell._debug_detail_label.text.contains("floor source: BODY_POLYGON"))
+	assert_true(shell._debug_detail_label.text.contains("selection source: SELECTION_POLYGON"))
+	assert_true(shell._debug_detail_label.text.contains("BasePoint:"))
+	assert_true(shell._debug_detail_label.text.contains("TopPoint:"))
 	assert_true(shell._debug_detail_label.text.contains("AttachmentSocket:"))
+	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_selection_area"))
+	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_base_point"))
+	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_top_point"))
+	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_height_guide"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_selection_area"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_base_point"))
 	var board: Dictionary = _dictionary_map(shell._object_footprints())["power_module_board"]
 	shell._select_object_for_debug("power_module_board")
 	assert_true(shell._debug_detail_label.text.contains("work_back_wall"))

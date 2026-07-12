@@ -8,6 +8,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment editable object 2.5D reference and selection split
+
+- Result: Added BasePoint, TopPoint, and debug-only SelectionArea/SelectionPolygon to fridge, NAVI LINK, microwave, and Power Board. Body remains movement collision/floor occupancy, Selection owns P hover/click, Interaction owns game-use range, UsePoint owns the access position, Visual owns screen bounds, and AttachmentSocket owns child/wall attachment.
+- P debug: Added cyan SelectionPolygon, green BasePoint, yellow TopPoint/height guide, and SCENE_NODE detail fields without duplicating equivalent Body/floor faces. PlacementFootprint remains optional and absent; the other fourteen objects retain Resource/fallback geometry.
+- MCP check: Restarted the editor to clear a stale PackedScene cache, confirmed the 59-node hierarchy and Korean Inspector descriptions, edited/restored BasePoint, TopPoint, UsePoint, and a five-point NAVI SelectionPolygon, ran P+V, and verified Selection/Interaction/Use independence plus Microwave/Board parent-follow. Fresh game/editor errors and placement/measurement warnings were zero. Status: `KEEP_CANDIDATE`; Manual confirmation: `REQUIRED` for user Inspector fine tuning.
+
 ### Apartment editable object common structure cleanup
 
 - Result: Replaced the stage-1 VisualAnchor/mixed-shape contract with `Visual/Sprite2D/VisualPreview`, named BodyPolygon and InteractionPolygon nodes, independent UsePoint, and AttachmentSocket for fridge, NAVI LINK, microwave, and Power Board. Microwave/Board remain non-blocking and have no BodyPolygon; no current object gained PlacementFootprint.

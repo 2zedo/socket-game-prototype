@@ -5,8 +5,12 @@ class_name ApartmentEditableObject
 const VISUAL_PATH := NodePath("Visual")
 const SPRITE_PATH := NodePath("Visual/Sprite2D")
 const VISUAL_PREVIEW_PATH := NodePath("Visual/VisualPreview")
+const BASE_POINT_PATH := NodePath("BasePoint")
+const TOP_POINT_PATH := NodePath("TopPoint")
 const BODY_PATH := NodePath("Body")
 const BODY_POLYGON_PATH := NodePath("Body/BodyPolygon")
+const SELECTION_AREA_PATH := NodePath("SelectionArea")
+const SELECTION_POLYGON_PATH := NodePath("SelectionArea/SelectionPolygon")
 const INTERACTION_AREA_PATH := NodePath("InteractionArea")
 const INTERACTION_POLYGON_PATH := NodePath("InteractionArea/InteractionPolygon")
 const USE_POINT_PATH := NodePath("UsePoint")
@@ -66,6 +70,16 @@ func attachment_anchor_world() -> Vector2:
 	return parent_anchor.global_position if parent_anchor != null else global_position
 
 
+func base_point_world() -> Vector2:
+	var base_point := get_node_or_null(BASE_POINT_PATH) as Marker2D
+	return base_point.global_position if base_point != null else global_position
+
+
+func top_point_world() -> Vector2:
+	var top_point := get_node_or_null(TOP_POINT_PATH) as Marker2D
+	return top_point.global_position if top_point != null else global_position
+
+
 func attachment_socket_world() -> Vector2:
 	var socket := get_node_or_null(ATTACHMENT_SOCKET_PATH) as Marker2D
 	return socket.global_position if socket != null else global_position
@@ -78,6 +92,10 @@ func use_point_world() -> Vector2:
 
 func body_world_polygon() -> PackedVector2Array:
 	return _collision_polygon_world(BODY_POLYGON_PATH)
+
+
+func selection_world_polygon() -> PackedVector2Array:
+	return _collision_polygon_world(SELECTION_POLYGON_PATH)
 
 
 func interaction_world_polygon() -> PackedVector2Array:
@@ -107,7 +125,11 @@ func geometry_warnings() -> Array[String]:
 	_require_node_type(warnings, VISUAL_PATH, Node2D)
 	_require_node_type(warnings, SPRITE_PATH, Sprite2D)
 	_require_node_type(warnings, VISUAL_PREVIEW_PATH, Polygon2D)
+	_require_node_type(warnings, BASE_POINT_PATH, Marker2D)
+	_require_node_type(warnings, TOP_POINT_PATH, Marker2D)
 	_require_node_type(warnings, BODY_PATH, StaticBody2D)
+	_require_node_type(warnings, SELECTION_AREA_PATH, Area2D)
+	_require_node_type(warnings, SELECTION_POLYGON_PATH, CollisionPolygon2D)
 	_require_node_type(warnings, INTERACTION_AREA_PATH, Area2D)
 	_require_node_type(warnings, USE_POINT_PATH, Marker2D)
 	_require_node_type(warnings, ATTACHMENT_SOCKET_PATH, Marker2D)
@@ -116,17 +138,26 @@ func geometry_warnings() -> Array[String]:
 	var interaction_required := config != null and String(config.get("category")) == "interaction"
 	var body_required := config != null and bool(config.get("blocks_movement"))
 	var body_polygon := get_node_or_null(BODY_POLYGON_PATH) as CollisionPolygon2D
+	var selection_polygon := get_node_or_null(SELECTION_POLYGON_PATH) as CollisionPolygon2D
 	var interaction_polygon := get_node_or_null(INTERACTION_POLYGON_PATH) as CollisionPolygon2D
 	if body_required and (body_polygon == null or body_polygon.disabled):
 		warnings.append("blocks_movement requires Body/BodyPolygon")
 	if body_polygon != null:
 		_append_polygon_warning(warnings, "Body/BodyPolygon", body_polygon.polygon, body_polygon.scale)
+	if selection_polygon == null or selection_polygon.disabled:
+		warnings.append("SelectionArea/SelectionPolygon is required")
+	else:
+		_append_polygon_warning(warnings, "SelectionArea/SelectionPolygon", selection_polygon.polygon, selection_polygon.scale)
 	if interaction_required and (interaction_polygon == null or interaction_polygon.disabled):
 		warnings.append("interactive object requires InteractionArea/InteractionPolygon")
 	if interaction_polygon != null:
 		_append_polygon_warning(warnings, "InteractionArea/InteractionPolygon", interaction_polygon.polygon, interaction_polygon.scale)
 	if interaction_required and get_node_or_null(USE_POINT_PATH) == null:
 		warnings.append("interactive object requires UsePoint")
+	var base_point := get_node_or_null(BASE_POINT_PATH) as Marker2D
+	var top_point := get_node_or_null(TOP_POINT_PATH) as Marker2D
+	if base_point != null and top_point != null and base_point.position.is_equal_approx(top_point.position):
+		warnings.append("BasePoint and TopPoint must identify different height positions")
 
 	var sprite := get_node_or_null(SPRITE_PATH) as Sprite2D
 	var preview := get_node_or_null(VISUAL_PREVIEW_PATH) as Polygon2D
@@ -159,6 +190,15 @@ func geometry_warnings() -> Array[String]:
 				warnings.append("InteractionArea must not contain CollisionShape2D")
 			elif child is CollisionPolygon2D and child.name != "InteractionPolygon":
 				warnings.append("interaction collision polygon must be named InteractionPolygon")
+	var selection_area := get_node_or_null(SELECTION_AREA_PATH) as Area2D
+	if selection_area != null:
+		if selection_area.collision_layer != 0 or selection_area.collision_mask != 0 or selection_area.monitoring or selection_area.monitorable:
+			warnings.append("SelectionArea must remain debug-only with physics and monitoring disabled")
+		for child in selection_area.get_children():
+			if child is CollisionShape2D:
+				warnings.append("SelectionArea must not contain CollisionShape2D")
+			elif child is CollisionPolygon2D and child.name != "SelectionPolygon":
+				warnings.append("selection collision polygon must be named SelectionPolygon")
 	if config != null and _resource_geometry_active(config):
 		warnings.append("migrated Resource geometry must remain disabled")
 	return warnings

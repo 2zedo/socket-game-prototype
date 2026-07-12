@@ -17,10 +17,28 @@ editor_description = "실제 이미지가 없을 때만 쓰는 임시 화면 범
 polygon = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
 color = Color(0.32, 0.86, 1, 0.18)
 
+[node name="BasePoint" type="Marker2D" parent="."]
+editor_description = "바닥·벽·부모에 오브젝트가 설치되는 기준점. 실제 위치 기준으로 직접 조정합니다."
+
+[node name="TopPoint" type="Marker2D" parent="."]
+editor_description = "BasePoint에서 오브젝트 높이를 확인하는 상단 기준점. 선택·상호작용 판정과 독립적으로 조정합니다."
+position = Vector2(0, -64)
+
 [node name="Body" type="StaticBody2D" parent="."]
 editor_description = "이동 충돌이 필요한 오브젝트만 BodyPolygon을 둡니다."
 collision_layer = 0
 collision_mask = 0
+
+[node name="SelectionArea" type="Area2D" parent="."]
+editor_description = "SelectionPolygon의 위치 기준. 게임 상호작용과 분리된 디버그 hover/click 영역입니다."
+collision_layer = 0
+collision_mask = 0
+monitoring = false
+monitorable = false
+
+[node name="SelectionPolygon" type="CollisionPolygon2D" parent="SelectionArea"]
+editor_description = "마우스 hover/click 선택용 화면 영역. InteractionPolygon과 독립적으로 꼭짓점을 조정합니다."
+polygon = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
 
 [node name="InteractionArea" type="Area2D" parent="."]
 editor_description = "InteractionPolygon의 위치 기준. UsePoint와 독립적으로 조정합니다."
