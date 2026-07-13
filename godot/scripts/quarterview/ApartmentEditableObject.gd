@@ -93,6 +93,22 @@ func attachment_anchor_world() -> Vector2:
 	return parent_anchor.global_position if parent_anchor != null else global_position
 
 
+func mount_parent_socket_path() -> String:
+	var mount_socket := get_node_or_null(mount_socket_path) as Marker2D
+	if mount_socket != null:
+		return String(mount_socket.get_path())
+	var parent_socket := get_parent() as Marker2D
+	return String(parent_socket.get_path()) if parent_socket != null else ""
+
+
+func mount_parent_socket_world() -> Vector2:
+	var mount_socket := get_node_or_null(mount_socket_path) as Marker2D
+	if mount_socket != null:
+		return mount_socket.global_position
+	var parent_socket := get_parent() as Marker2D
+	return parent_socket.global_position if parent_socket != null else base_point_world()
+
+
 func _sync_mount_socket() -> void:
 	if mount_socket_path.is_empty():
 		return

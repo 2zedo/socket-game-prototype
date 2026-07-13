@@ -141,7 +141,7 @@ Loading order:
 2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
 3. additive `custom_object_footprints` entries from the Inspector
 
-Scene nodes override that loading order for exact ROTATE_90 geometry on all seven direct-interaction objects and five floor environment objects. The interaction objects keep ObjectRoot, visual, Base/Top, optional Body, Selection, Interaction, UsePoint, and attachment geometry in `EditableObjectNodes`. `sink_counter`, `dining_table`, `ups_unit`, `bathroom_fixture`, and `shoes_slippers` use the smaller `ApartmentEditableEnvironmentObject` contract with no InteractionArea or UsePoint. BasePoint is the installation/ground reference, TopPoint is the independent height reference, and SelectionPolygon owns P hover/click only. Their Resource entries retain logical identity, category, room, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The remaining six environment/decoration objects continue to use the Resource/fallback footprint path.
+Scene nodes override that loading order for exact ROTATE_90 geometry on all 18 apartment objects. The seven direct-interaction objects keep ObjectRoot, visual, Base/Top, optional Body, Selection, Interaction, UsePoint, and attachment geometry. The eleven environment/decoration objects use the smaller `ApartmentEditableEnvironmentObject` contract with no InteractionArea or UsePoint; the six attached objects also omit BodyPolygon and never block movement. BasePoint is the installation/ground reference, TopPoint is the independent height reference, and SelectionPolygon owns P hover/click only. Resource entries retain logical identity, category, room, wall/parent relationship, UI specification, and future asset strings, but no active ROTATE_90 position/size/offset/access-cell geometry. Resource/fallback geometry remains compatibility code for standalone, custom, or non-ROTATE_90 paths and is not the Environment authority.
 
 Current rotated-floorplan placement candidate:
 
@@ -156,15 +156,15 @@ Current rotated-floorplan placement candidate:
 | `node_17` | work/power | Scene `EditableObjectNodes/Node17` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `sink_counter` | living | Scene `EditableObjectNodes/SinkCounter` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | none; Selection only | `FLOOR` / environment; owns `MicrowaveSocket` |
 | `dining_table` | living | Scene `EditableObjectNodes/DiningTable` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | none; Selection only | `FLOOR` / environment |
-| `signal_booster` | work/power | `(1,2)` | `(-68,-58)` | `112x96` | none | none | parent: `node_17` |
+| `signal_booster` | work/power | `EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster` | Inspector | `Visual/VisualPreview` | none | none; Selection only | `PARENT_OBJECT`: `node_17` / environment |
 | `ups_unit` | work/power | Scene `EditableObjectNodes/UpsUnit` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | none; Selection only | `FLOOR` / independent environment; optional `PowerCableSocket` |
 | `bathroom_fixture` | bathroom | Scene `EditableObjectNodes/BathroomFixture` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | none; Selection only | `FLOOR` / environment |
-| `sea_horizon_poster` | living | `(11,7)` | `(0,-20)` | `160x80` | none | none | wall edge: `living_right_wall` |
-| `fluorescent_light` | living | `(6,6)` | `(0,0)` | `240x40` | none | none | ceiling |
+| `sea_horizon_poster` | living | `Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster` | Inspector | `Visual/VisualPreview` | none | none; Selection only | `WALL_EDGE`: `living_right_wall` / decoration |
+| `fluorescent_light` | living | `CeilingAnchors/FluorescentLightSocket/FluorescentLight` | Inspector | `Visual/VisualPreview` | none | none; Selection only | `CEILING` / environment |
 | `shoes_slippers` | entrance | Scene `EditableObjectNodes/ShoesSlippers` | Inspector | `Visual/VisualPreview` | none | none; Selection only | `FLOOR` / non-blocking decoration |
-| `cable_bundle` | work/power | `(2,2)` | `(36,42)` | `80x40` | none | none | parent: `node_17` |
-| `wall_conduit` | work/power | `(3,0)` | `(0,0)` | `128x64` | none | none | wall edge: `work_back_wall` |
-| `power_housing` | work/power | `(6,0)` | `(0,0)` | `240x210` | none | none | parent: board / `work_back_wall` |
+| `cable_bundle` | work/power | `EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle` | Inspector | `Visual/VisualPreview` | none | none; Selection only | `PARENT_OBJECT`: `node_17` / decoration |
+| `wall_conduit` | work/power | `Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit` | Inspector | `Visual/VisualPreview` | none | none; Selection only | `WALL_EDGE`: `work_back_wall` / decoration |
+| `power_housing` | work/power | `EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing` | Inspector | `Visual/VisualPreview` | none | none; Selection only | `PARENT_OBJECT`: `power_module_board` / decoration |
 
 Attachment policy:
 
@@ -174,7 +174,9 @@ Attachment policy:
 - The four blocking migrated environment objects derive floor occupancy from their authored BodyPolygon on the BasePoint installation row. `shoes_slippers` has no BodyPolygon and never blocks N or Playable movement.
 - Microwave is a real child of `sink_counter/AttachmentSockets/MicrowaveSocket`. Moving the sink moves both; moving only the Socket moves only Microwave while keeping its Selection, Interaction, and UsePoint geometry together.
 - `entrance_door` and `power_module_board` resolve installation from the owning WallCell's `AttachmentSocket` through `mount_socket_path`; moving that Cell or Socket moves the complete object while preserving editable local `mount_offset`. The door BodyPolygon blocks the exact doorway edge while closed and is disabled while open; it never creates floor occupancy.
-- The still-Resource-backed `wall_conduit` and `sea_horizon_poster` resolve their wall anchor from `WorkBackWall/WallCells/Cell02/AttachmentSocket` and `LivingRightWall/WallCells/Cell03/AttachmentSocket`; this keeps them on the edited Cell without converting the remaining environment objects to editable nodes.
+- `signal_booster` and `cable_bundle` are real children of independent NODE-17 sockets, and `power_housing` is a real child of Power Module Board's `PowerHousingSocket`. Moving one socket moves only its attached child.
+- `wall_conduit` and `sea_horizon_poster` are real children of `WorkBackWall/WallCells/Cell02/AttachmentSocket` and `LivingRightWall/WallCells/Cell03/AttachmentSocket`. Moving the owning WallCell moves the attachment. `enabled=false`, `visual_enabled=false`, or V inspection state changes wall physics/visuals without hiding the child; setting the WallCell root itself to `visible=false` intentionally hides the full subtree.
+- `fluorescent_light` is a real child of `CeilingAnchors/FluorescentLightSocket` and is never projected from a floor or wall cell.
 - Direct world interaction is limited to exactly seven objects: `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17`. Each has valid interaction geometry and at least one walkable access point/cell.
 - `sink_counter`, `dining_table`, `signal_booster`, `ups_unit`, `bathroom_fixture`, `sea_horizon_poster`, `fluorescent_light`, `shoes_slippers`, `cable_bundle`, `wall_conduit`, and `power_housing` have no gameplay interaction geometry. They remain selectable only for P placement inspection.
 - P debug selection and direct game/mock interaction are separate contracts. A zero size, empty access-cell set, or non-interaction category never creates an orange interaction marker.
@@ -191,7 +193,7 @@ Shell editing controls:
 - `H`: open shell-only Phone debug overlay; this does not call production `PhoneUI`.
 - `ESC`: close the topmost shell debug overlay.
 - `debug_focus_object_id`: emphasize one object id, for example `bed`.
-- For all twelve Scene-node objects, SelectionPolygon is the P hover/click authority and hover labels identify its owner; InteractionPolygon is not reused for selection. The remaining six Resource-backed objects retain floor/collision, wall/parent anchor, then visual fallback priority. Repeated clicks at one location still cycle candidates and show `선택 n/m`.
+- For all 18 Scene-node objects, SelectionPolygon is the P hover/click authority and hover labels identify its owner; InteractionPolygon is not reused for selection. Attached environment objects rank below interaction/collision objects, and repeated clicks at one location still cycle candidates and show `선택 n/m`.
 
 Coordinate rule:
 
@@ -200,7 +202,7 @@ Coordinate rule:
 - `SelectionArea/SelectionPolygon` controls candidate P hover/click. `InteractionArea/InteractionPolygon` controls game-use range, while sibling `UsePoint` controls the character access cell. Moving any one of those three channels never moves the others; only moving ObjectRoot or a parent anchor moves all of them.
 - Migrated wall/parent objects follow their Scene ParentAnchor, and `AttachmentSocket` is the exact child/wall attachment marker. Their logical `anchor_type`, `parent_object_id`, and `wall_segment_id` remain Resource metadata.
 - Sprite2D texture bounds are the visual authority when a texture exists; otherwise one editor-only VisualPreview polygon supplies the temporary visual bound. Neither visual source participates in movement collision or interaction.
-- Unmigrated floor objects continue to use `anchor_cell`, `size_cells`, occupied cells, and interaction cells. Unmigrated wall/ceiling/parent objects continue to use the existing Resource anchor fields.
+- All active Environment objects use ObjectRoot, authored polygons/markers, and their physical parent Socket as geometry authority. Resource anchor type and parent/wall ids remain logical metadata only; cleared cell/offset/size geometry is not reactivated as a fallback for these 18 nodes.
 - Wall segments use wall edge coordinates: `from_cell -> to_cell`.
 - Do not treat object floor cells and wall edge coordinates as the same coordinate layer.
 

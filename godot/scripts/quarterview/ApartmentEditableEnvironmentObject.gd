@@ -60,7 +60,18 @@ func visual_source() -> StringName:
 
 
 func attachment_anchor_world() -> Vector2:
-	return base_point_world()
+	var parent_socket := _mount_parent_socket()
+	return parent_socket.global_position if parent_socket != null else base_point_world()
+
+
+func mount_parent_socket_path() -> String:
+	var parent_socket := _mount_parent_socket()
+	return String(parent_socket.get_path()) if parent_socket != null else ""
+
+
+func mount_parent_socket_world() -> Vector2:
+	var parent_socket := _mount_parent_socket()
+	return parent_socket.global_position if parent_socket != null else base_point_world()
 
 
 func base_point_world() -> Vector2:
@@ -129,6 +140,8 @@ func geometry_warnings() -> Array[String]:
 			warnings.append("environment object must not contain %s" % forbidden_path)
 
 	var config := _logical_resource_config()
+	if config != null and int(config.get("anchor_type")) != 0 and _mount_parent_socket() == null:
+		warnings.append("attached environment object requires a Marker2D parent socket")
 	var body_required := config != null and bool(config.get("blocks_movement"))
 	var body_polygon := get_node_or_null(BODY_POLYGON_PATH) as CollisionPolygon2D
 	var selection_polygon := get_node_or_null(SELECTION_POLYGON_PATH) as CollisionPolygon2D
@@ -253,6 +266,10 @@ func _logical_resource_config() -> Resource:
 	return null
 
 
+func _mount_parent_socket() -> Marker2D:
+	return get_parent() as Marker2D
+
+
 func _node_has_property(node: Node, property_name: StringName) -> bool:
 	for property in node.get_property_list():
 		if StringName(property.get("name", "")) == property_name:
@@ -272,6 +289,7 @@ func _resource_geometry_active(config: Resource) -> bool:
 		or Vector2(config.get("interaction_size_px")) != Vector2.ZERO
 		or Vector2(config.get("interaction_offset_px")) != Vector2.ZERO
 		or Vector2(config.get("wall_offset_px")) != Vector2.ZERO
+		or (int(config.get("anchor_type")) != 0 and not is_zero_approx(float(config.get("wall_position_ratio"))))
 		or not Array(config.get("interaction_cells")).is_empty()
 		or Vector2i(config.get("interaction_cell")) != Vector2i(-1, -1)
 	)

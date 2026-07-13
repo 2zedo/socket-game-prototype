@@ -67,6 +67,24 @@ func test_environment_manual_floor_fridge_and_wall_cells_propagate_to_both_wrapp
 			assert_eq(inherited_object.get_node("SelectionArea/SelectionPolygon").polygon, expected_object.get_node("SelectionArea/SelectionPolygon").polygon)
 			assert_null(inherited_object.get_node_or_null("InteractionArea"))
 			assert_null(inherited_object.get_node_or_null("UsePoint"))
+	var attached_paths := [
+		"EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster",
+		"EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle",
+		"EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing",
+		"Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster",
+		"Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit",
+		"CeilingAnchors/FluorescentLightSocket/FluorescentLight",
+	]
+	for object_path in attached_paths:
+		var expected_object: Node2D = environment.get_node(object_path)
+		for wrapper in [candidate, playable]:
+			var inherited_object: Node2D = wrapper.get_node(object_path)
+			assert_eq(inherited_object.global_position, expected_object.global_position)
+			assert_eq(inherited_object.get_node("Visual/VisualPreview").polygon, expected_object.get_node("Visual/VisualPreview").polygon)
+			assert_eq(inherited_object.get_node("SelectionArea/SelectionPolygon").polygon, expected_object.get_node("SelectionArea/SelectionPolygon").polygon)
+			assert_null(inherited_object.get_node_or_null("Body/BodyPolygon"))
+			assert_null(inherited_object.get_node_or_null("InteractionArea"))
+			assert_null(inherited_object.get_node_or_null("UsePoint"))
 	assert_null(environment.get_node_or_null("EditableObjectNodes/SinkCounterParentAnchor"))
 	var microwave_path := "EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave"
 	for wrapper in [environment, candidate, playable]:
@@ -75,6 +93,14 @@ func test_environment_manual_floor_fridge_and_wall_cells_propagate_to_both_wrapp
 		assert_eq(microwave.get_node("BasePoint").global_position, Vector2(996, 174))
 		assert_eq(microwave.get_node("UsePoint").global_position, Vector2(996, 238))
 	assert_false(playable._object_blocker_ids_for_cell(Vector2i(1, 9)).has("shoes_slippers"), "Shoes/slippers selection must not add an N/Playable blocker.")
+	for object_id in ["signal_booster", "cable_bundle", "power_housing", "sea_horizon_poster", "wall_conduit", "fluorescent_light"]:
+		var object_data: Dictionary = playable.playable_object_data(object_id)
+		assert_true(object_data.node_backed)
+		assert_eq(object_data.source, "scene_node")
+		assert_false(object_data.blocks_movement)
+		assert_eq(object_data.collision_polygons, [])
+		assert_eq(object_data.interaction_polygons, [])
+		assert_false(playable._object_blocker_ids_for_cell(object_data.anchor_cell).has(object_id))
 	for blocker_point in [Vector2(996, 174), Vector2(868, 302), Vector2(804, 78)]:
 		assert_false(playable.playable_is_walkable_world_point(blocker_point), "Environment BodyPolygon must block N/Playable movement.")
 

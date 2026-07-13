@@ -644,7 +644,7 @@ polygon = PackedVector2Array(929.3167, 104.63344, 801.3167, 168.63344, 806.6833,
 disabled = true
 
 
-+[node name="AttachmentSockets" type="Node2D" parent="Walls/WorkBackWall"]
+[node name="AttachmentSockets" type="Node2D" parent="Walls/WorkBackWall"]
 editor_description = "호환용 빈 컨테이너. 실제 Socket은 WallCells 아래 Cell/AttachmentSocket입니다."
 
 [node name="WallCells" type="Node2D" parent="Walls/WorkBackWall"]
@@ -719,6 +719,18 @@ cell_index = 2
 [node name="AttachmentSocket" parent="Walls/WorkBackWall/WallCells/Cell02" index="7"]
 editor_description = "전선관 환경 오브젝트의 벽 한 칸 부착 기준점."
 position = Vector2(30.72, 15.36)
+
+[node name="WallConduit" parent="Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket" index="0" instance=ExtResource("11_environment_object")]
+object_id = &"wall_conduit"
+
+[node name="VisualPreview" parent="Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit/Visual" index="1"]
+polygon = PackedVector2Array(-64, -32, 64, -32, 64, 32, -64, 32)
+
+[node name="TopPoint" parent="Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit" index="2"]
+position = Vector2(0, -32)
+
+[node name="SelectionPolygon" parent="Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit/SelectionArea" index="0"]
+polygon = PackedVector2Array(-64, -32, 64, -32, 64, 32, -64, 32)
 
 [node name="Cell03" parent="Walls/WorkBackWall/WallCells" instance=ExtResource("9_wall_cell")]
 position = Vector2(1316, 46)
@@ -883,6 +895,22 @@ end_offset = Vector2(-64, 32)
 editor_description = "바다 수평선 포스터의 벽 한 칸 부착 기준점. Cell 이동을 따라갑니다."
 position = Vector2(-30.72, 15.36)
 
+[node name="SeaHorizonPoster" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket" index="0" instance=ExtResource("11_environment_object")]
+position = Vector2(0, -20)
+object_id = &"sea_horizon_poster"
+
+[node name="VisualPreview" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster/Visual" index="1"]
+polygon = PackedVector2Array(-80, -40, 80, -40, 80, 40, -80, 40)
+
+[node name="BasePoint" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster" index="1"]
+position = Vector2(0, 20)
+
+[node name="TopPoint" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster" index="2"]
+position = Vector2(0, -40)
+
+[node name="SelectionPolygon" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster/SelectionArea" index="0"]
+polygon = PackedVector2Array(-80, -40, 80, -40, 80, 40, -80, 40)
+
 [node name="Cell04" parent="Walls/LivingRightWall/WallCells" instance=ExtResource("9_wall_cell")]
 position = Vector2(1252, 526)
 cell_index = 4
@@ -1017,6 +1045,25 @@ opening_kind = 1
 opening_id = &"bathroom_door"
 opening_passable = true
 
+[node name="CeilingAnchors" type="Node2D" parent="."]
+editor_description = "천장 부착 환경 오브젝트의 Scene Node 정본. 바닥 셀이나 벽 좌표로 환산하지 않고 각 Socket을 직접 이동합니다."
+
+[node name="FluorescentLightSocket" type="Marker2D" parent="CeilingAnchors"]
+editor_description = "형광등의 독립 천장 부착 기준점. 이 Marker를 움직이면 형광등만 따라갑니다."
+position = Vector2(1060, 334)
+
+[node name="FluorescentLight" parent="CeilingAnchors/FluorescentLightSocket" instance=ExtResource("11_environment_object")]
+object_id = &"fluorescent_light"
+
+[node name="VisualPreview" parent="CeilingAnchors/FluorescentLightSocket/FluorescentLight/Visual" index="1"]
+polygon = PackedVector2Array(-120, -20, 120, -20, 120, 20, -120, 20)
+
+[node name="TopPoint" parent="CeilingAnchors/FluorescentLightSocket/FluorescentLight" index="2"]
+position = Vector2(0, -20)
+
+[node name="SelectionPolygon" parent="CeilingAnchors/FluorescentLightSocket/FluorescentLight/SelectionArea" index="0"]
+polygon = PackedVector2Array(-120, -20, 120, -20, 120, 20, -120, 20)
+
 [node name="EditableObjectNodes" type="Node2D" parent="."]
 
 [node name="Fridge" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
@@ -1150,6 +1197,41 @@ polygon = PackedVector2Array(-48, -32, 48, -32, 48, 32, -48, 32)
 
 [node name="UsePoint" parent="EditableObjectNodes/Node17" index="6"]
 position = Vector2(64, 40)
+
+[node name="AttachmentSockets" type="Node2D" parent="EditableObjectNodes/Node17"]
+editor_description = "NODE-17 자식 장비의 독립 부착 기준점 모음. 각 Socket 이동은 해당 자식만 이동합니다."
+
+[node name="SignalBoosterSocket" type="Marker2D" parent="EditableObjectNodes/Node17/AttachmentSockets"]
+editor_description = "신호 증폭기 부착 기준점. NODE-17 기준 현재 world 위치를 보존합니다."
+position = Vector2(-68, -58)
+
+[node name="SignalBooster" parent="EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket" instance=ExtResource("11_environment_object")]
+object_id = &"signal_booster"
+
+[node name="VisualPreview" parent="EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster/Visual" index="1"]
+polygon = PackedVector2Array(-56, -48, 56, -48, 56, 48, -56, 48)
+
+[node name="TopPoint" parent="EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster" index="2"]
+position = Vector2(0, -48)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster/SelectionArea" index="0"]
+polygon = PackedVector2Array(-56, -48, 56, -48, 56, 48, -56, 48)
+
+[node name="CableBundleSocket" type="Marker2D" parent="EditableObjectNodes/Node17/AttachmentSockets"]
+editor_description = "케이블 묶음 부착 기준점. 신호 증폭기 Socket과 독립적으로 이동합니다."
+position = Vector2(36, 42)
+
+[node name="CableBundle" parent="EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket" instance=ExtResource("11_environment_object")]
+object_id = &"cable_bundle"
+
+[node name="VisualPreview" parent="EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle/Visual" index="1"]
+polygon = PackedVector2Array(-40, -20, 40, -20, 40, 20, -40, 20)
+
+[node name="TopPoint" parent="EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle" index="2"]
+position = Vector2(0, -20)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle/SelectionArea" index="0"]
+polygon = PackedVector2Array(-40, -20, 40, -20, 40, 20, -40, 20)
 
 [node name="SinkCounter" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
 position = Vector2(996, 174)
@@ -1290,6 +1372,24 @@ polygon = PackedVector2Array(-60, -36, 60, -36, 60, 36, -60, 36)
 [node name="UsePoint" parent="EditableObjectNodes/PowerModuleBoard" index="6"]
 position = Vector2(-96, 170)
 
+[node name="AttachmentSockets" type="Node2D" parent="EditableObjectNodes/PowerModuleBoard"]
+editor_description = "전력 모듈 보드 자식 장비의 부착 기준점 모음. 벽 Cell Socket과는 별도 계층입니다."
+
+[node name="PowerHousingSocket" type="Marker2D" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets"]
+editor_description = "전력 장비 외장 프레임 부착 기준점. 보드 이동을 따라가며 단독 조정할 수 있습니다."
+
+[node name="PowerHousing" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket" instance=ExtResource("11_environment_object")]
+object_id = &"power_housing"
+
+[node name="VisualPreview" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing/Visual" index="1"]
+polygon = PackedVector2Array(-120, -105, 120, -105, 120, 105, -120, 105)
+
+[node name="TopPoint" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing" index="2"]
+position = Vector2(0, -105)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing/SelectionArea" index="0"]
+polygon = PackedVector2Array(-120, -105, 120, -105, 120, 105, -120, 105)
+
 [node name="EntranceDoor" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
 position = Vector2(516, 184)
 object_id = &"entrance_door"
@@ -1340,13 +1440,18 @@ zoom = Vector2(0.58, 0.58)
 [editable path="Openings/WorkRoomOpening"]
 [editable path="Openings/LivingWindowOpening"]
 [editable path="Walls/WorkBackWall/WallCells/Cell02"]
+[editable path="Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit"]
 [editable path="Walls/WorkBackWall/WallCells/Cell05"]
 [editable path="Walls/EntranceWall/WallCells/Cell04"]
 [editable path="Walls/LivingRightWall/WallCells/Cell03"]
+[editable path="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster"]
+[editable path="CeilingAnchors/FluorescentLightSocket/FluorescentLight"]
 [editable path="EditableObjectNodes/Fridge"]
 [editable path="EditableObjectNodes/Bed"]
 [editable path="EditableObjectNodes/NaviLink"]
 [editable path="EditableObjectNodes/Node17"]
+[editable path="EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster"]
+[editable path="EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle"]
 [editable path="EditableObjectNodes/SinkCounter"]
 [editable path="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave"]
 [editable path="EditableObjectNodes/DiningTable"]
@@ -1354,4 +1459,5 @@ zoom = Vector2(0.58, 0.58)
 [editable path="EditableObjectNodes/BathroomFixture"]
 [editable path="EditableObjectNodes/ShoesSlippers"]
 [editable path="EditableObjectNodes/PowerModuleBoard"]
+[editable path="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing"]
 [editable path="EditableObjectNodes/EntranceDoor"]

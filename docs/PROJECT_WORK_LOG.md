@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Attached environment object Node migration
+
+- Result: Migrated signal booster, cable bundle, power housing, sea-horizon poster, wall conduit, and fluorescent light to `ApartmentEditableEnvironmentObject` nodes. All 18 apartment objects now use Environment Scene nodes for position, visual, selection, Base/Top, and attachment geometry; the six Resources retain logical relation metadata with geometry cleared.
+- Attachments/navigation: NODE-17 owns independent SignalBooster/CableBundle sockets, Power Module Board owns PowerHousingSocket, WorkBack Cell02 owns Wall Conduit, LivingRight Cell03 owns the poster, and CeilingAnchors owns the fluorescent light. The six have no BodyPolygon, InteractionArea, or UsePoint, never block N/Playable, and remain visible when V hides wall visuals.
+- MCP check: Recorded each pre-migration world transform, edited/restored every parent Socket and both owning WallCells, confirmed child-only tracking and exact P detail paths, exercised V normal/transparent/hidden, and opened the shared Environment in Shell and Playable with no new editor/game errors. Status: `KEEP_CANDIDATE`; Manual confirmation: `COMPLETE` for this migration workflow.
+- Validation: Targeted attachment/socket/resource/P/Playable tests passed, followed by `scripts/validate_concent.sh --full` with 149 tests and 4015 assertions passing; the validator reported only the 32 known Phone PNG export warnings.
+
 ### Floor environment object Node migration
 
 - Result: Added `ApartmentEditableEnvironmentObject` and migrated sink counter, dining table, UPS, bathroom fixture, and shoes/slippers to editable Environment Scene nodes. Root, VisualPreview, Base/Top, Selection, optional Body, and Socket geometry are now Inspector authorities; their Resource geometry is cleared.

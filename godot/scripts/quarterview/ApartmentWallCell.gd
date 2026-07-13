@@ -65,7 +65,7 @@ func _sync_geometry() -> void:
 	editor_opening_preview.points = PackedVector2Array([Vector2.ZERO, end_offset])
 	editor_opening_preview.default_color = Color(0.2, 0.95, 1.0, 0.95) if opening_kind == OpeningKind.WINDOW else Color(1.0, 0.72, 0.22, 0.95)
 	editor_opening_preview.visible = Engine.is_editor_hint() and opening_kind != OpeningKind.NONE
-	editor_description = "%s · %s · %s · Cell %02d. Root를 이동하면 이 벽 한 칸의 Visual/Collision/Socket이 함께 이동합니다." % [
+	editor_description = "%s · %s · %s · Cell %02d. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다." % [
 		String(wall_id),
 		room_name_ko,
 		"AXIS_A" if direction == Direction.AXIS_A else "AXIS_B",

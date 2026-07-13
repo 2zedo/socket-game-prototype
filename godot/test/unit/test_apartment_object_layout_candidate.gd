@@ -21,14 +21,15 @@ const NON_INTERACTION_IDS := [
 	"shoes_slippers", "cable_bundle", "wall_conduit", "power_housing",
 ]
 const EDITABLE_NODE_IDS := DIRECT_INTERACTION_IDS
-const EDITABLE_ENVIRONMENT_NODE_IDS := [
+const FLOOR_ENVIRONMENT_NODE_IDS := [
 	"sink_counter", "dining_table", "ups_unit", "bathroom_fixture", "shoes_slippers",
 ]
-const ALL_EDITABLE_NODE_IDS := EDITABLE_NODE_IDS + EDITABLE_ENVIRONMENT_NODE_IDS
-const RESOURCE_BACKED_ENVIRONMENT_IDS := [
-	"signal_booster", "sea_horizon_poster", "fluorescent_light",
-	"cable_bundle", "wall_conduit", "power_housing",
+const ATTACHED_ENVIRONMENT_NODE_IDS := [
+	"signal_booster", "cable_bundle", "power_housing", "sea_horizon_poster",
+	"wall_conduit", "fluorescent_light",
 ]
+const EDITABLE_ENVIRONMENT_NODE_IDS := FLOOR_ENVIRONMENT_NODE_IDS + ATTACHED_ENVIRONMENT_NODE_IDS
+const ALL_EDITABLE_NODE_IDS := EDITABLE_NODE_IDS + EDITABLE_ENVIRONMENT_NODE_IDS
 const RETIRED_IDS := [
 	"phone", "air_conditioner", "desk", "bed_placeholder", "fridge_placeholder",
 	"microwave_placeholder", "sink_counter_placeholder", "small_table_placeholder",
@@ -74,6 +75,8 @@ func test_migrated_resources_keep_logic_without_duplicate_scene_geometry() -> vo
 		assert_eq(objects[id].collision_shape_type, FOOTPRINT_CONFIG_SCRIPT.CollisionShapeType.NONE)
 		assert_eq(objects[id].interaction_cells, [], "%s Resource must not duplicate Scene use points." % id)
 		assert_eq(objects[id].interaction_cell, Vector2i(-1, -1))
+		if id in ATTACHED_ENVIRONMENT_NODE_IDS:
+			assert_eq(objects[id].wall_position_ratio, 0.0, "%s Resource must not retain positional wall ratio geometry." % id)
 
 
 func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() -> void:
@@ -179,10 +182,8 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 	assert_eq(objects["microwave"].floor_occupancy_source, "NONE")
 	assert_eq(objects["power_module_board"].floor_occupancy_source, "NONE")
 	for id in EXPECTED_IDS:
-		if ALL_EDITABLE_NODE_IDS.has(id):
-			continue
-		assert_false(bool(objects[id].get("node_backed", false)), "%s must keep the Resource fallback path." % id)
-		assert_eq(objects[id].source, "resource")
+		assert_true(bool(objects[id].get("node_backed", false)), "%s must use Environment Scene Node authority." % id)
+		assert_eq(objects[id].source, "scene_node")
 
 
 func test_floor_environment_scene_nodes_preserve_geometry_without_interaction_nodes() -> void:
@@ -219,7 +220,7 @@ func test_floor_environment_scene_nodes_preserve_geometry_without_interaction_no
 		},
 	}
 	var objects := _dictionary_map(shell._object_footprints())
-	for id in EDITABLE_ENVIRONMENT_NODE_IDS:
+	for id in FLOOR_ENVIRONMENT_NODE_IDS:
 		var spec: Dictionary = expected[id]
 		var object_node: Node2D = shell.get_node(spec.path)
 		assert_eq(object_node.position, spec.position)
@@ -258,6 +259,97 @@ func test_floor_environment_scene_nodes_preserve_geometry_without_interaction_no
 	assert_false(objects["shoes_slippers"].blocks_movement)
 	assert_false(objects["shoes_slippers"].uses_floor_occupancy)
 	assert_eq(objects["shoes_slippers"].collision_polygons, [])
+
+
+func test_attached_environment_nodes_preserve_world_geometry_and_real_socket_parents() -> void:
+	var shell = _make_shell()
+	var expected := {
+		"signal_booster": {
+			"path": "EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster",
+			"socket": "EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket",
+			"root_local": Vector2.ZERO, "world": Vector2(928, -20),
+			"polygon": PackedVector2Array([Vector2(-56, -48), Vector2(56, -48), Vector2(56, 48), Vector2(-56, 48)]),
+			"base": Vector2.ZERO, "top": Vector2(0, -48), "priority": 2,
+		},
+		"cable_bundle": {
+			"path": "EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle",
+			"socket": "EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket",
+			"root_local": Vector2.ZERO, "world": Vector2(1032, 80),
+			"polygon": PackedVector2Array([Vector2(-40, -20), Vector2(40, -20), Vector2(40, 20), Vector2(-40, 20)]),
+			"base": Vector2.ZERO, "top": Vector2(0, -20), "priority": 2,
+		},
+		"power_housing": {
+			"path": "EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing",
+			"socket": "EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket",
+			"root_local": Vector2.ZERO, "world": Vector2(1476, 96),
+			"polygon": PackedVector2Array([Vector2(-120, -105), Vector2(120, -105), Vector2(120, 105), Vector2(-120, 105)]),
+			"base": Vector2.ZERO, "top": Vector2(0, -105), "priority": 2,
+		},
+		"sea_horizon_poster": {
+			"path": "Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster",
+			"socket": "Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket",
+			"root_local": Vector2(0, -20), "world": Vector2(1285.28, 489.36),
+			"polygon": PackedVector2Array([Vector2(-80, -40), Vector2(80, -40), Vector2(80, 40), Vector2(-80, 40)]),
+			"base": Vector2(0, 20), "top": Vector2(0, -40), "priority": 2,
+		},
+		"wall_conduit": {
+			"path": "Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit",
+			"socket": "Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket",
+			"root_local": Vector2.ZERO, "world": Vector2(1282.72, 29.36),
+			"polygon": PackedVector2Array([Vector2(-64, -32), Vector2(64, -32), Vector2(64, 32), Vector2(-64, 32)]),
+			"base": Vector2.ZERO, "top": Vector2(0, -32), "priority": 2,
+		},
+		"fluorescent_light": {
+			"path": "CeilingAnchors/FluorescentLightSocket/FluorescentLight",
+			"socket": "CeilingAnchors/FluorescentLightSocket",
+			"root_local": Vector2.ZERO, "world": Vector2(1060, 334),
+			"polygon": PackedVector2Array([Vector2(-120, -20), Vector2(120, -20), Vector2(120, 20), Vector2(-120, 20)]),
+			"base": Vector2.ZERO, "top": Vector2(0, -20), "priority": 4,
+		},
+	}
+	var objects := _dictionary_map(shell._object_footprints())
+	for id in ATTACHED_ENVIRONMENT_NODE_IDS:
+		var spec: Dictionary = expected[id]
+		var object_node: Node2D = shell.get_node(spec.path)
+		var socket: Marker2D = shell.get_node(spec.socket)
+		var object_data: Dictionary = objects[id]
+		assert_eq(object_node.get_parent(), socket)
+		assert_eq(object_node.position, spec.root_local)
+		assert_almost_eq(object_node.global_position.distance_to(spec.world), 0.0, 0.01)
+		assert_eq(object_node.get_node("Visual/VisualPreview").polygon, spec.polygon)
+		assert_eq(object_node.get_node("SelectionArea/SelectionPolygon").polygon, spec.polygon)
+		assert_eq(object_node.get_node("BasePoint").position, spec.base)
+		assert_eq(object_node.get_node("TopPoint").position, spec.top)
+		assert_null(object_node.get_node_or_null("Body/BodyPolygon"))
+		assert_null(object_node.get_node_or_null("InteractionArea"))
+		assert_null(object_node.get_node_or_null("InteractionPolygon"))
+		assert_null(object_node.get_node_or_null("UsePoint"))
+		assert_eq(object_node.geometry_warnings(), [])
+		assert_true(object_data.node_backed)
+		assert_eq(object_data.source, "scene_node")
+		assert_eq(String(object_data.node_path), String(object_node.get_path()))
+		assert_eq(String(object_data.mount_parent_socket_path), String(socket.get_path()))
+		assert_almost_eq(Vector2(object_data.mount_parent_socket_world).distance_to(socket.global_position), 0.0, 0.01)
+		assert_almost_eq(shell._object_pixel_center(object_data).distance_to(spec.world), 0.0, 0.01)
+		assert_eq(object_data.collision_polygons, [])
+		assert_eq(object_data.interaction_polygons, [])
+		assert_eq(object_data.use_points_world, [])
+		assert_eq(object_data.occupied_cells, [])
+		assert_false(object_data.blocks_movement)
+		assert_false(object_data.uses_floor_occupancy)
+		var hit: Dictionary = shell._object_hit_candidate(object_data, spec.world)
+		assert_eq(hit.hit_kind, "selection")
+		assert_eq(hit.priority, spec.priority)
+
+
+func test_attached_environment_resource_wall_ratio_is_rejected_as_duplicate_geometry() -> void:
+	var shell = _make_shell()
+	var poster: Node2D = shell.get_node("Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster")
+	var poster_config = _object_map(FOOTPRINT_SET.objects)["sea_horizon_poster"]
+	poster_config.wall_position_ratio = 0.5
+	assert_true(_strings_contain(Array(poster.call("geometry_warnings")), "migrated Resource geometry must remain disabled"))
+	poster_config.wall_position_ratio = 0.0
+	assert_eq(poster.call("geometry_warnings"), [])
 
 
 func test_environment_body_vertex_extension_updates_derived_floor_cells() -> void:
@@ -368,11 +460,11 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 	assert_eq(_dictionary_map(shell._object_footprints())["sink_counter"].visual_center_world, sink_before)
 	assert_eq(sink_node.position, Vector2(1012, 182), "Earlier root movement remains independent from MicrowaveSocket movement.")
 
-	var board_socket: Node2D = shell.get_node("EditableObjectNodes/PowerModuleBoard/AttachmentSocket")
+	var board_socket: Node2D = shell.get_node("EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket")
 	var housing_before: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
 	board_socket.position += Vector2(8, 4)
 	var housing_after: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
-	assert_eq(housing_after, housing_before + Vector2(8, 4), "Resource child attachments must follow AttachmentSocket.")
+	assert_eq(housing_after, housing_before + Vector2(8, 4), "PowerHousing Scene Node must follow its dedicated Socket.")
 
 
 func test_new_interaction_nodes_keep_selection_interaction_and_use_independent() -> void:
@@ -404,7 +496,7 @@ func test_new_interaction_nodes_keep_selection_interaction_and_use_independent()
 		assert_eq(Vector2(after_use.use_points_world[0]), use_before + Vector2(10, 5))
 
 
-func test_node_17_attachment_socket_keeps_resource_children_attached() -> void:
+func test_node_17_independent_sockets_move_only_their_scene_node_child() -> void:
 	var shell = _make_shell()
 	var objects_before := _dictionary_map(shell._object_footprints())
 	assert_eq(objects_before["signal_booster"].parent_object_id, "node_17")
@@ -412,12 +504,36 @@ func test_node_17_attachment_socket_keeps_resource_children_attached() -> void:
 	var booster_before: Vector2 = shell._object_pixel_center(objects_before["signal_booster"])
 	var cable_before: Vector2 = shell._object_pixel_center(objects_before["cable_bundle"])
 	var node_center_before: Vector2 = shell._object_pixel_center(objects_before["node_17"])
-	var socket: Marker2D = shell.get_node("EditableObjectNodes/Node17/AttachmentSocket")
-	socket.position += Vector2(14, 7)
+	var booster_socket: Marker2D = shell.get_node("EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket")
+	booster_socket.position += Vector2(14, 7)
 	var objects_after := _dictionary_map(shell._object_footprints())
 	assert_eq(shell._object_pixel_center(objects_after["signal_booster"]), booster_before + Vector2(14, 7))
-	assert_eq(shell._object_pixel_center(objects_after["cable_bundle"]), cable_before + Vector2(14, 7))
+	assert_eq(shell._object_pixel_center(objects_after["cable_bundle"]), cable_before, "SignalBoosterSocket must not move CableBundle.")
 	assert_eq(shell._object_pixel_center(objects_after["node_17"]), node_center_before, "Socket edits must not move NODE-17 itself.")
+	var cable_socket: Marker2D = shell.get_node("EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket")
+	cable_socket.position += Vector2(-9, 5)
+	var objects_after_cable := _dictionary_map(shell._object_footprints())
+	assert_eq(shell._object_pixel_center(objects_after_cable["signal_booster"]), booster_before + Vector2(14, 7))
+	assert_eq(shell._object_pixel_center(objects_after_cable["cable_bundle"]), cable_before + Vector2(-9, 5))
+
+
+func test_power_housing_and_ceiling_sockets_move_only_their_attached_child() -> void:
+	var shell = _make_shell()
+	var before := _dictionary_map(shell._object_footprints())
+	var board_before: Vector2 = shell._object_pixel_center(before["power_module_board"])
+	var housing_before: Vector2 = shell._object_pixel_center(before["power_housing"])
+	var light_before: Vector2 = shell._object_pixel_center(before["fluorescent_light"])
+	var housing_socket: Marker2D = shell.get_node("EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket")
+	housing_socket.position += Vector2(10, -6)
+	var after_housing := _dictionary_map(shell._object_footprints())
+	assert_eq(shell._object_pixel_center(after_housing["power_housing"]), housing_before + Vector2(10, -6))
+	assert_eq(shell._object_pixel_center(after_housing["power_module_board"]), board_before)
+	assert_eq(shell._object_pixel_center(after_housing["fluorescent_light"]), light_before)
+	var light_socket: Marker2D = shell.get_node("CeilingAnchors/FluorescentLightSocket")
+	light_socket.position += Vector2(-12, 8)
+	var after_light := _dictionary_map(shell._object_footprints())
+	assert_eq(shell._object_pixel_center(after_light["fluorescent_light"]), light_before + Vector2(-12, 8))
+	assert_eq(shell._object_pixel_center(after_light["power_housing"]), housing_before + Vector2(10, -6))
 
 
 func test_entrance_door_open_state_switches_wall_collision_without_floor_occupancy() -> void:
@@ -557,16 +673,13 @@ func test_editable_object_configuration_warnings_cover_invalid_contracts() -> vo
 	socket.free()
 
 
-func test_rotated_floorplan_environment_layout_values_are_preserved() -> void:
+func test_all_eighteen_resource_geometry_values_are_disabled() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
-	_assert_pixels(objects["signal_booster"], Vector2i(1, 2), Vector2(-68, -58), Vector2(112, 96), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["sea_horizon_poster"], Vector2i(11, 7), Vector2(0, -20), Vector2(160, 80), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["fluorescent_light"], Vector2i(6, 6), Vector2.ZERO, Vector2(240, 40), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["cable_bundle"], Vector2i(2, 2), Vector2(36, 42), Vector2(80, 40), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["wall_conduit"], Vector2i(3, 0), Vector2.ZERO, Vector2(128, 64), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["power_housing"], Vector2i(6, 0), Vector2.ZERO, Vector2(240, 210), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	for id in EDITABLE_ENVIRONMENT_NODE_IDS:
+	for id in EXPECTED_IDS:
 		_assert_pixels(objects[id], Vector2i.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+		assert_eq(objects[id].size_cells, Vector2i.ZERO)
+		assert_eq(objects[id].interaction_cell, Vector2i(-1, -1))
+		assert_eq(objects[id].interaction_cells, [])
 
 
 func test_attachment_and_floor_occupancy_policy() -> void:
@@ -607,6 +720,12 @@ func test_parent_and_wall_references_are_valid_and_acyclic() -> void:
 	assert_eq(objects["power_housing"].wall_segment_id, objects["power_module_board"].wall_segment_id)
 	assert_true(String(shell.get_node("EditableObjectNodes/PowerModuleBoard").mount_socket_path).contains("Cell05/AttachmentSocket"))
 	assert_true(String(objects["microwave"].node_path).contains("SinkCounter/AttachmentSockets/MicrowaveSocket"))
+	assert_true(String(objects["signal_booster"].node_path).contains("Node17/AttachmentSockets/SignalBoosterSocket"))
+	assert_true(String(objects["cable_bundle"].node_path).contains("Node17/AttachmentSockets/CableBundleSocket"))
+	assert_true(String(objects["power_housing"].node_path).contains("PowerModuleBoard/AttachmentSockets/PowerHousingSocket"))
+	assert_true(String(objects["sea_horizon_poster"].mount_parent_socket_path).contains("LivingRightWall/WallCells/Cell03/AttachmentSocket"))
+	assert_true(String(objects["wall_conduit"].mount_parent_socket_path).contains("WorkBackWall/WallCells/Cell02/AttachmentSocket"))
+	assert_true(String(objects["fluorescent_light"].mount_parent_socket_path).contains("CeilingAnchors/FluorescentLightSocket"))
 	var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 	var entrance_unit: Dictionary = shell._object_wall_attachment_unit(objects["entrance_door"], entrance_wall)
 	assert_eq(int(entrance_unit.get("offset", -1)), int(entrance_wall.get("doorway_offset", -2)))
@@ -648,25 +767,18 @@ func test_direct_interaction_contract_contains_exactly_seven_world_objects() -> 
 func test_environment_and_decoration_objects_have_no_gameplay_interaction_geometry() -> void:
 	var shell = _make_shell()
 	var objects := _dictionary_map(shell._object_footprints())
-	var resource_backed_ids: Array[String] = []
 	for id in NON_INTERACTION_IDS:
 		assert_ne(String(objects[id].category), "interaction", "%s must remain P-debug-only, not directly usable." % id)
-		if EDITABLE_ENVIRONMENT_NODE_IDS.has(id):
-			assert_true(objects[id].node_backed)
-			assert_eq(objects[id].source, "scene_node")
-			var object_node: Node = objects[id].object_node
-			assert_null(object_node.get_node_or_null("InteractionArea"))
-			assert_null(object_node.get_node_or_null("InteractionPolygon"))
-			assert_null(object_node.get_node_or_null("UsePoint"))
-		else:
-			assert_false(bool(objects[id].get("node_backed", false)), "%s must keep the Resource fallback path." % id)
-			assert_eq(objects[id].source, "resource")
-			resource_backed_ids.append(id)
+		assert_true(objects[id].node_backed)
+		assert_eq(objects[id].source, "scene_node")
+		var object_node: Node = objects[id].object_node
+		assert_null(object_node.get_node_or_null("InteractionArea"))
+		assert_null(object_node.get_node_or_null("InteractionPolygon"))
+		assert_null(object_node.get_node_or_null("UsePoint"))
 		assert_eq(Vector2(objects[id].interaction_size_px), Vector2.ZERO)
 		assert_eq(shell._object_raw_interaction_cells(objects[id]), [])
 		assert_eq(shell._object_interaction_cells(objects[id]), [])
 		assert_false(shell._object_has_valid_interaction_area(objects[id]))
-	assert_eq(_sorted_strings(resource_backed_ids), _sorted_strings(RESOURCE_BACKED_ENVIRONMENT_IDS))
 
 
 func test_priority_interaction_cells_touch_their_object_or_parent_collision() -> void:
@@ -695,8 +807,8 @@ func test_rotated_floorplan_layout_invariants() -> void:
 	assert_eq(objects["entrance_door"].wall_segment_id, &"entrance_wall")
 	assert_eq(objects["power_module_board"].wall_segment_id, &"work_back_wall")
 	assert_eq(objects["wall_conduit"].wall_segment_id, &"work_back_wall")
-	assert_eq(objects["wall_conduit"].wall_position_ratio, 0.31)
-	assert_eq(objects["sea_horizon_poster"].anchor_cell, Vector2i(11, 7))
+	assert_eq(objects["wall_conduit"].wall_position_ratio, 0.0)
+	assert_eq(objects["sea_horizon_poster"].wall_segment_id, &"living_right_wall")
 
 
 func test_candidate_layout_has_no_placement_or_measurement_warnings() -> void:
@@ -978,6 +1090,14 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_socket"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_wall_edge"))
 	assert_ne(shell._object_anchor_world_position(board), shell._cell_center(board.anchor_cell), "Wall anchor must resolve from its wall edge, not a fake floor center.")
+	shell._select_object_for_debug("sea_horizon_poster")
+	assert_true(shell._debug_detail_label.text.contains("geometry source: SCENE_NODE"))
+	assert_true(shell._debug_detail_label.text.contains("Cell03/AttachmentSocket"))
+	assert_true(shell._debug_detail_label.text.contains("ParentSocket:"))
+	assert_true(shell._debug_detail_label.text.contains("wall: living_right_wall / SCENE_SOCKET"))
+	assert_false(shell._debug_detail_label.text.contains("wall: living_right_wall @ 0.00"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_sea_horizon_poster_selected_attachment_parent_socket"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_sea_horizon_poster_selected_interaction"))
 
 
 func test_wall_transparency_toggle_is_visual_only() -> void:
@@ -1012,6 +1132,13 @@ func test_wall_transparency_toggle_is_visual_only() -> void:
 	assert_eq(shell._navigation_edge_sets()["blocked"].keys().size(), edges_before["blocked"].keys().size())
 	assert_true(shell._compact_help_label.text.contains("전체벽=숨김"))
 	assert_true(shell._debug_help_body_label.text.contains("현재: 숨김"))
+	var conduit: Node2D = shell.get_node("Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit")
+	var poster: Node2D = shell.get_node("Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster")
+	assert_true(conduit.visible, "V HIDDEN must keep wall-attached equipment roots visible.")
+	assert_true(poster.visible, "V HIDDEN must keep wall-attached decoration roots visible.")
+	shell._unhandled_input(_key_event(KEY_P))
+	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_wall_conduit_selection_area"))
+	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_sea_horizon_poster_selection_area"))
 	shell._redraw_reveal_sensitive_layers()
 	assert_false(shell.get_node("Walls/LivingRightWall/WallCells/Cell00/Visual").visible, "Reveal refresh must not escape HIDDEN inspection mode.")
 	shell._unhandled_input(_key_event(KEY_V))
@@ -1252,27 +1379,36 @@ func test_wall_cell_move_visibility_openings_and_socket_tracking_use_cell_author
 			"object_id": "wall_conduit",
 			"wall_path": "Walls/WorkBackWall",
 			"cell_path": "WallCells/Cell02",
+			"object_path": "AttachmentSocket/WallConduit",
 		},
 		{
 			"object_id": "sea_horizon_poster",
 			"wall_path": "Walls/LivingRightWall",
 			"cell_path": "WallCells/Cell03",
+			"object_path": "AttachmentSocket/SeaHorizonPoster",
 		},
 	]:
 		var socket_wall = shell.get_node(socket_case.wall_path)
 		var socket_cell: Node2D = socket_wall.get_node(socket_case.cell_path)
-		var object_data: Dictionary = shell._object_data_by_id(socket_case.object_id)
-		var anchor_before: Vector2 = shell._object_anchor_world_position(object_data)
+		var object_node: Node2D = socket_cell.get_node(socket_case.object_path)
+		var anchor_before: Vector2 = shell._object_anchor_world_position(shell._object_data_by_id(socket_case.object_id))
+		var object_before := object_node.global_position
 		var socket_before: Vector2 = socket_cell.get_node("AttachmentSocket").global_position
 		var socket_cell_before := socket_cell.position
 		var test_delta := Vector2(16, 8)
 		socket_cell.position += test_delta
 		socket_wall._sync_group_from_cells()
 		assert_eq(socket_cell.get_node("AttachmentSocket").global_position, socket_before + test_delta)
-		assert_eq(shell._object_anchor_world_position(object_data), anchor_before + test_delta, "%s must read its WallCell Socket directly." % socket_case.object_id)
+		assert_eq(object_node.global_position, object_before + test_delta, "%s must physically follow its WallCell Socket." % socket_case.object_id)
+		assert_eq(shell._object_anchor_world_position(shell._object_data_by_id(socket_case.object_id)), anchor_before + test_delta, "%s must read its WallCell Socket directly." % socket_case.object_id)
+		socket_cell.enabled = false
+		socket_wall._sync_group_from_cells()
+		assert_true(object_node.visible, "Disabling a WallCell must not delete or hide attached decoration roots.")
+		assert_eq(shell._object_placement_warnings(), [], "A retained physical Socket stays valid while its wall material is disabled.")
+		socket_cell.enabled = true
 		socket_cell.position = socket_cell_before
 		socket_wall._sync_group_from_cells()
-		assert_eq(shell._object_anchor_world_position(object_data), anchor_before)
+		assert_eq(shell._object_anchor_world_position(shell._object_data_by_id(socket_case.object_id)), anchor_before)
 
 	for opening_path in [
 		"Walls/EntranceWall/WallCells/Cell04",

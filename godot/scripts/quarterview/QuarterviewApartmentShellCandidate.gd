@@ -163,6 +163,8 @@ const EDITABLE_NODE_OBJECT_IDS := [
 ]
 const EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS := [
 	"sink_counter", "dining_table", "ups_unit", "bathroom_fixture", "shoes_slippers",
+	"signal_booster", "cable_bundle", "power_housing", "sea_horizon_poster",
+	"wall_conduit", "fluorescent_light",
 ]
 const EDITABLE_OBJECT_NODES_PATH := ^"EditableObjectNodes"
 const RESOURCE_WALL_SOCKET_PATH_BY_OBJECT_ID := {
@@ -1088,9 +1090,8 @@ func _wall_height_from_config(config: Resource) -> float:
 			return -1.0
 
 
-# Seven direct-interaction objects and five migrated floor environment objects use Scene nodes as
-# their exact ROTATE_90 geometry authority. The remaining six environment/decoration objects keep
-# the Resource fallback path until deliberately migrated.
+# All 18 apartment world objects use Scene nodes as their exact ROTATE_90 geometry authority.
+# Resources retain logical identity, category, asset and parent/wall metadata only.
 func _object_footprints() -> Array[Dictionary]:
 	var footprints: Array[Dictionary] = []
 	for entry in _active_object_footprint_config_entries():
@@ -1228,6 +1229,12 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var visual_bounds: Rect2 = object_node.call("visual_bounds_world")
 	var root_position: Vector2 = object_node.global_position
 	var attachment_anchor: Vector2 = object_node.call("attachment_anchor_world")
+	var mount_parent_socket_path := ""
+	if object_node.has_method("mount_parent_socket_path"):
+		mount_parent_socket_path = String(object_node.call("mount_parent_socket_path"))
+	var mount_parent_socket_world := attachment_anchor
+	if object_node.has_method("mount_parent_socket_world"):
+		mount_parent_socket_world = Vector2(object_node.call("mount_parent_socket_world"))
 	var base_point: Vector2 = object_node.call("base_point_world")
 	var top_point: Vector2 = object_node.call("top_point_world")
 	var use_points_world: Array[Vector2] = []
@@ -1236,7 +1243,12 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var collision_bounds := _polygons_bounds(collision_polygons)
 	var selection_bounds := _polygons_bounds(selection_polygons)
 	var interaction_bounds := _polygons_bounds(interaction_polygons)
-	var anchor_world := base_point
+	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
+	var anchor_world := (
+		mount_parent_socket_world
+		if anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.FLOOR and not mount_parent_socket_path.is_empty()
+		else base_point
+	)
 	var occupied_cells: Array[Vector2i] = []
 	if not floor_polygons.is_empty():
 		occupied_cells = (
@@ -1255,6 +1267,8 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	object_data["object_node"] = object_node
 	object_data["object_root_world"] = root_position
 	object_data["attachment_anchor_world"] = attachment_anchor
+	object_data["mount_parent_socket_path"] = mount_parent_socket_path
+	object_data["mount_parent_socket_world"] = mount_parent_socket_world
 	object_data["anchor_world_position"] = anchor_world
 	object_data["base_point_world"] = base_point
 	object_data["top_point_world"] = top_point
@@ -1493,15 +1507,15 @@ func _candidate_object_footprint_specs() -> Array[Dictionary]:
 		_object_spec("node_17", "NODE-17", "work_power_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "node_17_dl_base.png", "objects/apartment/Node17.tscn", "audio_node_17", "표시 화면과 신호등이 작업공간 중앙을 향함", true, Vector2i.ZERO),
 		_object_spec("sink_counter", "싱크대·주방 카운터", "living_area", "environment", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "sink_counter_dl_base.png", "objects/apartment/sink_counter.tres", "", "상판 정면이 주방 통로를 향함", true, Vector2i.ZERO),
 		_object_spec("dining_table", "작은 식탁", "living_area", "environment", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "dining_table_dl_base.png", "objects/apartment/dining_table.tres", "", "의자 접근면이 생활공간 통로를 향함", true, Vector2i.ZERO),
-		_object_spec("signal_booster", "신호 증폭기", "work_power_area", "environment", Vector2i(1, 2), Vector2(112, 96), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2(-68, -58), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "signal_booster_dl_base.png", "objects/apartment/signal_booster.tres", "audio_signal_booster", "표시등이 작업공간 중앙을 향함", false),
+		_object_spec("signal_booster", "신호 증폭기", "work_power_area", "environment", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "signal_booster_dl_base.png", "objects/apartment/signal_booster.tres", "audio_signal_booster", "표시등이 작업공간 중앙을 향함", false, Vector2i.ZERO, 0.0),
 		_object_spec("ups_unit", "UPS·보조전원", "work_power_area", "environment", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "ups_unit_dl_base.png", "objects/apartment/ups_unit.tres", "audio_ups_unit", "전면 패널이 작업공간 통로를 향함", true, Vector2i.ZERO),
 		_object_spec("bathroom_fixture", "욕실 통합 설비", "bathroom", "environment", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "bathroom_fixture_dl_base.png", "objects/apartment/bathroom_fixture.tres", "", "욕실문에서 내부를 볼 때 정면이 보임", true, Vector2i.ZERO),
-		_object_spec("sea_horizon_poster", "바다·수평선 포스터", "living_area", "decoration", Vector2i(11, 7), Vector2(160, 80), false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "living_right_wall", "", Vector2(0, -20), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "sea_horizon_poster_wall.png", "objects/apartment/sea_horizon_poster.tres", "", "포스터 그림이 침대와 방 안쪽을 향함", false, Vector2i.ONE, 0.58),
-		_object_spec("fluorescent_light", "형광등", "living_area", "environment", Vector2i(6, 6), Vector2(240, 40), false, [], ApartmentObjectFootprintConfigScript.AnchorType.CEILING, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "fluorescent_light_base.png", "objects/apartment/fluorescent_light.tres", "audio_fluorescent_light", "천장에서 생활공간 전체를 비춤", false),
+		_object_spec("sea_horizon_poster", "바다·수평선 포스터", "living_area", "decoration", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "living_right_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "sea_horizon_poster_wall.png", "objects/apartment/sea_horizon_poster.tres", "", "포스터 그림이 침대와 방 안쪽을 향함", false, Vector2i.ZERO, 0.0),
+		_object_spec("fluorescent_light", "형광등", "living_area", "environment", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.CEILING, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "fluorescent_light_base.png", "objects/apartment/fluorescent_light.tres", "audio_fluorescent_light", "천장에서 생활공간 전체를 비춤", false, Vector2i.ZERO, 0.0),
 		_object_spec("shoes_slippers", "신발·슬리퍼", "entrance_area", "decoration", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "shoes_slippers_dl_base.png", "objects/apartment/shoes_slippers.tres", "", "신발 앞코가 현관 통로를 향함", false, Vector2i.ZERO),
-		_object_spec("cable_bundle", "케이블 묶음", "work_power_area", "decoration", Vector2i(2, 2), Vector2(80, 40), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2(36, 42), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "cable_bundle_var01.png", "objects/apartment/cable_bundle.tres", "", "NODE-17에서 전력 장비 방향으로 정리됨", false),
-		_object_spec("wall_conduit", "벽면 전선관", "work_power_area", "decoration", Vector2i(3, 0), Vector2(128, 64), false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_back_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "wall_conduit_axis_a_1x.png", "objects/apartment/wall_conduit.tres", "", "작업공간 뒤쪽 벽 방향을 따라 이어짐", false, Vector2i.ONE, 0.31),
-		_object_spec("power_housing", "전력 장비 외장 프레임", "work_power_area", "decoration", Vector2i(6, 0), Vector2(240, 210), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "work_back_wall", "power_module_board", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "power_housing_dl_base.png", "objects/apartment/power_housing.tres", "", "전력 모듈 보드와 같은 방향", false, Vector2i.ONE, 0.68),
+		_object_spec("cable_bundle", "케이블 묶음", "work_power_area", "decoration", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "cable_bundle_var01.png", "objects/apartment/cable_bundle.tres", "", "NODE-17에서 전력 장비 방향으로 정리됨", false, Vector2i.ZERO, 0.0),
+		_object_spec("wall_conduit", "벽면 전선관", "work_power_area", "decoration", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_back_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "wall_conduit_axis_a_1x.png", "objects/apartment/wall_conduit.tres", "", "작업공간 뒤쪽 벽 방향을 따라 이어짐", false, Vector2i.ZERO, 0.0),
+		_object_spec("power_housing", "전력 장비 외장 프레임", "work_power_area", "decoration", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "work_back_wall", "power_module_board", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "power_housing_dl_base.png", "objects/apartment/power_housing.tres", "", "전력 모듈 보드와 같은 방향", false, Vector2i.ZERO, 0.0),
 	]
 
 
@@ -1706,11 +1720,13 @@ func _object_placement_warnings() -> Array[String]:
 		var wall_id := String(object_data.get("wall_segment_id", ""))
 		if _object_requires_wall(object_data):
 			var wall := _wall_segment_by_id(wall_id)
-			if wall_id.is_empty() or wall.is_empty() or not bool(wall.get("enabled", true)):
+			var mount_parent_socket_path := String(object_data.get("mount_parent_socket_path", ""))
+			var physical_socket_valid := bool(object_data.get("node_backed", false)) and not mount_parent_socket_path.is_empty() and get_node_or_null(NodePath(mount_parent_socket_path)) != null
+			if wall_id.is_empty() or wall.is_empty():
 				warnings.append("object %s references unavailable wall %s" % [object_id, wall_id])
 			elif object_id == "entrance_door" and not _object_wall_attachment_is_doorway(object_data, wall):
 				warnings.append("object %s must target the doorway unit on %s" % [object_id, wall_id])
-			elif object_id != "entrance_door" and not _object_wall_attachment_is_available(object_data, wall):
+			elif object_id != "entrance_door" and not physical_socket_valid and not _object_wall_attachment_is_available(object_data, wall):
 				warnings.append("object %s targets an unavailable wall unit on %s" % [object_id, wall_id])
 		elif not wall_id.is_empty() and _wall_segment_by_id(wall_id).is_empty():
 			warnings.append("object %s references unknown related wall %s" % [object_id, wall_id])
@@ -1748,8 +1764,7 @@ func _object_placement_warnings() -> Array[String]:
 
 func _object_geometry_is_hard_authority(object_data: Dictionary) -> bool:
 	# In the editable Environment, exact placement validation follows authored Scene Nodes.
-	# The remaining Resource-only environment props stay as legacy debug references while the
-	# user paints the authoritative TileMaps; they must not force those manual floor edits back.
+	# Legacy non-ROTATE_90 views retain their isolated Resource compatibility path.
 	return bool(object_data.get("node_backed", false)) or not _environment_node_authority_active()
 
 
@@ -2221,7 +2236,10 @@ func _object_edit_hint(object_data: Dictionary) -> String:
 	if source == "resource":
 		location = "edit godot/resources/quarterview/apartment_shell_object_footprints.tres entry id=\"%s\"" % id
 	elif source == "scene_node":
-		return "edit Scene > %s; adjust Visual/BodyPolygon/InteractionPolygon/UsePoint/AttachmentSocket" % String(object_data.get("node_path", id))
+		var channels := "Visual/SelectionPolygon/BasePoint/TopPoint/AttachmentSockets"
+		if String(object_data.get("category", "")) == "interaction":
+			channels = "Visual/BodyPolygon/SelectionPolygon/InteractionPolygon/UsePoint/AttachmentSocket"
+		return "edit Scene > %s; adjust %s" % [String(object_data.get("node_path", id)), channels]
 	elif source == "fallback":
 		location = "edit _default_object_footprint_configs() entry id=\"%s\"" % id
 	elif source == "custom":
@@ -2724,12 +2742,14 @@ func _draw_object_attachment_guide(parent: Node, prefix: String, object_data: Di
 			_add_marker(parent, "%s_socket_%d" % [prefix, socket_index], Vector2(socket_positions[socket_index]), color, 7.0 if thickness <= 2.0 else 11.0)
 		if anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.FLOOR:
 			return
-	elif anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT:
+	elif anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.CEILING:
 		return
-	var anchor_position := _object_anchor_world_position(object_data)
-	var attachment_target := Vector2(object_data.get("socket_world_position", _object_pixel_center(object_data))) if node_backed else _object_pixel_center(object_data)
+	var anchor_position := Vector2(object_data.get("mount_parent_socket_world", _object_anchor_world_position(object_data))) if node_backed else _object_anchor_world_position(object_data)
+	var attachment_target := Vector2(object_data.get("base_point_world", _object_pixel_center(object_data))) if node_backed else _object_pixel_center(object_data)
 	if not node_backed:
 		_add_marker(parent, "%s_anchor" % prefix, anchor_position, color, 7.0 if thickness <= 2.0 else 11.0)
+	elif not String(object_data.get("mount_parent_socket_path", "")).is_empty():
+		_add_marker(parent, "%s_parent_socket" % prefix, anchor_position, color, 7.0 if thickness <= 2.0 else 11.0)
 	if anchor_position.distance_to(attachment_target) > 0.5:
 		_draw_dashed_line(parent, "%s_leader" % prefix, anchor_position, attachment_target, color, thickness, 7)
 	if anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE:
@@ -2790,6 +2810,9 @@ func _object_anchor_world_position(object_data: Dictionary, resolving: Dictionar
 func _object_anchor_debug_text(object_data: Dictionary) -> String:
 	var type_name := _object_anchor_type_name(object_data)
 	var resolved := _object_anchor_world_position(object_data)
+	var mount_parent_socket_path := String(object_data.get("mount_parent_socket_path", ""))
+	if bool(object_data.get("node_backed", false)) and not mount_parent_socket_path.is_empty():
+		return "%s: socket=%s / resolved=%s" % [type_name, mount_parent_socket_path, str(resolved)]
 	if type_name == "WALL_EDGE":
 		var wall_id := String(object_data.get("wall_segment_id", ""))
 		var unit := _object_wall_attachment_unit(object_data, _wall_segment_by_id(wall_id))
@@ -2850,7 +2873,7 @@ func _object_hit_candidate(object_data: Dictionary, world_position: Vector2) -> 
 			if _point_in_object_polygon(world_position, selection_points):
 				var selection_center := _polygon_bounds(selection_points).get_center()
 				return {
-					"id": id, "priority": 0, "hit_kind": "selection",
+					"id": id, "priority": _node_backed_selection_priority(object_data), "hit_kind": "selection",
 					"distance": selection_center.distance_squared_to(world_position),
 				}
 		return {}
@@ -2898,6 +2921,17 @@ func _object_hit_candidate(object_data: Dictionary, world_position: Vector2) -> 
 		"hit_kind": "ceiling/environment visual" if low_priority_visual else "visual",
 		"distance": center.distance_squared_to(world_position),
 	}
+
+
+func _node_backed_selection_priority(object_data: Dictionary) -> int:
+	if String(object_data.get("category", "")) == "interaction":
+		return 0
+	if not _object_collision_polygon_points(object_data).is_empty():
+		return 1
+	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
+	if anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE or anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT:
+		return 2
+	return 4
 
 
 func _point_in_object_polygon(world_position: Vector2, points: Array[Vector2]) -> bool:
@@ -3739,6 +3773,15 @@ func _update_debug_detail_panel() -> void:
 		_debug_detail_label.text = ""
 
 
+func _object_wall_detail_reference(object_data: Dictionary) -> String:
+	var wall_id := String(object_data.get("wall_segment_id", ""))
+	if wall_id.is_empty():
+		return "-"
+	if bool(object_data.get("node_backed", false)):
+		return "%s / SCENE_SOCKET" % wall_id
+	return "%s @ %.2f" % [wall_id, float(object_data.get("wall_position_ratio", 0.5))]
+
+
 func _object_debug_detail_text(object_data: Dictionary) -> String:
 	if object_data.is_empty():
 		return "오브젝트 배치\n\n오브젝트를 가리키거나 클릭하면 상세 정보가 표시됩니다."
@@ -3753,7 +3796,7 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 		selection_text += " · interaction owner: %s" % id
 	elif hit_kind == "selection":
 		selection_text += " · selection owner: %s" % id
-	var detail := "%s\n%s\nid: %s\ncategory: %s\nroom: %s\nanchor type: %s\nanchor resolved: %s\nposition offset: %s\nvisual: %s\ncollision: %s @ %s\ninteraction: %s @ %s\ninteraction cells: %s\nmovement block: %s / floor occupancy: %s\nparent: %s\nwall: %s @ %.2f" % [
+	var detail := "%s\n%s\nid: %s\ncategory: %s\nroom: %s\nanchor type: %s\nanchor resolved: %s\nposition offset: %s\nvisual: %s\ncollision: %s @ %s\ninteraction: %s @ %s\ninteraction cells: %s\nmovement block: %s / floor occupancy: %s\nparent: %s\nwall: %s" % [
 		selection_text,
 		String(object_data.get("display_name_ko", _object_display_name_ko(id))), id,
 		_object_category_name(object_data), _room_area_label(String(object_data.get("room_area_id", ""))), _object_anchor_type_name(object_data),
@@ -3763,11 +3806,10 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 		str(object_data.get("interaction_offset_px", Vector2.ZERO)), _format_cells(_object_interaction_cells(object_data)),
 		_bool_ko(bool(object_data.get("blocks_movement", false))), _bool_ko(_object_uses_floor_occupancy(object_data)),
 		String(object_data.get("parent_object_id", "-")) if not String(object_data.get("parent_object_id", "")).is_empty() else "-",
-		String(object_data.get("wall_segment_id", "-")) if not String(object_data.get("wall_segment_id", "")).is_empty() else "-",
-		float(object_data.get("wall_position_ratio", 0.5)),
+		_object_wall_detail_reference(object_data),
 	]
 	if bool(object_data.get("node_backed", false)):
-		detail += "\ngeometry source: SCENE_NODE\nnode: %s\nvisual source: %s\nfloor source: %s\nselection source: %s / size: %s\nBasePoint: %s\nTopPoint: %s / height: %.1f px\nUsePoint: %s\nAttachmentSockets: %s" % [
+		detail += "\ngeometry source: SCENE_NODE\nnode: %s\nvisual source: %s\nfloor source: %s\nselection source: %s / size: %s\nBasePoint: %s\nTopPoint: %s / height: %.1f px\nUsePoint: %s\nAttachmentSockets: %s\nParentSocket: %s @ %s" % [
 			String(object_data.get("node_path", "-")),
 			String(object_data.get("visual_source", "-")),
 			String(object_data.get("floor_occupancy_source", "NONE")),
@@ -3778,6 +3820,8 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 			float(object_data.get("height_px", 0.0)),
 			str(Array(object_data.get("use_points_world", []))),
 			str(Array(object_data.get("socket_world_positions", []))),
+			String(object_data.get("mount_parent_socket_path", "-")) if not String(object_data.get("mount_parent_socket_path", "")).is_empty() else "-",
+			str(object_data.get("mount_parent_socket_world", Vector2.ZERO)),
 		]
 		if bool(object_data.get("open_state_supported", false)):
 			detail += "\nopen state: %s / BodyPolygon: %s" % [
