@@ -58,6 +58,25 @@ func test_environment_manual_floor_fridge_and_wall_cells_propagate_to_both_wrapp
 		assert_eq(fridge.get_node("SelectionArea/SelectionPolygon").polygon, expected_fridge.get_node("SelectionArea/SelectionPolygon").polygon)
 		assert_eq(fridge.get_node("InteractionArea/InteractionPolygon").position, Vector2(30, 25))
 		assert_eq(wrapper.get_node("Walls/WorkBackWall/WallCells/Cell05").position, environment.get_node("Walls/WorkBackWall/WallCells/Cell05").position)
+	for object_path in ["SinkCounter", "DiningTable", "UpsUnit", "BathroomFixture", "ShoesSlippers"]:
+		var expected_object: Node2D = environment.get_node("EditableObjectNodes/%s" % object_path)
+		for wrapper in [candidate, playable]:
+			var inherited_object: Node2D = wrapper.get_node("EditableObjectNodes/%s" % object_path)
+			assert_eq(inherited_object.position, expected_object.position)
+			assert_eq(inherited_object.get_node("Visual/VisualPreview").polygon, expected_object.get_node("Visual/VisualPreview").polygon)
+			assert_eq(inherited_object.get_node("SelectionArea/SelectionPolygon").polygon, expected_object.get_node("SelectionArea/SelectionPolygon").polygon)
+			assert_null(inherited_object.get_node_or_null("InteractionArea"))
+			assert_null(inherited_object.get_node_or_null("UsePoint"))
+	assert_null(environment.get_node_or_null("EditableObjectNodes/SinkCounterParentAnchor"))
+	var microwave_path := "EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave"
+	for wrapper in [environment, candidate, playable]:
+		var microwave: Node2D = wrapper.get_node(microwave_path)
+		assert_eq(microwave.global_position, Vector2(996, 114))
+		assert_eq(microwave.get_node("BasePoint").global_position, Vector2(996, 174))
+		assert_eq(microwave.get_node("UsePoint").global_position, Vector2(996, 238))
+	assert_false(playable._object_blocker_ids_for_cell(Vector2i(1, 9)).has("shoes_slippers"), "Shoes/slippers selection must not add an N/Playable blocker.")
+	for blocker_point in [Vector2(996, 174), Vector2(868, 302), Vector2(804, 78)]:
+		assert_false(playable.playable_is_walkable_world_point(blocker_point), "Environment BodyPolygon must block N/Playable movement.")
 
 
 func test_fridge_sprite_uses_texture_bounds_without_changing_gameplay_geometry() -> void:

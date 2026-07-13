@@ -8,6 +8,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Floor environment object Node migration
+
+- Result: Added `ApartmentEditableEnvironmentObject` and migrated sink counter, dining table, UPS, bathroom fixture, and shoes/slippers to editable Environment Scene nodes. Root, VisualPreview, Base/Top, Selection, optional Body, and Socket geometry are now Inspector authorities; their Resource geometry is cleared.
+- Attachments/navigation: Replaced `SinkCounterParentAnchor` with the sink's real `AttachmentSockets/MicrowaveSocket` while preserving Microwave world Selection/Interaction/UsePoint geometry. Sink, table, UPS, and bathroom occupancy derives from BodyPolygon; shoes/slippers has no Body or movement block. Direct interaction remains exactly seven objects, and six environment/decoration objects remain Resource-backed.
+- MCP check: Edited/restored every Root and SelectionPolygon plus all four BodyPolygons, verified sink and Socket tracking independently, confirmed identical Environment nodes in Shell/Playable, exercised P/N/V and Playable click movement, and observed no new runtime errors. Status: `KEEP_CANDIDATE`; Manual confirmation: `COMPLETE` for this migration workflow.
+
 ### Apartment Environment single authority and WallCell editing
 
 - Authority: Removed Shell/Playable floor, wall, socket, and object child overrides. Both wrappers now instance `QuarterviewApartmentEnvironment` directly, preserving the user's 99 floor cells and Fridge root `(1128,186)`; editable-object Y-sort derives from BasePoint instead of a stale stored z value.

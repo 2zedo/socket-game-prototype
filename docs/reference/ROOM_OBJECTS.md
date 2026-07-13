@@ -141,7 +141,7 @@ Loading order:
 2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
 3. additive `custom_object_footprints` entries from the Inspector
 
-Node migration stage 2 overrides that loading order for exact ROTATE_90 geometry on all seven direct-interaction objects. `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17` use `EditableObjectNodes` in the candidate Scene for ObjectRoot, `Visual/Sprite2D/VisualPreview`, BasePoint, TopPoint, BodyPolygon when blocking, SelectionPolygon, InteractionPolygon, UsePoint, and AttachmentSocket. BasePoint is the installation/ground reference and TopPoint is the independent height reference. SelectionPolygon owns P hover/click only; InteractionPolygon remains the game-use range. Their Resource entries retain logical identity, category, room, interaction status, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The other eleven environment objects continue to use the Resource/fallback footprint path.
+Scene nodes override that loading order for exact ROTATE_90 geometry on all seven direct-interaction objects and five floor environment objects. The interaction objects keep ObjectRoot, visual, Base/Top, optional Body, Selection, Interaction, UsePoint, and attachment geometry in `EditableObjectNodes`. `sink_counter`, `dining_table`, `ups_unit`, `bathroom_fixture`, and `shoes_slippers` use the smaller `ApartmentEditableEnvironmentObject` contract with no InteractionArea or UsePoint. BasePoint is the installation/ground reference, TopPoint is the independent height reference, and SelectionPolygon owns P hover/click only. Their Resource entries retain logical identity, category, room, wall/parent relationship, UI specification, and future asset strings, but no duplicate position/size/offset/access-cell values. The remaining six environment/decoration objects continue to use the Resource/fallback footprint path.
 
 Current rotated-floorplan placement candidate:
 
@@ -150,18 +150,18 @@ Current rotated-floorplan placement candidate:
 | `entrance_door` | entrance | Scene `EditableObjectNodes/EntranceDoor`, mounted to `Walls/EntranceWall/WallCells/Cell04/AttachmentSocket` | Inspector | `Visual/VisualPreview` | closed-only `Body/BodyPolygon`; no floor occupancy | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `entrance_wall` doorway / interaction |
 | `bed` | living | Scene `EditableObjectNodes/Bed` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `fridge` | living | Scene `EditableObjectNodes/Fridge` | Inspector | `Visual/Sprite2D` (`fridge_dl_closed.png`, 90x146 bound, BasePoint-aligned) | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
-| `microwave` | living | `SinkCounterParentAnchor` child | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `PARENT_OBJECT`: `sink_counter` / interaction |
+| `microwave` | living | `EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave` | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `PARENT_OBJECT`: `sink_counter` / interaction |
 | `navi_link` | work/power | Scene `ObjectRoot` | Inspector | `Visual/VisualPreview` until Sprite texture exists | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
 | `power_module_board` | work/power | Scene `EditableObjectNodes/PowerModuleBoard`, mounted to `Walls/WorkBackWall/WallCells/Cell05/AttachmentSocket` | Inspector | `Visual/VisualPreview` until Sprite texture exists | none | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `WALL_EDGE`: `work_back_wall` / interaction |
 | `node_17` | work/power | Scene `EditableObjectNodes/Node17` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | `InteractionArea/InteractionPolygon` + independent `UsePoint` | `FLOOR` / interaction |
-| `sink_counter` | living | `(3,4)` | `(0,0)` | `220x150` | `160x70` | none | floor environment |
-| `dining_table` | living | `(4,7)` | `(0,0)` | `170x120` | `130x70` | none | `FLOOR` / environment |
+| `sink_counter` | living | Scene `EditableObjectNodes/SinkCounter` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | none; Selection only | `FLOOR` / environment; owns `MicrowaveSocket` |
+| `dining_table` | living | Scene `EditableObjectNodes/DiningTable` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | none; Selection only | `FLOOR` / environment |
 | `signal_booster` | work/power | `(1,2)` | `(-68,-58)` | `112x96` | none | none | parent: `node_17` |
-| `ups_unit` | work/power | `(8,2)` | `(0,0)` | `140x110` | `100x60` | none | `FLOOR` / environment |
-| `bathroom_fixture` | bathroom | `(0,4)` | `(0,0)` | `200x140` | `150x80` | none | floor environment |
+| `ups_unit` | work/power | Scene `EditableObjectNodes/UpsUnit` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | none; Selection only | `FLOOR` / independent environment; optional `PowerCableSocket` |
+| `bathroom_fixture` | bathroom | Scene `EditableObjectNodes/BathroomFixture` | Inspector | `Visual/VisualPreview` | `Body/BodyPolygon` | none; Selection only | `FLOOR` / environment |
 | `sea_horizon_poster` | living | `(11,7)` | `(0,-20)` | `160x80` | none | none | wall edge: `living_right_wall` |
 | `fluorescent_light` | living | `(6,6)` | `(0,0)` | `240x40` | none | none | ceiling |
-| `shoes_slippers` | entrance | `(1,9)` | `(0,0)` | `100x60` | none | none | `FLOOR` / non-blocking decoration |
+| `shoes_slippers` | entrance | Scene `EditableObjectNodes/ShoesSlippers` | Inspector | `Visual/VisualPreview` | none | none; Selection only | `FLOOR` / non-blocking decoration |
 | `cable_bundle` | work/power | `(2,2)` | `(36,42)` | `80x40` | none | none | parent: `node_17` |
 | `wall_conduit` | work/power | `(3,0)` | `(0,0)` | `128x64` | none | none | wall edge: `work_back_wall` |
 | `power_housing` | work/power | `(6,0)` | `(0,0)` | `240x210` | none | none | parent: board / `work_back_wall` |
@@ -171,6 +171,8 @@ Attachment policy:
 - Candidate Resources expose `anchor_type` as `FLOOR`, `WALL_EDGE`, `CEILING`, or `PARENT_OBJECT`; object category remains independently `interaction`, `environment`, or `decoration`.
 - Wall, ceiling, and non-floor parent attachments do not remove navigation cells or participate in floor overlap checks.
 - `ups_unit` is floor-anchored and retains floor occupancy/collision; it has no spatial parent anchor.
+- The four blocking migrated environment objects derive floor occupancy from their authored BodyPolygon on the BasePoint installation row. `shoes_slippers` has no BodyPolygon and never blocks N or Playable movement.
+- Microwave is a real child of `sink_counter/AttachmentSockets/MicrowaveSocket`. Moving the sink moves both; moving only the Socket moves only Microwave while keeping its Selection, Interaction, and UsePoint geometry together.
 - `entrance_door` and `power_module_board` resolve installation from the owning WallCell's `AttachmentSocket` through `mount_socket_path`; moving that Cell or Socket moves the complete object while preserving editable local `mount_offset`. The door BodyPolygon blocks the exact doorway edge while closed and is disabled while open; it never creates floor occupancy.
 - The still-Resource-backed `wall_conduit` and `sea_horizon_poster` resolve their wall anchor from `WorkBackWall/WallCells/Cell02/AttachmentSocket` and `LivingRightWall/WallCells/Cell03/AttachmentSocket`; this keeps them on the edited Cell without converting the remaining environment objects to editable nodes.
 - Direct world interaction is limited to exactly seven objects: `entrance_door`, `bed`, `fridge`, `microwave`, `navi_link`, `power_module_board`, and `node_17`. Each has valid interaction geometry and at least one walkable access point/cell.
@@ -183,13 +185,13 @@ Shell editing controls:
 - `M`: show room measurement only; the default view does not include object detail.
 - `P`: show BodyPolygon-derived floor occupancy in blue, BodyPolygon collision in red, SelectionPolygon in cyan dashes, InteractionPolygon in orange dashes, UsePoint as an orange marker, AttachmentSocket in pink, BasePoint in green, and TopPoint/height guide in yellow. White Sprite2D/VisualPreview bounds appear only on the selected object. Equivalent floor/collision surfaces use one blue fill with a red collision outline.
 - `N`: show navigation / collision debug; blocking footprints are removed from walkable cells.
-- `V`: make all candidate wall, stub, door, and window visuals translucent for wall-attached and behind-wall inspection; floor edges, logical walls, navigation edges, collision, and reveal state do not change.
+- `V`: cycle all candidate wall visuals through normal, 18% transparent, and hidden states for inspection; floor edges, logical walls, navigation edges, collision, openings, sockets, and attached objects do not change.
 - `I`: print wall inventory followed by object footprint summary.
 - `J`: open shell-only interaction debug menu for mock object use / inspect / cancel flow.
 - `H`: open shell-only Phone debug overlay; this does not call production `PhoneUI`.
 - `ESC`: close the topmost shell debug overlay.
 - `debug_focus_object_id`: emphasize one object id, for example `bed`.
-- For the seven migrated objects, SelectionPolygon is the only P hover/click authority and hover labels identify its owner; InteractionPolygon is not reused for selection. The other eleven retain floor/collision, wall/parent anchor, then visual fallback priority. Repeated clicks at one location still cycle candidates and show `선택 n/m`.
+- For all twelve Scene-node objects, SelectionPolygon is the P hover/click authority and hover labels identify its owner; InteractionPolygon is not reused for selection. The remaining six Resource-backed objects retain floor/collision, wall/parent anchor, then visual fallback priority. Repeated clicks at one location still cycle candidates and show `선택 n/m`.
 
 Coordinate rule:
 

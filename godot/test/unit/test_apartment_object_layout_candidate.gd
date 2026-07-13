@@ -21,6 +21,14 @@ const NON_INTERACTION_IDS := [
 	"shoes_slippers", "cable_bundle", "wall_conduit", "power_housing",
 ]
 const EDITABLE_NODE_IDS := DIRECT_INTERACTION_IDS
+const EDITABLE_ENVIRONMENT_NODE_IDS := [
+	"sink_counter", "dining_table", "ups_unit", "bathroom_fixture", "shoes_slippers",
+]
+const ALL_EDITABLE_NODE_IDS := EDITABLE_NODE_IDS + EDITABLE_ENVIRONMENT_NODE_IDS
+const RESOURCE_BACKED_ENVIRONMENT_IDS := [
+	"signal_booster", "sea_horizon_poster", "fluorescent_light",
+	"cable_bundle", "wall_conduit", "power_housing",
+]
 const RETIRED_IDS := [
 	"phone", "air_conditioner", "desk", "bed_placeholder", "fridge_placeholder",
 	"microwave_placeholder", "sink_counter_placeholder", "small_table_placeholder",
@@ -60,7 +68,7 @@ func test_fallback_inventory_matches_resource_inventory_and_metadata() -> void:
 
 func test_migrated_resources_keep_logic_without_duplicate_scene_geometry() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
-	for id in EDITABLE_NODE_IDS:
+	for id in ALL_EDITABLE_NODE_IDS:
 		_assert_pixels(objects[id], Vector2i.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 		assert_eq(objects[id].size_cells, Vector2i.ZERO, "%s Resource must not duplicate Scene occupancy size." % id)
 		assert_eq(objects[id].collision_shape_type, FOOTPRINT_CONFIG_SCRIPT.CollisionShapeType.NONE)
@@ -75,7 +83,7 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 		"bed": "EditableObjectNodes/Bed",
 		"fridge": "EditableObjectNodes/Fridge",
 		"navi_link": "EditableObjectNodes/NaviLink",
-		"microwave": "EditableObjectNodes/SinkCounterParentAnchor/Microwave",
+		"microwave": "EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave",
 		"power_module_board": "EditableObjectNodes/PowerModuleBoard",
 		"node_17": "EditableObjectNodes/Node17",
 	}
@@ -171,10 +179,109 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 	assert_eq(objects["microwave"].floor_occupancy_source, "NONE")
 	assert_eq(objects["power_module_board"].floor_occupancy_source, "NONE")
 	for id in EXPECTED_IDS:
-		if EDITABLE_NODE_IDS.has(id):
+		if ALL_EDITABLE_NODE_IDS.has(id):
 			continue
 		assert_false(bool(objects[id].get("node_backed", false)), "%s must keep the Resource fallback path." % id)
 		assert_eq(objects[id].source, "resource")
+
+
+func test_floor_environment_scene_nodes_preserve_geometry_without_interaction_nodes() -> void:
+	var shell = _make_shell()
+	var expected := {
+		"sink_counter": {
+			"path": "EditableObjectNodes/SinkCounter", "position": Vector2(996, 174),
+			"visual": PackedVector2Array([Vector2(-110, -75), Vector2(110, -75), Vector2(110, 75), Vector2(-110, 75)]),
+			"body": PackedVector2Array([Vector2(-40.249224, -19.429563), Vector2(102.859127, 52.124612), Vector2(40.249224, 83.429563), Vector2(-102.859127, 11.875388)]),
+			"top": Vector2(0, -75), "cells": [Vector2i(3, 4), Vector2i(4, 4)],
+		},
+		"dining_table": {
+			"path": "EditableObjectNodes/DiningTable", "position": Vector2(868, 302),
+			"visual": PackedVector2Array([Vector2(-85, -60), Vector2(85, -60), Vector2(85, 60), Vector2(-85, 60)]),
+			"body": PackedVector2Array([Vector2(-26.832816, -20.72136), Vector2(89.442719, 37.416408), Vector2(26.832816, 68.72136), Vector2(-89.442719, 10.583592)]),
+			"top": Vector2(0, -60), "cells": [Vector2i(4, 7)],
+		},
+		"ups_unit": {
+			"path": "EditableObjectNodes/UpsUnit", "position": Vector2(1444, 270),
+			"visual": PackedVector2Array([Vector2(-70, -55), Vector2(70, -55), Vector2(70, 55), Vector2(-70, 55)]),
+			"body": PackedVector2Array([Vector2(-17.888544, -13.777088), Vector2(71.554175, 30.944272), Vector2(17.888544, 57.777088), Vector2(-71.554175, 13.055728)]),
+			"top": Vector2(0, -55), "cells": [Vector2i(8, 2)],
+		},
+		"bathroom_fixture": {
+			"path": "EditableObjectNodes/BathroomFixture", "position": Vector2(804, 78),
+			"visual": PackedVector2Array([Vector2(-100, -70), Vector2(100, -70), Vector2(100, 70), Vector2(-100, 70)]),
+			"body": PackedVector2Array([Vector2(-31.304952, -23.429563), Vector2(102.859127, 43.652476), Vector2(31.304952, 79.429563), Vector2(-102.859127, 12.347524)]),
+			"top": Vector2(0, -70), "cells": [Vector2i(0, 4)],
+		},
+		"shoes_slippers": {
+			"path": "EditableObjectNodes/ShoesSlippers", "position": Vector2(548, 270),
+			"visual": PackedVector2Array([Vector2(-50, -30), Vector2(50, -30), Vector2(50, 30), Vector2(-50, 30)]),
+			"body": PackedVector2Array(), "top": Vector2(0, -30), "cells": [],
+		},
+	}
+	var objects := _dictionary_map(shell._object_footprints())
+	for id in EDITABLE_ENVIRONMENT_NODE_IDS:
+		var spec: Dictionary = expected[id]
+		var object_node: Node2D = shell.get_node(spec.path)
+		assert_eq(object_node.position, spec.position)
+		assert_true(object_node.is_in_group("apartment_editable_environment_object"))
+		assert_eq(object_node.get_node("Visual/VisualPreview").polygon, spec.visual)
+		assert_eq(object_node.get_node("SelectionArea/SelectionPolygon").polygon, spec.visual)
+		assert_eq(object_node.get_node("BasePoint").position, Vector2.ZERO)
+		assert_eq(object_node.get_node("TopPoint").position, spec.top)
+		assert_eq(object_node.get_node_or_null("Body/BodyPolygon").polygon if object_node.has_node("Body/BodyPolygon") else PackedVector2Array(), spec.body)
+		assert_true(object_node.get_node("Visual/VisualPreview").editor_description.contains("실제 이미지가 없을 때만"))
+		assert_true(object_node.get_node("BasePoint").editor_description.contains("바닥 또는 설치 기준점"))
+		assert_true(object_node.get_node("TopPoint").editor_description.contains("화면상 높이 확인 기준점"))
+		assert_true(object_node.get_node("SelectionArea/SelectionPolygon").editor_description.contains("P 디버그"))
+		assert_null(object_node.get_node_or_null("InteractionArea"))
+		assert_null(object_node.get_node_or_null("InteractionPolygon"))
+		assert_null(object_node.get_node_or_null("UsePoint"))
+		assert_null(object_node.get_node_or_null("PlacementFootprint"))
+		assert_eq(object_node.get_node("Visual/VisualPreview").scale, Vector2.ONE)
+		assert_eq(object_node.get_node("SelectionArea/SelectionPolygon").scale, Vector2.ONE)
+		if object_node.has_node("Body/BodyPolygon"):
+			assert_eq(object_node.get_node("Body/BodyPolygon").scale, Vector2.ONE)
+			assert_true(object_node.get_node("Body/BodyPolygon").editor_description.contains("플레이어 이동을 막는 바닥 충돌 범위"))
+			var world_body: PackedVector2Array = objects[id].collision_polygons[0]
+			for point_index in range(spec.body.size()):
+				assert_eq(world_body[point_index], spec.position + spec.body[point_index])
+		assert_eq(object_node.geometry_warnings(), [])
+		assert_true(objects[id].node_backed)
+		assert_eq(objects[id].source, "scene_node")
+		assert_eq(objects[id].interaction_polygons, [])
+		assert_eq(objects[id].interaction_cells, [])
+		assert_eq(objects[id].use_points_world, [])
+		assert_eq(objects[id].occupied_cells, spec.cells)
+	assert_eq(shell.get_node("EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket").position, Vector2.ZERO)
+	assert_true(shell.get_node("EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket").editor_description.contains("전자레인지 부착 기준점"))
+	assert_eq(shell.get_node("EditableObjectNodes/UpsUnit/AttachmentSockets/PowerCableSocket").position, Vector2.ZERO)
+	assert_false(objects["shoes_slippers"].blocks_movement)
+	assert_false(objects["shoes_slippers"].uses_floor_occupancy)
+	assert_eq(objects["shoes_slippers"].collision_polygons, [])
+
+
+func test_environment_body_vertex_extension_updates_derived_floor_cells() -> void:
+	var shell = _make_shell()
+	var body: CollisionPolygon2D = shell.get_node("EditableObjectNodes/SinkCounter/Body/BodyPolygon")
+	var original := body.polygon
+	var extended := body.polygon
+	extended[1] += Vector2(64, 32)
+	extended[2] += Vector2(64, 32)
+	body.polygon = extended
+	var occupied: Array = _dictionary_map(shell._object_footprints())["sink_counter"].occupied_cells
+	assert_eq(occupied, [Vector2i(3, 4), Vector2i(4, 4), Vector2i(5, 4)])
+	body.polygon = original
+	assert_eq(_dictionary_map(shell._object_footprints())["sink_counter"].occupied_cells, [Vector2i(3, 4), Vector2i(4, 4)])
+	body.position += Vector2(128, 64)
+	var moved_cells: Array = _dictionary_map(shell._object_footprints())["sink_counter"].occupied_cells
+	assert_false(moved_cells.has(Vector2i(3, 4)), "A moved BodyPolygon must not leave a hidden blocker at BasePoint.")
+	assert_eq(moved_cells, [Vector2i(5, 4), Vector2i(6, 4)])
+	body.position += Vector2(5000, 5000)
+	assert_eq(
+		_dictionary_map(shell._object_footprints())["sink_counter"].occupied_cells,
+		[],
+		"A BodyPolygon with zero floor overlap must not block the entire BasePoint row."
+	)
 
 
 func test_editable_geometry_channels_are_independent_and_parent_anchors_propagate() -> void:
@@ -225,7 +332,7 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 	assert_ne(shell._object_blocked_cells(), blocked_before)
 
 	for anchor_path_and_id in [
-		["EditableObjectNodes/SinkCounterParentAnchor", "microwave"],
+		["EditableObjectNodes/SinkCounter", "microwave"],
 		["Walls/WorkBackWall/WallCells/Cell05/AttachmentSocket", "power_module_board"],
 	]:
 		var parent_anchor: Node2D = shell.get_node(anchor_path_and_id[0])
@@ -240,6 +347,26 @@ func test_editable_geometry_channels_are_independent_and_parent_anchors_propagat
 		assert_eq(shell._object_interaction_polygons(object_after)[0][0], interaction_before + Vector2(16, 8))
 		assert_eq(shell._object_selection_polygons(object_after)[0][0], selection_before + Vector2(16, 8))
 		assert_eq(object_after.base_point_world, base_before + Vector2(16, 8))
+
+	assert_null(shell.get_node_or_null("EditableObjectNodes/SinkCounterParentAnchor"))
+	var sink_node: Node2D = shell.get_node("EditableObjectNodes/SinkCounter")
+	var microwave_socket: Marker2D = shell.get_node("EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket")
+	var microwave_node: Node2D = microwave_socket.get_node("Microwave")
+	assert_eq(microwave_node.get_parent(), microwave_socket)
+	var sink_before: Vector2 = _dictionary_map(shell._object_footprints())["sink_counter"].visual_center_world
+	var microwave_before: Dictionary = _dictionary_map(shell._object_footprints())["microwave"]
+	var microwave_center_before: Vector2 = shell._object_pixel_center(microwave_before)
+	var microwave_selection_before: Vector2 = shell._object_selection_polygons(microwave_before)[0][0]
+	var microwave_interaction_before: Vector2 = shell._object_interaction_polygons(microwave_before)[0][0]
+	var microwave_use_before: Vector2 = microwave_before.use_points_world[0]
+	microwave_socket.position += Vector2(12, 6)
+	var microwave_after: Dictionary = _dictionary_map(shell._object_footprints())["microwave"]
+	assert_eq(shell._object_pixel_center(microwave_after), microwave_center_before + Vector2(12, 6))
+	assert_eq(shell._object_selection_polygons(microwave_after)[0][0], microwave_selection_before + Vector2(12, 6))
+	assert_eq(shell._object_interaction_polygons(microwave_after)[0][0], microwave_interaction_before + Vector2(12, 6))
+	assert_eq(microwave_after.use_points_world[0], microwave_use_before + Vector2(12, 6))
+	assert_eq(_dictionary_map(shell._object_footprints())["sink_counter"].visual_center_world, sink_before)
+	assert_eq(sink_node.position, Vector2(1012, 182), "Earlier root movement remains independent from MicrowaveSocket movement.")
 
 	var board_socket: Node2D = shell.get_node("EditableObjectNodes/PowerModuleBoard/AttachmentSocket")
 	var housing_before: Vector2 = shell._object_pixel_center(_dictionary_map(shell._object_footprints())["power_housing"])
@@ -432,17 +559,14 @@ func test_editable_object_configuration_warnings_cover_invalid_contracts() -> vo
 
 func test_rotated_floorplan_environment_layout_values_are_preserved() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
-	_assert_pixels(objects["sink_counter"], Vector2i(3, 4), Vector2.ZERO, Vector2(220, 150), Vector2(160, 70), Vector2(0, 32), Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["dining_table"], Vector2i(4, 7), Vector2.ZERO, Vector2(170, 120), Vector2(130, 70), Vector2(0, 24), Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["signal_booster"], Vector2i(1, 2), Vector2(-68, -58), Vector2(112, 96), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["ups_unit"], Vector2i(8, 2), Vector2.ZERO, Vector2(140, 110), Vector2(100, 60), Vector2(0, 22), Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["bathroom_fixture"], Vector2i(0, 4), Vector2.ZERO, Vector2(200, 140), Vector2(150, 80), Vector2(0, 28), Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["sea_horizon_poster"], Vector2i(11, 7), Vector2(0, -20), Vector2(160, 80), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["fluorescent_light"], Vector2i(6, 6), Vector2.ZERO, Vector2(240, 40), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
-	_assert_pixels(objects["shoes_slippers"], Vector2i(1, 9), Vector2.ZERO, Vector2(100, 60), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["cable_bundle"], Vector2i(2, 2), Vector2(36, 42), Vector2(80, 40), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["wall_conduit"], Vector2i(3, 0), Vector2.ZERO, Vector2(128, 64), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 	_assert_pixels(objects["power_housing"], Vector2i(6, 0), Vector2.ZERO, Vector2(240, 210), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
+	for id in EDITABLE_ENVIRONMENT_NODE_IDS:
+		_assert_pixels(objects[id], Vector2i.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO)
 
 
 func test_attachment_and_floor_occupancy_policy() -> void:
@@ -482,7 +606,7 @@ func test_parent_and_wall_references_are_valid_and_acyclic() -> void:
 		assert_ne(parent_id, id, "%s must not parent itself." % id)
 	assert_eq(objects["power_housing"].wall_segment_id, objects["power_module_board"].wall_segment_id)
 	assert_true(String(shell.get_node("EditableObjectNodes/PowerModuleBoard").mount_socket_path).contains("Cell05/AttachmentSocket"))
-	assert_true(String(objects["microwave"].node_path).contains("SinkCounterParentAnchor"))
+	assert_true(String(objects["microwave"].node_path).contains("SinkCounter/AttachmentSockets/MicrowaveSocket"))
 	var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 	var entrance_unit: Dictionary = shell._object_wall_attachment_unit(objects["entrance_door"], entrance_wall)
 	assert_eq(int(entrance_unit.get("offset", -1)), int(entrance_wall.get("doorway_offset", -2)))
@@ -524,14 +648,25 @@ func test_direct_interaction_contract_contains_exactly_seven_world_objects() -> 
 func test_environment_and_decoration_objects_have_no_gameplay_interaction_geometry() -> void:
 	var shell = _make_shell()
 	var objects := _dictionary_map(shell._object_footprints())
+	var resource_backed_ids: Array[String] = []
 	for id in NON_INTERACTION_IDS:
 		assert_ne(String(objects[id].category), "interaction", "%s must remain P-debug-only, not directly usable." % id)
-		assert_false(bool(objects[id].get("node_backed", false)), "%s must stay Resource-backed in stage 2." % id)
-		assert_eq(objects[id].source, "resource")
+		if EDITABLE_ENVIRONMENT_NODE_IDS.has(id):
+			assert_true(objects[id].node_backed)
+			assert_eq(objects[id].source, "scene_node")
+			var object_node: Node = objects[id].object_node
+			assert_null(object_node.get_node_or_null("InteractionArea"))
+			assert_null(object_node.get_node_or_null("InteractionPolygon"))
+			assert_null(object_node.get_node_or_null("UsePoint"))
+		else:
+			assert_false(bool(objects[id].get("node_backed", false)), "%s must keep the Resource fallback path." % id)
+			assert_eq(objects[id].source, "resource")
+			resource_backed_ids.append(id)
 		assert_eq(Vector2(objects[id].interaction_size_px), Vector2.ZERO)
 		assert_eq(shell._object_raw_interaction_cells(objects[id]), [])
 		assert_eq(shell._object_interaction_cells(objects[id]), [])
 		assert_false(shell._object_has_valid_interaction_area(objects[id]))
+	assert_eq(_sorted_strings(resource_backed_ids), _sorted_strings(RESOURCE_BACKED_ENVIRONMENT_IDS))
 
 
 func test_priority_interaction_cells_touch_their_object_or_parent_collision() -> void:
@@ -553,22 +688,15 @@ func test_priority_interaction_cells_touch_their_object_or_parent_collision() ->
 
 func test_rotated_floorplan_layout_invariants() -> void:
 	var objects := _object_map(FOOTPRINT_SET.objects)
-	var expected_anchors := {
-		"sink_counter": Vector2i(3, 4),
-		"dining_table": Vector2i(4, 7),
-		"bathroom_fixture": Vector2i(0, 4),
-	}
-	for id in expected_anchors:
-		assert_eq(objects[id].anchor_cell, expected_anchors[id], "%s rotated-floorplan anchor changed unexpectedly." % id)
+	for id in ALL_EDITABLE_NODE_IDS:
+		assert_eq(objects[id].anchor_cell, Vector2i.ZERO)
+		assert_eq(objects[id].size_cells, Vector2i.ZERO)
 	assert_eq(objects["microwave"].parent_object_id, &"sink_counter")
 	assert_eq(objects["entrance_door"].wall_segment_id, &"entrance_wall")
 	assert_eq(objects["power_module_board"].wall_segment_id, &"work_back_wall")
 	assert_eq(objects["wall_conduit"].wall_segment_id, &"work_back_wall")
 	assert_eq(objects["wall_conduit"].wall_position_ratio, 0.31)
 	assert_eq(objects["sea_horizon_poster"].anchor_cell, Vector2i(11, 7))
-	for id in DIRECT_INTERACTION_IDS:
-		assert_eq(objects[id].anchor_cell, Vector2i.ZERO)
-		assert_eq(objects[id].size_cells, Vector2i.ZERO)
 
 
 func test_candidate_layout_has_no_placement_or_measurement_warnings() -> void:
@@ -590,27 +718,13 @@ func test_expected_asset_fields_are_spec_strings_not_runtime_dependencies() -> v
 
 
 func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
-	var centers_by_rotation := []
 	for rotation in [0, 1, 2, 3]:
 		var shell = SHELL_SCENE.instantiate()
 		shell.map_rotation = rotation
 		add_child_autoqfree(shell)
 		assert_eq(shell._object_footprints().size(), 18, "ROTATE_%d should instantiate all objects." % [rotation * 90])
 		var objects := _dictionary_map(shell._object_footprints())
-		var fallback_floor: Array[Vector2] = shell._object_floor_polygon_points(objects["sink_counter"])
-		var fallback_anchor: Vector2i = objects["sink_counter"].anchor_cell
-		var fallback_size: Vector2i = objects["sink_counter"].size_cells
-		var expected_floor := [
-			shell._iso(fallback_anchor.x, fallback_anchor.y),
-			shell._iso(fallback_anchor.x + fallback_size.x, fallback_anchor.y),
-			shell._iso(fallback_anchor.x + fallback_size.x, fallback_anchor.y + fallback_size.y),
-			shell._iso(fallback_anchor.x, fallback_anchor.y + fallback_size.y),
-		]
-		assert_eq(fallback_floor, expected_floor, "ROTATE_%d Resource fallback floor must use rotated grid corners." % [rotation * 90])
-		_assert_collision_polygon_contract(shell, objects["sink_counter"], rotation * 90)
-		var fallback_center: Vector2 = shell._cell_center(objects["sink_counter"].anchor_cell) + Vector2(objects["sink_counter"].position_offset_px)
-		assert_eq(shell._object_pixel_center(objects["sink_counter"]), fallback_center)
-		for id in EDITABLE_NODE_IDS:
+		for id in ALL_EDITABLE_NODE_IDS:
 			assert_eq(bool(objects[id].get("node_backed", false)), rotation == 1, "%s Scene geometry is authored only for ROTATE_90." % id)
 		if rotation == 1:
 			assert_eq(shell._object_pixel_center(objects["microwave"]), Vector2(996, 114))
@@ -618,16 +732,12 @@ func test_all_map_rotations_instantiate_with_the_same_inventory() -> void:
 			assert_eq(shell._object_pixel_center(objects["node_17"]), Vector2(996, 38))
 			assert_eq(shell._object_pixel_center(objects["entrance_door"]), Vector2(516, 184))
 		else:
-			for id in EDITABLE_NODE_IDS:
+			for id in ALL_EDITABLE_NODE_IDS:
 				assert_eq(shell._object_occupied_cells(objects[id]), [], "%s must not become a fallback blocker outside ROTATE_90." % id)
 				assert_false(shell._object_blocker_ids_for_cell(Vector2i.ZERO).has(id), "%s must not block fallback cell (0, 0)." % id)
 		var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
 		assert_true(shell._object_wall_attachment_is_doorway(objects["entrance_door"], entrance_wall), "ROTATE_%d entrance door must stay on its doorway unit." % [rotation * 90])
 		assert_eq(shell._object_placement_warnings(), [], "ROTATE_%d should preserve placement invariants." % [rotation * 90])
-		centers_by_rotation.append(shell._object_pixel_center(objects["sink_counter"]))
-	for first in range(centers_by_rotation.size()):
-		for second in range(first + 1, centers_by_rotation.size()):
-			assert_ne(centers_by_rotation[first], centers_by_rotation[second], "Each map rotation should project fallback geometry to a distinct screen center.")
 
 
 func test_shell_debug_key_smoke() -> void:
@@ -762,7 +872,7 @@ func test_scene_selection_priority_and_repeated_click_cycle_over_environment_ove
 	shell._unhandled_input(_key_event(KEY_P))
 	var objects := _dictionary_map(shell._object_footprints())
 	var overlap_world_position: Vector2 = shell._polygon_bounds(shell._object_selection_polygons(objects["fridge"])[0]).get_center()
-	var microwave: Node2D = shell.get_node("EditableObjectNodes/SinkCounterParentAnchor/Microwave")
+	var microwave: Node2D = shell.get_node("EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave")
 	microwave.get_node("SelectionArea").global_position = overlap_world_position
 	var candidates: Array[Dictionary] = shell._object_hit_candidates(overlap_world_position)
 	assert_eq(_candidate_ids(candidates).slice(0, 2), ["fridge", "microwave"])
@@ -852,7 +962,7 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	assert_true(shell._debug_detail_label.text.contains("selection source: SELECTION_POLYGON"))
 	assert_true(shell._debug_detail_label.text.contains("BasePoint:"))
 	assert_true(shell._debug_detail_label.text.contains("TopPoint:"))
-	assert_true(shell._debug_detail_label.text.contains("AttachmentSocket:"))
+	assert_true(shell._debug_detail_label.text.contains("AttachmentSockets:"))
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_selection_area"))
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_base_point"))
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_top_point"))

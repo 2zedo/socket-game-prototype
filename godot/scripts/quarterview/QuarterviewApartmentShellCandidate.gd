@@ -161,6 +161,9 @@ const EDITABLE_NODE_OBJECT_IDS := [
 	"entrance_door", "bed", "fridge", "microwave", "navi_link",
 	"power_module_board", "node_17",
 ]
+const EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS := [
+	"sink_counter", "dining_table", "ups_unit", "bathroom_fixture", "shoes_slippers",
+]
 const EDITABLE_OBJECT_NODES_PATH := ^"EditableObjectNodes"
 const RESOURCE_WALL_SOCKET_PATH_BY_OBJECT_ID := {
 	"wall_conduit": ^"Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket",
@@ -1085,8 +1088,9 @@ func _wall_height_from_config(config: Resource) -> float:
 			return -1.0
 
 
-# All seven direct-interaction objects use Scene nodes as their exact ROTATE_90 geometry authority.
-# The eleven environment/decoration objects keep the Resource path until deliberately migrated.
+# Seven direct-interaction objects and five migrated floor environment objects use Scene nodes as
+# their exact ROTATE_90 geometry authority. The remaining six environment/decoration objects keep
+# the Resource fallback path until deliberately migrated.
 func _object_footprints() -> Array[Dictionary]:
 	var footprints: Array[Dictionary] = []
 	for entry in _active_object_footprint_config_entries():
@@ -1176,13 +1180,14 @@ func _editable_object_node_authority_active() -> bool:
 
 
 func _editable_object_node_by_id(object_id: String) -> Node2D:
-	if not EDITABLE_NODE_OBJECT_IDS.has(object_id):
+	if not EDITABLE_NODE_OBJECT_IDS.has(object_id) and not EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS.has(object_id):
 		return null
-	for candidate in get_tree().get_nodes_in_group("apartment_editable_object"):
-		if not is_ancestor_of(candidate):
-			continue
-		if candidate is Node2D and candidate.has_method("body_world_polygon") and String(candidate.get("object_id")) == object_id:
-			return candidate as Node2D
+	for group_name in ["apartment_editable_object", "apartment_editable_environment_object"]:
+		for candidate in get_tree().get_nodes_in_group(group_name):
+			if not is_ancestor_of(candidate):
+				continue
+			if candidate is Node2D and candidate.has_method("body_world_polygon") and String(candidate.get("object_id")) == object_id:
+				return candidate as Node2D
 	return null
 
 
@@ -1193,14 +1198,18 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 		return resource_data
 	if object_node.has_method("_sync_mount_socket"):
 		object_node.call("_sync_mount_socket")
-	if not object_node.has_method("body_world_polygon") or not object_node.has_method("selection_world_polygon") or not object_node.has_method("interaction_world_polygon"):
+	if not object_node.has_method("body_world_polygon") or not object_node.has_method("selection_world_polygon"):
 		return resource_data
 
 	var object_data := resource_data.duplicate(true)
 	var body_polygon: PackedVector2Array = object_node.call("body_world_polygon")
 	var selection_polygon: PackedVector2Array = object_node.call("selection_world_polygon")
-	var interaction_polygon: PackedVector2Array = object_node.call("interaction_world_polygon")
-	var placement_polygon: PackedVector2Array = object_node.call("placement_footprint_world_polygon")
+	var interaction_polygon := PackedVector2Array()
+	if object_node.has_method("interaction_world_polygon"):
+		interaction_polygon = object_node.call("interaction_world_polygon")
+	var placement_polygon := PackedVector2Array()
+	if object_node.has_method("placement_footprint_world_polygon"):
+		placement_polygon = object_node.call("placement_footprint_world_polygon")
 	var occupancy_polygon: PackedVector2Array = object_node.call("floor_occupancy_world_polygon")
 	var visual_polygon: PackedVector2Array = object_node.call("visual_world_polygon")
 	var collision_polygons: Array[PackedVector2Array] = []
@@ -1221,15 +1230,20 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var attachment_anchor: Vector2 = object_node.call("attachment_anchor_world")
 	var base_point: Vector2 = object_node.call("base_point_world")
 	var top_point: Vector2 = object_node.call("top_point_world")
-	var use_point: Vector2 = object_node.call("use_point_world")
+	var use_points_world: Array[Vector2] = []
+	if object_node.has_method("use_point_world"):
+		use_points_world.append(Vector2(object_node.call("use_point_world")))
 	var collision_bounds := _polygons_bounds(collision_polygons)
 	var selection_bounds := _polygons_bounds(selection_polygons)
 	var interaction_bounds := _polygons_bounds(interaction_polygons)
 	var anchor_world := base_point
 	var occupied_cells: Array[Vector2i] = []
 	if not floor_polygons.is_empty():
-		occupied_cells = _cells_overlapped_by_polygons(floor_polygons)
-	var use_cell := Vector2i(floori(_screen_to_grid_point(use_point).x), floori(_screen_to_grid_point(use_point).y))
+		occupied_cells = (
+			_cells_occupied_by_environment_body(floor_polygons, base_point)
+			if EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS.has(object_id)
+			else _cells_overlapped_by_polygons(floor_polygons)
+		)
 	var root_grid := _screen_to_grid_point(base_point)
 	var anchor_cell := Vector2i(floori(root_grid.x), floori(root_grid.y))
 	var footprint_size := _cells_bounds_size(occupied_cells)
@@ -1246,7 +1260,8 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	object_data["top_point_world"] = top_point
 	object_data["height_vector"] = top_point - base_point
 	object_data["height_px"] = base_point.distance_to(top_point)
-	object_data["socket_world_position"] = object_node.call("attachment_socket_world")
+	object_data["socket_world_position"] = object_node.call("attachment_socket_world") if object_node.has_method("attachment_socket_world") else base_point
+	object_data["socket_world_positions"] = object_node.call("attachment_socket_world_positions") if object_node.has_method("attachment_socket_world_positions") else [object_data["socket_world_position"]]
 	object_data["anchor_cell"] = anchor_cell
 	object_data["size_cells"] = footprint_size
 	object_data["position_offset_px"] = visual_center - anchor_world
@@ -1263,9 +1278,9 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	object_data["selection_source"] = "SELECTION_POLYGON"
 	object_data["interaction_polygons"] = interaction_polygons
 	object_data["interaction_size_px"] = interaction_bounds.size
-	object_data["interaction_offset_px"] = interaction_bounds.get_center() - use_point if interaction_bounds.has_area() else Vector2.ZERO
-	object_data["use_points_world"] = [use_point]
-	object_data["interaction_cells"] = [use_cell]
+	object_data["interaction_offset_px"] = interaction_bounds.get_center() - use_points_world[0] if interaction_bounds.has_area() and not use_points_world.is_empty() else Vector2.ZERO
+	object_data["use_points_world"] = use_points_world
+	object_data["interaction_cells"] = _world_points_to_cells(use_points_world)
 	object_data["floor_polygons"] = floor_polygons
 	object_data["placement_polygons"] = [placement_polygon] if placement_polygon.size() >= 3 else []
 	object_data["floor_occupancy_source"] = (
@@ -1275,6 +1290,7 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	object_data["occupied_cells"] = occupied_cells
 	if object_node.has_method("body_collision_active"):
 		object_data["body_collision_active"] = bool(object_node.call("body_collision_active"))
+	if object_node.has_method("set_open"):
 		object_data["open_state_supported"] = bool(object_node.get("supports_open_state"))
 		object_data["is_open"] = bool(object_node.get("is_open"))
 	return object_data
@@ -1339,6 +1355,67 @@ func _cells_overlapped_by_polygons(polygons: Array[PackedVector2Array]) -> Array
 	return cells
 
 
+# Environment Body polygons preserve their pre-migration visual-front collision offset. BasePoint
+# selects the installation row in the fixed ROTATE_90 view, while the occupied columns come only
+# from actual Body-to-floor-diamond overlap. A detached Body therefore cannot keep a hidden
+# Resource-style blocker at BasePoint.
+func _cells_occupied_by_environment_body(polygons: Array[PackedVector2Array], base_point: Vector2) -> Array[Vector2i]:
+	const RELATIVE_OVERLAP_THRESHOLD := 0.99
+	var candidate_cells := _environment_occupancy_candidate_cells()
+	var base_grid := _screen_to_grid_point(base_point)
+	var base_cell := Vector2i(floori(base_grid.x), floori(base_grid.y))
+	var overlap_by_cell: Dictionary = {}
+	var maximum_overlap_ratio := 0.0
+	for cell in candidate_cells:
+		var tile_polygon := PackedVector2Array(_tile_points(float(cell.x), float(cell.y)))
+		var tile_area := absf(_packed_polygon_signed_area(tile_polygon))
+		var overlap_area := 0.0
+		for polygon in polygons:
+			for intersection in Geometry2D.intersect_polygons(tile_polygon, polygon):
+				overlap_area += absf(_packed_polygon_signed_area(intersection))
+		if tile_area <= 0.0 or overlap_area <= 0.0:
+			continue
+		var overlap_ratio := overlap_area / tile_area
+		overlap_by_cell[cell] = overlap_ratio
+		maximum_overlap_ratio = maxf(maximum_overlap_ratio, overlap_ratio)
+	var cells: Array[Vector2i] = []
+	if is_zero_approx(maximum_overlap_ratio):
+		return cells
+	for cell in candidate_cells:
+		if cell.y != base_cell.y:
+			continue
+		if float(overlap_by_cell.get(cell, 0.0)) >= maximum_overlap_ratio * RELATIVE_OVERLAP_THRESHOLD:
+			cells.append(cell)
+	return cells
+
+
+func _packed_polygon_signed_area(points: PackedVector2Array) -> float:
+	if points.size() < 3:
+		return 0.0
+	var double_area := 0.0
+	for index in range(points.size()):
+		var current := points[index]
+		var next := points[(index + 1) % points.size()]
+		double_area += current.x * next.y - next.x * current.y
+	return double_area * 0.5
+
+
+func _environment_occupancy_candidate_cells() -> Array[Vector2i]:
+	var candidates: Array[Vector2i] = []
+	var seen: Dictionary = {}
+	for cell in _base_walkable_floor_cells():
+		seen[_cell_key(cell)] = true
+		candidates.append(cell)
+	for room_rect in [_living_room_rect(), _work_room_rect(), _bathroom_room_rect(), _entrance_room_rect()]:
+		for cell in _cells_in_rect(room_rect):
+			if seen.has(_cell_key(cell)):
+				continue
+			seen[_cell_key(cell)] = true
+			candidates.append(cell)
+	_sort_cells(candidates)
+	return candidates
+
+
 func _cells_bounds_size(cells: Array[Vector2i]) -> Vector2i:
 	if cells.is_empty():
 		return Vector2i.ZERO
@@ -1348,6 +1425,16 @@ func _cells_bounds_size(cells: Array[Vector2i]) -> Vector2i:
 		minimum = Vector2i(mini(minimum.x, cell.x), mini(minimum.y, cell.y))
 		maximum = Vector2i(maxi(maximum.x, cell.x), maxi(maximum.y, cell.y))
 	return maximum - minimum + Vector2i.ONE
+
+
+func _world_points_to_cells(points: Array[Vector2]) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	for point in points:
+		var grid_point := _screen_to_grid_point(point)
+		var cell := Vector2i(floori(grid_point.x), floori(grid_point.y))
+		if not cells.has(cell):
+			cells.append(cell)
+	return cells
 
 
 func _cells_minimum(cells: Array[Vector2i]) -> Vector2i:
@@ -1404,14 +1491,14 @@ func _candidate_object_footprint_specs() -> Array[Dictionary]:
 		_object_spec("navi_link", "NAVI LINK", "work_power_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "navi_link_dl_idle_base.png", "objects/apartment/NaviLink.tscn", "audio_navi_link", "좌석 입구와 조작부가 작업공간 통로를 향함", true, Vector2i.ZERO),
 		_object_spec("power_module_board", "전력 모듈 보드", "work_power_area", "interaction", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_back_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "power_module_board_dl_base.png", "objects/apartment/PowerModuleBoard.tscn", "audio_power_board", "화면과 슬롯이 작업공간 안쪽을 향함", false, Vector2i.ZERO),
 		_object_spec("node_17", "NODE-17", "work_power_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "node_17_dl_base.png", "objects/apartment/Node17.tscn", "audio_node_17", "표시 화면과 신호등이 작업공간 중앙을 향함", true, Vector2i.ZERO),
-		_object_spec("sink_counter", "싱크대·주방 카운터", "living_area", "environment", Vector2i(3, 4), Vector2(220, 150), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(160, 70), Vector2.ZERO, Vector2.ZERO, "sink_counter_dl_base.png", "objects/apartment/sink_counter.tres", "", "상판 정면이 주방 통로를 향함", true, Vector2i(2, 1)),
-		_object_spec("dining_table", "작은 식탁", "living_area", "environment", Vector2i(4, 7), Vector2(170, 120), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(130, 70), Vector2.ZERO, Vector2.ZERO, "dining_table_dl_base.png", "objects/apartment/dining_table.tres", "", "의자 접근면이 생활공간 통로를 향함"),
+		_object_spec("sink_counter", "싱크대·주방 카운터", "living_area", "environment", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "sink_counter_dl_base.png", "objects/apartment/sink_counter.tres", "", "상판 정면이 주방 통로를 향함", true, Vector2i.ZERO),
+		_object_spec("dining_table", "작은 식탁", "living_area", "environment", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "dining_table_dl_base.png", "objects/apartment/dining_table.tres", "", "의자 접근면이 생활공간 통로를 향함", true, Vector2i.ZERO),
 		_object_spec("signal_booster", "신호 증폭기", "work_power_area", "environment", Vector2i(1, 2), Vector2(112, 96), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2(-68, -58), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "signal_booster_dl_base.png", "objects/apartment/signal_booster.tres", "audio_signal_booster", "표시등이 작업공간 중앙을 향함", false),
-		_object_spec("ups_unit", "UPS·보조전원", "work_power_area", "environment", Vector2i(8, 2), Vector2(140, 110), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(100, 60), Vector2.ZERO, Vector2.ZERO, "ups_unit_dl_base.png", "objects/apartment/ups_unit.tres", "audio_ups_unit", "전면 패널이 작업공간 통로를 향함"),
-		_object_spec("bathroom_fixture", "욕실 통합 설비", "bathroom", "environment", Vector2i(0, 4), Vector2(200, 140), true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2(150, 80), Vector2.ZERO, Vector2.ZERO, "bathroom_fixture_dl_base.png", "objects/apartment/bathroom_fixture.tres", "", "욕실문에서 내부를 볼 때 정면이 보임"),
+		_object_spec("ups_unit", "UPS·보조전원", "work_power_area", "environment", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "ups_unit_dl_base.png", "objects/apartment/ups_unit.tres", "audio_ups_unit", "전면 패널이 작업공간 통로를 향함", true, Vector2i.ZERO),
+		_object_spec("bathroom_fixture", "욕실 통합 설비", "bathroom", "environment", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "bathroom_fixture_dl_base.png", "objects/apartment/bathroom_fixture.tres", "", "욕실문에서 내부를 볼 때 정면이 보임", true, Vector2i.ZERO),
 		_object_spec("sea_horizon_poster", "바다·수평선 포스터", "living_area", "decoration", Vector2i(11, 7), Vector2(160, 80), false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "living_right_wall", "", Vector2(0, -20), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "sea_horizon_poster_wall.png", "objects/apartment/sea_horizon_poster.tres", "", "포스터 그림이 침대와 방 안쪽을 향함", false, Vector2i.ONE, 0.58),
 		_object_spec("fluorescent_light", "형광등", "living_area", "environment", Vector2i(6, 6), Vector2(240, 40), false, [], ApartmentObjectFootprintConfigScript.AnchorType.CEILING, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "fluorescent_light_base.png", "objects/apartment/fluorescent_light.tres", "audio_fluorescent_light", "천장에서 생활공간 전체를 비춤", false),
-		_object_spec("shoes_slippers", "신발·슬리퍼", "entrance_area", "decoration", Vector2i(1, 9), Vector2(100, 60), false, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "shoes_slippers_dl_base.png", "objects/apartment/shoes_slippers.tres", "", "신발 앞코가 현관 통로를 향함", false),
+		_object_spec("shoes_slippers", "신발·슬리퍼", "entrance_area", "decoration", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "shoes_slippers_dl_base.png", "objects/apartment/shoes_slippers.tres", "", "신발 앞코가 현관 통로를 향함", false, Vector2i.ZERO),
 		_object_spec("cable_bundle", "케이블 묶음", "work_power_area", "decoration", Vector2i(2, 2), Vector2(80, 40), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "node_17", Vector2(36, 42), Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "cable_bundle_var01.png", "objects/apartment/cable_bundle.tres", "", "NODE-17에서 전력 장비 방향으로 정리됨", false),
 		_object_spec("wall_conduit", "벽면 전선관", "work_power_area", "decoration", Vector2i(3, 0), Vector2(128, 64), false, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "work_back_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "wall_conduit_axis_a_1x.png", "objects/apartment/wall_conduit.tres", "", "작업공간 뒤쪽 벽 방향을 따라 이어짐", false, Vector2i.ONE, 0.31),
 		_object_spec("power_housing", "전력 장비 외장 프레임", "work_power_area", "decoration", Vector2i(6, 0), Vector2(240, 210), false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "work_back_wall", "power_module_board", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "power_housing_dl_base.png", "objects/apartment/power_housing.tres", "", "전력 모듈 보드와 같은 방향", false, Vector2i.ONE, 0.68),
@@ -1542,7 +1629,7 @@ func _object_placement_warnings() -> Array[String]:
 		if not bool(object_data.get("enabled", true)):
 			continue
 		var object_id := String(object_data.get("id", ""))
-		if EDITABLE_NODE_OBJECT_IDS.has(object_id) and not _editable_object_node_authority_active():
+		if (EDITABLE_NODE_OBJECT_IDS.has(object_id) or EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS.has(object_id)) and not _editable_object_node_authority_active():
 			continue
 		var blocks_movement := bool(object_data.get("blocks_movement", true))
 		var uses_floor := _object_uses_floor_occupancy(object_data)
@@ -1566,7 +1653,11 @@ func _object_placement_warnings() -> Array[String]:
 			warnings.append("object %s has no occupied cells; check size_cells" % object_id)
 
 		for cell in occupied_cells:
-			if not _is_base_walkable_cell(cell):
+			var scene_environment_cell := (
+				EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS.has(object_id)
+				and _authored_room_area_for_cell(cell) == String(object_data.get("room_area_id", ""))
+			)
+			if not _is_base_walkable_cell(cell) and not scene_environment_cell:
 				warnings.append("object %s occupies non-walkable or out-of-room floor cell %s" % [object_id, _format_cell(cell)])
 			var cell_key := _cell_key(cell)
 			if occupied_by_cell.has(cell_key):
@@ -1642,7 +1733,15 @@ func _object_placement_warnings() -> Array[String]:
 		for second_index in range(first_index + 1, blocking_colliders.size()):
 			var first := blocking_colliders[first_index]
 			var second := blocking_colliders[second_index]
-			if _object_collision_grid_rect(first).intersects(_object_collision_grid_rect(second)):
+			var overlaps := false
+			if bool(first.get("node_backed", false)) and bool(second.get("node_backed", false)):
+				for cell in _object_occupied_cells(first):
+					if _object_occupied_cells(second).has(cell):
+						overlaps = true
+						break
+			else:
+				overlaps = _object_collision_grid_rect(first).intersects(_object_collision_grid_rect(second))
+			if overlaps:
 				warnings.append("blocking collision overlap between %s and %s" % [first.get("id", ""), second.get("id", "")])
 	return warnings
 
@@ -1659,18 +1758,19 @@ func _editable_object_node_warnings() -> Array[String]:
 	if not _editable_object_node_authority_active():
 		return warnings
 	var seen_ids: Dictionary = {}
-	for candidate in get_tree().get_nodes_in_group("apartment_editable_object"):
-		if not is_ancestor_of(candidate):
-			continue
-		if not (candidate is Node2D) or not candidate.has_method("body_world_polygon"):
-			continue
-		var object_id := String(candidate.get("object_id"))
-		if seen_ids.has(object_id):
-			warnings.append("duplicate editable object node id %s" % object_id)
-		seen_ids[object_id] = true
-		for node_warning in candidate.call("geometry_warnings"):
-			warnings.append("editable object %s: %s" % [object_id, String(node_warning)])
-	for object_id in EDITABLE_NODE_OBJECT_IDS:
+	for group_name in ["apartment_editable_object", "apartment_editable_environment_object"]:
+		for candidate in get_tree().get_nodes_in_group(group_name):
+			if not is_ancestor_of(candidate):
+				continue
+			if not (candidate is Node2D) or not candidate.has_method("body_world_polygon"):
+				continue
+			var object_id := String(candidate.get("object_id"))
+			if seen_ids.has(object_id):
+				warnings.append("duplicate editable object node id %s" % object_id)
+			seen_ids[object_id] = true
+			for node_warning in candidate.call("geometry_warnings"):
+				warnings.append("editable object %s: %s" % [object_id, String(node_warning)])
+	for object_id in EDITABLE_NODE_OBJECT_IDS + EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS:
 		if not seen_ids.has(object_id):
 			warnings.append("editable object node %s is missing" % object_id)
 	return warnings
@@ -1959,7 +2059,7 @@ func _print_object_measurement_comparison() -> void:
 		if not bool(object_data.get("enabled", true)):
 			continue
 		var id := String(object_data.get("id", ""))
-		if EDITABLE_NODE_OBJECT_IDS.has(id) and not _editable_object_node_authority_active():
+		if (EDITABLE_NODE_OBJECT_IDS.has(id) or EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS.has(id)) and not _editable_object_node_authority_active():
 			continue
 		var warnings := _room_measurement_object_warnings_for(object_data)
 		print("%s | expected_room=%s | category=%s | anchor_type=%s | anchor=%s | offset_px=%s | visual_px=%s | collision_px=%s | interaction_px=%s | parent=%s | wall=%s | occupied=%s | interactions=%s | result=%s" % [
@@ -1986,7 +2086,7 @@ func _room_measurement_object_warnings() -> Array[String]:
 		if not bool(object_data.get("enabled", true)):
 			continue
 		var id := String(object_data.get("id", ""))
-		if EDITABLE_NODE_OBJECT_IDS.has(id) and not _editable_object_node_authority_active():
+		if (EDITABLE_NODE_OBJECT_IDS.has(id) or EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS.has(id)) and not _editable_object_node_authority_active():
 			continue
 		for warning in _room_measurement_object_warnings_for(object_data):
 			warnings.append("measurement object %s: %s" % [id, warning])
@@ -2015,7 +2115,11 @@ func _room_measurement_object_warnings_for(object_data: Dictionary) -> Array[Str
 	if not node_backed and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT and _room_area_for_cell(anchor, false) != expected_room:
 		warnings.append("anchor %s is outside expected room" % _format_cell(anchor))
 	for cell in occupied_cells:
-		var actual_room := _room_area_for_cell(cell, false)
+		var actual_room := (
+			_authored_room_area_for_cell(cell)
+			if node_backed and EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS.has(String(object_data.get("id", "")))
+			else _room_area_for_cell(cell, false)
+		)
 		if actual_room != expected_room:
 			warnings.append("cell %s is in %s(%s), not %s(%s)" % [
 				_format_cell(cell),
@@ -2615,8 +2719,9 @@ func _draw_object_attachment_guide(parent: Node, prefix: String, object_data: Di
 	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
 	var node_backed := bool(object_data.get("node_backed", false))
 	if node_backed:
-		var socket_position := Vector2(object_data.get("socket_world_position", _object_pixel_center(object_data)))
-		_add_marker(parent, "%s_socket" % prefix, socket_position, color, 7.0 if thickness <= 2.0 else 11.0)
+		var socket_positions: Array = object_data.get("socket_world_positions", [])
+		for socket_index in range(socket_positions.size()):
+			_add_marker(parent, "%s_socket_%d" % [prefix, socket_index], Vector2(socket_positions[socket_index]), color, 7.0 if thickness <= 2.0 else 11.0)
 		if anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.FLOOR:
 			return
 	elif anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE and anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT:
@@ -3662,7 +3767,7 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 		float(object_data.get("wall_position_ratio", 0.5)),
 	]
 	if bool(object_data.get("node_backed", false)):
-		detail += "\ngeometry source: SCENE_NODE\nnode: %s\nvisual source: %s\nfloor source: %s\nselection source: %s / size: %s\nBasePoint: %s\nTopPoint: %s / height: %.1f px\nUsePoint: %s\nAttachmentSocket: %s" % [
+		detail += "\ngeometry source: SCENE_NODE\nnode: %s\nvisual source: %s\nfloor source: %s\nselection source: %s / size: %s\nBasePoint: %s\nTopPoint: %s / height: %.1f px\nUsePoint: %s\nAttachmentSockets: %s" % [
 			String(object_data.get("node_path", "-")),
 			String(object_data.get("visual_source", "-")),
 			String(object_data.get("floor_occupancy_source", "NONE")),
@@ -3672,7 +3777,7 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 			str(object_data.get("top_point_world", Vector2.ZERO)),
 			float(object_data.get("height_px", 0.0)),
 			str(Array(object_data.get("use_points_world", []))),
-			str(object_data.get("socket_world_position", Vector2.ZERO)),
+			str(Array(object_data.get("socket_world_positions", []))),
 		]
 		if bool(object_data.get("open_state_supported", false)):
 			detail += "\nopen state: %s / BodyPolygon: %s" % [
@@ -4240,6 +4345,31 @@ func _room_area_for_cell(cell: Vector2i, include_object_blocks := true) -> Strin
 			return "none"
 	elif not _is_base_walkable_cell(cell):
 		return "none"
+	if _environment_node_authority_active():
+		var world_point := _cell_center(cell)
+		var candidates: Array[ApartmentRoomArea] = []
+		for room_node in $RoomAreas.get_children():
+			if room_node is ApartmentRoomArea:
+				candidates.append(room_node)
+		candidates.sort_custom(func(a: ApartmentRoomArea, b: ApartmentRoomArea) -> bool:
+			return a.selection_priority > b.selection_priority
+		)
+		for room_node in candidates:
+			if room_node.contains_world_point(world_point):
+				return String(room_node.room_id)
+		return "none"
+	if _is_entrance_area_cell(cell):
+		return "entrance_area"
+	if _is_cell_in_rect(cell, _bathroom_room_rect()):
+		return "bathroom"
+	if _is_cell_in_rect(cell, _work_room_rect()):
+		return "work_power_area"
+	if _is_cell_in_rect(cell, _living_room_rect()):
+		return "living_area"
+	return "none"
+
+
+func _authored_room_area_for_cell(cell: Vector2i) -> String:
 	if _environment_node_authority_active():
 		var world_point := _cell_center(cell)
 		var candidates: Array[ApartmentRoomArea] = []

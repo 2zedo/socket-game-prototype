@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=4 uid="uid://ckn6c2wld0xoc"]
+[gd_scene load_steps=14 format=4 uid="uid://ckn6c2wld0xoc"]
 
 [ext_resource type="Script" uid="uid://d1bjksuh03jij" path="res://scripts/quarterview/QuarterviewApartmentShellCandidate.gd" id="1_shell_candidate"]
 [ext_resource type="Resource" uid="uid://bvlebudmvyhsg" path="res://resources/quarterview/apartment_shell_object_footprints.tres" id="2_object_footprints"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentOpeningMarker.tscn" id="8_opening"]
 [ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentWallCell.tscn" id="9_wall_cell"]
 [ext_resource type="Script" path="res://scripts/quarterview/ApartmentEnvironmentEditorGuides.gd" id="10_editor_guides"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/objects/ApartmentEditableEnvironmentObject.tscn" id="11_environment_object"]
 
 [sub_resource type="Shader" id="Shader_fridge_checker_cleanup"]
 code = "shader_type canvas_item;
@@ -1150,33 +1151,117 @@ polygon = PackedVector2Array(-48, -32, 48, -32, 48, 32, -48, 32)
 [node name="UsePoint" parent="EditableObjectNodes/Node17" index="6"]
 position = Vector2(64, 40)
 
-[node name="SinkCounterParentAnchor" type="Node2D" parent="EditableObjectNodes"]
+[node name="SinkCounter" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
 position = Vector2(996, 174)
+object_id = &"sink_counter"
 
-[node name="Microwave" parent="EditableObjectNodes/SinkCounterParentAnchor" instance=ExtResource("3_editable_object")]
+[node name="VisualPreview" parent="EditableObjectNodes/SinkCounter/Visual" index="1"]
+polygon = PackedVector2Array(-110, -75, 110, -75, 110, 75, -110, 75)
+
+[node name="TopPoint" parent="EditableObjectNodes/SinkCounter" index="2"]
+position = Vector2(0, -75)
+
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/SinkCounter/Body" index="0"]
+editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
+polygon = PackedVector2Array(-40.249224, -19.429563, 102.859127, 52.124612, 40.249224, 83.429563, -102.859127, 11.875388)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/SinkCounter/SelectionArea" index="0"]
+polygon = PackedVector2Array(-110, -75, 110, -75, 110, 75, -110, 75)
+
+[node name="MicrowaveSocket" type="Marker2D" parent="EditableObjectNodes/SinkCounter/AttachmentSockets" index="0"]
+editor_description = "전자레인지 부착 기준점. 이 Marker만 움직이면 전자레인지만 함께 이동합니다."
+
+[node name="Microwave" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket" instance=ExtResource("3_editable_object")]
 position = Vector2(0, -60)
 object_id = &"microwave"
 
-[node name="VisualPreview" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/Visual" index="1"]
+[node name="VisualPreview" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave/Visual" index="1"]
 polygon = PackedVector2Array(-48, -36, 48, -36, 48, 36, -48, 36)
 
-[node name="BasePoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="1"]
+[node name="BasePoint" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave" index="1"]
 position = Vector2(0, 60)
 
-[node name="TopPoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="2"]
+[node name="TopPoint" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave" index="2"]
 position = Vector2(0, -36)
 
-[node name="SelectionPolygon" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/SelectionArea" index="0"]
+[node name="SelectionPolygon" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave/SelectionArea" index="0"]
 polygon = PackedVector2Array(-48, -36, 48, -36, 48, 36, -48, 36)
 
-[node name="InteractionArea" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="5"]
+[node name="InteractionArea" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave" index="5"]
 position = Vector2(0, 124)
 
-[node name="InteractionPolygon" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave/InteractionArea" index="0"]
+[node name="InteractionPolygon" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave/InteractionArea" index="0"]
 polygon = PackedVector2Array(-48, -28, 48, -28, 48, 28, -48, 28)
 
-[node name="UsePoint" parent="EditableObjectNodes/SinkCounterParentAnchor/Microwave" index="6"]
+[node name="UsePoint" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave" index="6"]
 position = Vector2(0, 124)
+
+[node name="DiningTable" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
+position = Vector2(868, 302)
+object_id = &"dining_table"
+
+[node name="VisualPreview" parent="EditableObjectNodes/DiningTable/Visual" index="1"]
+polygon = PackedVector2Array(-85, -60, 85, -60, 85, 60, -85, 60)
+
+[node name="TopPoint" parent="EditableObjectNodes/DiningTable" index="2"]
+position = Vector2(0, -60)
+
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/DiningTable/Body" index="0"]
+editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
+polygon = PackedVector2Array(-26.832816, -20.72136, 89.442719, 37.416408, 26.832816, 68.72136, -89.442719, 10.583592)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/DiningTable/SelectionArea" index="0"]
+polygon = PackedVector2Array(-85, -60, 85, -60, 85, 60, -85, 60)
+
+[node name="UpsUnit" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
+position = Vector2(1444, 270)
+object_id = &"ups_unit"
+
+[node name="VisualPreview" parent="EditableObjectNodes/UpsUnit/Visual" index="1"]
+polygon = PackedVector2Array(-70, -55, 70, -55, 70, 55, -70, 55)
+
+[node name="TopPoint" parent="EditableObjectNodes/UpsUnit" index="2"]
+position = Vector2(0, -55)
+
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/UpsUnit/Body" index="0"]
+editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
+polygon = PackedVector2Array(-17.888544, -13.777088, 71.554175, 30.944272, 17.888544, 57.777088, -71.554175, 13.055728)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/UpsUnit/SelectionArea" index="0"]
+polygon = PackedVector2Array(-70, -55, 70, -55, 70, 55, -70, 55)
+
+[node name="PowerCableSocket" type="Marker2D" parent="EditableObjectNodes/UpsUnit/AttachmentSockets" index="0"]
+editor_description = "향후 전력 케이블 시각 연결에만 사용할 선택적 부착 기준점. 전력 보드의 transform parent가 아닙니다."
+
+[node name="BathroomFixture" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
+position = Vector2(804, 78)
+object_id = &"bathroom_fixture"
+
+[node name="VisualPreview" parent="EditableObjectNodes/BathroomFixture/Visual" index="1"]
+polygon = PackedVector2Array(-100, -70, 100, -70, 100, 70, -100, 70)
+
+[node name="TopPoint" parent="EditableObjectNodes/BathroomFixture" index="2"]
+position = Vector2(0, -70)
+
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/BathroomFixture/Body" index="0"]
+editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
+polygon = PackedVector2Array(-31.304952, -23.429563, 102.859127, 43.652476, 31.304952, 79.429563, -102.859127, 12.347524)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/BathroomFixture/SelectionArea" index="0"]
+polygon = PackedVector2Array(-100, -70, 100, -70, 100, 70, -100, 70)
+
+[node name="ShoesSlippers" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
+position = Vector2(548, 270)
+object_id = &"shoes_slippers"
+
+[node name="VisualPreview" parent="EditableObjectNodes/ShoesSlippers/Visual" index="1"]
+polygon = PackedVector2Array(-50, -30, 50, -30, 50, 30, -50, 30)
+
+[node name="TopPoint" parent="EditableObjectNodes/ShoesSlippers" index="2"]
+position = Vector2(0, -30)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/ShoesSlippers/SelectionArea" index="0"]
+polygon = PackedVector2Array(-50, -30, 50, -30, 50, 30, -50, 30)
 
 [node name="PowerModuleBoard" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
 position = Vector2(1476, 96)
@@ -1262,6 +1347,11 @@ zoom = Vector2(0.58, 0.58)
 [editable path="EditableObjectNodes/Bed"]
 [editable path="EditableObjectNodes/NaviLink"]
 [editable path="EditableObjectNodes/Node17"]
-[editable path="EditableObjectNodes/SinkCounterParentAnchor/Microwave"]
+[editable path="EditableObjectNodes/SinkCounter"]
+[editable path="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave"]
+[editable path="EditableObjectNodes/DiningTable"]
+[editable path="EditableObjectNodes/UpsUnit"]
+[editable path="EditableObjectNodes/BathroomFixture"]
+[editable path="EditableObjectNodes/ShoesSlippers"]
 [editable path="EditableObjectNodes/PowerModuleBoard"]
 [editable path="EditableObjectNodes/EntranceDoor"]
