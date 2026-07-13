@@ -168,6 +168,38 @@ func test_fridge_y_sort_threshold_uses_base_point() -> void:
 	assert_gt(player.z_index, fridge.z_index)
 
 
+func test_playable_default_hides_all_editor_and_runtime_debug_guides() -> void:
+	var playable = PLAYABLE_SCENE.instantiate()
+	add_child_autofree(playable)
+	assert_false(playable.get_node("EditorGuides").visible)
+	for room_name in ["EntranceArea", "BathroomArea", "LivingArea", "WorkArea"]:
+		assert_false(playable.get_node("RoomAreas/%s/EditorPreview" % room_name).visible)
+	for layer_name in [
+		"DebugZoneLayer",
+		"DebugLabelLayer",
+		"ObjectPlacementDebugLayer",
+		"DebugSelectionLayer",
+		"NavigationDebugLayer",
+		"FloorGridDebugLayer",
+		"GridCoordinateLayer",
+		"WallEdgeCoordinateLayer",
+		"WallIdLayer",
+		"WallWireframeLayer",
+		"OcclusionWallDebugLayer",
+		"RoomMeasurementDebugLayer",
+	]:
+		assert_false((playable.get_node(layer_name) as CanvasItem).visible, "%s must be hidden in normal Playable." % layer_name)
+	for control_path in [
+		"DebugOverlayLayer/CompactDebugHelp",
+		"DebugOverlayLayer/ObjectPlacementLegendBackground",
+		"DebugOverlayLayer/ObjectPlacementLegendLabel",
+		"DebugOverlayLayer/RoomMeasurementLegendBackground",
+		"DebugOverlayLayer/RoomMeasurementLegendLabel",
+		"DebugOverlayLayer/DebugDetailPanel",
+	]:
+		assert_false((playable.get_node(control_path) as CanvasItem).visible, "%s must be hidden in normal Playable." % control_path)
+
+
 func _dependencies_contain(dependencies: Array, expected_path: String) -> bool:
 	for raw_dependency in dependencies:
 		if String(raw_dependency).ends_with("::%s" % expected_path) or String(raw_dependency) == expected_path:

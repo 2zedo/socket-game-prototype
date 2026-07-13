@@ -49,6 +49,7 @@ func _ready() -> void:
 	else:
 		set_process(true)
 		_sync_editor_visual_preview()
+		_sync_editor_selection_guides()
 		update_configuration_warnings()
 
 
@@ -58,6 +59,7 @@ func _process(_delta: float) -> void:
 	_sync_sort_from_base_point()
 	if Engine.is_editor_hint():
 		_sync_editor_visual_preview()
+		_sync_editor_selection_guides()
 
 
 func visual_world_polygon() -> PackedVector2Array:
@@ -289,6 +291,77 @@ func _sync_editor_visual_preview() -> void:
 	var preview := get_node_or_null(VISUAL_PREVIEW_PATH) as Polygon2D
 	if preview != null:
 		preview.visible = sprite == null or sprite.texture == null
+
+
+func _sync_editor_selection_guides() -> void:
+	var selected_nodes: Array[Node] = _editor_selected_nodes()
+	var object_selected := _selection_targets_this_editable_root(selected_nodes)
+	var body_selected := _selection_touches_branch(get_node_or_null(BODY_PATH), selected_nodes)
+	var selection_selected := _selection_touches_branch(get_node_or_null(SELECTION_AREA_PATH), selected_nodes)
+	var interaction_selected := _selection_touches_branch(get_node_or_null(INTERACTION_AREA_PATH), selected_nodes)
+	_set_canvas_item_visible(get_node_or_null(BODY_PATH), body_selected)
+	_set_canvas_item_visible(get_node_or_null(BODY_POLYGON_PATH), body_selected)
+	_set_canvas_item_visible(get_node_or_null(SELECTION_AREA_PATH), selection_selected)
+	_set_canvas_item_visible(get_node_or_null(SELECTION_POLYGON_PATH), selection_selected)
+	_set_canvas_item_visible(get_node_or_null(INTERACTION_AREA_PATH), interaction_selected)
+	_set_canvas_item_visible(get_node_or_null(INTERACTION_POLYGON_PATH), interaction_selected)
+	for path in [BASE_POINT_PATH, TOP_POINT_PATH, USE_POINT_PATH]:
+		_set_editor_marker_visible(get_node_or_null(path), object_selected)
+	_set_marker_gizmo(get_node_or_null(ATTACHMENT_SOCKET_PATH), object_selected)
+	var extra_sockets := get_node_or_null("AttachmentSockets") as Node2D
+	if extra_sockets != null:
+		for child in extra_sockets.get_children():
+			_set_marker_gizmo(child, object_selected)
+
+
+func _editor_selected_nodes() -> Array[Node]:
+	var result: Array[Node] = []
+	if not Engine.is_editor_hint():
+		return result
+	var selection := EditorInterface.get_selection()
+	if selection == null:
+		return result
+	for selected_node in selection.get_selected_nodes():
+		if selected_node is Node:
+			result.append(selected_node as Node)
+	return result
+
+
+func _selection_touches_branch(branch: Node, selected_nodes: Array[Node]) -> bool:
+	if branch == null:
+		return false
+	for selected_node in selected_nodes:
+		if selected_node == branch or branch.is_ancestor_of(selected_node):
+			return true
+	return false
+
+
+func _selection_targets_this_editable_root(selected_nodes: Array[Node]) -> bool:
+	for selected_node in selected_nodes:
+		var cursor: Node = selected_node
+		while cursor != null:
+			if cursor.is_in_group("apartment_editable_object") or cursor.is_in_group("apartment_editable_environment_object"):
+				if cursor == self:
+					return true
+				break
+			cursor = cursor.get_parent()
+	return false
+
+
+func _set_canvas_item_visible(node: Node, value: bool) -> void:
+	if node is CanvasItem:
+		(node as CanvasItem).visible = value
+
+
+func _set_marker_gizmo(node: Node, value: bool) -> void:
+	if node is Marker2D:
+		(node as Marker2D).gizmo_extents = 10.0 if value else 0.0
+
+
+func _set_editor_marker_visible(node: Node, value: bool) -> void:
+	if node is Marker2D:
+		(node as Marker2D).visible = value
+		(node as Marker2D).gizmo_extents = 10.0 if value else 0.0
 
 
 func _sync_body_open_state() -> void:

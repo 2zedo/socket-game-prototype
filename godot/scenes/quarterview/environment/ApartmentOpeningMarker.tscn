@@ -7,10 +7,14 @@ editor_description = "문·창문 의미/미리보기 Node. 위치와 통과 기
 script = ExtResource("1_script")
 
 [node name="StartPoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "개구부 시작점 미러. 위치를 바꾸려면 소유 WallCell Root/end_offset을 조정합니다."
+gizmo_extents = 0.0
 
 [node name="EndPoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "개구부 끝점 미러. 위치를 바꾸려면 소유 WallCell Root/end_offset을 조정합니다."
+gizmo_extents = 0.0
 
 [node name="EditorPreview" type="Line2D" parent="."]
 editor_description = "실행 전 개구부 위치를 보여주는 에디터 전용 선."

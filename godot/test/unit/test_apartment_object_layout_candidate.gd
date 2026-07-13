@@ -226,11 +226,11 @@ func test_environment_scene_snapshots_match_all_eighteen_node_polygons_without_l
 
 func test_missing_environment_node_warns_without_resource_fallback_or_ghost_geometry() -> void:
 	var shell = _make_shell()
-	shell._unhandled_input(_key_event(KEY_P))
+	shell._unhandled_input(_key_event(KEY_P, true))
 	shell._select_object_for_debug("fridge")
 	assert_eq(shell._selected_object_id, "fridge")
 	assert_gt(shell._debug_selection_layer.get_child_count(), 0)
-	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_"))
+	assert_false(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_"), "Shift+P keeps the current selection only in the emphasized selection layer.")
 	var previous_fridge_data: Dictionary = shell._object_data_by_id("fridge")
 	var previous_occupied_cells: Array[Vector2i] = shell._object_occupied_cells(previous_fridge_data)
 	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
@@ -688,7 +688,7 @@ func test_power_housing_and_ceiling_sockets_move_only_their_attached_child() -> 
 
 func test_entrance_door_open_state_switches_wall_collision_without_floor_occupancy() -> void:
 	var shell = _make_shell()
-	shell._unhandled_input(_key_event(KEY_P))
+	shell._unhandled_input(_key_event(KEY_P, true))
 	var door_node: Node2D = shell.get_node("EditableObjectNodes/EntranceDoor")
 	var body_polygon: CollisionPolygon2D = door_node.get_node("Body/BodyPolygon")
 	var entrance_wall: Dictionary = shell._wall_segment_by_id("entrance_wall")
@@ -1056,9 +1056,106 @@ func test_shift_primary_debug_key_allows_explicit_combined_view() -> void:
 	shell._unhandled_input(_key_event(KEY_P, true))
 	assert_true(shell.show_room_measurements)
 	assert_true(shell.show_object_placeholders)
+	assert_true(shell.show_all_object_debug_geometry)
 	assert_false(shell.show_navigation_debug)
+	assert_false(shell._measurement_legend_label.visible, "Combined M+P must keep only the active P legend to avoid overlap.")
 	shell._unhandled_input(_key_event(KEY_N))
 	_assert_primary_mode(shell, 3, false, false, true)
+
+
+func test_p_default_focus_and_shift_p_all_object_inspection_are_distinct() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_P))
+	var object_layer: Node2D = shell.get_node("ObjectPlacementDebugLayer")
+	var selection_layer: Node2D = shell.get_node("DebugSelectionLayer")
+	assert_false(shell.show_all_object_debug_geometry)
+	assert_false(object_layer.visible)
+	assert_eq(object_layer.get_child_count(), 0)
+	var fridge: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
+	var hover_position: Vector2 = shell._polygon_bounds(shell._object_selection_polygons(fridge)[0]).get_center()
+	shell._update_object_hover_at(hover_position)
+	assert_true(_has_child_prefix(selection_layer, "object_fridge_hover_selection_area"))
+	assert_false(_has_child_prefix(selection_layer, "object_fridge_selected_"))
+	shell._select_object_for_debug("fridge")
+	assert_true(_has_child_prefix(selection_layer, "object_fridge_selected_composite_collision_outline"))
+	assert_true(_has_child_prefix(selection_layer, "object_fridge_selected_interaction_area"))
+	assert_true(_has_child_prefix(selection_layer, "object_fridge_visual_bounds"))
+
+	shell._unhandled_input(_key_event(KEY_P, true))
+	assert_true(shell.show_all_object_debug_geometry)
+	assert_true(object_layer.visible)
+	assert_true(is_equal_approx(object_layer.modulate.a, 0.32))
+	assert_true(_has_child_prefix(object_layer, "object_bed_floor_footprint"))
+	assert_true(_has_child_prefix(object_layer, "object_power_module_board_selection_area"))
+	assert_false(_has_child_prefix(object_layer, "object_fridge_"), "Shift+P must not duplicate the selected object under the emphasized layer.")
+	assert_true(_has_child_prefix(selection_layer, "object_fridge_selected_composite_collision_outline"), "Selected geometry must stay fully emphasized over the low-alpha all-object layer.")
+	shell._select_object_for_debug("bed")
+	assert_true(_has_child_prefix(object_layer, "object_fridge_"), "The previous selection must return to the low-alpha all-object layer.")
+	assert_false(_has_child_prefix(object_layer, "object_bed_"), "The new selection must be excluded from the low-alpha all-object layer.")
+	assert_true(_has_child_prefix(selection_layer, "object_bed_selected_composite_collision_outline"))
+
+	shell._unhandled_input(_key_event(KEY_P, true))
+	assert_false(shell.show_all_object_debug_geometry)
+	assert_false(object_layer.visible)
+	assert_eq(object_layer.get_child_count(), 0)
+
+
+func test_floor_grid_and_room_fill_are_debug_only_and_low_alpha() -> void:
+	var shell = _make_shell()
+	var grid_layer: Node2D = shell.get_node("FloorGridDebugLayer")
+	assert_false(grid_layer.visible)
+	assert_false(shell.get_node("RoomMeasurementDebugLayer").visible)
+	assert_false(shell._compact_help_label.visible)
+	shell._unhandled_input(_key_event(KEY_M))
+	assert_true(grid_layer.visible)
+	var room_fill: Polygon2D = shell.get_node("RoomMeasurementDebugLayer/measurement_room_entrance_area_0_7")
+	assert_lte(room_fill.color.a, 0.08)
+	shell._unhandled_input(_key_event(KEY_N))
+	assert_true(grid_layer.visible)
+	shell._unhandled_input(_key_event(KEY_P))
+	assert_true(grid_layer.visible)
+	shell._unhandled_input(_key_event(KEY_P))
+	assert_false(grid_layer.visible)
+	assert_false(shell._compact_help_label.visible)
+
+
+func test_v_only_shows_wall_state_feedback_until_normal_returns() -> void:
+	var shell = _make_shell()
+	assert_false(shell._compact_help_label.visible)
+	shell._unhandled_input(_key_event(KEY_V))
+	assert_true(shell._compact_help_label.visible)
+	assert_true(shell._compact_help_label.text.contains("V=반투명"))
+	shell._unhandled_input(_key_event(KEY_V))
+	assert_true(shell._compact_help_label.visible)
+	assert_true(shell._compact_help_label.text.contains("V=숨김"))
+	shell._unhandled_input(_key_event(KEY_V))
+	assert_false(shell._compact_help_label.visible)
+
+
+func test_scene_node_wall_wireframe_tracks_w_m_focus_and_hidden_visual_state() -> void:
+	var shell = _make_shell()
+	var wireframe: Node2D = shell.get_node("WallWireframeLayer")
+	assert_gt(int(wireframe.call("command_count")), 0)
+	assert_false(wireframe.visible)
+	shell._unhandled_input(_key_event(KEY_W))
+	assert_true(wireframe.visible)
+	assert_true(bool(wireframe.call("has_command_prefix", "wall_wire_work_back_wall_00_base")))
+	assert_true(bool(wireframe.call("has_command_prefix", "wall_wire_work_back_wall_00_top")))
+	assert_true(bool(wireframe.call("has_command_prefix", "wall_wire_entrance_wall_04_base")), "Door opening Cell must have a wireframe boundary.")
+	assert_gt(shell.get_node("WallIdLayer").get_child_count(), 0, "W must no longer be empty for Scene Node walls.")
+	var focused_cell: Node2D = shell.get_node("Walls/WorkBackWall/WallCells/Cell02")
+	shell.debug_focus_wall_cell_path = focused_cell.get_path()
+	shell._redraw_wall_wireframe_overlay()
+	assert_true(bool(wireframe.call("has_command_prefix", "wall_wire_work_back_wall_02_focus")))
+	shell._unhandled_input(_key_event(KEY_V))
+	shell._unhandled_input(_key_event(KEY_V))
+	assert_eq(shell.wall_inspection_mode, shell.WallInspectionMode.HIDDEN)
+	assert_true(wireframe.visible, "V HIDDEN must preserve W wireframe.")
+	assert_false(shell.get_node("Walls/WorkBackWall/WallCells/Cell00/Visual").visible)
+	shell._unhandled_input(_key_event(KEY_W))
+	assert_false(wireframe.visible)
+	shell._unhandled_input(_key_event(KEY_M))
+	assert_true(wireframe.visible, "M must expose wall wireframe even when W is off.")
 
 
 func test_navigation_mode_hides_all_object_placement_details() -> void:
@@ -1084,7 +1181,7 @@ func test_measurement_mode_has_room_summary_without_object_details() -> void:
 
 func test_object_mode_draws_four_point_floor_and_collision_polygons() -> void:
 	var shell = _make_shell()
-	shell._unhandled_input(_key_event(KEY_P))
+	shell._unhandled_input(_key_event(KEY_P, true))
 	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
 	var floor_polygon: Polygon2D = layer.get_node("object_bed_floor_footprint")
 	assert_eq(floor_polygon.polygon.size(), 4)
@@ -1102,7 +1199,7 @@ func test_object_mode_draws_four_point_floor_and_collision_polygons() -> void:
 
 func test_object_mode_draws_scene_node_collision_separately_from_grid_occupancy() -> void:
 	var shell = _make_shell()
-	shell._unhandled_input(_key_event(KEY_P))
+	shell._unhandled_input(_key_event(KEY_P, true))
 	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
 	var objects := _dictionary_map(shell._object_footprints())
 	assert_true(shell._object_floor_collision_are_equivalent(objects["fridge"]))
@@ -1121,7 +1218,7 @@ func test_object_mode_draws_scene_node_collision_separately_from_grid_occupancy(
 
 func test_invalid_or_empty_interaction_data_draws_no_orange_geometry() -> void:
 	var shell = _make_shell()
-	shell._unhandled_input(_key_event(KEY_P))
+	shell._unhandled_input(_key_event(KEY_P, true))
 	var layer: Node = shell.get_node("ObjectPlacementDebugLayer")
 	for id in NON_INTERACTION_IDS:
 		assert_false(_has_child_prefix(layer, "object_%s_interaction_" % id), "%s must not draw orange geometry." % id)
@@ -1191,12 +1288,13 @@ func test_object_mode_legend_and_selected_bounds_show_scene_node_detail_without_
 	assert_true(shell._object_legend_label.text.contains("collision"))
 	assert_true(shell._object_legend_label.text.contains("AttachmentSocket"))
 	assert_true(shell._object_legend_label.text.contains("VisualPreview"))
-	assert_true(shell._object_legend_label.text.contains("InteractionPolygon"))
-	assert_true(shell._object_legend_label.text.contains("SelectionPolygon"))
+	assert_true(shell._object_legend_label.text.contains("Interaction"))
+	assert_true(shell._object_legend_label.text.contains("Selection"))
 	assert_true(shell._object_legend_label.text.contains("BasePoint"))
 	assert_true(shell._object_legend_label.text.contains("TopPoint"))
 	assert_true(shell._object_legend_label.text.contains("UsePoint"))
-	assert_true(shell._object_legend_label.text.contains("파랑 채움 + 빨강 테두리"))
+	assert_true(shell._object_legend_label.text.contains("파랑 면+빨강 실선"))
+	assert_true(shell._object_legend_label.text.contains("Shift+P"))
 	assert_true(shell._object_legend_label.text.contains("후보 순환"))
 	assert_true(shell._object_legend_label.text.contains("기본→반투명→숨김"))
 	assert_gt(shell._debug_detail_panel.get_global_rect().position.x, 0.0, "P detail panel must stay inside the viewport.")
@@ -1205,14 +1303,16 @@ func test_object_mode_legend_and_selected_bounds_show_scene_node_detail_without_
 	shell._unhandled_input(_mouse_motion_event(bed_viewport_position))
 	assert_eq(shell._hovered_object_id, "bed")
 	assert_not_null(shell.get_node("DebugSelectionLayer").get_node_or_null("object_bed_short_name"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_hover_selection_area"))
+	assert_eq(shell.get_node("ObjectPlacementDebugLayer").get_child_count(), 0, "Default P must not draw all object geometry.")
 	shell._unhandled_input(_mouse_click_event(bed_viewport_position))
 	assert_eq(shell._selected_object_id, "bed")
 	assert_true(shell._debug_detail_label.text.contains("id: bed"))
 	assert_true(shell._debug_detail_label.text.contains("source=SCENE_NODE"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_visual_bounds"))
-	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_occupancy_bounds"))
-	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_composite_collision_outline"))
-	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_interaction_bounds"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_selected_floor_footprint"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_selected_composite_collision_outline"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_selected_interaction_area"))
 	shell._update_object_hover_at(Vector2(-10000, -10000))
 	assert_eq(shell._hovered_object_id, "")
 	assert_eq(shell._selected_object_id, "bed", "Moving hover away must preserve click selection.")
@@ -1229,19 +1329,17 @@ func test_object_mode_legend_and_selected_bounds_show_scene_node_detail_without_
 	assert_true(shell._debug_detail_label.text.contains("AttachmentSockets:"))
 	for legacy_label in ["anchor type:", "position offset:", "visual size:", "interaction cells:", "LEGACY_RESOURCE"]:
 		assert_false(shell._debug_detail_label.text.contains(legacy_label), "SCENE_NODE detail must not expose %s" % legacy_label)
-	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_selection_area"))
-	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_base_point"))
-	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_top_point"))
-	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_height_guide"))
-	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_selection_area"))
-	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_base_point"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_selection_area"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_base_point"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_top_point"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_height_guide"))
 	shell._select_object_for_debug("bed")
 	assert_true(shell._debug_detail_label.text.contains("source=SCENE_NODE"))
 	assert_true(shell._debug_detail_label.text.contains("EditableObjectNodes/Bed"))
 	var board: Dictionary = _dictionary_map(shell._object_footprints())["power_module_board"]
 	shell._select_object_for_debug("power_module_board")
 	assert_true(shell._debug_detail_label.text.contains("WorkBackWall"))
-	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_socket"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_socket"))
 	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_wall_edge"))
 	assert_ne(shell._object_anchor_world_position(board), shell._cell_center(board.anchor_cell), "Wall anchor must resolve from its wall edge, not a fake floor center.")
 	shell._select_object_for_debug("sea_horizon_poster")
@@ -1249,7 +1347,7 @@ func test_object_mode_legend_and_selected_bounds_show_scene_node_detail_without_
 	assert_true(shell._debug_detail_label.text.contains("Cell03/AttachmentSocket"))
 	assert_true(shell._debug_detail_label.text.contains("ParentSocket:"))
 	assert_false(shell._debug_detail_label.text.contains("wall: living_right_wall"))
-	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_sea_horizon_poster_selected_attachment_parent_socket"))
+	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_sea_horizon_poster_selected_attachment_parent_socket"))
 	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_sea_horizon_poster_selected_interaction"))
 
 
@@ -1269,7 +1367,7 @@ func test_wall_transparency_toggle_is_visual_only() -> void:
 	assert_eq(shell._wall_segments().size(), wall_count_before)
 	assert_eq(shell._object_blocked_cells(), blocked_before)
 	assert_eq(shell._navigation_edge_sets()["blocked"].keys().size(), edges_before["blocked"].keys().size())
-	assert_true(shell._compact_help_label.text.contains("전체벽=반투명"))
+	assert_true(shell._compact_help_label.text.contains("V=반투명"))
 	shell.preview_revealed_walls = true
 	shell._redraw_reveal_sensitive_layers()
 	_assert_layer_alpha(shell.get_node("WallLayer"), 0.18)
@@ -1283,13 +1381,13 @@ func test_wall_transparency_toggle_is_visual_only() -> void:
 	assert_false(shell.get_node("Walls/WorkBackWall/WallCells/Cell00/CollisionBody/CollisionPolygon2D").disabled)
 	assert_false(shell.get_node("EditableObjectNodes/EntranceDoor/Body/BodyPolygon").disabled, "HIDDEN must keep the closed door collision active.")
 	assert_eq(shell._navigation_edge_sets()["blocked"].keys().size(), edges_before["blocked"].keys().size())
-	assert_true(shell._compact_help_label.text.contains("전체벽=숨김"))
+	assert_true(shell._compact_help_label.text.contains("V=숨김"))
 	assert_true(shell._debug_help_body_label.text.contains("현재: 숨김"))
 	var conduit: Node2D = shell.get_node("Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit")
 	var poster: Node2D = shell.get_node("Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster")
 	assert_true(conduit.visible, "V HIDDEN must keep wall-attached equipment roots visible.")
 	assert_true(poster.visible, "V HIDDEN must keep wall-attached decoration roots visible.")
-	shell._unhandled_input(_key_event(KEY_P))
+	shell._unhandled_input(_key_event(KEY_P, true))
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_wall_conduit_selection_area"))
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_sea_horizon_poster_selection_area"))
 	shell._redraw_reveal_sensitive_layers()
@@ -1414,6 +1512,44 @@ func test_environment_floor_room_wall_and_opening_nodes_are_scene_authority() ->
 	assert_eq(board.attachment_anchor_world(), shell.get_node("Walls/WorkBackWall/WallCells/Cell05/AttachmentSocket").global_position)
 	assert_eq(door.attachment_anchor_world(), shell.get_node("Walls/EntranceWall/WallCells/Cell04/AttachmentSocket").global_position)
 	assert_false(shell.get_node("EditorGuides").visible, "Editor floor labels and legend must stay hidden at runtime.")
+	for guide_name in ["RoomGuides", "WallGuides", "ObjectGuides", "HeightAndSocketGuides"]:
+		var guide: Node2D = shell.get_node("EditorGuides/%s" % guide_name)
+		assert_false(guide.editor_description.is_empty())
+	for room_name in ["EntranceArea", "BathroomArea", "LivingArea", "WorkArea"]:
+		var room_preview: Polygon2D = shell.get_node("RoomAreas/%s/EditorPreview" % room_name)
+		assert_lte(room_preview.color.a, 0.08)
+	var editor_guides = shell.get_node("EditorGuides")
+	var fridge = shell.get_node("EditableObjectNodes/Fridge")
+	var selected_nodes: Array[Node] = [fridge]
+	var signature_before: String = editor_guides._guide_signature(shell, selected_nodes)
+	var base_point: Marker2D = fridge.get_node("BasePoint")
+	var original_base_position := base_point.position
+	base_point.position += Vector2(3.0, -2.0)
+	var base_signature: String = editor_guides._guide_signature(shell, selected_nodes)
+	assert_ne(base_signature, signature_before, "BasePoint edits must invalidate HeightAndSocketGuides.")
+	base_point.position = original_base_position
+	var top_point: Marker2D = fridge.get_node("TopPoint")
+	var original_top_position := top_point.position
+	top_point.position += Vector2(-2.0, 3.0)
+	var top_signature: String = editor_guides._guide_signature(shell, selected_nodes)
+	assert_ne(top_signature, signature_before, "TopPoint edits must invalidate HeightAndSocketGuides.")
+	top_point.position = original_top_position
+	var socket: Marker2D = fridge.get_node("AttachmentSocket")
+	var original_socket_position := socket.position
+	socket.position += Vector2(2.0, 2.0)
+	var socket_signature: String = editor_guides._guide_signature(shell, selected_nodes)
+	assert_ne(socket_signature, signature_before, "AttachmentSocket edits must invalidate HeightAndSocketGuides.")
+	socket.position = original_socket_position
+	var sink_counter = shell.get_node("EditableObjectNodes/SinkCounter")
+	var microwave = shell.get_node("EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave")
+	var microwave_selection: Array[Node] = [microwave.get_node("SelectionArea/SelectionPolygon")]
+	assert_eq(editor_guides._selected_editable_object(shell, microwave_selection), microwave, "Nested selection must resolve to the nearest editable root.")
+	assert_true(microwave._selection_targets_this_editable_root(microwave_selection))
+	assert_false(sink_counter._selection_targets_this_editable_root(microwave_selection), "Editing Microwave must not show SinkCounter's Base/Top/socket guides.")
+	editor_guides._rebuild_object_guides(shell, microwave_selection)
+	var microwave_guide: Line2D = shell.get_node("EditorGuides/ObjectGuides/Object_Microwave")
+	var sink_guide: Line2D = shell.get_node("EditorGuides/ObjectGuides/Object_SinkCounter")
+	assert_gt(microwave_guide.default_color.a, sink_guide.default_color.a, "Only the nearest nested editable root may receive the selected outline emphasis.")
 
 
 func test_non_rotated_fallback_disables_authored_rotated_visuals_and_collisions() -> void:

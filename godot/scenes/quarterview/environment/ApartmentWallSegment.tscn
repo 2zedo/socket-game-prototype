@@ -7,16 +7,24 @@ editor_description = "긴 벽의 의미를 묶는 WallGroup. 실제 위치·Visu
 script = ExtResource("1_script")
 
 [node name="StartPoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "벽선 시작점."
+gizmo_extents = 0.0
 
 [node name="EndPoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "벽선 끝점."
+gizmo_extents = 0.0
 
 [node name="BasePoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "벽 바닥 기준점. Start/End 중간으로 자동 갱신됩니다."
+gizmo_extents = 0.0
 
 [node name="TopPoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "벽 높이 기준점. 세로 위치를 직접 조정합니다."
+gizmo_extents = 0.0
 position = Vector2(0, -176)
 
 [node name="Visual" type="Polygon2D" parent="."]

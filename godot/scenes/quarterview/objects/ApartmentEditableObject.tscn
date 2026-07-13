@@ -15,44 +15,56 @@ editor_description = "실제 texture가 연결되면 이 Sprite2D의 texture rec
 [node name="VisualPreview" type="Polygon2D" parent="Visual"]
 editor_description = "실제 이미지가 없을 때만 쓰는 임시 화면 범위."
 polygon = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
-color = Color(0.32, 0.86, 1, 0.18)
+color = Color(0.82, 0.92, 1, 0.04)
 
 [node name="BasePoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "바닥·벽·부모에 오브젝트가 설치되는 기준점. 실제 위치 기준으로 직접 조정합니다."
+gizmo_extents = 0.0
 
 [node name="TopPoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "BasePoint에서 오브젝트 높이를 확인하는 상단 기준점. 선택·상호작용 판정과 독립적으로 조정합니다."
+gizmo_extents = 0.0
 position = Vector2(0, -64)
 
 [node name="Body" type="StaticBody2D" parent="."]
 editor_description = "이동 충돌이 필요한 오브젝트만 BodyPolygon을 둡니다."
+visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="SelectionArea" type="Area2D" parent="."]
 editor_description = "SelectionPolygon의 위치 기준. 게임 상호작용과 분리된 디버그 hover/click 영역입니다."
+visible = false
 collision_layer = 0
 collision_mask = 0
 monitoring = false
 monitorable = false
 
 [node name="SelectionPolygon" type="CollisionPolygon2D" parent="SelectionArea"]
+visible = false
 editor_description = "마우스 hover/click 선택용 화면 영역. InteractionPolygon과 독립적으로 꼭짓점을 조정합니다."
 polygon = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
 
 [node name="InteractionArea" type="Area2D" parent="."]
 editor_description = "InteractionPolygon의 위치 기준. UsePoint와 독립적으로 조정합니다."
+visible = false
 collision_layer = 0
 collision_mask = 0
 monitoring = false
 monitorable = false
 
 [node name="InteractionPolygon" type="CollisionPolygon2D" parent="InteractionArea"]
+visible = false
 editor_description = "클릭·사용 감지 범위. UsePoint와 독립적으로 조정."
 polygon = PackedVector2Array(-32, -24, 32, -24, 32, 24, -32, 24)
 
 [node name="UsePoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "오브젝트 사용 시 캐릭터가 이동해 설 위치."
+gizmo_extents = 0.0
 
 [node name="AttachmentSocket" type="Marker2D" parent="."]
 editor_description = "자식 장비 또는 벽·부모 부착 기준점."
+gizmo_extents = 0.0

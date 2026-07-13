@@ -7,10 +7,12 @@ editor_description = "논리 방 구역 정본. Area2D/CollisionPolygon2D 꼭짓
 script = ExtResource("1_script")
 
 [node name="Area2D" type="Area2D" parent="."]
+visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Area2D"]
+visible = false
 editor_description = "M 측량과 방 판정에 쓰는 논리 구역. 꼭짓점을 직접 조정."
 
 [node name="EditorPreview" type="Polygon2D" parent="."]

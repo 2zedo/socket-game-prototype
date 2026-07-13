@@ -70,6 +70,15 @@ Do not modify by default:
 
 `QuarterviewApartmentEnvironment` is the single ROTATE_90 Scene-Node authority for floor cells, logical room polygons, wall/opening geometry, navigation, and objects. `QuarterviewApartmentShellCandidate` inherits that PackedScene for design/debug review. `QuarterviewApartmentPlayable` inherits the same PackedScene and adds one `QuarterviewRoom` gameplay instance in opt-in external-environment mode. In that mode the legacy room builder stays empty and hover/click, click-to-move, UsePoint arrival, and interaction signals query the Environment's Scene-Node geometry and walkable-cell graph. Existing `QuarterviewRoom` behavior and non-ROTATE_90 candidate checks retain the legacy calculated fallback. These scenes are candidates, not production wiring.
 
+### 아파트 환경 편집 방법
+
+- 실제 구조 수정은 `QuarterviewApartmentEnvironment.tscn`, 판정 확인은 `QuarterviewApartmentShellCandidate.tscn`, 플레이어 조작 확인은 `QuarterviewApartmentPlayable.tscn`에서 한다.
+- 오브젝트는 `EditableObjectNodes/<Object>` 아래의 Root 위치, `Visual/Sprite2D` 또는 `VisualPreview`, `Body/BodyPolygon`, `SelectionArea/SelectionPolygon`, `InteractionArea/InteractionPolygon`, `UsePoint` 순으로 수정한다. 환경 오브젝트에는 Interaction/UsePoint가 없다.
+- 바닥은 `Floor/<Room>Floor` TileMapLayer에서 칠하고, 벽은 `Walls/<WallGroup>/WallCells/CellNN`, 벽부착 장비는 해당 Cell의 `AttachmentSocket`에서 수정한다.
+- 기본 Environment 2D 화면은 Visual 외곽만 옅게 보여 준다. 판정 Polygon을 Scene Tree에서 직접 선택하면 Godot 기본 꼭짓점 편집과 해당 오브젝트의 높이·기준점 가이드가 나타난다. `EditorGuides/RoomGuides`, `WallGuides`, `ObjectGuides`, `HeightAndSocketGuides`는 눈 아이콘으로 각각 끌 수 있으며 실행 중에는 자동으로 숨는다.
+- Shell 키는 `P` 선택/hover 오브젝트 판정, `Shift+P` 전체 오브젝트 검사, `M` 방 측량, `N` 이동·충돌, `W` 벽 wireframe/ID, `V` 벽 Visual의 기본→반투명→숨김 순환이다.
+- 권장 순서는 Environment에서 Visual/Polygon/Socket 수정 → Shell에서 P/M/N/W/V 확인 → Playable에서 실제 이동·가림·상호작용 확인이다.
+
 | Need | Where |
 | --- | --- |
 | Paint or erase floor cells | `Floor/EntranceFloor`, `BathroomFloor`, `LivingFloor`, or `WorkFloor` (`TileMapLayer`, 128×64 isometric) |
@@ -91,12 +100,12 @@ Do not modify by default:
 | Edit a migrated interaction range/access point | Edit `InteractionArea/InteractionPolygon` and sibling `UsePoint` independently |
 | Edit a migrated temporary visual bound | Edit `Visual/VisualPreview`; once `Visual/Sprite2D` has a texture, its texture rect takes priority |
 | Edit the attachment point | Move `AttachmentSocket`; parent/wall relationships remain Resource metadata |
-| Show wall IDs / start-end markers | Press `W` in the shell scene; labels prioritize Korean wall names with `id` as secondary info |
+| Show wall wireframe / IDs | Press `W` in the shell scene; shows authored WallCell bottom/top/end edges, door/window boundaries, and Korean-first group labels even while V is HIDDEN |
 | Print wall inventory | Press `I` in the shell scene |
 | Show floor cell coordinates | Press `G` in the shell scene; floor labels use `칸 (x,y)` |
 | Show wall edge / vertex coordinates | Press `E` in the shell scene; wall labels use `벽선 from -> to` / `축=A/B` |
 | Show navigation / collision debug | Press `N`; shows only movement cells, object-blocked cells, wall/door edges, the marker, current room, and a compact legend |
-| Show object placement debug | Press `P`; shows composite/separate floor-collision geometry, valid interaction owners, ranked hover candidates, and `선택 n/m` click cycling |
+| Show object placement debug | Press `P` for hover Selection or selected-object details; `Shift+P` shows all objects at low alpha while keeping the selection emphasized |
 | Show room measurements / placement reference | Press `M`; shows simplified room bounds, placement zones, doorway clearance, required paths, and wall-mount availability |
 | Open complete shell shortcut help | Press `F1`; press `F1` or `ESC` to close the Korean help panel |
 | Inspect walls without changing collision | Press `V` to cycle `NORMAL -> TRANSPARENT (18%) -> HIDDEN -> NORMAL`; openings, collision, navigation, sockets, and attached objects remain active |
@@ -157,13 +166,13 @@ When `E` is enabled, the shell displays wall grid-line vertices and the hover pa
 
 `M`, `P`, and `N` are primary debug modes backed by `DebugMode.NONE`, `ROOM_MEASUREMENT`, `OBJECT_PLACEMENT`, and `NAVIGATION`. A normal key press replaces the previous primary mode; pressing the active key again returns to `NONE`. `Shift+M/P/N`, or `allow_combined_debug_overlays=true`, explicitly permits combined inspection while the default remains exclusive. Legacy `show_room_measurements`, `show_object_placeholders`, and `show_navigation_debug` exports remain load-compatible and are normalized into the active mode at startup.
 
-Their render responsibilities are separated into `RoomMeasurementDebugLayer`, `ObjectPlacementDebugLayer`, `NavigationDebugLayer`, and `DebugSelectionLayer`. `DebugDetailPanel` shows only the current mode's room/object/navigation summary, `ObjectPlacementLegend` appears only with P, and `DebugHelpPanel` owns the complete Korean shortcut list. The compact top help shows the fixed review view (`ROTATE_90`), current mode, M/P/N, V wall-inspection state, and F1.
+Their render responsibilities are separated into `RoomMeasurementDebugLayer`, `ObjectPlacementDebugLayer`, `NavigationDebugLayer`, `DebugSelectionLayer`, `FloorGridDebugLayer`, and `WallWireframeLayer`. `DebugDetailPanel` shows only the current mode's room/object/navigation summary, `ObjectPlacementLegend` appears only with P, and `DebugHelpPanel` owns the complete Korean shortcut list. The compact top help shows the fixed review view (`ROTATE_90`), current mode, P scope, M/N/W, V wall-inspection state, and F1. Floor debug grid geometry is enabled only by M/N/P; the Playable default shows only the authored floor tile art.
 
 When `N` is enabled, the shell displays walkable floor cells, room areas, object-blocked cells, logical blocked wall edges, passable doorway edges, and a shell-only debug marker. Bed, fridge, NAVI, NODE-17, sink counter, dining table, UPS, and bathroom fixture blocked cells are derived from their Scene `Body/BodyPolygon`; the environment objects use Body overlap on the BasePoint installation row so polygon edits change occupancy without leaving a hidden Resource blocker. Shoes/slippers and the six attached environment/decoration objects have no BodyPolygon and do not block. An optional future PlacementFootprint may override occupancy, but none of these objects has one. The entrance door instead toggles its exact doorway edge between blocked while closed and passable while open, without floor occupancy. N does not display object names, ids, sizes, interaction data, parent data, or `ObjectPlacementDebugLayer`.
 
 Navigation area ids are `living_area`, `work_power_area`, `bathroom`, and `entrance_area`. The shell-only marker starts at `player_debug_cell=(1,8)` by default. Arrow keys move the marker only when `N` is enabled; blocked wall edges and non-walkable target cells stop movement, while doorway edges allow passage.
 
-When `P` is enabled, Scene objects draw BodyPolygon-derived occupancy in blue, the same BodyPolygon collision as a red outline, SelectionPolygon as cyan dashes, InteractionPolygon as orange dashes, UsePoint as an independent orange marker, physical parent/AttachmentSocket in pink, BasePoint in green, TopPoint/height guide in yellow, and Sprite2D/VisualPreview bounds as selected-only white dashes. When floor and collision are the same Node polygon, P draws one blue face with a red outline; a future distinct PlacementFootprint would draw separately. The base layer owns every authored geometry channel. The selected layer adds only the white visual bound and short label, so it cannot produce a second Body/Selection/Interaction/Socket line. Wall, ceiling, and non-floor parent attachments do not block `N` unless they receive a BodyPolygon in a later migration.
+When `P` is enabled, hover without a click draws only that object's SelectionPolygon as cyan dashes. A clicked object draws its BodyPolygon-derived occupancy as one low blue face plus red collision outline, SelectionPolygon as cyan dashes, InteractionPolygon as orange dashes, UsePoint as a green marker, physical parent/AttachmentSocket in magenta, BasePoint in light green, TopPoint/height guide in yellow, and Sprite2D/VisualPreview bounds as white dashes. Non-selected objects remain hidden. `Shift+P` enables the all-object layer at reduced alpha and keeps the selected object thick and fully emphasized; it does not duplicate selected geometry. A future distinct PlacementFootprint may draw separately, but the current Body occupancy/collision is composited once. Wall, ceiling, and non-floor parent attachments do not block `N` unless they receive a BodyPolygon in a later migration.
 
 P hit testing is separate from the gameplay interaction inventory. All 18 objects are selectable through explicit SelectionPolygon geometry. The eleven environment objects expose no orange InteractionPolygon or UsePoint; the six attached objects also expose no BodyPolygon. Interaction and physical shapes rank above parent/wall attachments, while ceiling and non-blocking environment visuals remain last. Repeated clicks with the same candidate group cycle in ranked order. For the active Environment, `DebugDetailPanel` is intentionally compact: `source=SCENE_NODE`, exact ObjectRoot and physical parent Socket NodePaths, Body/Selection/Interaction presence, UsePoint/BasePoint/TopPoint, visual source, and AttachmentSockets. It does not print deprecated Resource anchor/offset/size/cell geometry. Only the isolated compatibility path prints a separate `LEGACY_RESOURCE` section.
 
@@ -185,7 +194,7 @@ Object placement display options:
 
 `ApartmentObjectFootprintConfig.AnchorType` still separates logical spatial role from category. For wall/parent/ceiling objects, the physical Scene parent Socket is the exact transform source while Resource `anchor_type`, `wall_segment_id`, and `parent_object_id` retain semantic ownership only. The legacy projection path remains compatibility code outside the active Environment authority. The current pass is visually authored against the existing `ROTATE_90` reference view.
 
-`V` cycles the authored WallCell visuals through `NORMAL`, `TRANSPARENT (18%)`, and `HIDDEN`. Floor/edge/debug layers, blocked/passable navigation edges, openings, collision, sockets, and wall-attached objects remain active in all three states.
+`W` uses authored WallCell and Opening data directly: bright gray bottom edges, pale-yellow top edges, dashed gray ends, green door boundaries, blue window boundaries, and an optional white focused Cell. `V` cycles the authored WallCell visuals through `NORMAL`, `TRANSPARENT (18%)`, and `HIDDEN`; W or M keeps this wireframe visible while floor/edge/debug data, blocked/passable navigation edges, openings, collision, sockets, and wall-attached objects remain active in all three states.
 
 Shell-only interaction UI:
 

@@ -36,6 +36,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
 		_sync_group_from_cells()
+		_sync_editor_marker_visibility()
 
 
 func wall_cells() -> Array[Node]:
@@ -91,6 +92,22 @@ func _sync_group_from_cells() -> void:
 		cell.call("set_revealed", _revealed)
 	_sync_opening_marker_from_cells(cells)
 	_disable_retired_group_geometry()
+	if Engine.is_editor_hint():
+		_sync_editor_marker_visibility()
+
+
+func _sync_editor_marker_visibility() -> void:
+	var selection := EditorInterface.get_selection()
+	var group_selected := false
+	if selection != null:
+		for selected_node in selection.get_selected_nodes():
+			if selected_node == self or is_ancestor_of(selected_node):
+				group_selected = true
+				break
+	for marker in [start_point, end_point, base_point, top_point]:
+		if marker is Marker2D:
+			(marker as Marker2D).visible = group_selected
+			(marker as Marker2D).gizmo_extents = 10.0 if group_selected else 0.0
 
 
 func _sync_opening_marker_from_cells(cells: Array[Node]) -> void:

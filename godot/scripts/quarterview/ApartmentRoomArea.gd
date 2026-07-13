@@ -6,7 +6,7 @@ class_name ApartmentRoomArea
 @export var room_id: StringName
 @export var korean_name := ""
 @export_range(0, 100, 1) var selection_priority := 0
-@export var preview_color := Color(0.2, 0.8, 0.6, 0.12)
+@export var preview_color := Color(0.2, 0.8, 0.6, 0.06)
 
 @onready var area_polygon: CollisionPolygon2D = $Area2D/CollisionPolygon2D
 @onready var editor_preview: Polygon2D = $EditorPreview
@@ -21,13 +21,30 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
 		_sync_preview()
+		_sync_editor_collision_visibility()
 
 
 func _sync_preview() -> void:
 	if not is_instance_valid(area_polygon) or not is_instance_valid(editor_preview):
 		return
 	editor_preview.polygon = area_polygon.polygon
-	editor_preview.color = preview_color
+	var readable_color := preview_color
+	readable_color.a = minf(readable_color.a, 0.08)
+	editor_preview.color = readable_color
+	if Engine.is_editor_hint():
+		_sync_editor_collision_visibility()
+
+
+func _sync_editor_collision_visibility() -> void:
+	var selection := EditorInterface.get_selection()
+	var show_collision := false
+	if selection != null:
+		for selected_node in selection.get_selected_nodes():
+			if selected_node == $Area2D or $Area2D.is_ancestor_of(selected_node):
+				show_collision = true
+				break
+	$Area2D.visible = show_collision
+	area_polygon.visible = show_collision
 
 
 func world_polygon() -> PackedVector2Array:

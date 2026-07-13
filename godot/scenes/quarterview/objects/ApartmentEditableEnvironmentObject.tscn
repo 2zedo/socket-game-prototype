@@ -15,28 +15,35 @@ editor_description = "실제 texture가 연결되면 이 Sprite2D의 texture rec
 [node name="VisualPreview" type="Polygon2D" parent="Visual"]
 editor_description = "실제 이미지가 없을 때만 쓰는 임시 화면 범위."
 polygon = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
-color = Color(0.32, 0.86, 1, 0.18)
+color = Color(0.82, 0.92, 1, 0.04)
 
 [node name="BasePoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "바닥 또는 설치 기준점. 화면 범위·충돌·선택과 독립적으로 직접 조정합니다."
+gizmo_extents = 0.0
 
 [node name="TopPoint" type="Marker2D" parent="."]
+visible = false
 editor_description = "화면상 높이 확인 기준점. BasePoint와 독립적으로 직접 조정합니다."
+gizmo_extents = 0.0
 position = Vector2(0, -64)
 
 [node name="Body" type="StaticBody2D" parent="."]
 editor_description = "이동 충돌이 필요한 환경 오브젝트만 BodyPolygon을 둡니다."
+visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="SelectionArea" type="Area2D" parent="."]
 editor_description = "SelectionPolygon의 기준. 게임 상호작용이 아닌 P 디버그 선택 전용 영역입니다."
+visible = false
 collision_layer = 0
 collision_mask = 0
 monitoring = false
 monitorable = false
 
 [node name="SelectionPolygon" type="CollisionPolygon2D" parent="SelectionArea"]
+visible = false
 editor_description = "P 디버그에서 오브젝트를 선택하는 화면 영역. 꼭짓점을 직접 조정합니다."
 polygon = PackedVector2Array(-32, -32, 32, -32, 32, 32, -32, 32)
 

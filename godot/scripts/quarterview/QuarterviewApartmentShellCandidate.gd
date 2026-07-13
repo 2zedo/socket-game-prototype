@@ -4,6 +4,7 @@ const ApartmentWallSegmentConfigScript := preload("res://scripts/quarterview/Apa
 const ApartmentObjectFootprintConfigScript := preload("res://scripts/quarterview/ApartmentObjectFootprintConfig.gd")
 const ApartmentObjectFootprintSetConfigScript := preload("res://scripts/quarterview/ApartmentObjectFootprintSetConfig.gd")
 const ApartmentWallCellScript := preload("res://scripts/quarterview/ApartmentWallCell.gd")
+const ApartmentDebugGeometryLayerScript := preload("res://scripts/quarterview/ApartmentDebugGeometryLayer.gd")
 
 enum ViewOrientation {
 	FRONT_RIGHT,
@@ -145,7 +146,8 @@ const COLOR_OCCLUSION_STUB_DEBUG := Color(1.0, 0.62, 0.16, 0.95)
 const COLOR_OBJECT_INTERACTION := Color(1.0, 0.58, 0.16, 0.96)
 const COLOR_OBJECT_INTERACTION_AREA := Color(1.0, 0.50, 0.10, 0.94)
 const COLOR_OBJECT_SELECTION_AREA := Color(0.18, 0.92, 0.92, 0.96)
-const COLOR_OBJECT_BASE_POINT := Color(0.28, 1.0, 0.46, 0.98)
+const COLOR_OBJECT_USE_POINT := Color(0.24, 1.0, 0.48, 0.98)
+const COLOR_OBJECT_BASE_POINT := Color(0.64, 1.0, 0.44, 0.98)
 const COLOR_OBJECT_TOP_POINT := Color(1.0, 0.88, 0.24, 0.98)
 const COLOR_OBJECT_BLOCKED_CELL := Color(1.0, 0.28, 0.20, 0.92)
 const COLOR_OBJECT_VISUAL_BOUNDS := Color(0.82, 0.95, 1.0, 0.88)
@@ -153,6 +155,12 @@ const COLOR_OBJECT_OCCUPANCY := Color(0.38, 0.36, 1.0, 0.26)
 const COLOR_OBJECT_OCCUPANCY_OUTLINE := Color(0.56, 0.58, 1.0, 0.92)
 const COLOR_OBJECT_ATTACHMENT := Color(0.92, 0.42, 1.0, 0.96)
 const COLOR_OBJECT_LEGEND_BACKGROUND := Color(0.055, 0.035, 0.10, 0.92)
+const COLOR_WALL_WIREFRAME_BASE := Color(0.86, 0.88, 0.90, 0.88)
+const COLOR_WALL_WIREFRAME_TOP := Color(1.0, 0.92, 0.58, 0.88)
+const COLOR_WALL_WIREFRAME_END := Color(0.68, 0.70, 0.74, 0.84)
+const COLOR_WALL_WIREFRAME_DOOR := Color(0.28, 1.0, 0.54, 0.98)
+const COLOR_WALL_WIREFRAME_WINDOW := Color(0.30, 0.70, 1.0, 0.98)
+const COLOR_WALL_WIREFRAME_FOCUS := Color(1.0, 1.0, 1.0, 1.0)
 const DIRECT_INTERACTION_OBJECT_IDS := [
 	"entrance_door", "bed", "fridge", "microwave", "navi_link",
 	"power_module_board", "node_17",
@@ -175,10 +183,10 @@ const COLOR_DEBUG_PANEL_BORDER := Color(0.46, 0.66, 0.70, 0.70)
 const COLOR_DEBUG_PANEL_BACKDROP := Color(0.0, 0.0, 0.0, 0.48)
 const COLOR_DEBUG_TEXT := Color(0.92, 0.94, 0.90, 1.0)
 const COLOR_DEBUG_MUTED_TEXT := Color(0.68, 0.76, 0.78, 1.0)
-const COLOR_MEASUREMENT_ENTRANCE := Color(0.96, 0.72, 0.26, 0.18)
-const COLOR_MEASUREMENT_BATHROOM := Color(0.32, 0.72, 0.96, 0.18)
-const COLOR_MEASUREMENT_LIVING := Color(0.34, 0.88, 0.58, 0.13)
-const COLOR_MEASUREMENT_WORK := Color(0.48, 0.54, 1.0, 0.16)
+const COLOR_MEASUREMENT_ENTRANCE := Color(0.96, 0.72, 0.26, 0.07)
+const COLOR_MEASUREMENT_BATHROOM := Color(0.32, 0.72, 0.96, 0.07)
+const COLOR_MEASUREMENT_LIVING := Color(0.34, 0.88, 0.58, 0.06)
+const COLOR_MEASUREMENT_WORK := Color(0.48, 0.54, 1.0, 0.07)
 const COLOR_MEASUREMENT_WALKABLE := Color(0.30, 1.0, 0.72, 0.72)
 const COLOR_MEASUREMENT_PLACEMENT := Color(0.36, 0.78, 1.0, 0.34)
 const COLOR_MEASUREMENT_DOOR_CLEARANCE := Color(1.0, 0.82, 0.24, 0.46)
@@ -275,6 +283,7 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 @export var show_blocking_object_cells := true
 @export var show_nonblocking_object_cells := true
 @export_group("Object Placement Debug")
+@export var show_all_object_debug_geometry := false
 @export var show_object_names := true
 @export var show_object_floor_footprints := true
 @export var show_object_collision_shapes := true
@@ -300,6 +309,7 @@ var wall_inspection_transparency: bool:
 # Shell-only reveal test. When true, REVEALABLE walls can become full walls for the active room area.
 @export var debug_auto_reveal_walls := false
 @export var debug_focus_wall_id := ""
+@export var debug_focus_wall_cell_path: NodePath
 @export var debug_focus_object_id := ""
 @export var player_debug_cell := Vector2i(1, 8)
 
@@ -316,10 +326,12 @@ var _label_layer: Node2D
 var _object_layer: Node2D
 var _debug_selection_layer: Node2D
 var _navigation_layer: Node2D
+var _floor_grid_debug_layer: Node2D
 var _grid_coord_layer: Node2D
 var _wall_edge_coord_layer: Node2D
 var _hover_edge_highlight_layer: Node2D
 var _wall_id_layer: Node2D
+var _wall_wireframe_layer: Node2D
 var _occlusion_debug_layer: Node2D
 var _room_measurement_layer: Node2D
 var _debug_overlay_layer: CanvasLayer
@@ -414,6 +426,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if event.keycode == KEY_W:
 			show_wall_ids = not show_wall_ids
+			_redraw_wall_wireframe_overlay()
 			_update_label_visibility()
 			get_viewport().set_input_as_handled()
 			return
@@ -434,7 +447,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_P:
-			_toggle_primary_debug_mode(DebugMode.OBJECT_PLACEMENT, event.shift_pressed)
+			_toggle_object_debug_mode(event.shift_pressed)
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_O:
@@ -445,7 +458,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_V:
 			wall_inspection_mode = ((wall_inspection_mode + 1) % WallInspectionMode.size()) as WallInspectionMode
 			_apply_wall_inspection_transparency()
-			_update_compact_debug_help()
+			_update_label_visibility()
 			get_viewport().set_input_as_handled()
 			return
 		if event.keycode == KEY_M:
@@ -558,9 +571,27 @@ func _toggle_primary_debug_mode(mode: DebugMode, combine := false) -> void:
 	_set_primary_debug_mode(DebugMode.NONE if active_debug_mode == mode else mode)
 
 
+func _toggle_object_debug_mode(inspect_all: bool) -> void:
+	if inspect_all:
+		if show_object_placeholders:
+			show_all_object_debug_geometry = not show_all_object_debug_geometry
+		else:
+			show_all_object_debug_geometry = true
+			show_object_placeholders = true
+			active_debug_mode = DebugMode.OBJECT_PLACEMENT
+	else:
+		show_all_object_debug_geometry = false
+		_toggle_primary_debug_mode(DebugMode.OBJECT_PLACEMENT, false)
+	_redraw_object_placement_overlay()
+	_redraw_object_selection_overlay()
+	_update_label_visibility()
+
+
 func _set_primary_debug_mode(mode: DebugMode) -> void:
 	active_debug_mode = mode
 	_set_primary_debug_flags(mode)
+	if mode != DebugMode.OBJECT_PLACEMENT:
+		show_all_object_debug_geometry = false
 	_update_label_visibility()
 
 
@@ -618,10 +649,12 @@ func _create_layers() -> void:
 	_object_layer = _add_layer("ObjectPlacementDebugLayer", 65)
 	_debug_selection_layer = _add_layer("DebugSelectionLayer", 68)
 	_navigation_layer = _add_layer("NavigationDebugLayer", 70)
+	_floor_grid_debug_layer = _add_debug_geometry_layer("FloorGridDebugLayer", 72)
 	_grid_coord_layer = _add_layer("GridCoordinateLayer", 85)
 	_wall_edge_coord_layer = _add_layer("WallEdgeCoordinateLayer", 88)
 	_hover_edge_highlight_layer = _add_layer("WallEdgeHoverHighlightLayer", 89)
 	_wall_id_layer = _add_layer("WallIdLayer", 90)
+	_wall_wireframe_layer = _add_debug_geometry_layer("WallWireframeLayer", 92)
 	_occlusion_debug_layer = _add_layer("OcclusionWallDebugLayer", 95)
 	_room_measurement_layer = _add_layer("RoomMeasurementDebugLayer", 98)
 	_debug_overlay_layer = CanvasLayer.new()
@@ -643,8 +676,10 @@ func _build_shell() -> void:
 	_draw_debug_labels()
 	_draw_object_placeholders()
 	_draw_navigation_overlay()
+	_draw_floor_grid_debug_overlay()
 	_draw_floor_grid_overlay()
 	_draw_wall_edge_overlay()
+	_draw_wall_wireframe_overlay()
 	_draw_room_measurement_overlay()
 	_draw_control_hint()
 
@@ -737,8 +772,10 @@ func _wall_segments_from_scene_nodes() -> Array[Dictionary]:
 		var authored_unit_edges: Dictionary = {}
 		for entry in wall_node.unit_edge_entries():
 			var unit_index := int(entry.get("cell_index", authored_unit_edges.size()))
-			var unit_start_grid := _screen_to_grid_point(Vector2(entry.get("from_world", Vector2.ZERO)))
-			var unit_end_grid := _screen_to_grid_point(Vector2(entry.get("to_world", Vector2.ZERO)))
+			var from_world := Vector2(entry.get("from_world", Vector2.ZERO))
+			var to_world := Vector2(entry.get("to_world", Vector2.ZERO))
+			var unit_start_grid := _screen_to_grid_point(from_world)
+			var unit_end_grid := _screen_to_grid_point(to_world)
 			var unit_delta := unit_end_grid - unit_start_grid
 			var unit_axis := WallAxis.AXIS_A if absf(unit_delta.x) >= absf(unit_delta.y) else WallAxis.AXIS_B
 			var from_cell := Vector2i(roundi(unit_start_grid.x), roundi(unit_start_grid.y))
@@ -748,6 +785,8 @@ func _wall_segments_from_scene_nodes() -> Array[Dictionary]:
 				"segment_id": String(wall_node.wall_id),
 				"from_cell": from_cell,
 				"to_cell": to_cell,
+				"from_world": from_world,
+				"to_world": to_world,
 				"axis": unit_axis,
 				"cell_path": String(entry.get("node_path", "")),
 				"opening_kind": int(entry.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE)),
@@ -2603,15 +2642,18 @@ func _draw_debug_labels() -> void:
 
 func _draw_object_placeholders(object_snapshot: Array[Dictionary] = []) -> void:
 	var objects := object_snapshot if not object_snapshot.is_empty() else _object_footprints()
-	for object_data in objects:
-		if not bool(object_data.get("enabled", true)):
-			continue
-		var blocks_movement := bool(object_data.get("blocks_movement", true))
-		if blocks_movement and not show_blocking_object_cells:
-			continue
-		if not blocks_movement and not show_nonblocking_object_cells:
-			continue
-		_draw_object_placeholder(object_data)
+	if show_all_object_debug_geometry:
+		for object_data in objects:
+			if not bool(object_data.get("enabled", true)):
+				continue
+			if String(object_data.get("id", "")) == _selected_object_id:
+				continue
+			var blocks_movement := bool(object_data.get("blocks_movement", true))
+			if blocks_movement and not show_blocking_object_cells:
+				continue
+			if not blocks_movement and not show_nonblocking_object_cells:
+				continue
+			_draw_object_placeholder(object_data)
 	_last_object_geometry_signature = _object_snapshot_geometry_signature(objects)
 
 
@@ -2644,8 +2686,10 @@ func _object_snapshot_geometry_signature(object_snapshot: Array[Dictionary]) -> 
 	return "|".join(parts)
 
 
-func _draw_object_placeholder(object_data: Dictionary) -> void:
+func _draw_object_placeholder(object_data: Dictionary, parent: Node = null, name_prefix := "", thickness_scale := 1.0) -> void:
 	var id := String(object_data.get("id", ""))
+	var target: Node = parent if parent != null else _object_layer
+	var prefix := name_prefix if not name_prefix.is_empty() else "object_%s" % id
 	var blocks_movement := bool(object_data.get("blocks_movement", true))
 	var uses_floor := _object_uses_floor_occupancy(object_data)
 	var floor_points := _object_floor_polygon_points(object_data)
@@ -2660,81 +2704,82 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 		var occupancy_fill := COLOR_OBJECT_OCCUPANCY
 		if not blocks_movement:
 			occupancy_fill.a *= 0.62
-		_add_polygon(_object_layer, "object_%s_floor_footprint" % id, floor_points, occupancy_fill)
+		_add_polygon(target, "%s_floor_footprint" % prefix, floor_points, occupancy_fill)
 		if not composite_surface:
 			_add_line(
-				_object_layer,
-				"object_%s_floor_outline" % id,
+				target,
+				"%s_floor_outline" % prefix,
 				floor_points + [floor_points[0]],
 				COLOR_OBJECT_OCCUPANCY_OUTLINE,
-				3.0 if blocks_movement else 2.0
+				(3.0 if blocks_movement else 2.0) * thickness_scale
 			)
 
 	if show_object_collision_shapes and collision_points.size() >= 3:
 		if composite_surface:
 			_add_line(
-				_object_layer,
-				"object_%s_composite_collision_outline" % id,
+				target,
+				"%s_composite_collision_outline" % prefix,
 				collision_points + [collision_points[0]],
 				COLOR_OBJECT_BLOCKED_CELL,
-				3.0
+				3.0 * thickness_scale
 			)
 		else:
 			var collision_fill := COLOR_OBJECT_BLOCKED_CELL
 			collision_fill.a = 0.16
-			_add_polygon(_object_layer, "object_%s_collision_shape" % id, collision_points, collision_fill)
+			_add_polygon(target, "%s_collision_shape" % prefix, collision_points, collision_fill)
 			_add_line(
-				_object_layer,
-				"object_%s_collision_outline" % id,
+				target,
+				"%s_collision_outline" % prefix,
 				collision_points + [collision_points[0]],
 				COLOR_OBJECT_BLOCKED_CELL,
-				3.0
+				3.0 * thickness_scale
 			)
 
 	if bool(object_data.get("node_backed", false)):
 		var selection_polygons := _object_selection_polygons(object_data)
 		for selection_index in range(selection_polygons.size()):
 			_draw_dashed_polygon(
-				_object_layer,
-				"object_%s_selection_area_%d" % [id, selection_index],
+				target,
+				"%s_selection_area_%d" % [prefix, selection_index],
 				selection_polygons[selection_index],
 				COLOR_OBJECT_SELECTION_AREA,
-				2.0,
+				2.0 * thickness_scale,
 				8
 			)
-		_draw_object_height_guide(_object_layer, "object_%s" % id, object_data, 2.0)
+		_draw_object_height_guide(target, prefix, object_data, 2.0 * thickness_scale)
 
 	if show_object_interaction_areas and _object_has_valid_interaction_area(object_data):
 		var interaction_polygons := _object_interaction_polygons(object_data)
 		for polygon_index in range(interaction_polygons.size()):
 			var interaction_points: Array = interaction_polygons[polygon_index]
 			_draw_dashed_polygon(
-				_object_layer,
-				"object_%s_interaction_area_%d" % [id, polygon_index],
+				target,
+				"%s_interaction_area_%d" % [prefix, polygon_index],
 				interaction_points,
-				COLOR_OBJECT_INTERACTION_AREA
+				COLOR_OBJECT_INTERACTION_AREA,
+				2.0 * thickness_scale
 			)
 			if not bool(object_data.get("node_backed", false)):
 				var interaction_center := _polygon_bounds(interaction_points).get_center()
 				_add_marker(
-					_object_layer,
-					"object_%s_interaction_marker_%d" % [id, polygon_index],
+					target,
+					"%s_interaction_marker_%d" % [prefix, polygon_index],
 					interaction_center,
 					COLOR_OBJECT_INTERACTION_AREA,
-					8.0
+					8.0 * thickness_scale
 				)
 		if bool(object_data.get("node_backed", false)):
 			for use_point_index in range(Array(object_data.get("use_points_world", [])).size()):
 				_add_marker(
-					_object_layer,
-					"object_%s_use_point_%d" % [id, use_point_index],
+					target,
+					"%s_use_point_%d" % [prefix, use_point_index],
 					Vector2(Array(object_data.get("use_points_world", []))[use_point_index]),
-					COLOR_OBJECT_INTERACTION_AREA,
-					8.0
+					COLOR_OBJECT_USE_POINT,
+					8.0 * thickness_scale
 				)
 
 	if show_object_parent_links:
-		_draw_object_attachment_guide(_object_layer, "object_%s_attachment" % id, object_data, COLOR_OBJECT_ATTACHMENT, 2.0)
+		_draw_object_attachment_guide(target, "%s_attachment" % prefix, object_data, COLOR_OBJECT_ATTACHMENT, 2.0 * thickness_scale)
 
 
 func _object_floor_polygon_points(object_data: Dictionary) -> Array[Vector2]:
@@ -3164,6 +3209,8 @@ func _select_hovered_object(world_position: Vector2 = Vector2(INF, INF)) -> bool
 	_last_selection_world_position = world_position
 	debug_focus_object_id = _selected_object_id
 	var object_snapshot := _object_footprints()
+	if show_all_object_debug_geometry:
+		_redraw_object_placement_overlay(object_snapshot)
 	_redraw_object_selection_overlay(object_snapshot)
 	_update_debug_detail_panel(object_snapshot)
 	return true
@@ -3181,6 +3228,8 @@ func _select_object_for_debug(object_id: String) -> void:
 	_last_selection_signature = ""
 	_last_selection_world_position = Vector2(INF, INF)
 	debug_focus_object_id = object_id
+	if show_all_object_debug_geometry:
+		_redraw_object_placement_overlay(object_snapshot)
 	_redraw_object_selection_overlay(object_snapshot)
 	_update_debug_detail_panel(object_snapshot)
 
@@ -3210,6 +3259,8 @@ func _redraw_object_selection_overlay(object_snapshot: Array[Dictionary] = []) -
 	var selected_data: Dictionary = objects_by_id.get(_selected_object_id, {})
 	if not _selected_object_id.is_empty() and (selected_data.is_empty() or bool(selected_data.get("scene_geometry_missing", false))):
 		_clear_object_selection_state()
+		if show_all_object_debug_geometry:
+			_redraw_object_placement_overlay(objects)
 	var ids: Array[String] = []
 	if not _hovered_object_id.is_empty():
 		ids.append(_hovered_object_id)
@@ -3222,11 +3273,21 @@ func _redraw_object_selection_overlay(object_snapshot: Array[Dictionary] = []) -
 		var is_selected := object_id == _selected_object_id
 		var center := _object_pixel_center(object_data)
 		var visual_points := _object_visual_polygon_points(object_data)
-		# The base ObjectPlacementDebugLayer is the sole owner of Body/Selection/Interaction/
-		# marker geometry. Selection adds only the otherwise hidden visual bounds and label,
-		# preventing doubled lines from drifting apart or looking like stale geometry.
-		if is_selected and visual_points.size() >= 3:
-			_draw_dashed_polygon(_debug_selection_layer, "object_%s_visual_bounds" % object_id, visual_points, COLOR_OBJECT_VISUAL_BOUNDS, 3.5, 10)
+		if is_selected:
+			_draw_object_placeholder(object_data, _debug_selection_layer, "object_%s_selected" % object_id, 1.35)
+			if visual_points.size() >= 3:
+				_draw_dashed_polygon(_debug_selection_layer, "object_%s_visual_bounds" % object_id, visual_points, Color(1.0, 1.0, 1.0, 0.98), 3.5, 10)
+		else:
+			var selection_polygons := _object_selection_polygons(object_data)
+			for selection_index in range(selection_polygons.size()):
+				_draw_dashed_polygon(
+					_debug_selection_layer,
+					"object_%s_hover_selection_area_%d" % [object_id, selection_index],
+					selection_polygons[selection_index],
+					COLOR_OBJECT_SELECTION_AREA,
+					2.8,
+					8
+				)
 		if show_object_names and show_object_labels:
 			var name_ko := String(object_data.get("display_name_ko", _object_display_name_ko(object_id)))
 			var hit_kind := _object_selection_hit_kind(object_id)
@@ -3854,7 +3915,7 @@ func _create_object_legend_overlay() -> void:
 	_object_legend_label.name = "ObjectPlacementLegendLabel"
 	_object_legend_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_object_legend_label.position = Vector2(-418.0, 28.0)
-	_object_legend_label.text = "오브젝트 배치 범례\n파랑 면: BodyPolygon 기반 floor occupancy  |  빨강: BodyPolygon collision\n같은 면: 파랑 채움 + 빨강 테두리  |  PlacementFootprint는 선택 사항\n청록 점선: SelectionPolygon (hover/click 전용)\n주황 점선: InteractionPolygon  |  주황 마커: UsePoint\n흰 점선: 선택된 Sprite2D/VisualPreview bounds  |  분홍: AttachmentSocket\n초록: BasePoint  |  노랑: TopPoint/높이 가이드\n같은 위치 반복 클릭: 후보 순환  |  V: 기본→반투명→숨김"
+	_object_legend_label.text = "오브젝트 배치 범례\nP 기본: hover Selection만 / 클릭 선택: 모든 판정  |  Shift+P: 전체 검사\n파랑 면+빨강 실선: Body floor/collision  |  청록 점선: Selection\n주황 점선: Interaction  |  초록 마커: UsePoint\n연두: BasePoint  |  노랑: TopPoint/높이  |  자홍: AttachmentSocket\n흰 점선: Sprite2D/VisualPreview bounds\n같은 위치 반복 클릭: 후보 순환  |  V: 기본→반투명→숨김"
 	_object_legend_label.modulate = COLOR_DEBUG_TEXT
 	_object_legend_label.add_theme_font_size_override("font_size", 12)
 	_object_legend_label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
@@ -3900,7 +3961,8 @@ func _update_compact_debug_help() -> void:
 	if _compact_help_label == null:
 		return
 	var wall_state := _wall_inspection_mode_name_ko()
-	_compact_help_label.text = "기준 시점 ROTATE_90  |  현재 모드: %s  |  M 측량  P 오브젝트  N 이동·충돌  |  V 전체벽=%s  |  F1 도움말" % [_debug_mode_display_name(), wall_state]
+	var p_scope := "전체" if show_all_object_debug_geometry else "선택"
+	_compact_help_label.text = "기준 시점 ROTATE_90  |  현재: %s  |  P=%s  M 측량  N 이동·충돌  W 벽선  |  V=%s  |  F1" % [_debug_mode_display_name(), p_scope, wall_state]
 	_update_debug_help_wall_state()
 
 
@@ -3917,7 +3979,7 @@ func _wall_inspection_mode_name_ko() -> String:
 func _update_debug_help_wall_state() -> void:
 	if _debug_help_body_label == null:
 		return
-	_debug_help_body_label.text = "기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 측량 모드\nP  오브젝트 배치 모드 (같은 위치 반복 클릭: 후보 순환)\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nV  전체 벽 표시 순환: 기본 → 반투명 → 숨김 (현재: %s)\n   모든 상태에서 충돌·내비게이션·개구부·Socket 유지\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽 논리선  /  L  구역 라벨  /  I  inventory 출력\nJ  7개 직접 상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기" % _wall_inspection_mode_name_ko()
+	_debug_help_body_label.text = "기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 외곽·이름·낮은 채움 측량\nP  hover Selection / 클릭 선택 전체 판정\nShift+P  전체 오브젝트 낮은 alpha 검사 전환\nN  이동·충돌 모드\nW  벽 하단·윗변·끝선·문·창문 wireframe\nShift+M/N  임시 조합 표시\n\nV  전체 벽 표시 순환: 기본 → 반투명 → 숨김 (현재: %s)\n   숨김에서도 W 또는 M wireframe과 충돌·내비게이션·개구부·Socket 유지\nG  바닥 좌표  /  E  벽선 좌표  /  O  숨김벽 논리선\nL  레거시 구역 라벨  /  I  inventory 출력\nJ  7개 직접 상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기" % _wall_inspection_mode_name_ko()
 
 
 func _update_debug_detail_panel(object_snapshot: Array[Dictionary] = []) -> void:
@@ -4330,6 +4392,100 @@ func _draw_floor_grid_overlay() -> void:
 		)
 		coord_label.modulate = COLOR_GRID_LABEL_TEXT
 	_draw_grid_axis_overlay()
+
+
+func _draw_floor_grid_debug_overlay() -> void:
+	if _floor_grid_debug_layer == null:
+		return
+	for cell in _visible_floor_cells():
+		var points := _tile_points(float(cell.x), float(cell.y))
+		_floor_grid_debug_layer.call(
+			"add_polyline_command",
+			"debug_grid_%d_%d" % [cell.x, cell.y],
+			PackedVector2Array(points + [points[0]]),
+			Color(0.84, 0.9, 0.96, 0.24),
+			1.25
+		)
+
+
+func _draw_wall_wireframe_overlay() -> void:
+	if _wall_wireframe_layer == null or not _wall_node_authority_active():
+		return
+	for segment in _wall_segments_from_scene_nodes():
+		if not bool(segment.get("enabled", true)):
+			continue
+		var wall_id := String(segment.get("id", ""))
+		var height := maxf(8.0, float(segment.get("height", wall_height)))
+		var unit_edges: Dictionary = segment.get("unit_edges", {})
+		var sorted_indices: Array = unit_edges.keys()
+		sorted_indices.sort()
+		var first_world := Vector2.ZERO
+		var last_world := Vector2.ZERO
+		var has_world_edge := false
+		for unit_index in sorted_indices:
+			var edge: Dictionary = unit_edges[unit_index]
+			if not bool(edge.get("enabled", true)):
+				continue
+			var from_cell: Vector2i = edge.get("from_cell", Vector2i.ZERO)
+			var to_cell: Vector2i = edge.get("to_cell", Vector2i.ZERO)
+			var from_world := Vector2(edge.get("from_world", _iso(from_cell.x, from_cell.y)))
+			var to_world := Vector2(edge.get("to_world", _iso(to_cell.x, to_cell.y)))
+			if not has_world_edge:
+				first_world = from_world
+				has_world_edge = true
+			last_world = to_world
+			var top_from := from_world - Vector2(0.0, height)
+			var top_to := to_world - Vector2(0.0, height)
+			var opening_kind := int(edge.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE))
+			var cell_path := String(edge.get("cell_path", ""))
+			var focus_path := String(debug_focus_wall_cell_path)
+			var focus_cell := (
+				(not focus_path.is_empty() and (cell_path == focus_path or cell_path.ends_with(focus_path)))
+				or (not debug_focus_wall_id.is_empty() and wall_id == debug_focus_wall_id)
+			)
+			var base_color := COLOR_WALL_WIREFRAME_BASE
+			var top_color := COLOR_WALL_WIREFRAME_TOP
+			var end_color := COLOR_WALL_WIREFRAME_END
+			if opening_kind == ApartmentWallCellScript.OpeningKind.DOOR:
+				base_color = COLOR_WALL_WIREFRAME_DOOR
+				top_color = COLOR_WALL_WIREFRAME_DOOR
+				end_color = COLOR_WALL_WIREFRAME_DOOR
+			elif opening_kind == ApartmentWallCellScript.OpeningKind.WINDOW:
+				base_color = COLOR_WALL_WIREFRAME_WINDOW
+				top_color = COLOR_WALL_WIREFRAME_WINDOW
+				end_color = COLOR_WALL_WIREFRAME_WINDOW
+			var prefix := "wall_wire_%s_%02d" % [wall_id, int(unit_index)]
+			_wall_wireframe_layer.call("add_polyline_command", "%s_base" % prefix, PackedVector2Array([from_world, to_world]), base_color, 2.6)
+			_wall_wireframe_layer.call("add_polyline_command", "%s_top" % prefix, PackedVector2Array([top_from, top_to]), top_color, 2.2)
+			_wall_wireframe_layer.call("add_polyline_command", "%s_start" % prefix, PackedVector2Array([from_world, top_from]), end_color, 1.8, true, 8.0)
+			_wall_wireframe_layer.call("add_polyline_command", "%s_end" % prefix, PackedVector2Array([to_world, top_to]), end_color, 1.8, true, 8.0)
+			if focus_cell:
+				_wall_wireframe_layer.call(
+					"add_polyline_command",
+					"%s_focus" % prefix,
+					PackedVector2Array([from_world, to_world, top_to, top_from, from_world]),
+					COLOR_WALL_WIREFRAME_FOCUS,
+					4.0
+				)
+		if has_world_edge and _wall_id_layer != null:
+			var midpoint := (first_world + last_world) * 0.5 - Vector2(0.0, height + 24.0)
+			_add_label_with_background(
+				_wall_id_layer,
+				"wall_id_%s" % wall_id,
+				"%s  |  %d cells" % [_wall_display_name_ko(wall_id), unit_edges.size()],
+				midpoint,
+				12,
+				COLOR_WALL_ID_BACKGROUND,
+				COLOR_DEBUG_TEXT
+			)
+
+
+func _redraw_wall_wireframe_overlay() -> void:
+	if _wall_wireframe_layer != null and _wall_wireframe_layer.has_method("clear_commands"):
+		_wall_wireframe_layer.call("clear_commands")
+	if _wall_node_authority_active() and _wall_id_layer != null:
+		_clear_layer_children(_wall_id_layer)
+	_draw_wall_wireframe_overlay()
 
 
 func _draw_grid_axis_overlay() -> void:
@@ -5355,10 +5511,13 @@ func _redraw_reveal_sensitive_layers() -> void:
 	_clear_layer_children(_wall_layer)
 	_clear_layer_children(_door_layer)
 	_clear_layer_children(_wall_id_layer)
+	if _wall_wireframe_layer != null and _wall_wireframe_layer.has_method("clear_commands"):
+		_wall_wireframe_layer.call("clear_commands")
 	_clear_layer_children(_occlusion_debug_layer)
 	_clear_layer_children(_room_measurement_layer)
 	_draw_walls()
 	_draw_doors_and_window_placeholders()
+	_draw_wall_wireframe_overlay()
 	_draw_room_measurement_overlay()
 	_apply_wall_inspection_transparency()
 	_update_label_visibility()
@@ -6015,6 +6174,14 @@ func _add_layer(layer_name: String, z: int) -> Node2D:
 	return layer
 
 
+func _add_debug_geometry_layer(layer_name: String, z: int) -> Node2D:
+	var layer := ApartmentDebugGeometryLayerScript.new() as Node2D
+	layer.name = layer_name
+	layer.z_index = z
+	add_child(layer)
+	return layer
+
+
 func _add_polygon(parent: Node, polygon_name: String, points: Array[Vector2], color: Color) -> Polygon2D:
 	var polygon := Polygon2D.new()
 	polygon.name = polygon_name
@@ -6109,13 +6276,18 @@ func _update_label_visibility() -> void:
 		# M owns one room-name label per measured room; suppress the legacy broad label set there.
 		_label_layer.visible = show_debug_labels and not show_room_measurements
 	if _object_layer != null:
-		_object_layer.visible = show_object_placeholders
+		_object_layer.visible = show_object_placeholders and show_all_object_debug_geometry
+		_object_layer.modulate.a = 0.32
 	if _debug_selection_layer != null:
 		_debug_selection_layer.visible = show_object_placeholders
 	if _navigation_layer != null:
 		_navigation_layer.visible = show_navigation_debug
+	if _floor_grid_debug_layer != null:
+		_floor_grid_debug_layer.visible = _has_primary_debug_mode()
 	if _wall_id_layer != null:
 		_wall_id_layer.visible = show_wall_ids
+	if _wall_wireframe_layer != null:
+		_wall_wireframe_layer.visible = show_wall_ids or show_room_measurements
 	if _grid_coord_layer != null:
 		_grid_coord_layer.visible = show_floor_grid_coords
 	if _wall_edge_coord_layer != null:
@@ -6141,9 +6313,9 @@ func _update_label_visibility() -> void:
 	if _active_room_background != null:
 		_active_room_background.visible = show_navigation_debug
 	if _measurement_legend_label != null:
-		_measurement_legend_label.visible = show_room_measurements
+		_measurement_legend_label.visible = show_room_measurements and not show_object_placeholders
 	if _measurement_legend_background != null:
-		_measurement_legend_background.visible = show_room_measurements
+		_measurement_legend_background.visible = show_room_measurements and not show_object_placeholders
 	if _object_legend_label != null:
 		_object_legend_label.visible = show_object_placeholders
 	if _object_legend_background != null:
@@ -6154,6 +6326,8 @@ func _update_label_visibility() -> void:
 		_measurement_summary_background.visible = false
 	if _debug_detail_panel != null:
 		_debug_detail_panel.visible = _has_primary_debug_mode()
+	if _compact_help_label != null:
+		_compact_help_label.visible = _has_any_debug_guide_mode()
 	if not show_object_placeholders:
 		_hovered_object_id = ""
 		_hovered_object_candidates.clear()
@@ -6162,6 +6336,17 @@ func _update_label_visibility() -> void:
 	_redraw_object_selection_overlay()
 	_update_active_room_overlay()
 	_update_hover_cell()
+
+
+func _has_any_debug_guide_mode() -> bool:
+	return (
+		_has_primary_debug_mode()
+		or show_wall_ids
+		or show_floor_grid_coords
+			or show_wall_edge_coords
+			or show_occlusion_wall_debug
+			or wall_inspection_mode != WallInspectionMode.NORMAL
+		)
 
 
 func _apply_camera_preset(preset: String) -> void:

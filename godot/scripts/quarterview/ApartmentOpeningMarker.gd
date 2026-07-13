@@ -25,6 +25,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
 		_sync_preview()
+		_sync_editor_marker_visibility()
 
 
 func _sync_preview() -> void:
@@ -32,6 +33,22 @@ func _sync_preview() -> void:
 		return
 	editor_preview.points = PackedVector2Array([start_point.position, end_point.position])
 	editor_preview.default_color = Color(0.2, 0.95, 1.0, 0.95) if opening_type == OpeningType.WINDOW else Color(1.0, 0.72, 0.22, 0.95)
+	if Engine.is_editor_hint():
+		_sync_editor_marker_visibility()
+
+
+func _sync_editor_marker_visibility() -> void:
+	var selection := EditorInterface.get_selection()
+	var opening_selected := false
+	if selection != null:
+		for selected_node in selection.get_selected_nodes():
+			if selected_node == self or is_ancestor_of(selected_node):
+				opening_selected = true
+				break
+	start_point.gizmo_extents = 10.0 if opening_selected else 0.0
+	end_point.gizmo_extents = 10.0 if opening_selected else 0.0
+	start_point.visible = opening_selected
+	end_point.visible = opening_selected
 
 
 func world_start() -> Vector2:

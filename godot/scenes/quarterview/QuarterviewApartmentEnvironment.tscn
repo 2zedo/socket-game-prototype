@@ -65,11 +65,26 @@ floor_id = &"work_power_area"
 korean_name = "작업·전력 공간"
 
 [node name="EditorGuides" type="Node2D" parent="."]
-editor_description = "에디터에서만 보이는 방 이름과 바닥색 범례. 게임 실행 시 자동으로 숨겨집니다."
+editor_description = "에디터 전용 가이드 루트. 하위 네 그룹을 Scene Tree 눈 아이콘으로 각각 켜고 끄며, 게임 실행 시 전체가 자동으로 숨겨집니다."
 z_index = 1000
 script = ExtResource("10_editor_guides")
 
-[node name="EntranceRoomLabel" type="Label" parent="EditorGuides"]
+[node name="RoomGuides" type="Node2D" parent="EditorGuides"]
+editor_description = "방 이름·바닥색 범례·어두운 논리 방 외곽선. 이 그룹의 눈 아이콘으로 방 가이드만 숨깁니다."
+
+[node name="RoomOutlineGuides" type="Node2D" parent="EditorGuides/RoomGuides"]
+editor_description = "RoomArea Polygon에서 자동 파생된 에디터 전용 외곽선."
+
+[node name="WallGuides" type="Node2D" parent="EditorGuides"]
+editor_description = "WallCell 하단·윗변·끝선과 개구부를 얇은 선으로 보여주는 에디터 전용 가이드."
+
+[node name="ObjectGuides" type="Node2D" parent="EditorGuides"]
+editor_description = "Sprite2D 또는 VisualPreview 범위에서 자동 파생된 얇은 오브젝트 외곽선."
+
+[node name="HeightAndSocketGuides" type="Node2D" parent="EditorGuides"]
+editor_description = "현재 편집 중인 오브젝트의 BasePoint·TopPoint·Socket만 보여주는 에디터 전용 가이드."
+
+[node name="EntranceRoomLabel" type="Label" parent="EditorGuides/RoomGuides"]
 position = Vector2(510, 205)
 text = "현관"
 theme_override_colors/font_color = Color(0.96, 0.72, 0.26, 1)
@@ -77,7 +92,7 @@ theme_override_colors/font_outline_color = Color(0.08, 0.08, 0.1, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 20
 
-[node name="BathroomRoomLabel" type="Label" parent="EditorGuides"]
+[node name="BathroomRoomLabel" type="Label" parent="EditorGuides/RoomGuides"]
 position = Vector2(735, 112)
 text = "욕실"
 theme_override_colors/font_color = Color(0.72, 0.82, 0.9, 1)
@@ -85,7 +100,7 @@ theme_override_colors/font_outline_color = Color(0.08, 0.08, 0.1, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 20
 
-[node name="LivingRoomLabel" type="Label" parent="EditorGuides"]
+[node name="LivingRoomLabel" type="Label" parent="EditorGuides/RoomGuides"]
 position = Vector2(895, 330)
 text = "생활공간"
 theme_override_colors/font_color = Color(0.94, 0.87, 0.66, 1)
@@ -93,7 +108,7 @@ theme_override_colors/font_outline_color = Color(0.08, 0.08, 0.1, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 20
 
-[node name="WorkRoomLabel" type="Label" parent="EditorGuides"]
+[node name="WorkRoomLabel" type="Label" parent="EditorGuides/RoomGuides"]
 position = Vector2(1180, 130)
 text = "작업·전력공간"
 theme_override_colors/font_color = Color(0.62, 0.72, 0.84, 1)
@@ -101,12 +116,12 @@ theme_override_colors/font_outline_color = Color(0.08, 0.08, 0.1, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 20
 
-[node name="FloorLegendBackground" type="ColorRect" parent="EditorGuides"]
+[node name="FloorLegendBackground" type="ColorRect" parent="EditorGuides/RoomGuides"]
 position = Vector2(410, -80)
 size = Vector2(430, 70)
 color = Color(0.04, 0.045, 0.06, 0.88)
 
-[node name="FloorLegend" type="Label" parent="EditorGuides"]
+[node name="FloorLegend" type="Label" parent="EditorGuides/RoomGuides"]
 position = Vector2(422, -72)
 text = "바닥색 범례  ■ 현관(갈색)  ■ 욕실(회색)\n■ 생활공간(베이지)  ■ 작업·전력공간(청회색)"
 theme_override_colors/font_color = Color(0.95, 0.95, 0.9, 1)
@@ -119,9 +134,10 @@ editor_description = "M 측량과 방 판정의 논리 Polygon 정본. 바닥 Ti
 room_id = &"entrance_area"
 korean_name = "현관"
 selection_priority = 40
-preview_color = Color(0.96, 0.72, 0.26, 0.13)
+preview_color = Color(0.96, 0.72, 0.26, 0.06)
 
 [node name="CollisionPolygon2D" parent="RoomAreas/EntranceArea/Area2D" index="0"]
+visible = false
 polygon = PackedVector2Array(612, 142, 740, 206, 548, 302, 420, 238)
 
 [node name="EditorPreview" parent="RoomAreas/EntranceArea" index="1"]
@@ -132,9 +148,10 @@ polygon = PackedVector2Array(612, 142, 740, 206, 548, 302, 420, 238)
 room_id = &"bathroom"
 korean_name = "욕실"
 selection_priority = 30
-preview_color = Color(0.32, 0.72, 0.96, 0.12)
+preview_color = Color(0.32, 0.72, 0.96, 0.06)
 
 [node name="CollisionPolygon2D" parent="RoomAreas/BathroomArea/Area2D" index="0"]
+visible = false
 polygon = PackedVector2Array(804, 46, 932, 110, 740, 206, 612, 142)
 
 [node name="EditorPreview" parent="RoomAreas/BathroomArea" index="1"]
@@ -145,9 +162,10 @@ polygon = PackedVector2Array(804, 46, 932, 110, 740, 206, 612, 142)
 room_id = &"living_area"
 korean_name = "생활공간"
 selection_priority = 10
-preview_color = Color(0.34, 0.88, 0.58, 0.1)
+preview_color = Color(0.34, 0.88, 0.58, 0.06)
 
 [node name="CollisionPolygon2D" parent="RoomAreas/LivingArea/Area2D" index="0"]
+visible = false
 polygon = PackedVector2Array(804, 46, 1508, 398, 1124, 590, 420, 238)
 
 [node name="EditorPreview" parent="RoomAreas/LivingArea" index="1"]
@@ -158,9 +176,10 @@ polygon = PackedVector2Array(804, 46, 1508, 398, 1124, 590, 420, 238)
 room_id = &"work_power_area"
 korean_name = "작업·전력 공간"
 selection_priority = 20
-preview_color = Color(0.48, 0.54, 1, 0.11)
+preview_color = Color(0.48, 0.54, 1, 0.06)
 
 [node name="CollisionPolygon2D" parent="RoomAreas/WorkArea/Area2D" index="0"]
+visible = false
 polygon = PackedVector2Array(1124, -50, 1636, 206, 1380, 334, 868, 78)
 
 [node name="EditorPreview" parent="RoomAreas/WorkArea" index="1"]
@@ -177,9 +196,11 @@ owner_wall_id = &"entrance_wall"
 passable = false
 
 [node name="StartPoint" parent="Openings/EntranceDoorOpening" index="0"]
+gizmo_extents = 0.0
 position = Vector2(548, 174)
 
 [node name="EndPoint" parent="Openings/EntranceDoorOpening" index="1"]
+gizmo_extents = 0.0
 position = Vector2(484, 206)
 
 [node name="EditorPreview" parent="Openings/EntranceDoorOpening" index="2"]
@@ -192,9 +213,11 @@ korean_name = "현관 내부 개구부"
 owner_wall_id = &"entrance_inner_wall"
 
 [node name="StartPoint" parent="Openings/EntranceInnerOpening" index="0"]
+gizmo_extents = 0.0
 position = Vector2(676, 238)
 
 [node name="EndPoint" parent="Openings/EntranceInnerOpening" index="1"]
+gizmo_extents = 0.0
 position = Vector2(612, 270)
 
 [node name="EditorPreview" parent="Openings/EntranceInnerOpening" index="2"]
@@ -207,9 +230,11 @@ korean_name = "욕실문 개구부"
 owner_wall_id = &"bathroom_right_wall"
 
 [node name="StartPoint" parent="Openings/BathroomDoorOpening" index="0"]
+gizmo_extents = 0.0
 position = Vector2(804, 174)
 
 [node name="EndPoint" parent="Openings/BathroomDoorOpening" index="1"]
+gizmo_extents = 0.0
 position = Vector2(740, 206)
 
 [node name="EditorPreview" parent="Openings/BathroomDoorOpening" index="2"]
@@ -222,9 +247,11 @@ korean_name = "작업실 개구부"
 owner_wall_id = &"work_front_shared_wall"
 
 [node name="StartPoint" parent="Openings/WorkRoomOpening" index="0"]
+gizmo_extents = 0.0
 position = Vector2(1188, 238)
 
 [node name="EndPoint" parent="Openings/WorkRoomOpening" index="1"]
+gizmo_extents = 0.0
 position = Vector2(1252, 270)
 
 [node name="EditorPreview" parent="Openings/WorkRoomOpening" index="2"]
@@ -239,9 +266,11 @@ owner_wall_id = &"living_right_wall"
 passable = false
 
 [node name="StartPoint" parent="Openings/LivingWindowOpening" index="0"]
+gizmo_extents = 0.0
 position = Vector2(1175.2, 564.4)
 
 [node name="EndPoint" parent="Openings/LivingWindowOpening" index="1"]
+gizmo_extents = 0.0
 position = Vector2(1069.6, 617.2)
 
 [node name="EditorPreview" parent="Openings/LivingWindowOpening" index="2"]
@@ -257,15 +286,19 @@ wall_id = &"work_back_wall"
 korean_name = "작업실 뒤 벽"
 
 [node name="StartPoint" type="Marker2D" parent="Walls/WorkBackWall"]
+gizmo_extents = 0.0
 position = Vector2(1124, -50)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/WorkBackWall"]
+gizmo_extents = 0.0
 position = Vector2(1636, 206)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/WorkBackWall"]
+gizmo_extents = 0.0
 position = Vector2(1380, 78)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/WorkBackWall"]
+gizmo_extents = 0.0
 position = Vector2(1380, -98)
 
 [node name="Visual" type="Polygon2D" parent="Walls/WorkBackWall"]
@@ -295,15 +328,19 @@ wall_id = &"work_left_wall"
 korean_name = "작업실 왼쪽 벽"
 
 [node name="StartPoint" type="Marker2D" parent="Walls/WorkLeftWall"]
+gizmo_extents = 0.0
 position = Vector2(1124, -50)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/WorkLeftWall"]
+gizmo_extents = 0.0
 position = Vector2(868, 78)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/WorkLeftWall"]
+gizmo_extents = 0.0
 position = Vector2(996, 14)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/WorkLeftWall"]
+gizmo_extents = 0.0
 position = Vector2(996, -162)
 
 [node name="Visual" type="Polygon2D" parent="Walls/WorkLeftWall"]
@@ -333,15 +370,19 @@ wall_id = &"work_right_wall"
 korean_name = "작업실 오른쪽 벽"
 
 [node name="StartPoint" type="Marker2D" parent="Walls/WorkRightWall"]
+gizmo_extents = 0.0
 position = Vector2(1636, 206)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/WorkRightWall"]
+gizmo_extents = 0.0
 position = Vector2(1380, 334)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/WorkRightWall"]
+gizmo_extents = 0.0
 position = Vector2(1508, 270)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/WorkRightWall"]
+gizmo_extents = 0.0
 position = Vector2(1508, 94)
 
 [node name="Visual" type="Polygon2D" parent="Walls/WorkRightWall"]
@@ -372,15 +413,19 @@ korean_name = "현관 외벽"
 opening_path = NodePath("../../Openings/EntranceDoorOpening")
 
 [node name="StartPoint" type="Marker2D" parent="Walls/EntranceWall"]
+gizmo_extents = 0.0
 position = Vector2(804, 46)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/EntranceWall"]
+gizmo_extents = 0.0
 position = Vector2(420, 238)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/EntranceWall"]
+gizmo_extents = 0.0
 position = Vector2(612, 142)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/EntranceWall"]
+gizmo_extents = 0.0
 position = Vector2(612, -34)
 
 [node name="Visual" type="Polygon2D" parent="Walls/EntranceWall"]
@@ -411,15 +456,19 @@ korean_name = "현관 내부 벽"
 opening_path = NodePath("../../Openings/EntranceInnerOpening")
 
 [node name="StartPoint" type="Marker2D" parent="Walls/EntranceInnerWall"]
+gizmo_extents = 0.0
 position = Vector2(740, 206)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/EntranceInnerWall"]
+gizmo_extents = 0.0
 position = Vector2(548, 302)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/EntranceInnerWall"]
+gizmo_extents = 0.0
 position = Vector2(644, 254)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/EntranceInnerWall"]
+gizmo_extents = 0.0
 position = Vector2(644, 78)
 
 [node name="Visual" type="Polygon2D" parent="Walls/EntranceInnerWall"]
@@ -452,15 +501,19 @@ revealable = true
 opening_path = NodePath("../../Openings/LivingWindowOpening")
 
 [node name="StartPoint" type="Marker2D" parent="Walls/LivingRightWall"]
+gizmo_extents = 0.0
 position = Vector2(1508, 398)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/LivingRightWall"]
+gizmo_extents = 0.0
 position = Vector2(1124, 590)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/LivingRightWall"]
+gizmo_extents = 0.0
 position = Vector2(1316, 494)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/LivingRightWall"]
+gizmo_extents = 0.0
 position = Vector2(1316, 318)
 
 [node name="Visual" type="Polygon2D" parent="Walls/LivingRightWall"]
@@ -494,15 +547,19 @@ korean_name = "생활공간 앞 잘린벽"
 display_type = 1
 
 [node name="StartPoint" type="Marker2D" parent="Walls/LivingFrontCutaway"]
+gizmo_extents = 0.0
 position = Vector2(420, 238)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/LivingFrontCutaway"]
+gizmo_extents = 0.0
 position = Vector2(1124, 590)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/LivingFrontCutaway"]
+gizmo_extents = 0.0
 position = Vector2(772, 414)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/LivingFrontCutaway"]
+gizmo_extents = 0.0
 position = Vector2(772, 372)
 
 [node name="Visual" type="Polygon2D" parent="Walls/LivingFrontCutaway"]
@@ -535,15 +592,19 @@ korean_name = "작업실·생활공간 공용벽"
 opening_path = NodePath("../../Openings/WorkRoomOpening")
 
 [node name="StartPoint" type="Marker2D" parent="Walls/WorkFrontSharedWall"]
+gizmo_extents = 0.0
 position = Vector2(804, 46)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/WorkFrontSharedWall"]
+gizmo_extents = 0.0
 position = Vector2(1508, 398)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/WorkFrontSharedWall"]
+gizmo_extents = 0.0
 position = Vector2(1156, 222)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/WorkFrontSharedWall"]
+gizmo_extents = 0.0
 position = Vector2(1156, 46)
 
 [node name="Visual" type="Polygon2D" parent="Walls/WorkFrontSharedWall"]
@@ -573,15 +634,19 @@ wall_id = &"bathroom_wall"
 korean_name = "욕실 앞 벽"
 
 [node name="StartPoint" type="Marker2D" parent="Walls/BathroomWall"]
+gizmo_extents = 0.0
 position = Vector2(612, 142)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/BathroomWall"]
+gizmo_extents = 0.0
 position = Vector2(740, 206)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/BathroomWall"]
+gizmo_extents = 0.0
 position = Vector2(676, 174)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/BathroomWall"]
+gizmo_extents = 0.0
 position = Vector2(676, -2)
 
 [node name="Visual" type="Polygon2D" parent="Walls/BathroomWall"]
@@ -612,15 +677,19 @@ korean_name = "욕실 오른쪽 벽"
 opening_path = NodePath("../../Openings/BathroomDoorOpening")
 
 [node name="StartPoint" type="Marker2D" parent="Walls/BathroomRightWall"]
+gizmo_extents = 0.0
 position = Vector2(932, 110)
 
 [node name="EndPoint" type="Marker2D" parent="Walls/BathroomRightWall"]
+gizmo_extents = 0.0
 position = Vector2(740, 206)
 
 [node name="BasePoint" type="Marker2D" parent="Walls/BathroomRightWall"]
+gizmo_extents = 0.0
 position = Vector2(836, 158)
 
 [node name="TopPoint" type="Marker2D" parent="Walls/BathroomRightWall"]
+gizmo_extents = 0.0
 position = Vector2(836, -18)
 
 [node name="Visual" type="Polygon2D" parent="Walls/BathroomRightWall"]
@@ -718,6 +787,7 @@ position = Vector2(1252, 14)
 cell_index = 2
 
 [node name="AttachmentSocket" parent="Walls/WorkBackWall/WallCells/Cell02" index="7"]
+gizmo_extents = 0.0
 editor_description = "전선관 환경 오브젝트의 벽 한 칸 부착 기준점."
 position = Vector2(30.72, 15.36)
 
@@ -725,12 +795,15 @@ position = Vector2(30.72, 15.36)
 object_id = &"wall_conduit"
 
 [node name="VisualPreview" parent="Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-64, -32, 64, -32, 64, 32, -64, 32)
 
 [node name="TopPoint" parent="Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -32)
 
 [node name="SelectionPolygon" parent="Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket/WallConduit/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-64, -32, 64, -32, 64, 32, -64, 32)
 
 [node name="Cell03" parent="Walls/WorkBackWall/WallCells" instance=ExtResource("9_wall_cell")]
@@ -746,6 +819,7 @@ position = Vector2(1444, 110)
 cell_index = 5
 
 [node name="AttachmentSocket" parent="Walls/WorkBackWall/WallCells/Cell05" index="7"]
+gizmo_extents = 0.0
 editor_description = "전력 모듈 보드의 실제 벽 한 칸 부착 기준점. Cell 이동을 따라갑니다."
 position = Vector2(32, 16)
 
@@ -838,6 +912,7 @@ opening_kind = 1
 opening_id = &"entrance_door"
 
 [node name="AttachmentSocket" parent="Walls/EntranceWall/WallCells/Cell04" index="7"]
+gizmo_extents = 0.0
 editor_description = "현관문의 실제 Opening Cell 부착 기준점. Cell 이동을 따라갑니다."
 position = Vector2(-32, 16)
 
@@ -893,6 +968,7 @@ direction = 1
 end_offset = Vector2(-64, 32)
 
 [node name="AttachmentSocket" parent="Walls/LivingRightWall/WallCells/Cell03" index="7"]
+gizmo_extents = 0.0
 editor_description = "바다 수평선 포스터의 벽 한 칸 부착 기준점. Cell 이동을 따라갑니다."
 position = Vector2(-30.72, 15.36)
 
@@ -901,15 +977,19 @@ position = Vector2(0, -20)
 object_id = &"sea_horizon_poster"
 
 [node name="VisualPreview" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-80, -40, 80, -40, 80, 40, -80, 40)
 
 [node name="BasePoint" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster" index="1"]
+gizmo_extents = 0.0
 position = Vector2(0, 20)
 
 [node name="TopPoint" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -40)
 
 [node name="SelectionPolygon" parent="Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-80, -40, 80, -40, 80, 40, -80, 40)
 
 [node name="Cell04" parent="Walls/LivingRightWall/WallCells" instance=ExtResource("9_wall_cell")]
@@ -1050,6 +1130,7 @@ opening_passable = true
 editor_description = "천장 부착 환경 오브젝트의 Scene Node 정본. 바닥 셀이나 벽 좌표로 환산하지 않고 각 Socket을 직접 이동합니다."
 
 [node name="FluorescentLightSocket" type="Marker2D" parent="CeilingAnchors"]
+gizmo_extents = 0.0
 editor_description = "형광등의 독립 천장 부착 기준점. 이 Marker를 움직이면 형광등만 따라갑니다."
 position = Vector2(1060, 334)
 
@@ -1057,12 +1138,15 @@ position = Vector2(1060, 334)
 object_id = &"fluorescent_light"
 
 [node name="VisualPreview" parent="CeilingAnchors/FluorescentLightSocket/FluorescentLight/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-120, -20, 120, -20, 120, 20, -120, 20)
 
 [node name="TopPoint" parent="CeilingAnchors/FluorescentLightSocket/FluorescentLight" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -20)
 
 [node name="SelectionPolygon" parent="CeilingAnchors/FluorescentLightSocket/FluorescentLight/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-120, -20, 120, -20, 120, 20, -120, 20)
 
 [node name="EditableObjectNodes" type="Node2D" parent="."]
@@ -1081,17 +1165,21 @@ region_enabled = true
 region_rect = Rect2(260, 205, 560, 1050)
 
 [node name="VisualPreview" parent="EditableObjectNodes/Fridge/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 visible = false
 position = Vector2(8, 4)
 polygon = PackedVector2Array(-45, -73, 45, -73, 45, 73, -45, 73)
 
 [node name="BasePoint" parent="EditableObjectNodes/Fridge" index="1"]
+gizmo_extents = 0.0
 position = Vector2(8, 77)
 
 [node name="TopPoint" parent="EditableObjectNodes/Fridge" index="2"]
+gizmo_extents = 0.0
 position = Vector2(8, -69)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/Fridge/Body" index="0"]
+visible = false
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 position = Vector2(0, 38)
 polygon = PackedVector2Array(1, -38, 52, -4, 11, 41, -40, 3)
@@ -1100,16 +1188,19 @@ polygon = PackedVector2Array(1, -38, 52, -4, 11, 41, -40, 3)
 position = Vector2(8, 4)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/Fridge/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-45, -73, 45, -73, 45, 73, 10.627426, 73, -45, 73)
 
 [node name="InteractionArea" parent="EditableObjectNodes/Fridge" index="5"]
 position = Vector2(-56, 44)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/Fridge/InteractionArea" index="0"]
+visible = false
 position = Vector2(30, 25)
 polygon = PackedVector2Array(-40, -28, 40, -28, 40, 28, -40, 28)
 
 [node name="UsePoint" parent="EditableObjectNodes/Fridge" index="6"]
+gizmo_extents = 0.0
 position = Vector2(-68, 84)
 
 [node name="Bed" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
@@ -1117,28 +1208,35 @@ position = Vector2(1262, 424)
 object_id = &"bed"
 
 [node name="VisualPreview" parent="EditableObjectNodes/Bed/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-130, -90, 130, -90, 130, 90, -130, 90)
 
 [node name="BasePoint" parent="EditableObjectNodes/Bed" index="1"]
+gizmo_extents = 0.0
 position = Vector2(0, 90)
 
 [node name="TopPoint" parent="EditableObjectNodes/Bed" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -90)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/Bed/Body" index="0"]
+visible = false
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-40.2492, -30.3738, 120.7477, 50.1246, 40.2492, 90.3738, -120.7477, 9.8754)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/Bed/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-130, -90, 130, -90, 130, 90, -130, 90)
 
 [node name="InteractionArea" parent="EditableObjectNodes/Bed" index="5"]
 position = Vector2(-138, 6)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/Bed/InteractionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-60, -32, 60, -32, 60, 32, -60, 32)
 
 [node name="UsePoint" parent="EditableObjectNodes/Bed" index="6"]
+gizmo_extents = 0.0
 position = Vector2(-138, 6)
 
 [node name="NaviLink" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
@@ -1146,28 +1244,35 @@ position = Vector2(1264, 94)
 object_id = &"navi_link"
 
 [node name="VisualPreview" parent="EditableObjectNodes/NaviLink/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-150, -120, 150, -120, 150, 120, -150, 120)
 
 [node name="BasePoint" parent="EditableObjectNodes/NaviLink" index="1"]
+gizmo_extents = 0.0
 position = Vector2(0, 120)
 
 [node name="TopPoint" parent="EditableObjectNodes/NaviLink" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -120)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/NaviLink/Body" index="0"]
+visible = false
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-40.2491, -28.7902, 70.4386, 26.553787, 147.58, 65.1246, 40.2491, 118.79, -147.58, 24.8754)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/NaviLink/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-150, -120, 150, -120, 150, 120, -150, 120)
 
 [node name="InteractionArea" parent="EditableObjectNodes/NaviLink" index="5"]
 position = Vector2(-108, 96)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/NaviLink/InteractionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-96, -56, 32, -56, 32, -24, 96, -24, 96, 56, -32, 56, -32, 24, -96, 24)
 
 [node name="UsePoint" parent="EditableObjectNodes/NaviLink" index="6"]
+gizmo_extents = 0.0
 position = Vector2(-108, 96)
 
 [node name="Node17" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
@@ -1175,34 +1280,42 @@ position = Vector2(996, 38)
 object_id = &"node_17"
 
 [node name="VisualPreview" parent="EditableObjectNodes/Node17/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-75, -70, 75, -70, 75, 70, -75, 70)
 
 [node name="BasePoint" parent="EditableObjectNodes/Node17" index="1"]
+gizmo_extents = 0.0
 position = Vector2(0, 70)
 
 [node name="TopPoint" parent="EditableObjectNodes/Node17" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -70)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/Node17/Body" index="0"]
+visible = false
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-13.4164, -5.541, 67.082, 34.7082, 13.4164, 61.541, -67.082, 21.2918)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/Node17/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-75, -70, 75, -70, 75, 70, -75, 70)
 
 [node name="InteractionArea" parent="EditableObjectNodes/Node17" index="5"]
 position = Vector2(64, 40)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/Node17/InteractionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-48, -32, 48, -32, 48, 32, -48, 32)
 
 [node name="UsePoint" parent="EditableObjectNodes/Node17" index="6"]
+gizmo_extents = 0.0
 position = Vector2(64, 40)
 
 [node name="AttachmentSockets" type="Node2D" parent="EditableObjectNodes/Node17"]
 editor_description = "NODE-17 자식 장비의 독립 부착 기준점 모음. 각 Socket 이동은 해당 자식만 이동합니다."
 
 [node name="SignalBoosterSocket" type="Marker2D" parent="EditableObjectNodes/Node17/AttachmentSockets"]
+gizmo_extents = 0.0
 editor_description = "신호 증폭기 부착 기준점. NODE-17 기준 현재 world 위치를 보존합니다."
 position = Vector2(-68, -58)
 
@@ -1210,15 +1323,19 @@ position = Vector2(-68, -58)
 object_id = &"signal_booster"
 
 [node name="VisualPreview" parent="EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-56, -48, 56, -48, 56, 48, -56, 48)
 
 [node name="TopPoint" parent="EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -48)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/Node17/AttachmentSockets/SignalBoosterSocket/SignalBooster/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-56, -48, 56, -48, 56, 48, -56, 48)
 
 [node name="CableBundleSocket" type="Marker2D" parent="EditableObjectNodes/Node17/AttachmentSockets"]
+gizmo_extents = 0.0
 editor_description = "케이블 묶음 부착 기준점. 신호 증폭기 Socket과 독립적으로 이동합니다."
 position = Vector2(36, 42)
 
@@ -1226,12 +1343,15 @@ position = Vector2(36, 42)
 object_id = &"cable_bundle"
 
 [node name="VisualPreview" parent="EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-40, -20, 40, -20, 40, 20, -40, 20)
 
 [node name="TopPoint" parent="EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -20)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/Node17/AttachmentSockets/CableBundleSocket/CableBundle/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-40, -20, 40, -20, 40, 20, -40, 20)
 
 [node name="SinkCounter" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
@@ -1239,19 +1359,24 @@ position = Vector2(996, 174)
 object_id = &"sink_counter"
 
 [node name="VisualPreview" parent="EditableObjectNodes/SinkCounter/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-110, -75, 110, -75, 110, 75, -110, 75)
 
 [node name="TopPoint" parent="EditableObjectNodes/SinkCounter" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -75)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/SinkCounter/Body" index="0"]
+visible = false
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-40.249224, -19.429563, 102.859127, 52.124612, 40.249224, 83.429563, -102.859127, 11.875388)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/SinkCounter/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-110, -75, 110, -75, 110, 75, -110, 75)
 
 [node name="MicrowaveSocket" type="Marker2D" parent="EditableObjectNodes/SinkCounter/AttachmentSockets" index="0"]
+gizmo_extents = 0.0
 editor_description = "전자레인지 부착 기준점. 이 Marker만 움직이면 전자레인지만 함께 이동합니다."
 
 [node name="Microwave" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket" instance=ExtResource("3_editable_object")]
@@ -1259,24 +1384,30 @@ position = Vector2(0, -60)
 object_id = &"microwave"
 
 [node name="VisualPreview" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-48, -36, 48, -36, 48, 36, -48, 36)
 
 [node name="BasePoint" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave" index="1"]
+gizmo_extents = 0.0
 position = Vector2(0, 60)
 
 [node name="TopPoint" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -36)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-48, -36, 48, -36, 48, 36, -48, 36)
 
 [node name="InteractionArea" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave" index="5"]
 position = Vector2(0, 124)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave/InteractionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-48, -28, 48, -28, 48, 28, -48, 28)
 
 [node name="UsePoint" parent="EditableObjectNodes/SinkCounter/AttachmentSockets/MicrowaveSocket/Microwave" index="6"]
+gizmo_extents = 0.0
 position = Vector2(0, 124)
 
 [node name="DiningTable" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
@@ -1284,16 +1415,20 @@ position = Vector2(868, 302)
 object_id = &"dining_table"
 
 [node name="VisualPreview" parent="EditableObjectNodes/DiningTable/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-85, -60, 85, -60, 85, 60, -85, 60)
 
 [node name="TopPoint" parent="EditableObjectNodes/DiningTable" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -60)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/DiningTable/Body" index="0"]
+visible = false
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-26.832816, -20.72136, 89.442719, 37.416408, 26.832816, 68.72136, -89.442719, 10.583592)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/DiningTable/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-85, -60, 85, -60, 85, 60, -85, 60)
 
 [node name="UpsUnit" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
@@ -1301,19 +1436,24 @@ position = Vector2(1444, 270)
 object_id = &"ups_unit"
 
 [node name="VisualPreview" parent="EditableObjectNodes/UpsUnit/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-70, -55, 70, -55, 70, 55, -70, 55)
 
 [node name="TopPoint" parent="EditableObjectNodes/UpsUnit" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -55)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/UpsUnit/Body" index="0"]
+visible = false
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-17.888544, -13.777088, 71.554175, 30.944272, 17.888544, 57.777088, -71.554175, 13.055728)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/UpsUnit/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-70, -55, 70, -55, 70, 55, -70, 55)
 
 [node name="PowerCableSocket" type="Marker2D" parent="EditableObjectNodes/UpsUnit/AttachmentSockets" index="0"]
+gizmo_extents = 0.0
 editor_description = "향후 전력 케이블 시각 연결에만 사용할 선택적 부착 기준점. 전력 보드의 transform parent가 아닙니다."
 
 [node name="BathroomFixture" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
@@ -1321,16 +1461,20 @@ position = Vector2(804, 78)
 object_id = &"bathroom_fixture"
 
 [node name="VisualPreview" parent="EditableObjectNodes/BathroomFixture/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-100, -70, 100, -70, 100, 70, -100, 70)
 
 [node name="TopPoint" parent="EditableObjectNodes/BathroomFixture" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -70)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/BathroomFixture/Body" index="0"]
+visible = false
 editor_description = "플레이어 이동을 막는 바닥 충돌 범위. 꼭짓점을 직접 조정."
 polygon = PackedVector2Array(-31.304952, -23.429563, 102.859127, 43.652476, 31.304952, 79.429563, -102.859127, 12.347524)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/BathroomFixture/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-100, -70, 100, -70, 100, 70, -100, 70)
 
 [node name="ShoesSlippers" parent="EditableObjectNodes" instance=ExtResource("11_environment_object")]
@@ -1338,12 +1482,15 @@ position = Vector2(548, 270)
 object_id = &"shoes_slippers"
 
 [node name="VisualPreview" parent="EditableObjectNodes/ShoesSlippers/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-50, -30, 50, -30, 50, 30, -50, 30)
 
 [node name="TopPoint" parent="EditableObjectNodes/ShoesSlippers" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -30)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/ShoesSlippers/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-50, -30, 50, -30, 50, 30, -50, 30)
 
 [node name="PowerModuleBoard" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
@@ -1353,42 +1500,52 @@ mount_socket_path = NodePath("../../Walls/WorkBackWall/WallCells/Cell05/Attachme
 mount_offset = Vector2(0, -30)
 
 [node name="VisualPreview" parent="EditableObjectNodes/PowerModuleBoard/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-100, -90, 100, -90, 100, 90, -100, 90)
 
 [node name="BasePoint" parent="EditableObjectNodes/PowerModuleBoard" index="1"]
+gizmo_extents = 0.0
 position = Vector2(0, 30)
 
 [node name="TopPoint" parent="EditableObjectNodes/PowerModuleBoard" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -90)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/PowerModuleBoard/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-100, -90, 100, -90, 100, 90, -100, 90)
 
 [node name="InteractionArea" parent="EditableObjectNodes/PowerModuleBoard" index="5"]
 position = Vector2(-96, 170)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/PowerModuleBoard/InteractionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-60, -36, 60, -36, 60, 36, -60, 36)
 
 [node name="UsePoint" parent="EditableObjectNodes/PowerModuleBoard" index="6"]
+gizmo_extents = 0.0
 position = Vector2(-96, 170)
 
 [node name="AttachmentSockets" type="Node2D" parent="EditableObjectNodes/PowerModuleBoard"]
 editor_description = "전력 모듈 보드 자식 장비의 부착 기준점 모음. 벽 Cell Socket과는 별도 계층입니다."
 
 [node name="PowerHousingSocket" type="Marker2D" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets"]
+gizmo_extents = 0.0
 editor_description = "전력 장비 외장 프레임 부착 기준점. 보드 이동을 따라가며 단독 조정할 수 있습니다."
 
 [node name="PowerHousing" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket" instance=ExtResource("11_environment_object")]
 object_id = &"power_housing"
 
 [node name="VisualPreview" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-120, -105, 120, -105, 120, 105, -120, 105)
 
 [node name="TopPoint" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -105)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/PowerModuleBoard/AttachmentSockets/PowerHousingSocket/PowerHousing/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-120, -105, 120, -105, 120, 105, -120, 105)
 
 [node name="EntranceDoor" parent="EditableObjectNodes" instance=ExtResource("3_editable_object")]
@@ -1399,32 +1556,40 @@ mount_offset = Vector2(0, -6)
 supports_open_state = true
 
 [node name="VisualPreview" parent="EditableObjectNodes/EntranceDoor/Visual" index="1"]
+color = Color(0.82, 0.92, 1, 0.04)
 polygon = PackedVector2Array(-75, -110, 75, -110, 75, 110, -75, 110)
 
 [node name="BasePoint" parent="EditableObjectNodes/EntranceDoor" index="1"]
+gizmo_extents = 0.0
 position = Vector2(0, 6)
 
 [node name="TopPoint" parent="EditableObjectNodes/EntranceDoor" index="2"]
+gizmo_extents = 0.0
 position = Vector2(0, -214)
 
 [node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/EntranceDoor/Body" index="0"]
+visible = false
 editor_description = "닫힌 문이 이동을 막는 벽선 충돌 범위. 바닥 점유로 사용하지 않으며 꼭짓점을 직접 조정."
 position = Vector2(0, 6)
 polygon = PackedVector2Array(31.1056, -22.261, 36.4722, -11.5279, -31.1056, 22.261, -36.4722, 11.5279)
 
 [node name="SelectionPolygon" parent="EditableObjectNodes/EntranceDoor/SelectionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-75, -110, 75, -110, 75, 110, -75, 110)
 
 [node name="InteractionArea" parent="EditableObjectNodes/EntranceDoor" index="5"]
 position = Vector2(82, 22)
 
 [node name="InteractionPolygon" parent="EditableObjectNodes/EntranceDoor/InteractionArea" index="0"]
+visible = false
 polygon = PackedVector2Array(-48, -28, 48, -28, 48, 28, -48, 28)
 
 [node name="UsePoint" parent="EditableObjectNodes/EntranceDoor" index="6"]
+gizmo_extents = 0.0
 position = Vector2(32, 22)
 
 [node name="AttachmentSocket" parent="EditableObjectNodes/EntranceDoor" index="7"]
+gizmo_extents = 0.0
 position = Vector2(0, 6)
 
 [node name="Camera2D" type="Camera2D" parent="."]

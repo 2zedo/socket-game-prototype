@@ -48,6 +48,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
 		_sync_geometry()
+		_sync_editor_selection_guides()
 
 
 func _sync_geometry() -> void:
@@ -71,8 +72,31 @@ func _sync_geometry() -> void:
 		"AXIS_A" if direction == Direction.AXIS_A else "AXIS_B",
 		cell_index,
 	]
+	if Engine.is_editor_hint():
+		_sync_editor_selection_guides()
 	_refresh_visual_state()
 	_apply_collision_enabled()
+
+
+func _sync_editor_selection_guides() -> void:
+	var selection := EditorInterface.get_selection()
+	var cell_selected := false
+	var collision_selected := false
+	if selection != null:
+		for selected_node in selection.get_selected_nodes():
+			if selected_node == self or is_ancestor_of(selected_node):
+				cell_selected = true
+			if selected_node == $CollisionBody or $CollisionBody.is_ancestor_of(selected_node):
+				collision_selected = true
+	for marker in [start_point, end_point, base_point, top_point]:
+		if marker is Marker2D:
+			(marker as Marker2D).visible = cell_selected
+			(marker as Marker2D).gizmo_extents = 10.0 if cell_selected else 0.0
+	var attachment_socket := get_node_or_null("AttachmentSocket") as Marker2D
+	if attachment_socket != null:
+		attachment_socket.gizmo_extents = 10.0 if cell_selected else 0.0
+	$CollisionBody.visible = collision_selected
+	collision_polygon.visible = collision_selected
 
 
 func _wall_quad(from: Vector2, to: Vector2, height: float) -> PackedVector2Array:
