@@ -30,6 +30,7 @@ void fragment() {
 shader = SubResource("Shader_fridge_checker_cleanup")
 
 [node name="QuarterviewApartmentEnvironment" type="Node2D"]
+editor_description = "ROTATE_90 아파트 환경 단일 정본. 18개 오브젝트 geometry는 EditableObjectNodes의 Scene Node만 편집하고 Resource geometry fallback은 사용하지 않습니다."
 script = ExtResource("1_shell_candidate")
 object_footprint_set = ExtResource("2_object_footprints")
 full_map_camera_center_offset = Vector2(1, 0)

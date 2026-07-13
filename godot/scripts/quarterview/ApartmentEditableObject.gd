@@ -269,7 +269,7 @@ func geometry_warnings() -> Array[String]:
 			elif child is CollisionPolygon2D and child.name != "SelectionPolygon":
 				warnings.append("selection collision polygon must be named SelectionPolygon")
 	if config != null and _resource_geometry_active(config):
-		warnings.append("migrated Resource geometry must remain disabled")
+		warnings.append("deprecated Resource geometry must remain disabled; Scene Node is authoritative")
 	return warnings
 
 
@@ -372,6 +372,7 @@ func _resource_geometry_active(config: Resource) -> bool:
 		or Vector2(config.get("interaction_size_px")) != Vector2.ZERO
 		or Vector2(config.get("interaction_offset_px")) != Vector2.ZERO
 		or Vector2(config.get("wall_offset_px")) != Vector2.ZERO
+		or (int(config.get("anchor_type")) != 0 and not is_zero_approx(float(config.get("wall_position_ratio"))))
 		or not Array(config.get("interaction_cells")).is_empty()
 		or Vector2i(config.get("interaction_cell")) != Vector2i(-1, -1)
 	)

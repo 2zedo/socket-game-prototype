@@ -75,8 +75,7 @@ func test_migrated_resources_keep_logic_without_duplicate_scene_geometry() -> vo
 		assert_eq(objects[id].collision_shape_type, FOOTPRINT_CONFIG_SCRIPT.CollisionShapeType.NONE)
 		assert_eq(objects[id].interaction_cells, [], "%s Resource must not duplicate Scene use points." % id)
 		assert_eq(objects[id].interaction_cell, Vector2i(-1, -1))
-		if id in ATTACHED_ENVIRONMENT_NODE_IDS:
-			assert_eq(objects[id].wall_position_ratio, 0.0, "%s Resource must not retain positional wall ratio geometry." % id)
+		assert_eq(objects[id].wall_position_ratio, 0.0, "%s Resource must not retain positional wall ratio geometry." % id)
 
 
 func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() -> void:
@@ -184,6 +183,157 @@ func test_editable_object_scene_nodes_are_the_rotated_view_geometry_authority() 
 	for id in EXPECTED_IDS:
 		assert_true(bool(objects[id].get("node_backed", false)), "%s must use Environment Scene Node authority." % id)
 		assert_eq(objects[id].source, "scene_node")
+
+
+func test_environment_scene_snapshots_match_all_eighteen_node_polygons_without_legacy_reads() -> void:
+	var shell = _make_shell()
+	shell._legacy_resource_geometry_read_count = 0
+	var objects := _dictionary_map(shell._object_footprints())
+	assert_eq(_sorted_strings(objects.keys()), _sorted_strings(EXPECTED_IDS))
+	var scene_group_ids: Array[String] = []
+	for group_name in ["apartment_editable_object", "apartment_editable_environment_object"]:
+		for candidate in get_tree().get_nodes_in_group(group_name):
+			if shell.is_ancestor_of(candidate):
+				scene_group_ids.append(String(candidate.get("object_id")))
+	assert_eq(_sorted_strings(scene_group_ids), _sorted_strings(EXPECTED_IDS), "Environment editable groups must contain exactly the 18 canonical object ids.")
+	for id in EXPECTED_IDS:
+		var object_data: Dictionary = objects[id]
+		var object_node: Node2D = shell._editable_object_node_by_id(id)
+		assert_not_null(object_node)
+		assert_eq(object_data.source, "scene_node")
+		assert_true(object_data.node_backed)
+		assert_eq(PackedVector2Array(object_data.visual_polygons[0]), PackedVector2Array(object_node.call("visual_world_polygon")))
+		assert_eq(PackedVector2Array(object_data.selection_polygons[0]), PackedVector2Array(object_node.call("selection_world_polygon")))
+		var expected_body: PackedVector2Array = object_node.call("body_world_polygon")
+		if expected_body.size() >= 3:
+			assert_eq(PackedVector2Array(object_data.collision_polygons[0]), expected_body)
+		else:
+			assert_eq(object_data.collision_polygons, [])
+		var expected_interaction := PackedVector2Array()
+		if object_node.has_method("interaction_world_polygon"):
+			expected_interaction = object_node.call("interaction_world_polygon")
+		if expected_interaction.size() >= 3:
+			assert_eq(PackedVector2Array(object_data.interaction_polygons[0]), expected_interaction)
+		else:
+			assert_eq(object_data.interaction_polygons, [])
+		shell.playable_object_data(id)
+	shell._unhandled_input(_key_event(KEY_P))
+	shell._select_object_for_debug("fridge")
+	shell._unhandled_input(_key_event(KEY_N))
+	shell._unhandled_input(_key_event(KEY_M))
+	assert_eq(shell._legacy_resource_geometry_read_count, 0, "Environment P/M/N/Playable must never read legacy Resource geometry.")
+
+
+func test_missing_environment_node_warns_without_resource_fallback_or_ghost_geometry() -> void:
+	var shell = _make_shell()
+	shell._unhandled_input(_key_event(KEY_P))
+	shell._select_object_for_debug("fridge")
+	assert_eq(shell._selected_object_id, "fridge")
+	assert_gt(shell._debug_selection_layer.get_child_count(), 0)
+	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_"))
+	var previous_fridge_data: Dictionary = shell._object_data_by_id("fridge")
+	var previous_occupied_cells: Array[Vector2i] = shell._object_occupied_cells(previous_fridge_data)
+	var fridge: Node2D = shell.get_node("EditableObjectNodes/Fridge")
+	fridge.get_parent().remove_child(fridge)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	shell._legacy_resource_geometry_read_count = 0
+	var object_snapshot: Array[Dictionary] = shell._object_footprints()
+	var object_data: Dictionary = _dictionary_map(object_snapshot)["fridge"]
+	assert_eq(shell._selected_object_id, "", "A removed Scene authority must clear stale selection state.")
+	assert_eq(shell._selected_candidate_ids, [])
+	assert_eq(shell.debug_focus_object_id, "")
+	assert_eq(shell._debug_selection_layer.get_child_count(), 0, "A removed Scene authority must not leave a fallback-position label or visual ghost.")
+	assert_false(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_"), "A removed Scene authority must clear its base P geometry too.")
+	for cell in previous_occupied_cells:
+		assert_false(shell._object_blocker_ids_for_cell(cell, object_snapshot).has("fridge"), "A removed Scene authority must leave no stale N blocker.")
+	assert_eq(object_data.source, "missing_scene_node")
+	assert_false(object_data.node_backed)
+	assert_true(object_data.scene_geometry_missing)
+	assert_eq(shell._object_floor_polygon_points(object_data), [])
+	assert_eq(shell._object_visual_polygon_points(object_data), [])
+	assert_eq(shell._object_collision_polygon_points(object_data), [])
+	assert_eq(shell._object_interaction_polygons(object_data), [])
+	assert_eq(shell._object_occupied_cells(object_data), [])
+	assert_eq(shell._object_hit_candidate(object_data, Vector2.ZERO), {})
+	assert_false(shell._object_blocker_ids_for_cell(Vector2i.ZERO).has("fridge"))
+	assert_true(_strings_contain(shell._object_placement_warnings(), "editable object node fridge is missing"))
+	assert_eq(shell._legacy_resource_geometry_read_count, 0)
+	fridge.free()
+
+
+func test_environment_warns_for_unexpected_scene_and_metadata_ids() -> void:
+	var shell = _make_shell()
+	var unexpected_node: Node2D = shell.get_node("EditableObjectNodes/ShoesSlippers").duplicate()
+	unexpected_node.name = "UnexpectedObject"
+	unexpected_node.set("object_id", &"unexpected_scene_object")
+	shell.get_node("EditableObjectNodes").add_child(unexpected_node)
+	assert_true(unexpected_node.is_in_group("apartment_editable_environment_object"))
+	var unexpected_config: Resource = FOOTPRINT_CONFIG_SCRIPT.new()
+	unexpected_config.set("id", &"unexpected_metadata_object")
+	shell.object_footprint_set.objects.append(unexpected_config)
+	var warnings: Array[String] = shell._editable_object_node_warnings()
+	assert_true(_strings_contain(warnings, "unexpected editable object node id unexpected_scene_object"))
+	assert_true(_strings_contain(warnings, "unexpected object logical metadata id unexpected_metadata_object"))
+	shell.object_footprint_set.objects.erase(unexpected_config)
+	unexpected_node.free()
+
+
+func test_geometry_signature_tracks_independent_attachment_socket_edits() -> void:
+	var shell = _make_shell()
+	var before_snapshot: Array[Dictionary] = shell._object_footprints()
+	var before_signature: String = shell._object_snapshot_geometry_signature(before_snapshot)
+	var socket: Marker2D = shell.get_node("EditableObjectNodes/Fridge/AttachmentSocket")
+	var original_position := socket.position
+	socket.position += Vector2(9.0, -4.0)
+	var after_snapshot: Array[Dictionary] = shell._object_footprints()
+	var after_signature: String = shell._object_snapshot_geometry_signature(after_snapshot)
+	assert_ne(after_signature, before_signature, "An independent Socket edit must invalidate the P geometry snapshot.")
+	shell._update_object_hover_at(Vector2(-9999.0, -9999.0))
+	assert_eq(shell._last_object_geometry_signature, after_signature)
+	socket.position = original_position
+
+
+func test_resource_behavior_flags_validate_but_do_not_drive_environment_node_geometry() -> void:
+	var shell = _make_shell()
+	var config = _object_map(FOOTPRINT_SET.objects)["fridge"]
+	config.blocks_movement = false
+	config.uses_floor_occupancy = false
+	var object_data: Dictionary = _dictionary_map(shell._object_footprints())["fridge"]
+	assert_true(object_data.blocks_movement)
+	assert_true(object_data.uses_floor_occupancy)
+	var warnings: Array[String] = shell._editable_object_node_warnings()
+	assert_true(_strings_contain(warnings, "BodyPolygon disagrees with logical blocks_movement contract"))
+	assert_true(_strings_contain(warnings, "BodyPolygon disagrees with logical floor occupancy contract"))
+	config.blocks_movement = true
+	config.uses_floor_occupancy = true
+
+
+func test_environment_rejects_legacy_custom_geometry_instead_of_mixing_sources() -> void:
+	var shell = _make_shell()
+	var legacy_custom: Resource = FOOTPRINT_CONFIG_SCRIPT.new()
+	legacy_custom.id = &"legacy_ghost"
+	legacy_custom.visual_size_px = Vector2(128, 64)
+	shell.custom_object_footprints.append(legacy_custom)
+	shell._legacy_resource_geometry_read_count = 0
+	assert_eq(shell._object_footprints().size(), 18)
+	assert_eq(shell._legacy_resource_geometry_read_count, 0)
+	assert_true(_strings_contain(shell._editable_object_node_warnings(), "Environment ignores custom_object_footprints"))
+
+
+func test_non_rotated_inventory_uses_explicit_legacy_resource_section() -> void:
+	var shell = SHELL_SCENE.instantiate()
+	shell.map_rotation = shell.MapRotation.ROTATE_0
+	add_child_autoqfree(shell)
+	shell._legacy_resource_geometry_read_count = 0
+	var legacy_data: Dictionary = _dictionary_map(shell._object_footprints())["entrance_door"]
+	assert_eq(legacy_data.source, "legacy_resource")
+	assert_gt(shell._legacy_resource_geometry_read_count, 0)
+	var detail: String = shell._object_debug_detail_text(legacy_data)
+	assert_true(detail.contains("source=LEGACY_RESOURCE"))
+	assert_true(detail.contains("LEGACY_RESOURCE"))
+	assert_true(detail.contains("anchor type:"))
+	assert_false(detail.contains("source=SCENE_NODE"))
 
 
 func test_floor_environment_scene_nodes_preserve_geometry_without_interaction_nodes() -> void:
@@ -347,7 +497,7 @@ func test_attached_environment_resource_wall_ratio_is_rejected_as_duplicate_geom
 	var poster: Node2D = shell.get_node("Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket/SeaHorizonPoster")
 	var poster_config = _object_map(FOOTPRINT_SET.objects)["sea_horizon_poster"]
 	poster_config.wall_position_ratio = 0.5
-	assert_true(_strings_contain(Array(poster.call("geometry_warnings")), "migrated Resource geometry must remain disabled"))
+	assert_true(_strings_contain(Array(poster.call("geometry_warnings")), "deprecated Resource geometry must remain disabled"))
 	poster_config.wall_position_ratio = 0.0
 	assert_eq(poster.call("geometry_warnings"), [])
 
@@ -680,6 +830,9 @@ func test_all_eighteen_resource_geometry_values_are_disabled() -> void:
 		assert_eq(objects[id].size_cells, Vector2i.ZERO)
 		assert_eq(objects[id].interaction_cell, Vector2i(-1, -1))
 		assert_eq(objects[id].interaction_cells, [])
+		assert_eq(objects[id].collision_shape_type, FOOTPRINT_CONFIG_SCRIPT.CollisionShapeType.NONE)
+		assert_eq(objects[id].wall_position_ratio, 0.0)
+		assert_eq(objects[id].wall_offset_px, Vector2.ZERO)
 
 
 func test_attachment_and_floor_occupancy_policy() -> void:
@@ -1023,7 +1176,6 @@ func test_scene_selection_polygon_is_independent_from_interaction_polygon() -> v
 
 func test_visual_bounds_are_created_only_for_selected_object() -> void:
 	var shell = _make_shell()
-	shell.show_object_visual_bounds = true
 	shell._unhandled_input(_key_event(KEY_P))
 	var object_layer: Node = shell.get_node("ObjectPlacementDebugLayer")
 	for id in EXPECTED_IDS:
@@ -1032,10 +1184,9 @@ func test_visual_bounds_are_created_only_for_selected_object() -> void:
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_visual_bounds"))
 
 
-func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
+func test_object_mode_legend_and_selected_bounds_show_scene_node_detail_without_duplicate_geometry() -> void:
 	var shell = _make_shell()
 	shell._unhandled_input(_key_event(KEY_P))
-	shell.show_object_visual_bounds = true
 	assert_true(shell._object_legend_label.visible)
 	assert_true(shell._object_legend_label.text.contains("collision"))
 	assert_true(shell._object_legend_label.text.contains("AttachmentSocket"))
@@ -1057,46 +1208,48 @@ func test_object_mode_legend_and_selected_bounds_show_anchor_detail() -> void:
 	shell._unhandled_input(_mouse_click_event(bed_viewport_position))
 	assert_eq(shell._selected_object_id, "bed")
 	assert_true(shell._debug_detail_label.text.contains("id: bed"))
-	assert_true(shell._debug_detail_label.text.contains("anchor resolved: FLOOR"))
+	assert_true(shell._debug_detail_label.text.contains("source=SCENE_NODE"))
 	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_visual_bounds"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_occupancy_bounds"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_composite_collision_outline"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_interaction_bounds"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_occupancy_bounds"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_composite_collision_outline"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_bed_interaction_bounds"))
 	shell._update_object_hover_at(Vector2(-10000, -10000))
 	assert_eq(shell._hovered_object_id, "")
 	assert_eq(shell._selected_object_id, "bed", "Moving hover away must preserve click selection.")
 	shell._select_object_for_debug("fridge")
-	assert_true(shell._debug_detail_label.text.contains("geometry source: SCENE_NODE"))
+	assert_true(shell._debug_detail_label.text.contains("source=SCENE_NODE"))
 	assert_true(shell._debug_detail_label.text.contains("EditableObjectNodes/Fridge"))
 	assert_true(shell._debug_detail_label.text.contains("UsePoint:"))
-	assert_true(shell._debug_detail_label.text.contains("visual source: SPRITE2D"))
-	assert_true(shell._debug_detail_label.text.contains("floor source: BODY_POLYGON"))
-	assert_true(shell._debug_detail_label.text.contains("selection source: SELECTION_POLYGON"))
+	assert_true(shell._debug_detail_label.text.contains("Visual: SPRITE2D"))
+	assert_true(shell._debug_detail_label.text.contains("BodyPolygon: PRESENT"))
+	assert_true(shell._debug_detail_label.text.contains("SelectionPolygon: PRESENT"))
+	assert_true(shell._debug_detail_label.text.contains("InteractionPolygon: PRESENT"))
 	assert_true(shell._debug_detail_label.text.contains("BasePoint:"))
 	assert_true(shell._debug_detail_label.text.contains("TopPoint:"))
 	assert_true(shell._debug_detail_label.text.contains("AttachmentSockets:"))
+	for legacy_label in ["anchor type:", "position offset:", "visual size:", "interaction cells:", "LEGACY_RESOURCE"]:
+		assert_false(shell._debug_detail_label.text.contains(legacy_label), "SCENE_NODE detail must not expose %s" % legacy_label)
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_selection_area"))
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_base_point"))
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_top_point"))
 	assert_true(_has_child_prefix(shell.get_node("ObjectPlacementDebugLayer"), "object_fridge_height_guide"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_selection_area"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_base_point"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_selection_area"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_fridge_selected_base_point"))
 	shell._select_object_for_debug("bed")
-	assert_true(shell._debug_detail_label.text.contains("geometry source: SCENE_NODE"))
+	assert_true(shell._debug_detail_label.text.contains("source=SCENE_NODE"))
 	assert_true(shell._debug_detail_label.text.contains("EditableObjectNodes/Bed"))
 	var board: Dictionary = _dictionary_map(shell._object_footprints())["power_module_board"]
 	shell._select_object_for_debug("power_module_board")
-	assert_true(shell._debug_detail_label.text.contains("work_back_wall"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_socket"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_wall_edge"))
+	assert_true(shell._debug_detail_label.text.contains("WorkBackWall"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_socket"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_power_module_board_selected_attachment_wall_edge"))
 	assert_ne(shell._object_anchor_world_position(board), shell._cell_center(board.anchor_cell), "Wall anchor must resolve from its wall edge, not a fake floor center.")
 	shell._select_object_for_debug("sea_horizon_poster")
-	assert_true(shell._debug_detail_label.text.contains("geometry source: SCENE_NODE"))
+	assert_true(shell._debug_detail_label.text.contains("source=SCENE_NODE"))
 	assert_true(shell._debug_detail_label.text.contains("Cell03/AttachmentSocket"))
 	assert_true(shell._debug_detail_label.text.contains("ParentSocket:"))
-	assert_true(shell._debug_detail_label.text.contains("wall: living_right_wall / SCENE_SOCKET"))
-	assert_false(shell._debug_detail_label.text.contains("wall: living_right_wall @ 0.00"))
-	assert_true(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_sea_horizon_poster_selected_attachment_parent_socket"))
+	assert_false(shell._debug_detail_label.text.contains("wall: living_right_wall"))
+	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_sea_horizon_poster_selected_attachment_parent_socket"))
 	assert_false(_has_child_prefix(shell.get_node("DebugSelectionLayer"), "object_sea_horizon_poster_selected_interaction"))
 
 

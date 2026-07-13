@@ -13,7 +13,6 @@ collision_shape_type = 0
 uses_floor_occupancy = false
 anchor_type = 1
 wall_segment_id = &"entrance_wall"
-wall_position_ratio = 0.75
 facing_description_ko = "문 안쪽 면이 생활공간 중앙을 향함"
 display_name_ko = "현관문"
 expected_image_file = "entrance_door_dl_closed.png"

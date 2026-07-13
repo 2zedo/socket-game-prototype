@@ -182,7 +182,7 @@ func geometry_warnings() -> Array[String]:
 			elif child is CollisionPolygon2D and child.name != "SelectionPolygon":
 				warnings.append("selection collision polygon must be named SelectionPolygon")
 	if config != null and _resource_geometry_active(config):
-		warnings.append("migrated Resource geometry must remain disabled")
+		warnings.append("deprecated Resource geometry must remain disabled; Scene Node is authoritative")
 	return warnings
 
 

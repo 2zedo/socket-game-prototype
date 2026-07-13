@@ -135,13 +135,13 @@ Fallback list location:
 
 - `_default_object_footprint_configs()` in `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd`
 
-Loading order:
+Authority order:
 
-1. `object_footprint_set.objects` from the Resource assigned on reusable `QuarterviewApartmentEnvironment`
-2. fallback `_default_object_footprint_configs()` when the Resource is empty or unassigned
-3. additive `custom_object_footprints` entries from the Inspector
+1. In `QuarterviewApartmentEnvironment`, collect exactly 18 object roots from the Scene hierarchy and read transform, visual, Body, Selection, Interaction, UsePoint, Base/Top, and physical Socket geometry directly from those nodes.
+2. Match `object_footprint_set.objects` only for logical identity, category, room, expected movement/interaction policy, semantic anchor/parent/wall relation, UI, and asset specification.
+3. Use `_legacy_resource_object_footprint_from_config()` only outside the active ROTATE_90 Environment authority. It may read deprecated Resource geometry for standalone/custom/non-ROTATE compatibility; `_default_object_footprint_configs()` remains its inventory fallback.
 
-Scene nodes override that loading order for exact ROTATE_90 geometry on all 18 apartment objects. The seven direct-interaction objects keep ObjectRoot, visual, Base/Top, optional Body, Selection, Interaction, UsePoint, and attachment geometry. The eleven environment/decoration objects use the smaller `ApartmentEditableEnvironmentObject` contract with no InteractionArea or UsePoint; the six attached objects also omit BodyPolygon and never block movement. BasePoint is the installation/ground reference, TopPoint is the independent height reference, and SelectionPolygon owns P hover/click only. Resource entries retain logical identity, category, room, wall/parent relationship, UI specification, and future asset strings, but no active ROTATE_90 position/size/offset/access-cell geometry. Resource/fallback geometry remains compatibility code for standalone, custom, or non-ROTATE_90 paths and is not the Environment authority.
+The active Environment never reads Resource geometry before replacing it and never accepts additive `custom_object_footprints`; either condition produces an explicit warning instead of ghost geometry. The seven direct-interaction objects keep ObjectRoot, visual, Base/Top, optional Body, Selection, Interaction, UsePoint, and attachment geometry. The eleven environment/decoration objects use the smaller `ApartmentEditableEnvironmentObject` contract with no InteractionArea or UsePoint; the six attached objects also omit BodyPolygon and never block movement. BasePoint is the installation/ground reference, TopPoint is the independent height reference, and SelectionPolygon owns P hover/click only. Resource geometry fields remain serialized solely for legacy compatibility and are deprecated for current Environment authoring.
 
 Current rotated-floorplan placement candidate:
 
@@ -194,6 +194,7 @@ Shell editing controls:
 - `ESC`: close the topmost shell debug overlay.
 - `debug_focus_object_id`: emphasize one object id, for example `bed`.
 - For all 18 Scene-node objects, SelectionPolygon is the P hover/click authority and hover labels identify its owner; InteractionPolygon is not reused for selection. Attached environment objects rank below interaction/collision objects, and repeated clicks at one location still cycle candidates and show `선택 n/m`.
+- P's base layer draws each Scene polygon/marker once. The selected layer adds only the selected white visual bound and short label; it does not redraw Body, Selection, Interaction, UsePoint, or Socket geometry. The detail panel reports `source=SCENE_NODE`, exact ObjectRoot/parent Socket paths, channel presence, and Use/Base/Top positions. Deprecated anchor/offset/size/cell values appear only under a clearly separated `LEGACY_RESOURCE` section outside the active Environment.
 
 Coordinate rule:
 

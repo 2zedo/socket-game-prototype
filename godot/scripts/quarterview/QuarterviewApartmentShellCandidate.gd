@@ -166,11 +166,6 @@ const EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS := [
 	"signal_booster", "cable_bundle", "power_housing", "sea_horizon_poster",
 	"wall_conduit", "fluorescent_light",
 ]
-const EDITABLE_OBJECT_NODES_PATH := ^"EditableObjectNodes"
-const RESOURCE_WALL_SOCKET_PATH_BY_OBJECT_ID := {
-	"wall_conduit": ^"Walls/WorkBackWall/WallCells/Cell02/AttachmentSocket",
-	"sea_horizon_poster": ^"Walls/LivingRightWall/WallCells/Cell03/AttachmentSocket",
-}
 const OBJECT_ANCHOR_HIT_RADIUS := 18.0
 const OBJECT_CLICK_CYCLE_RADIUS := 3.0
 const WALL_INSPECTION_ALPHA := 0.18
@@ -243,11 +238,11 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 @export var custom_wall_segments: Array[Resource] = []
 
 @export_group("Object Footprint Editing")
-# All seven direct-interaction objects use EditableObjectNodes as the exact ROTATE_90
-# pixel-geometry authority. This Resource set remains logical/grid data for the other eleven.
+# In the Environment's ROTATE_90 path, this set supplies logical metadata only. All 18 objects
+# read position, visual, collision, selection, interaction and attachment geometry from Scene Nodes.
 @export var object_footprint_set: ApartmentObjectFootprintSetConfig
-# Custom entries are additive shell tests. Keep ids unique unless you intentionally want overlap
-# warnings while comparing a custom footprint against the Resource-backed baseline.
+# Deprecated compatibility hook for non-ROTATE_90 previews. The current Environment ignores this
+# geometry and reports a warning instead of mixing it with its 18 canonical Scene Nodes.
 @export var custom_object_footprints: Array[Resource] = []
 
 @export_group("Window Layout")
@@ -277,7 +272,6 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 # Shows coordinate-based furniture / device footprint placeholders. These are shell-only guides.
 @export var show_object_placeholders := false
 @export var show_object_labels := true
-@export var show_object_interaction_cells := true
 @export var show_blocking_object_cells := true
 @export var show_nonblocking_object_cells := true
 @export_group("Object Placement Debug")
@@ -285,7 +279,6 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 @export var show_object_floor_footprints := true
 @export var show_object_collision_shapes := true
 @export var show_object_interaction_areas := true
-@export var show_object_visual_bounds := false
 @export var show_object_parent_links := true
 @export_group("Debug")
 # Highlights logical occlusion walls that are rendered as low stubs in the current shell view.
@@ -367,6 +360,10 @@ var _selected_candidate_index := -1
 var _selected_hit_kind := ""
 var _last_selection_signature := ""
 var _last_selection_world_position := Vector2(INF, INF)
+var _last_object_geometry_signature := ""
+# Test-visible audit counter. The current Environment contract keeps this at zero; only the
+# explicitly isolated non-ROTATE/custom compatibility path may read Resource geometry.
+var _legacy_resource_geometry_read_count := 0
 
 
 func _ready() -> void:
@@ -1090,19 +1087,40 @@ func _wall_height_from_config(config: Resource) -> float:
 			return -1.0
 
 
-# All 18 apartment world objects use Scene nodes as their exact ROTATE_90 geometry authority.
-# Resources retain logical identity, category, asset and parent/wall metadata only.
+# All 18 apartment world objects use Scene Nodes as their exact ROTATE_90 geometry authority.
+# This branch intentionally never calls the legacy Resource geometry reader. Resources provide
+# only identity, category, state/asset and logical parent/wall metadata here.
 func _object_footprints() -> Array[Dictionary]:
+	if _environment_node_authority_active():
+		return _scene_node_object_footprints()
+	return _legacy_resource_object_footprints()
+
+
+func _scene_node_object_footprints() -> Array[Dictionary]:
 	var footprints: Array[Dictionary] = []
-	for entry in _active_object_footprint_config_entries():
+	if object_footprint_set == null:
+		return footprints
+	for config in object_footprint_set.objects:
+		if config == null:
+			continue
+		footprints.append(_object_footprint_with_node_authority(
+			_object_logical_metadata_from_config(config, "resource")
+		))
+	return footprints
+
+
+# Kept for tested non-ROTATE_90 inventory compatibility and explicit custom preview data.
+# The standalone QuarterviewRoom path owns a separate RoomObjectDefinition/OBJECT_LAYOUT contract.
+func _legacy_resource_object_footprints() -> Array[Dictionary]:
+	var footprints: Array[Dictionary] = []
+	for entry in _legacy_object_footprint_config_entries():
 		var config: Resource = entry.get("config")
 		if config == null:
 			continue
-		var source := String(entry.get("source", "default"))
-		var object_data := _object_footprint_from_config(config, source)
-		if source != "custom" and _editable_object_node_authority_active():
-			object_data = _object_footprint_with_node_authority(object_data)
-		footprints.append(object_data)
+		footprints.append(_legacy_resource_object_footprint_from_config(
+			config,
+			String(entry.get("source", "legacy_resource"))
+		))
 	return footprints
 
 
@@ -1177,7 +1195,9 @@ func _playable_nearest_walkable_cell(world_position: Vector2) -> Vector2i:
 
 
 func _editable_object_node_authority_active() -> bool:
-	return map_rotation == MapRotation.ROTATE_90
+	# Compatibility alias for older tests/helpers. Geometry authority is valid only on the
+	# authored Environment hierarchy, not on every arbitrary ROTATE_90 Node2D.
+	return _environment_node_authority_active()
 
 
 func _editable_object_node_by_id(object_id: String) -> Node2D:
@@ -1192,17 +1212,17 @@ func _editable_object_node_by_id(object_id: String) -> Node2D:
 	return null
 
 
-func _object_footprint_with_node_authority(resource_data: Dictionary) -> Dictionary:
-	var object_id := String(resource_data.get("id", ""))
+func _object_footprint_with_node_authority(logical_data: Dictionary) -> Dictionary:
+	var object_id := String(logical_data.get("id", ""))
 	var object_node := _editable_object_node_by_id(object_id)
 	if object_node == null:
-		return resource_data
+		return _scene_node_geometry_failure(logical_data, "missing_scene_node")
 	if object_node.has_method("_sync_mount_socket"):
 		object_node.call("_sync_mount_socket")
 	if not object_node.has_method("body_world_polygon") or not object_node.has_method("selection_world_polygon"):
-		return resource_data
+		return _scene_node_geometry_failure(logical_data, "invalid_scene_node")
 
-	var object_data := resource_data.duplicate(true)
+	var object_data := logical_data.duplicate(true)
 	var body_polygon: PackedVector2Array = object_node.call("body_world_polygon")
 	var selection_polygon: PackedVector2Array = object_node.call("selection_world_polygon")
 	var interaction_polygon := PackedVector2Array()
@@ -1211,22 +1231,32 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var placement_polygon := PackedVector2Array()
 	if object_node.has_method("placement_footprint_world_polygon"):
 		placement_polygon = object_node.call("placement_footprint_world_polygon")
-	var occupancy_polygon: PackedVector2Array = object_node.call("floor_occupancy_world_polygon")
+	# Current editable nodes derive occupancy from PlacementFootprint when present, otherwise Body.
+	# Reuse the already captured BodyPolygon instead of asking the Node to transform it twice.
+	var occupancy_polygon: PackedVector2Array = placement_polygon if placement_polygon.size() >= 3 else body_polygon
 	var visual_polygon: PackedVector2Array = object_node.call("visual_world_polygon")
 	var collision_polygons: Array[PackedVector2Array] = []
 	var selection_polygons: Array[PackedVector2Array] = []
 	var interaction_polygons: Array[PackedVector2Array] = []
 	var floor_polygons: Array[PackedVector2Array] = []
+	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
+	var uses_floor_occupancy := anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.FLOOR and occupancy_polygon.size() >= 3
+	var blocks_movement := body_polygon.size() >= 3
+	if object_node.has_method("body_collision_active"):
+		blocks_movement = bool(object_node.call("body_collision_active"))
 	if body_polygon.size() >= 3:
 		collision_polygons.append(body_polygon)
 	if selection_polygon.size() >= 3:
 		selection_polygons.append(selection_polygon)
 	if interaction_polygon.size() >= 3:
 		interaction_polygons.append(interaction_polygon)
-	if occupancy_polygon.size() >= 3 and bool(object_data.get("uses_floor_occupancy", true)):
+	if uses_floor_occupancy:
 		floor_polygons.append(occupancy_polygon)
-	var visual_center: Vector2 = object_node.call("visual_center_world")
-	var visual_bounds: Rect2 = object_node.call("visual_bounds_world")
+	var visual_polygons_for_bounds: Array[PackedVector2Array] = []
+	if visual_polygon.size() >= 3:
+		visual_polygons_for_bounds.append(visual_polygon)
+	var visual_bounds := _polygons_bounds(visual_polygons_for_bounds)
+	var visual_center := visual_bounds.get_center() if visual_bounds.has_area() else Vector2(object_node.call("visual_center_world"))
 	var root_position: Vector2 = object_node.global_position
 	var attachment_anchor: Vector2 = object_node.call("attachment_anchor_world")
 	var mount_parent_socket_path := ""
@@ -1243,7 +1273,6 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var collision_bounds := _polygons_bounds(collision_polygons)
 	var selection_bounds := _polygons_bounds(selection_polygons)
 	var interaction_bounds := _polygons_bounds(interaction_polygons)
-	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
 	var anchor_world := (
 		mount_parent_socket_world
 		if anchor_type != ApartmentObjectFootprintConfigScript.AnchorType.FLOOR and not mount_parent_socket_path.is_empty()
@@ -1261,10 +1290,12 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 	var footprint_size := _cells_bounds_size(occupied_cells)
 
 	object_data["source"] = "scene_node"
-	object_data["resource_source"] = resource_data.get("source", "resource")
+	object_data["logical_metadata_source"] = logical_data.get("source", "resource")
 	object_data["node_backed"] = true
 	object_data["node_path"] = String(object_node.get_path())
 	object_data["object_node"] = object_node
+	object_data["blocks_movement"] = blocks_movement
+	object_data["uses_floor_occupancy"] = uses_floor_occupancy
 	object_data["object_root_world"] = root_position
 	object_data["attachment_anchor_world"] = attachment_anchor
 	object_data["mount_parent_socket_path"] = mount_parent_socket_path
@@ -1302,21 +1333,71 @@ func _object_footprint_with_node_authority(resource_data: Dictionary) -> Diction
 		else ("PLACEMENT_FOOTPRINT" if placement_polygon.size() >= 3 else ("BODY_POLYGON" if body_polygon.size() >= 3 else "NONE"))
 	)
 	object_data["occupied_cells"] = occupied_cells
-	if object_node.has_method("body_collision_active"):
-		object_data["body_collision_active"] = bool(object_node.call("body_collision_active"))
+	object_data["body_collision_active"] = blocks_movement
 	if object_node.has_method("set_open"):
 		object_data["open_state_supported"] = bool(object_node.get("supports_open_state"))
 		object_data["is_open"] = bool(object_node.get("is_open"))
 	return object_data
 
 
+func _scene_node_geometry_failure(logical_data: Dictionary, failure_source: String) -> Dictionary:
+	var object_data := logical_data.duplicate(true)
+	object_data["source"] = failure_source
+	object_data["node_backed"] = false
+	object_data["scene_geometry_missing"] = true
+	object_data["blocks_movement"] = false
+	object_data["uses_floor_occupancy"] = false
+	object_data["anchor_cell"] = Vector2i.ZERO
+	object_data["size_cells"] = Vector2i.ZERO
+	object_data["position_offset_px"] = Vector2.ZERO
+	object_data["visual_size_px"] = Vector2.ZERO
+	object_data["collision_size_px"] = Vector2.ZERO
+	object_data["collision_offset_px"] = Vector2.ZERO
+	object_data["interaction_size_px"] = Vector2.ZERO
+	object_data["interaction_offset_px"] = Vector2.ZERO
+	object_data["interaction_cells"] = []
+	object_data["visual_polygons"] = []
+	object_data["collision_polygons"] = []
+	object_data["selection_polygons"] = []
+	object_data["interaction_polygons"] = []
+	object_data["floor_polygons"] = []
+	object_data["occupied_cells"] = []
+	object_data["use_points_world"] = []
+	return object_data
+
+
 func _connect_editable_object_signals() -> void:
+	for group_name in ["apartment_editable_object", "apartment_editable_environment_object"]:
+		for candidate in get_tree().get_nodes_in_group(group_name):
+			if not is_ancestor_of(candidate):
+				continue
+			var exit_callback := Callable(self, "_on_editable_object_tree_exiting")
+			if not candidate.is_connected("tree_exiting", exit_callback):
+				candidate.connect("tree_exiting", exit_callback)
 	var door_node := _editable_object_node_by_id("entrance_door")
 	if door_node == null or not door_node.has_signal("open_state_changed"):
 		return
 	var callback := Callable(self, "_on_entrance_door_open_state_changed")
 	if not door_node.is_connected("open_state_changed", callback):
 		door_node.connect("open_state_changed", callback)
+
+
+func _on_editable_object_tree_exiting() -> void:
+	# The node is still in the tree while this signal is emitted. Refresh on the next frame so
+	# P/N cannot retain geometry that no longer has a Scene authority.
+	call_deferred("_refresh_object_debug_after_authority_change")
+
+
+func _refresh_object_debug_after_authority_change() -> void:
+	if not is_inside_tree():
+		return
+	var object_snapshot := _object_footprints()
+	_redraw_object_placement_overlay(object_snapshot)
+	if _navigation_layer != null:
+		_clear_layer_children(_navigation_layer)
+		_draw_navigation_overlay()
+	_redraw_object_selection_overlay(object_snapshot)
+	_update_debug_detail_panel(object_snapshot)
 
 
 func set_entrance_door_open(value: bool) -> void:
@@ -1451,41 +1532,21 @@ func _world_points_to_cells(points: Array[Vector2]) -> Array[Vector2i]:
 	return cells
 
 
-func _cells_minimum(cells: Array[Vector2i]) -> Vector2i:
-	if cells.is_empty():
-		return Vector2i.ZERO
-	var minimum := cells[0]
-	for cell in cells.slice(1):
-		minimum = Vector2i(mini(minimum.x, cell.x), mini(minimum.y, cell.y))
-	return minimum
-
-
-func _active_object_footprint_config_entries() -> Array[Dictionary]:
+func _legacy_object_footprint_config_entries() -> Array[Dictionary]:
 	var entries: Array[Dictionary] = []
-	var base_source := "fallback"
-	var configs: Array[Resource] = []
 	if object_footprint_set != null and not object_footprint_set.objects.is_empty():
-		base_source = "resource"
 		for config in object_footprint_set.objects:
-			configs.append(config)
+			entries.append({"source": "legacy_resource", "config": config})
 	else:
-		configs = _default_object_footprint_configs()
-
-	for config in configs:
-		entries.append({
-			"source": base_source,
-			"config": config,
-		})
+		for config in _default_object_footprint_configs():
+			entries.append({"source": "legacy_fallback", "config": config})
 	for config in custom_object_footprints:
-		entries.append({
-			"source": "custom",
-			"config": config,
-		})
+		entries.append({"source": "legacy_custom", "config": config})
 	return entries
 
 
-# Edit these defaults to rough in furniture/device footprints. Coordinates are floor cells,
-# unlike wall segments, whose from/to values are wall edge grid-line coordinates.
+# Legacy-only logical inventory used when a non-ROTATE_90 preview has no Resource set.
+# The current Environment never reads these fallback geometry values.
 func _default_object_footprint_configs() -> Array[Resource]:
 	var configs: Array[Resource] = []
 	for spec in _candidate_object_footprint_specs():
@@ -1498,7 +1559,7 @@ func _default_object_footprint_configs() -> Array[Resource]:
 
 func _candidate_object_footprint_specs() -> Array[Dictionary]:
 	return [
-		_object_spec("entrance_door", "현관문", "entrance_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "entrance_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "entrance_door_dl_closed.png", "objects/apartment/EntranceDoor.tscn", "audio_entrance_door", "문 안쪽 면이 생활공간 중앙을 향함", false, Vector2i.ZERO, 0.75),
+		_object_spec("entrance_door", "현관문", "entrance_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE, "entrance_wall", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "entrance_door_dl_closed.png", "objects/apartment/EntranceDoor.tscn", "audio_entrance_door", "문 안쪽 면이 생활공간 중앙을 향함", false, Vector2i.ZERO, 0.0),
 		_object_spec("bed", "침대", "living_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "bed_dl_base.png", "objects/apartment/Bed.tscn", "", "침대 옆면과 머리맡이 보이고 왼쪽에서 접근", true, Vector2i.ZERO),
 		_object_spec("fridge", "냉장고", "living_area", "interaction", Vector2i.ZERO, Vector2.ZERO, true, [], ApartmentObjectFootprintConfigScript.AnchorType.FLOOR, "", "", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "fridge_dl_closed.png", "objects/apartment/Fridge.tscn", "audio_fridge", "문 앞면이 생활공간 중앙을 향함", true, Vector2i.ZERO),
 		_object_spec("microwave", "전자레인지", "living_area", "interaction", Vector2i.ZERO, Vector2.ZERO, false, [], ApartmentObjectFootprintConfigScript.AnchorType.PARENT_OBJECT, "", "sink_counter", Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, "microwave_dl_base.png", "objects/apartment/Microwave.tscn", "audio_microwave", "조작면이 주방 통로를 향함", false, Vector2i.ZERO),
@@ -1525,7 +1586,7 @@ func _object_spec(
 	wall_id: String, parent_id: String, position_offset: Vector2, collision_size: Vector2,
 	interaction_size: Vector2, interaction_offset: Vector2, image_file: String,
 	scene_file: String, audio_id: String, facing_ko: String, uses_floor := true,
-	size_cells := Vector2i.ONE, wall_ratio := 0.5
+	size_cells := Vector2i.ZERO, wall_ratio := 0.0
 ) -> Dictionary:
 	var collision_offset := Vector2.ZERO
 	if collision_size != Vector2.ZERO:
@@ -1578,7 +1639,33 @@ func _object_debug_color(id: String) -> Color:
 		_: return Color(0.55, 0.74, 1.0, 0.38)
 
 
-func _object_footprint_from_config(config: Resource, source: String = "default") -> Dictionary:
+func _object_logical_metadata_from_config(config: Resource, source: String) -> Dictionary:
+	return {
+		"id": String(config.id),
+		"enabled": config.enabled,
+		"source": source,
+		"room_area_id": String(config.room_area_id),
+		"category": String(config.category),
+		"blocks_movement": false,
+		"uses_floor_occupancy": false,
+		"expected_blocks_movement": config.blocks_movement,
+		"expected_uses_floor_occupancy": config.uses_floor_occupancy,
+		"anchor_type": config.anchor_type,
+		"parent_object_id": String(config.parent_object_id),
+		"wall_segment_id": String(config.wall_segment_id),
+		"facing_description_ko": config.facing_description_ko,
+		"display_name_ko": config.display_name_ko,
+		"expected_image_file": config.expected_image_file,
+		"expected_scene_file": config.expected_scene_file,
+		"expected_audio_set_id": config.expected_audio_set_id,
+		"debug_color": config.debug_color,
+		"display_name": config.display_name,
+		"note": config.note,
+	}
+
+
+func _legacy_resource_object_footprint_from_config(config: Resource, source: String = "legacy_resource") -> Dictionary:
+	_legacy_resource_geometry_read_count += 1
 	return {
 		"id": String(config.id),
 		"enabled": config.enabled,
@@ -1596,7 +1683,7 @@ func _object_footprint_from_config(config: Resource, source: String = "default")
 		"interaction_offset_px": config.interaction_offset_px,
 		"blocks_movement": config.blocks_movement,
 		"uses_floor_occupancy": config.uses_floor_occupancy,
-		"interaction_cells": _object_config_interaction_cells(config),
+		"interaction_cells": _legacy_resource_interaction_cells(config),
 		"anchor_type": config.anchor_type,
 		"parent_object_id": String(config.parent_object_id),
 		"wall_segment_id": String(config.wall_segment_id),
@@ -1613,7 +1700,7 @@ func _object_footprint_from_config(config: Resource, source: String = "default")
 	}
 
 
-func _object_config_interaction_cells(config: Resource) -> Array[Vector2i]:
+func _legacy_resource_interaction_cells(config: Resource) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	if config.interaction_cell != Vector2i(-1, -1):
 		cells.append(config.interaction_cell)
@@ -1636,10 +1723,11 @@ func _object_placement_warnings() -> Array[String]:
 	var occupied_by_cell: Dictionary = {}
 	var passable_edges: Dictionary = _navigation_edge_sets()["passable"]
 	var objects_by_id: Dictionary = {}
-	for object_data in _object_footprints():
+	var object_snapshot := _object_footprints()
+	for object_data in object_snapshot:
 		objects_by_id[String(object_data.get("id", ""))] = object_data
 
-	for object_data in _object_footprints():
+	for object_data in object_snapshot:
 		if not bool(object_data.get("enabled", true)):
 			continue
 		var object_id := String(object_data.get("id", ""))
@@ -1699,7 +1787,7 @@ func _object_placement_warnings() -> Array[String]:
 			if not _is_base_walkable_cell(interaction_cell):
 				warnings.append("object %s interaction cell %s is outside base walkable floor" % [object_id, _format_cell(interaction_cell)])
 				continue
-			var blockers := _object_blocker_ids_for_cell(interaction_cell)
+			var blockers := _object_blocker_ids_for_cell(interaction_cell, object_snapshot)
 			if not blockers.is_empty():
 				warnings.append("object %s interaction cell %s is occupied by blocking object(s): %s" % [
 					object_id,
@@ -1770,8 +1858,32 @@ func _object_geometry_is_hard_authority(object_data: Dictionary) -> bool:
 
 func _editable_object_node_warnings() -> Array[String]:
 	var warnings: Array[String] = []
-	if not _editable_object_node_authority_active():
+	if not _environment_node_authority_active():
 		return warnings
+	var expected_object_ids: Array = EDITABLE_NODE_OBJECT_IDS + EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS
+	var expected_id_set: Dictionary = {}
+	for expected_id in expected_object_ids:
+		expected_id_set[String(expected_id)] = true
+	var metadata_by_id: Dictionary = {}
+	if object_footprint_set == null or object_footprint_set.objects.is_empty():
+		warnings.append("Environment requires object_footprint_set logical metadata; Resource geometry fallback is disabled")
+	else:
+		var metadata_ids: Dictionary = {}
+		for config in object_footprint_set.objects:
+			if config == null:
+				continue
+			var metadata_id := String(config.id)
+			if metadata_ids.has(metadata_id):
+				warnings.append("duplicate object logical metadata id %s" % metadata_id)
+			if not expected_id_set.has(metadata_id):
+				warnings.append("unexpected object logical metadata id %s" % metadata_id)
+			metadata_ids[metadata_id] = true
+			metadata_by_id[metadata_id] = config
+		for expected_id in expected_object_ids:
+			if not metadata_ids.has(expected_id):
+				warnings.append("object logical metadata %s is missing" % expected_id)
+	if not custom_object_footprints.is_empty():
+		warnings.append("Environment ignores custom_object_footprints; legacy Resource geometry is non-ROTATE_90 only")
 	var seen_ids: Dictionary = {}
 	for group_name in ["apartment_editable_object", "apartment_editable_environment_object"]:
 		for candidate in get_tree().get_nodes_in_group(group_name):
@@ -1780,12 +1892,26 @@ func _editable_object_node_warnings() -> Array[String]:
 			if not (candidate is Node2D) or not candidate.has_method("body_world_polygon"):
 				continue
 			var object_id := String(candidate.get("object_id"))
+			if not expected_id_set.has(object_id):
+				warnings.append("unexpected editable object node id %s" % object_id)
 			if seen_ids.has(object_id):
 				warnings.append("duplicate editable object node id %s" % object_id)
 			seen_ids[object_id] = true
 			for node_warning in candidate.call("geometry_warnings"):
 				warnings.append("editable object %s: %s" % [object_id, String(node_warning)])
-	for object_id in EDITABLE_NODE_OBJECT_IDS + EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS:
+			var logical_config: Resource = metadata_by_id.get(object_id)
+			if logical_config != null:
+				var body_polygon := candidate.get_node_or_null("Body/BodyPolygon") as CollisionPolygon2D
+				var has_authored_body := body_polygon != null and body_polygon.polygon.size() >= 3
+				if bool(logical_config.blocks_movement) != has_authored_body:
+					warnings.append("editable object %s BodyPolygon disagrees with logical blocks_movement contract" % object_id)
+				var has_floor_geometry := (
+					int(logical_config.anchor_type) == ApartmentObjectFootprintConfigScript.AnchorType.FLOOR
+					and has_authored_body
+				)
+				if bool(logical_config.uses_floor_occupancy) != has_floor_geometry:
+					warnings.append("editable object %s BodyPolygon disagrees with logical floor occupancy contract" % object_id)
+	for object_id in expected_object_ids:
 		if not seen_ids.has(object_id):
 			warnings.append("editable object node %s is missing" % object_id)
 	return warnings
@@ -1838,7 +1964,13 @@ func _object_wall_attachment_unit(object_data: Dictionary, wall: Dictionary) -> 
 				nearest_distance = distance
 				nearest_unit = unit
 		return nearest_unit
-	var ratio := clampf(float(object_data.get("wall_position_ratio", 0.5)), 0.0, 0.9999)
+	# Legacy inventory still associates the entrance door with its logical doorway, but no
+	# Resource ratio is allowed to act as current placement geometry.
+	if String(object_data.get("id", "")) == "entrance_door":
+		for unit in units:
+			if bool(Dictionary(unit.get("edge", {})).get("doorway", false)):
+				return unit
+	var ratio := clampf(float(object_data.get("wall_position_ratio", 0.0)), 0.0, 0.9999)
 	var unit_index := mini(floori(ratio * units.size()), units.size() - 1)
 	return units[unit_index]
 
@@ -2219,7 +2351,7 @@ func _object_footprint_inventory_rows() -> Array[Dictionary]:
 			"anchor_type": _object_anchor_type_name(object_data),
 			"parent_object_id": String(object_data.get("parent_object_id", "")),
 			"wall_segment_id": String(object_data.get("wall_segment_id", "")),
-			"wall_position_ratio": float(object_data.get("wall_position_ratio", 0.5)),
+			"wall_position_ratio": float(object_data.get("wall_position_ratio", 0.0)),
 			"occupied_cells": _format_cells(_object_floor_occupied_cells(object_data)),
 			"blocks_movement": bool(object_data.get("blocks_movement", true)),
 			"interaction_cells": _format_cells(_object_interaction_cells(object_data)),
@@ -2232,17 +2364,19 @@ func _object_footprint_inventory_rows() -> Array[Dictionary]:
 func _object_edit_hint(object_data: Dictionary) -> String:
 	var id := String(object_data.get("id", ""))
 	var source := String(object_data.get("source", "default"))
-	var location := "edit _default_object_footprint_configs() entry id=\"%s\"" % id
-	if source == "resource":
+	var location := "legacy geometry source for id=\"%s\"" % id
+	if source == "legacy_resource":
 		location = "edit godot/resources/quarterview/apartment_shell_object_footprints.tres entry id=\"%s\"" % id
 	elif source == "scene_node":
 		var channels := "Visual/SelectionPolygon/BasePoint/TopPoint/AttachmentSockets"
 		if String(object_data.get("category", "")) == "interaction":
 			channels = "Visual/BodyPolygon/SelectionPolygon/InteractionPolygon/UsePoint/AttachmentSocket"
 		return "edit Scene > %s; adjust %s" % [String(object_data.get("node_path", id)), channels]
-	elif source == "fallback":
+	elif source == "missing_scene_node" or source == "invalid_scene_node":
+		return "restore QuarterviewApartmentEnvironment Scene Node authority for id=\"%s\"; Resource geometry fallback is disabled" % id
+	elif source == "legacy_fallback":
 		location = "edit _default_object_footprint_configs() entry id=\"%s\"" % id
-	elif source == "custom":
+	elif source == "legacy_custom":
 		location = "edit Inspector > custom_object_footprints entry id=\"%s\"" % id
 	return "%s; anchor: anchor_type + wall_segment_id / parent_object_id / anchor_cell; offset: position_offset_px; debug sizes: visual/collision/interaction *_px" % location
 
@@ -2467,8 +2601,9 @@ func _draw_debug_labels() -> void:
 	_add_debug_label("no_object_zone_label", "전경 대형 오브젝트 금지 구역", _room_center(_no_large_object_zone_rect()) + Vector2(-118, 20))
 
 
-func _draw_object_placeholders() -> void:
-	for object_data in _object_footprints():
+func _draw_object_placeholders(object_snapshot: Array[Dictionary] = []) -> void:
+	var objects := object_snapshot if not object_snapshot.is_empty() else _object_footprints()
+	for object_data in objects:
 		if not bool(object_data.get("enabled", true)):
 			continue
 		var blocks_movement := bool(object_data.get("blocks_movement", true))
@@ -2477,6 +2612,36 @@ func _draw_object_placeholders() -> void:
 		if not blocks_movement and not show_nonblocking_object_cells:
 			continue
 		_draw_object_placeholder(object_data)
+	_last_object_geometry_signature = _object_snapshot_geometry_signature(objects)
+
+
+func _redraw_object_placement_overlay(object_snapshot: Array[Dictionary] = []) -> void:
+	if _object_layer == null:
+		return
+	_clear_layer_children(_object_layer)
+	_draw_object_placeholders(object_snapshot)
+
+
+func _object_snapshot_geometry_signature(object_snapshot: Array[Dictionary]) -> String:
+	var parts: Array[String] = []
+	for object_data in object_snapshot:
+		parts.append(str(hash([
+			String(object_data.get("id", "")),
+			String(object_data.get("source", "")),
+			bool(object_data.get("scene_geometry_missing", false)),
+			object_data.get("visual_polygons", []),
+			object_data.get("collision_polygons", []),
+			object_data.get("selection_polygons", []),
+			object_data.get("interaction_polygons", []),
+			object_data.get("floor_polygons", []),
+			object_data.get("use_points_world", []),
+			object_data.get("base_point_world", Vector2.ZERO),
+			object_data.get("top_point_world", Vector2.ZERO),
+			object_data.get("socket_world_positions", []),
+			object_data.get("mount_parent_socket_world", Vector2.ZERO),
+			String(object_data.get("mount_parent_socket_path", "")),
+		])))
+	return "|".join(parts)
 
 
 func _draw_object_placeholder(object_data: Dictionary) -> void:
@@ -2573,6 +2738,8 @@ func _draw_object_placeholder(object_data: Dictionary) -> void:
 
 
 func _object_floor_polygon_points(object_data: Dictionary) -> Array[Vector2]:
+	if bool(object_data.get("scene_geometry_missing", false)):
+		return []
 	if not _object_uses_floor_occupancy(object_data):
 		return []
 	if bool(object_data.get("node_backed", false)):
@@ -2586,6 +2753,8 @@ func _object_floor_polygon_points(object_data: Dictionary) -> Array[Vector2]:
 
 
 func _object_visual_polygon_points(object_data: Dictionary) -> Array[Vector2]:
+	if bool(object_data.get("scene_geometry_missing", false)):
+		return []
 	if bool(object_data.get("node_backed", false)):
 		var polygons: Array = object_data.get("visual_polygons", [])
 		if polygons.is_empty():
@@ -2598,6 +2767,8 @@ func _object_visual_polygon_points(object_data: Dictionary) -> Array[Vector2]:
 
 
 func _object_collision_polygon_points(object_data: Dictionary) -> Array[Vector2]:
+	if bool(object_data.get("scene_geometry_missing", false)):
+		return []
 	if bool(object_data.get("node_backed", false)):
 		var polygons: Array = object_data.get("collision_polygons", [])
 		if polygons.is_empty():
@@ -2626,6 +2797,8 @@ func _object_collision_polygon_points(object_data: Dictionary) -> Array[Vector2]
 
 func _object_interaction_polygons(object_data: Dictionary) -> Array[Array]:
 	var result: Array[Array] = []
+	if bool(object_data.get("scene_geometry_missing", false)):
+		return result
 	if bool(object_data.get("node_backed", false)):
 		for polygon in object_data.get("interaction_polygons", []):
 			result.append(_packed_points_to_array(polygon))
@@ -2707,10 +2880,6 @@ func _mouse_event_world_position(event: InputEventMouse) -> Vector2:
 	return get_canvas_transform().affine_inverse() * event.position
 
 
-func _draw_dashed_rect(parent: Node, prefix: String, center: Vector2, size: Vector2, color: Color, thickness := 2.0, dash_count := 6) -> void:
-	_draw_dashed_polygon(parent, prefix, _pixel_rect_points(center, size), color, thickness, dash_count)
-
-
 func _draw_dashed_polygon(parent: Node, prefix: String, points: Array, color: Color, thickness := 2.0, dash_count := 6) -> void:
 	if points.size() < 3:
 		return
@@ -2734,6 +2903,8 @@ func _draw_dashed_line(parent: Node, prefix: String, from: Vector2, to: Vector2,
 
 
 func _draw_object_attachment_guide(parent: Node, prefix: String, object_data: Dictionary, color: Color, thickness: float) -> void:
+	if bool(object_data.get("scene_geometry_missing", false)):
+		return
 	var anchor_type := int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR))
 	var node_backed := bool(object_data.get("node_backed", false))
 	if node_backed:
@@ -2752,6 +2923,8 @@ func _draw_object_attachment_guide(parent: Node, prefix: String, object_data: Di
 		_add_marker(parent, "%s_parent_socket" % prefix, anchor_position, color, 7.0 if thickness <= 2.0 else 11.0)
 	if anchor_position.distance_to(attachment_target) > 0.5:
 		_draw_dashed_line(parent, "%s_leader" % prefix, anchor_position, attachment_target, color, thickness, 7)
+	if node_backed:
+		return
 	if anchor_type == ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE:
 		var wall := _wall_segment_by_id(String(object_data.get("wall_segment_id", "")))
 		var unit := _object_wall_attachment_unit(object_data, wall)
@@ -2787,10 +2960,6 @@ func _object_anchor_world_position(object_data: Dictionary, resolving: Dictionar
 
 	match int(object_data.get("anchor_type", ApartmentObjectFootprintConfigScript.AnchorType.FLOOR)):
 		ApartmentObjectFootprintConfigScript.AnchorType.WALL_EDGE:
-			var socket_path: NodePath = RESOURCE_WALL_SOCKET_PATH_BY_OBJECT_ID.get(object_id, NodePath())
-			var wall_socket := get_node_or_null(socket_path) as Marker2D
-			if wall_socket != null:
-				return wall_socket.global_position
 			var wall := _wall_segment_by_id(String(object_data.get("wall_segment_id", "")))
 			var unit := _object_wall_attachment_unit(object_data, wall)
 			var edge: Dictionary = unit.get("edge", {})
@@ -2839,14 +3008,10 @@ func _object_anchor_short_text(object_data: Dictionary) -> String:
 	return "%s · %s" % [type_name, _format_cell(object_data.get("anchor_cell", Vector2i.ZERO))]
 
 
-func _object_at_world_position(world_position: Vector2) -> String:
-	var candidates := _object_hit_candidates(world_position)
-	return String(candidates[0].get("id", "")) if not candidates.is_empty() else ""
-
-
-func _object_hit_candidates(world_position: Vector2) -> Array[Dictionary]:
+func _object_hit_candidates(world_position: Vector2, object_snapshot: Array[Dictionary] = []) -> Array[Dictionary]:
 	var candidates: Array[Dictionary] = []
-	for object_data in _object_footprints():
+	var objects := object_snapshot if not object_snapshot.is_empty() else _object_footprints()
+	for object_data in objects:
 		if not bool(object_data.get("enabled", true)):
 			continue
 		var candidate := _object_hit_candidate(object_data, world_position)
@@ -2867,16 +3032,28 @@ func _object_hit_candidates(world_position: Vector2) -> Array[Dictionary]:
 
 
 func _object_hit_candidate(object_data: Dictionary, world_position: Vector2) -> Dictionary:
-	var id := String(object_data.get("id", ""))
-	if bool(object_data.get("node_backed", false)):
-		for selection_points in _object_selection_polygons(object_data):
-			if _point_in_object_polygon(world_position, selection_points):
-				var selection_center := _polygon_bounds(selection_points).get_center()
-				return {
-					"id": id, "priority": _node_backed_selection_priority(object_data), "hit_kind": "selection",
-					"distance": selection_center.distance_squared_to(world_position),
-				}
+	if bool(object_data.get("scene_geometry_missing", false)):
 		return {}
+	if bool(object_data.get("node_backed", false)):
+		return _scene_node_hit_candidate(object_data, world_position)
+	return _legacy_resource_hit_candidate(object_data, world_position)
+
+
+func _scene_node_hit_candidate(object_data: Dictionary, world_position: Vector2) -> Dictionary:
+	var id := String(object_data.get("id", ""))
+	for selection_points in _object_selection_polygons(object_data):
+		if _point_in_object_polygon(world_position, selection_points):
+			var selection_center := _polygon_bounds(selection_points).get_center()
+			return {
+				"id": id, "priority": _node_backed_selection_priority(object_data), "hit_kind": "selection",
+				"distance": selection_center.distance_squared_to(world_position),
+			}
+	return {}
+
+
+# Non-ROTATE_90/custom compatibility only. The current Environment never dispatches here.
+func _legacy_resource_hit_candidate(object_data: Dictionary, world_position: Vector2) -> Dictionary:
+	var id := String(object_data.get("id", ""))
 	if _object_has_valid_interaction_area(object_data):
 		for interaction_points in _object_interaction_polygons(object_data):
 			if _point_in_object_polygon(world_position, interaction_points):
@@ -2946,16 +3123,25 @@ func _object_candidate_signature(candidates: Array[Dictionary]) -> String:
 
 
 func _update_object_hover_at(world_position: Vector2) -> void:
+	var object_snapshot := _object_footprints()
+	var geometry_signature := _object_snapshot_geometry_signature(object_snapshot)
+	var geometry_changed := geometry_signature != _last_object_geometry_signature
+	if geometry_changed:
+		_redraw_object_placement_overlay(object_snapshot)
 	var next_candidates: Array[Dictionary] = []
 	if show_object_placeholders:
-		next_candidates = _object_hit_candidates(world_position)
+		next_candidates = _object_hit_candidates(world_position, object_snapshot)
 	var next_id := String(next_candidates[0].get("id", "")) if not next_candidates.is_empty() else ""
-	if next_id == _hovered_object_id and _object_candidate_signature(next_candidates) == _object_candidate_signature(_hovered_object_candidates):
+	if (
+		not geometry_changed
+		and next_id == _hovered_object_id
+		and _object_candidate_signature(next_candidates) == _object_candidate_signature(_hovered_object_candidates)
+	):
 		return
 	_hovered_object_candidates = next_candidates
 	_hovered_object_id = next_id
-	_redraw_object_selection_overlay()
-	_update_debug_detail_panel()
+	_redraw_object_selection_overlay(object_snapshot)
+	_update_debug_detail_panel(object_snapshot)
 
 
 func _select_hovered_object(world_position: Vector2 = Vector2(INF, INF)) -> bool:
@@ -2977,13 +3163,16 @@ func _select_hovered_object(world_position: Vector2 = Vector2(INF, INF)) -> bool
 	_last_selection_signature = signature
 	_last_selection_world_position = world_position
 	debug_focus_object_id = _selected_object_id
-	_redraw_object_selection_overlay()
-	_update_debug_detail_panel()
+	var object_snapshot := _object_footprints()
+	_redraw_object_selection_overlay(object_snapshot)
+	_update_debug_detail_panel(object_snapshot)
 	return true
 
 
 func _select_object_for_debug(object_id: String) -> void:
-	if _object_data_by_id(object_id).is_empty():
+	var object_snapshot := _object_footprints()
+	var object_data := _object_data_by_id(object_id, object_snapshot)
+	if object_data.is_empty() or bool(object_data.get("scene_geometry_missing", false)):
 		return
 	_selected_object_id = object_id
 	_selected_candidate_ids = [object_id]
@@ -2992,91 +3181,52 @@ func _select_object_for_debug(object_id: String) -> void:
 	_last_selection_signature = ""
 	_last_selection_world_position = Vector2(INF, INF)
 	debug_focus_object_id = object_id
-	_redraw_object_selection_overlay()
-	_update_debug_detail_panel()
+	_redraw_object_selection_overlay(object_snapshot)
+	_update_debug_detail_panel(object_snapshot)
 
 
-func _object_data_by_id(object_id: String) -> Dictionary:
-	for object_data in _object_footprints():
+func _object_data_by_id(object_id: String, object_snapshot: Array[Dictionary] = []) -> Dictionary:
+	var objects := object_snapshot if not object_snapshot.is_empty() else _object_footprints()
+	for object_data in objects:
 		if String(object_data.get("id", "")) == object_id:
 			return object_data
 	return {}
 
 
-func _redraw_object_selection_overlay() -> void:
+func _redraw_object_selection_overlay(object_snapshot: Array[Dictionary] = []) -> void:
 	if _debug_selection_layer == null:
 		return
 	_clear_layer_children(_debug_selection_layer)
 	if not show_object_placeholders:
 		return
+	var objects_by_id: Dictionary = {}
+	var objects := object_snapshot if not object_snapshot.is_empty() else _object_footprints()
+	for snapshot_object in objects:
+		objects_by_id[String(snapshot_object.get("id", ""))] = snapshot_object
+	var hovered_data: Dictionary = objects_by_id.get(_hovered_object_id, {})
+	if not _hovered_object_id.is_empty() and (hovered_data.is_empty() or bool(hovered_data.get("scene_geometry_missing", false))):
+		_hovered_object_id = ""
+		_hovered_object_candidates.clear()
+	var selected_data: Dictionary = objects_by_id.get(_selected_object_id, {})
+	if not _selected_object_id.is_empty() and (selected_data.is_empty() or bool(selected_data.get("scene_geometry_missing", false))):
+		_clear_object_selection_state()
 	var ids: Array[String] = []
 	if not _hovered_object_id.is_empty():
 		ids.append(_hovered_object_id)
 	if not _selected_object_id.is_empty() and not ids.has(_selected_object_id):
 		ids.append(_selected_object_id)
 	for object_id in ids:
-		var object_data := _object_data_by_id(object_id)
-		if object_data.is_empty():
+		var object_data: Dictionary = objects_by_id.get(object_id, {})
+		if object_data.is_empty() or bool(object_data.get("scene_geometry_missing", false)):
 			continue
 		var is_selected := object_id == _selected_object_id
 		var center := _object_pixel_center(object_data)
 		var visual_points := _object_visual_polygon_points(object_data)
-		var composite_surface := _object_floor_collision_are_equivalent(object_data)
+		# The base ObjectPlacementDebugLayer is the sole owner of Body/Selection/Interaction/
+		# marker geometry. Selection adds only the otherwise hidden visual bounds and label,
+		# preventing doubled lines from drifting apart or looking like stale geometry.
 		if is_selected and visual_points.size() >= 3:
 			_draw_dashed_polygon(_debug_selection_layer, "object_%s_visual_bounds" % object_id, visual_points, COLOR_OBJECT_VISUAL_BOUNDS, 3.5, 10)
-		if is_selected and bool(object_data.get("node_backed", false)):
-			for selection_index in range(_object_selection_polygons(object_data).size()):
-				_draw_dashed_polygon(
-					_debug_selection_layer,
-					"object_%s_selected_selection_area_%d" % [object_id, selection_index],
-					_object_selection_polygons(object_data)[selection_index],
-					COLOR_OBJECT_SELECTION_AREA,
-					4.0,
-					8
-				)
-			_draw_object_height_guide(_debug_selection_layer, "object_%s_selected" % object_id, object_data, 4.0)
-		if is_selected and show_object_floor_footprints and _object_uses_floor_occupancy(object_data):
-			var floor_points := _object_floor_polygon_points(object_data)
-			if floor_points.size() >= 3:
-				_add_line(_debug_selection_layer, "object_%s_occupancy_bounds" % object_id, floor_points + [floor_points[0]], COLOR_OBJECT_OCCUPANCY_OUTLINE.lightened(0.22), 5.0)
-		if is_selected and show_object_collision_shapes:
-			var collision_points := _object_collision_polygon_points(object_data)
-			if not collision_points.is_empty():
-				if not composite_surface:
-					var collision_fill := COLOR_OBJECT_BLOCKED_CELL
-					collision_fill.a = 0.22
-					_add_polygon(_debug_selection_layer, "object_%s_collision_bounds" % object_id, collision_points, collision_fill)
-				_add_line(
-					_debug_selection_layer,
-					"object_%s_composite_collision_outline" % object_id if composite_surface else "object_%s_collision_outline" % object_id,
-					collision_points + [collision_points[0]],
-					COLOR_OBJECT_BLOCKED_CELL,
-					5.0
-				)
-		if is_selected and show_object_interaction_areas and _object_has_valid_interaction_area(object_data):
-			var interaction_polygons := _object_interaction_polygons(object_data)
-			for polygon_index in range(interaction_polygons.size()):
-				var interaction_points: Array = interaction_polygons[polygon_index]
-				if interaction_points.size() >= 3:
-					_draw_dashed_polygon(
-						_debug_selection_layer,
-						"object_%s_interaction_bounds_%d" % [object_id, polygon_index],
-						interaction_points,
-						COLOR_OBJECT_INTERACTION_AREA,
-						4.0,
-						9
-					)
-			if bool(object_data.get("node_backed", false)):
-				for use_point_index in range(Array(object_data.get("use_points_world", [])).size()):
-					_add_marker(
-						_debug_selection_layer,
-						"object_%s_selected_use_point_%d" % [object_id, use_point_index],
-						Vector2(Array(object_data.get("use_points_world", []))[use_point_index]),
-						COLOR_OBJECT_INTERACTION_AREA,
-						12.0
-					)
-		if is_selected and show_object_parent_links:
-			_draw_object_attachment_guide(_debug_selection_layer, "object_%s_selected_attachment" % object_id, object_data, COLOR_OBJECT_ATTACHMENT, 4.0)
 		if show_object_names and show_object_labels:
 			var name_ko := String(object_data.get("display_name_ko", _object_display_name_ko(object_id)))
 			var hit_kind := _object_selection_hit_kind(object_id)
@@ -3090,6 +3240,18 @@ func _redraw_object_selection_overlay() -> void:
 				COLOR_OBJECT_LABEL_BACKGROUND,
 				COLOR_LABEL
 			)
+
+
+func _clear_object_selection_state() -> void:
+	var cleared_object_id := _selected_object_id
+	_selected_object_id = ""
+	_selected_candidate_ids.clear()
+	_selected_candidate_index = -1
+	_selected_hit_kind = ""
+	_last_selection_signature = ""
+	_last_selection_world_position = Vector2(INF, INF)
+	if debug_focus_object_id == cleared_object_id:
+		debug_focus_object_id = ""
 
 
 func _object_selection_hit_kind(object_id: String) -> String:
@@ -3758,12 +3920,12 @@ func _update_debug_help_wall_state() -> void:
 	_debug_help_body_label.text = "기준 시점: ROTATE_90 / full_map (이번 배치 검토 기준)\n\nM  방 측량 모드\nP  오브젝트 배치 모드 (같은 위치 반복 클릭: 후보 순환)\nN  이동·충돌 모드\nShift+M/P/N  임시 조합 표시\n\nV  전체 벽 표시 순환: 기본 → 반투명 → 숨김 (현재: %s)\n   모든 상태에서 충돌·내비게이션·개구부·Socket 유지\nG  바닥 좌표  /  E  벽선 좌표  /  W  벽 정보\nO  숨김벽 논리선  /  L  구역 라벨  /  I  inventory 출력\nJ  7개 직접 상호작용 mock  /  H  Phone mock\n1/2/3  카메라 preset  /  방향키  N marker 이동\n\nF1 또는 ESC  이 도움말 닫기\nESC  열린 mock UI 또는 현재 M/P/N 모드 닫기" % _wall_inspection_mode_name_ko()
 
 
-func _update_debug_detail_panel() -> void:
+func _update_debug_detail_panel(object_snapshot: Array[Dictionary] = []) -> void:
 	if _debug_detail_label == null:
 		return
 	if show_object_placeholders:
 		var object_id := _selected_object_id if not _selected_object_id.is_empty() else _hovered_object_id
-		var object_data := _object_data_by_id(object_id)
+		var object_data := _object_data_by_id(object_id, object_snapshot)
 		_debug_detail_label.text = _object_debug_detail_text(object_data)
 	elif show_room_measurements:
 		_debug_detail_label.text = _room_measurement_detail_text()
@@ -3777,9 +3939,7 @@ func _object_wall_detail_reference(object_data: Dictionary) -> String:
 	var wall_id := String(object_data.get("wall_segment_id", ""))
 	if wall_id.is_empty():
 		return "-"
-	if bool(object_data.get("node_backed", false)):
-		return "%s / SCENE_SOCKET" % wall_id
-	return "%s @ %.2f" % [wall_id, float(object_data.get("wall_position_ratio", 0.5))]
+	return "%s @ %.2f" % [wall_id, float(object_data.get("wall_position_ratio", 0.0))]
 
 
 func _object_debug_detail_text(object_data: Dictionary) -> String:
@@ -3796,38 +3956,48 @@ func _object_debug_detail_text(object_data: Dictionary) -> String:
 		selection_text += " · interaction owner: %s" % id
 	elif hit_kind == "selection":
 		selection_text += " · selection owner: %s" % id
-	var detail := "%s\n%s\nid: %s\ncategory: %s\nroom: %s\nanchor type: %s\nanchor resolved: %s\nposition offset: %s\nvisual: %s\ncollision: %s @ %s\ninteraction: %s @ %s\ninteraction cells: %s\nmovement block: %s / floor occupancy: %s\nparent: %s\nwall: %s" % [
+	var detail := "%s\n%s\nid: %s\ncategory: %s\nroom: %s" % [
 		selection_text,
 		String(object_data.get("display_name_ko", _object_display_name_ko(id))), id,
-		_object_category_name(object_data), _room_area_label(String(object_data.get("room_area_id", ""))), _object_anchor_type_name(object_data),
-		_object_anchor_debug_text(object_data), str(object_data.get("position_offset_px", Vector2.ZERO)),
-		str(object_data.get("visual_size_px", Vector2.ZERO)), str(object_data.get("collision_size_px", Vector2.ZERO)),
-		str(object_data.get("collision_offset_px", Vector2.ZERO)), str(object_data.get("interaction_size_px", Vector2.ZERO)),
-		str(object_data.get("interaction_offset_px", Vector2.ZERO)), _format_cells(_object_interaction_cells(object_data)),
-		_bool_ko(bool(object_data.get("blocks_movement", false))), _bool_ko(_object_uses_floor_occupancy(object_data)),
-		String(object_data.get("parent_object_id", "-")) if not String(object_data.get("parent_object_id", "")).is_empty() else "-",
-		_object_wall_detail_reference(object_data),
+		_object_category_name(object_data), _room_area_label(String(object_data.get("room_area_id", ""))),
 	]
 	if bool(object_data.get("node_backed", false)):
-		detail += "\ngeometry source: SCENE_NODE\nnode: %s\nvisual source: %s\nfloor source: %s\nselection source: %s / size: %s\nBasePoint: %s\nTopPoint: %s / height: %.1f px\nUsePoint: %s\nAttachmentSockets: %s\nParentSocket: %s @ %s" % [
+		detail += "\nsource=SCENE_NODE\nNodePath: %s\nParentSocket: %s @ %s\nBodyPolygon: %s\nSelectionPolygon: %s\nInteractionPolygon: %s\nUsePoint: %s\nBasePoint: %s\nTopPoint: %s\nVisual: %s\nAttachmentSockets: %s" % [
 			String(object_data.get("node_path", "-")),
-			String(object_data.get("visual_source", "-")),
-			String(object_data.get("floor_occupancy_source", "NONE")),
-			String(object_data.get("selection_source", "-")),
-			str(object_data.get("selection_size_px", Vector2.ZERO)),
-			str(object_data.get("base_point_world", Vector2.ZERO)),
-			str(object_data.get("top_point_world", Vector2.ZERO)),
-			float(object_data.get("height_px", 0.0)),
-			str(Array(object_data.get("use_points_world", []))),
-			str(Array(object_data.get("socket_world_positions", []))),
 			String(object_data.get("mount_parent_socket_path", "-")) if not String(object_data.get("mount_parent_socket_path", "")).is_empty() else "-",
 			str(object_data.get("mount_parent_socket_world", Vector2.ZERO)),
+			"PRESENT" if not Array(object_data.get("collision_polygons", [])).is_empty() else "NONE",
+			"PRESENT" if not Array(object_data.get("selection_polygons", [])).is_empty() else "NONE",
+			"PRESENT" if not Array(object_data.get("interaction_polygons", [])).is_empty() else "NONE",
+			str(Array(object_data.get("use_points_world", []))) if not Array(object_data.get("use_points_world", [])).is_empty() else "NONE",
+			str(object_data.get("base_point_world", Vector2.ZERO)),
+			str(object_data.get("top_point_world", Vector2.ZERO)),
+			String(object_data.get("visual_source", "NONE")),
+			str(Array(object_data.get("socket_world_positions", []))),
 		]
 		if bool(object_data.get("open_state_supported", false)):
 			detail += "\nopen state: %s / BodyPolygon: %s" % [
 				"OPEN" if bool(object_data.get("is_open", false)) else "CLOSED",
 				"ACTIVE" if bool(object_data.get("body_collision_active", false)) else "DISABLED",
 			]
+		return detail
+	if bool(object_data.get("scene_geometry_missing", false)):
+		return detail + "\nsource=SCENE_NODE_MISSING\nResource geometry fallback: DISABLED"
+	detail += "\nsource=LEGACY_RESOURCE\nLEGACY_RESOURCE\nanchor type: %s\nanchor: %s\nposition offset: %s\nvisual size: %s\ncollision: %s @ %s\ninteraction: %s @ %s\ninteraction cells: %s\nmovement block: %s / floor occupancy: %s\nparent: %s\nwall: %s" % [
+		_object_anchor_type_name(object_data),
+		_object_anchor_debug_text(object_data),
+		str(object_data.get("position_offset_px", Vector2.ZERO)),
+		str(object_data.get("visual_size_px", Vector2.ZERO)),
+		str(object_data.get("collision_size_px", Vector2.ZERO)),
+		str(object_data.get("collision_offset_px", Vector2.ZERO)),
+		str(object_data.get("interaction_size_px", Vector2.ZERO)),
+		str(object_data.get("interaction_offset_px", Vector2.ZERO)),
+		_format_cells(_object_interaction_cells(object_data)),
+		_bool_ko(bool(object_data.get("blocks_movement", false))),
+		_bool_ko(_object_uses_floor_occupancy(object_data)),
+		String(object_data.get("parent_object_id", "-")) if not String(object_data.get("parent_object_id", "")).is_empty() else "-",
+		_object_wall_detail_reference(object_data),
+	]
 	return detail
 
 
@@ -4477,9 +4647,10 @@ func _object_blocked_cells() -> Array[Vector2i]:
 	return cells
 
 
-func _object_blocker_ids_for_cell(cell: Vector2i) -> Array[String]:
+func _object_blocker_ids_for_cell(cell: Vector2i, object_snapshot: Array[Dictionary] = []) -> Array[String]:
 	var ids: Array[String] = []
-	for object_data in _object_footprints():
+	var objects := object_snapshot if not object_snapshot.is_empty() else _object_footprints()
+	for object_data in objects:
 		if not bool(object_data.get("enabled", true)) or not bool(object_data.get("blocks_movement", true)) or not _object_uses_floor_occupancy(object_data):
 			continue
 		for occupied_cell in _object_occupied_cells(object_data):
@@ -4490,6 +4661,8 @@ func _object_blocker_ids_for_cell(cell: Vector2i) -> Array[String]:
 
 
 func _object_occupied_cells(object_data: Dictionary) -> Array[Vector2i]:
+	if bool(object_data.get("scene_geometry_missing", false)):
+		return []
 	if bool(object_data.get("node_backed", false)):
 		var node_cells: Array[Vector2i] = []
 		for cell in object_data.get("occupied_cells", []):

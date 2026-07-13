@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment Node geometry ownership finalization
+
+- Authority: Split the current Environment snapshot from `_legacy_resource_object_footprints()`. All 18 active objects read exact Scene transforms, visual/polygon/marker geometry, and physical Socket parents; Resource entries supply logical metadata only. Scene groups and metadata must each match the canonical 18 ids. Any missing/invalid Scene node now warns and yields no fallback visual, hit, occupancy, interaction, or blocker geometry.
+- P/debug: Removed selected-layer redraw of Body, Selection, Interaction, UsePoint, Base/Top, and Socket channels. The base layer draws each authored Node channel once; selection adds only the white visual bound/label. Node removal clears and redraws stale P/N layers, and Socket edits invalidate the geometry snapshot. Current details show `SCENE_NODE`, exact Node/Socket paths and channel presence, while deprecated cell/offset/size fields are isolated under `LEGACY_RESOURCE` outside the Environment.
+- Legacy: Kept the tested non-ROTATE/custom Resource projection path and standalone `QuarterviewRoom` contract, but removed dead display flags/helpers and the raw Resource-to-WallCell socket shortcut. Resource geometry fields remain serialized and documented as deprecated compatibility data rather than current authoring values.
+- MCP check: Environment/Shell/Playable each reported 18 Scene-node objects and zero legacy geometry reads; all 18 P details were selected in Shell and Playable. M and N remained exclusive/readable, V preserved navigation and wall attachments in all three states, Playable click movement changed the player position, and standalone QuarterviewRoom started independently with no new runtime errors. Status: `KEEP_CANDIDATE`.
+
 ### Attached environment object Node migration
 
 - Result: Migrated signal booster, cable bundle, power housing, sea-horizon poster, wall conduit, and fluorescent light to `ApartmentEditableEnvironmentObject` nodes. All 18 apartment objects now use Environment Scene nodes for position, visual, selection, Base/Top, and attachment geometry; the six Resources retain logical relation metadata with geometry cleared.
