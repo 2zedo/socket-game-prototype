@@ -69,6 +69,97 @@ Do not modify by default:
 | `godot/scenes/quarterview/samples/QuarterviewReusableMapSamplePlayable.tscn` | sample Environment + external-provider `QuarterviewRoom` | sample movement/door/interaction validation |
 | `godot/scenes/Player.tscn` | `godot/scripts/Player.gd` | protected current Main player |
 
+## Quarterview Apartment Production Readiness
+
+The current decision is `KEEP_CANDIDATE`. `QuarterviewApartmentEnvironment` and `QuarterviewApartmentPlayable` are not connected to production `Main`, DAY1 state, or production UI. In particular, `QuarterviewMain.tscn` still instances the standalone `QuarterviewRoom`; it is not a wrapper for the latest Apartment Environment/Playable pair.
+
+### Responsibility comparison
+
+| Component | Current production owner | Current Quarterview owner | Duplicate or gap | Required Adapter / contract | Keep / absorb / retire candidate | Main risk |
+| --- | --- | --- | --- | --- | --- | --- |
+| Scene entry / exit | `project.godot` → `Main.tscn`; `Main.gd` owns the DAY1 composition | Environment, Shell, Playable, and `QuarterviewMain` are direct-run candidates | No production entry to the latest Playable; no Quarterview exit contract | Separate production-candidate composition and explicit enter/back contract | Keep Main until the final gate; absorb Playable only through a new composition | Replacing Main early removes the rollback path |
+| Player creation / movement | `Apartment.gd` runtime-spawns `Player.tscn`; keyboard physics | `QuarterviewApartmentPlayable.tscn` adds `QuarterviewRoom`, click path, UsePoint arrival, and uses the Environment Camera2D | Two players and two movement models | Room adapter with one input-lock API and one active camera/player | Keep Quarterview click movement; retire old Player only after parity | Simple nesting creates two player/input models, while the QV Environment camera takes viewport framing ownership |
+| Object select / move / use | `Apartment.gd` emits one `ApartmentInteractable` argument | `QuarterviewRoom.gd` emits `(object_key, action_key, payload)` | Signal shapes and seven-object inventories differ | Stable public object ID plus production action/device mapping | Absorb Quarterview geometry/movement; keep production action semantics | Direct signal connection is invalid |
+| Phone open / close | `Main.gd`, production `PhoneUI`, scene-local `SurvivalState` | `QuarterviewMain` uses candidate Phone; Apartment Environment uses P for debug | Production P=test, Environment P=object debug, candidate P=Phone. `open_phone` is currently Backspace while Main also checks raw Tab | One orchestrator must own modal > Phone > interaction > debug priority and remove raw-key duplication | Keep production Phone first; candidate Phone adoption is conditional | One key can open/toggle multiple owners; ESC propagation can close the wrong layer |
+| Time progress | Scene-local `SurvivalState.gd` and `Main.gd` modal pause | Quarterview Playable has no time state | Missing integration; candidate mock time lives only in `QuarterviewMain.gd` | Read-only clock/state adapter plus modal pause contract | Keep `SurvivalState`; delete mock time only after real wiring | State is lost on scene replacement because it is not an Autoload |
+| Power / battery | `SurvivalState.gd`, `OutletMode`, device Resources, production Phone/HUD | `PowerBoardCandidate` and candidate HUD are local/mock | Two UIs, no shared calculation | Object/action mapping and a state-to-room visual adapter | Keep production calculations; candidate visuals are conditional | Split-brain load/device state; QV object IDs do not match DAY1 device IDs |
+| Day start / end | `Main.gd`, `SurvivalState.end_current_day()`, `DayResultPanel`, continue-next-day | Bed/DayResult candidate flows are mock | No real result or next-day connection | Bed action → orchestrator → state/result contract | Keep production flow until end-to-end parity | Candidate could end only its local mock day |
+| Save / restore | No SaveManager, persistence Autoload, or `user://` state write exists | Explicitly absent and forbidden by the candidate boundary | Entire feature is missing in both paths | Add a versioned save contract only if persistence is separately approved or made release-required; otherwise record the no-persistence/state-lifetime policy explicitly | Nothing to absorb yet | Scene change currently discards scene-local day state |
+| UI / input priority | `Main.gd` owns result, outlet, interaction, Phone, exploration order | `QuarterviewMain`, Environment debug, and `QuarterviewRoom` each handle input | Multiple `_unhandled_input` owners | Single production-candidate orchestrator; runtime-debug disable flag | Keep M/N/P/W/V in Shell, not in production runtime | Event order changes behavior and can leave movement unlocked/locked |
+| Signals / Autoload / Resources | Main connects local Apartment/State/UI; only `_mcp_game_helper` is Autoload | Environment provider + RoomObjectDefinition and Scene-node object data | No common implemented Room contract; `RoomSceneContract.gd` is a no-op skeleton | Implement the skeleton or introduce one typed adapter, not both | Keep local state for candidate composition; decide persistence separately | Duplicate connections after ad-hoc re-entry; legacy roles can be mistaken for production actions |
+
+Current object inventories are intentionally different:
+
+- Production Apartment: `bed`, `charger`, `communication_device`, `fan`, `laptop`, `light`, `power_strip`.
+- Quarterview direct interaction: `bed`, `entrance_door`, `fridge`, `microwave`, `navi_link`, `node_17`, `power_module_board`.
+- Plausible mappings such as `navi_link ↔ communication_device` and `power_module_board ↔ power_strip` are not yet approved contracts. Light/laptop/fan/charger have no direct equivalent in the current seven, while door/fridge/microwave/NODE-17 have no production DAY1 action mapping.
+
+### Exact connection-file classification
+
+Must change before production integration:
+
+- New `godot/scripts/quarterview/QuarterviewApartmentRoomAdapter.gd` plus contract tests: expose only normalized generic nearest/request payloads, input lock, and player/room seams. Stage B has no production state/UI knowledge and must not push production meanings into `QuarterviewRoom` definitions.
+- New `godot/scenes/quarterview/QuarterviewApartmentProductionCandidate.tscn` and `godot/scripts/quarterview/QuarterviewApartmentProductionCandidate.gd`: instance the existing Playable, local `SurvivalState`, and unchanged production UI; own modal/input/signal orchestration without modifying Main.
+- A typed object/action mapping Resource, QV visual/state adapter, and integration tests before Stage D; the proposed data path is `godot/resources/quarterview/apartment_production_action_map.tres`. Production action/device mapping and state-to-room visuals belong here and in the Stage-C/D composition controller, not in the generic room adapter.
+
+Conditionally change only after a product decision:
+
+- `godot/scenes/quarterview/QuarterviewApartmentPlayable.tscn`: reuse unchanged first; edit only if the external adapter needs an exported hook that cannot be supplied by composition.
+- `godot/scripts/quarterview/QuarterviewRoom.gd`: its current public Environment IDs and generic three-argument interaction payload are already suitable adapter input. Change only if Stage B proves a stable player-position/back signal or another missing public room seam is required.
+- `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd`: the composition can initially disable Environment `_unhandled_input`; add an explicit runtime-debug mode only if that composition-level control is insufficient while preserving Shell M/P/N/W/V/J/H/F1.
+- `godot/scripts/contracts/RoomSceneContract.gd`: implement only if selected instead of the new typed adapter. Its current methods are safe no-ops, not an implementation.
+- `godot/scenes/QuarterviewMain.tscn` and `godot/scripts/QuarterviewMain.gd`: only if its candidate overlay UX is retained. Never promote its mock time/power/day state.
+- `godot/scenes/quarterview/QuarterviewApartmentEnvironment.tscn`, `godot/resources/quarterview/apartment_shell_object_footprints.tres`, `godot/resources/rooms/quarterview/objects/*.tres`, and `godot/scripts/resources/RoomObjectDefinition.gd`: only after deciding how production light/laptop/fan/charger appear in the 18-object world.
+- `godot/scripts/SurvivalState.gd`: reuse unchanged first; modify only for an approved persistence contract, new action model, or corrected phase model.
+- Candidate Phone/Power Board scripts or production Phone/Outlet/Result Scenes and scripts: change one UI at a time only if that UI is selected for production.
+- Recommended final-entry path: change only `godot/project.godot` to the fully validated new composition at the explicit Main replacement gate, leaving `godot/scenes/Main.tscn` and `godot/scripts/Main.gd` intact for direct-run rollback. Any alternative that edits Main requires a separate approved preservation/rollback plan.
+
+Do not change during readiness and adapter work:
+
+- Production `Main.tscn`, `Main.gd`, `Apartment.tscn`, `Apartment.gd`, `Player.tscn`, `Player.gd`, `Interactable.tscn`, `Interactable.gd`, production SurvivalHUD/Phone/InteractionPanel/Outlet/Result Scenes and scripts, and `project.godot`. The new composition may instance these UI Scenes unchanged; that does not authorize editing them.
+- Existing Environment floor, wall, opening, object, Polygon, and camera authoring data.
+
+Removable only after promotion and a regression period:
+
+- Runtime-generated production `Apartment`/`Player`/`Interactable` path.
+- `QuarterviewRoom` standalone blockout/layout builders once no tested standalone path needs them.
+- `QuarterviewMain` mock state and mock Bed/Kitchen/Door/DayResult/Hacking handlers.
+- Environment non-ROTATE_90/legacy Resource geometry fallback after its tested compatibility paths are retired.
+- The no-op `RoomSceneContract` only if a different typed adapter becomes the accepted contract.
+
+Keep in production: `SurvivalState` day/power/battery calculation, production modal/result flow, device Resources, and the existing Main golden path until final approval. Absorb later: Environment Scene-node geometry, click path/UsePoint movement, door passability, and seven-object interaction payloads through an adapter. Temporarily adapt: signal shape, input lock, object/action IDs, and state-to-visual updates. Decision still unavailable: final Phone/Power Board UI, persistence lifetime, and how the missing DAY1 devices appear in the new room.
+
+### Staged connection plan
+
+| Stage | Files | Start condition | Implementation | Automated tests | MCP / user check | Completion and rollback | Next gate |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| A. Independent contract freeze | Existing readiness/dependency and Apartment Playable tests; docs only | Current Environment/Playable starts independently | Characterize Main composition, signals, input keys, state seams, QV signal/ID mismatch; keep `KEEP_CANDIDATE` | Main/Apartment/Environment/Shell/Playable/Sample startup; readiness GUT; full validation | MCP starts current scenes; user only confirms the audit scope | Done when no production files change. Rollback: remove only characterization tests/docs | All current contracts remain green |
+| B. Room adapter candidate | New `QuarterviewApartmentRoomAdapter.gd` and test; optionally implement `RoomSceneContract.gd` instead | Stage A green; one contract approach selected | Normalize nearest/request payload, input lock, player position, and public object ID; no state/UI | Adapter unit tests plus existing QV movement/door tests | MCP click→path→UsePoint→adapter signal; user checks control feel | Done when adapter has no production dependency. Rollback: delete new adapter | Stable payload and one movement owner |
+| C. Production-candidate composition and input | New `QuarterviewApartmentProductionCandidate.tscn/.gd`; production UI is instanced, not edited | Stage B stable; input policy and production state/UI reuse explicitly approved | Compose Playable + local SurvivalState + existing HUD/Phone/Interaction/Outlet/Result; disable runtime debug ownership; resolve P/Tab/Backspace and ESC priority | Modal order, Phone open/close, no duplicate signals, input-lock tests | MCP rapid Phone/interaction/ESC; user confirms UI/input priority | Done with Main untouched. Rollback: remove new composition | Candidate starts repeatedly with one camera/player/state |
+| D. Time and power mapping | Proposed `godot/resources/quarterview/apartment_production_action_map.tres`, its typed Resource script/test, QV visual adapter, and `godot/scripts/SurvivalState.gd` only if an approved gap requires it | Stage C composition stable; object/action matrix approved | Connect clock/modal pause, power/battery, device active/connected, Power Board/Outlet, and object visuals | Drain, battery, connection-vs-active, modal pause, each mapping | MCP clock/power changes reflected in HUD/Phone/room; user confirms semantics | Done when no mock state drives production UI. Rollback: detach the mapping adapter; any approved SurvivalState change must be an isolated commit and is reverted independently to restore the unchanged production state path | All seven QV interactions have an explicit production outcome |
+| E. Conditional save / restore track | New versioned persistence service/Resource and tests; exact path is intentionally TBD because no current save owner exists | Separate user approval of state lifetime/storage schema; this is not required for parity with the current no-save Main | Save only canonical state and player/scene entry data; define missing/corrupt-data defaults | New/no/corrupt/old save tests; scene reload restore | MCP restart/reload; user confirms continue/new-game behavior | Done when no-data startup and rollback migration pass. Rollback: disable/revert the isolated persistence service and keep current defaults | Runs in parallel only when approved; does not block F/H unless explicitly promoted to a release requirement |
+| F. DAY1 flow inside the candidate | New production-candidate composition Scene/Script from Stage C; protected Main remains untouched | Stages C-D green; Stage E only if separately approved as a release requirement | Complete direct-run candidate Bed end-day, Result, continue-next-day, and candidate-local exit/back behavior; do not add a Main route | Candidate launch→Result→next day tests; repeat-launch duplicate-signal test | MCP direct-run full DAY1 loop; user directly verifies every transition screen | Done with Main and start scene unchanged. Rollback: revert only candidate composition commits | Full functional parity checklist passes |
+| G. Legacy parity and removal decision | Comparison tests/docs; no deletion in the first pass | Stage F used successfully and golden-path comparison recorded | Decide retain/absorb/delete for old Apartment/Player/Interactable and candidate mocks | Old/new parity matrix and full validation | User approves any behavior difference | Done with a per-file removal list. Rollback: keep legacy path | Explicit deletion approval |
+| H. Final promotion | One dedicated `godot/project.godot` start-scene commit | Required Stages A-D, F, and G PASS; conditional E only when separately approved; old Main, `QuarterviewMain`, and the selected production-candidate composition manual checks PASS; explicit user approval | Point the start scene to the validated production-candidate composition; do not edit or delete existing `Main.tscn`/`Main.gd` | Full validation plus old Main, QuarterviewMain, and new composition direct startup | MCP fresh project launch; user final play-through | Done after normal push. Rollback: revert this single start-scene commit or direct-run the unchanged old Main | Cleanup only after a regression period |
+
+### Promotion checklist
+
+| Gate | Status | Evidence / blocker |
+| --- | --- | --- |
+| Independent Scene stability | PASS | Environment/Shell/Playable and reusable sample have startup and interaction tests; Stage A fresh MCP/full validation is recorded in the current work log |
+| Validated production entry composition | NOT IMPLEMENTED | No production-candidate composition exists. The recommended path does not add a temporary route inside old Main; final entry becomes active only through the isolated Stage H start-scene commit |
+| Phone / input ownership has no conflict | BLOCKED | P has three meanings across production/candidates; `open_phone` is Backspace while Main also polls raw Tab; ESC has multiple owners |
+| Time / power connected to Quarterview | NOT IMPLEMENTED | `SurvivalState` exists only under production Main; Playable has no state adapter |
+| Save / restore | NOT IMPLEMENTED | No persistence service or schema exists in either current Main or Quarterview. It is a conditional track, not a parity blocker unless separately approved as a release requirement |
+| DAY start / end on Quarterview | NOT IMPLEMENTED | Candidate Bed/Result are not wired to production state/result flow |
+| Existing Apartment functional parity | BLOCKED | Production and QV seven-object inventories/action IDs differ; keyboard vs click movement also requires an approved parity definition |
+| MCP runtime verification of current scenes | PASS | Current Main/DAY1, old Apartment, QV Playable, and sample startup are checked without a production transition |
+| User production-screen / control approval | BLOCKED | Required at Stages C, F, and H; this audit makes no screen or entry change |
+| Rollback remains available | PASS | Main/start scene and all protected production files remain unchanged |
+| Full repository validation | PASS | Current readiness GUT, all startups, metadata inspection, and `validate_concent.sh --full` pass before commit |
+
+Additional known risks are characterization findings, not changes made by this audit: `SurvivalState` currently has a microwave needs branch without a microwave DAY1 device definition; time-period text can report night/dawn while the internal `phase` update remains `day`; and `preview_power_use()` temporarily writes load outside the Outlet topology. Resolve each only in its own approved production task.
+
 ## Apartment Shell Candidate Editing
 
 `QuarterviewApartmentEnvironment` is the single ROTATE_90 Scene-Node authority for floor cells, logical room polygons, wall/opening geometry, navigation, and objects. `QuarterviewApartmentShellCandidate` inherits that PackedScene for design/debug review. `QuarterviewApartmentPlayable` inherits the same PackedScene and adds one `QuarterviewRoom` gameplay instance in opt-in external-environment mode. In that mode the legacy room builder stays empty and hover/click, click-to-move, UsePoint arrival, and interaction signals query the Environment's Scene-Node geometry and walkable-cell graph. Existing `QuarterviewRoom` behavior and non-ROTATE_90 candidate checks retain the legacy calculated fallback. These scenes are candidates, not production wiring.

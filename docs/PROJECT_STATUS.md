@@ -29,6 +29,7 @@
 
 ## Latest Work
 
+- Quarterview Apartment production-readiness is now characterized without wiring or replacing production. The current Main/DAY1 composition owns a scene-local `SurvivalState`, runtime-generated Apartment, and production HUD/Phone/Outlet/Result; the latest Quarterview Playable owns Environment geometry plus click movement only. Their interaction signals and seven-object IDs are incompatible without an adapter, save/load does not exist, and input ownership is blocked by P having multiple candidate/production meanings plus `open_phone` being mapped to Backspace while Main also polls raw Tab. Minimal regression tests lock Main composition/single signal wiring, no-save startup, Phone modal movement/clock lock, state read/debug-injection seams, and the QV signal/ID mismatch. MCP started Main twice, old Apartment, all Apartment candidate scenes, and all sample scenes; raw Tab/ESC modal lock restoration and Quarterview click movement were confirmed with zero new game/editor warning or error entries. Status: `KEEP_CANDIDATE`; all protected production files and `project.godot` remain unchanged.
 - Phone candidate atlas loading now uses one imported, typed `Texture2D` shared by all six `AtlasTexture` regions instead of decoding the source PNG through `Image.load()`. The former expected-warning test and validator exception are removed, while Phone layout, tabs, P/ESC overlay input, and candidate-only data wiring remain unchanged.
 - Added a two-room `QuarterviewReusableMapSample` Environment/Shell/Playable set as a component-reuse test, without modifying the apartment or production path. It instantiates the existing Floor, RoomArea, WallSegment, WallCell, Opening, editable interaction-object, editable environment-object, and editor-guide components; the Playable reuses `QuarterviewRoom` with one provider-declared bed interaction. MCP changed/restored a floor cell, WallCell/Opening pair, object Root, SelectionPolygon, and UsePoint; exercised CLEAN/STRUCTURE/OBJECT/ALL plus Shell P/M/N/W/V; and confirmed Playable movement through the internal/external doors and click-to-UsePoint interaction. Status: `KEEP_CANDIDATE`; this is validation infrastructure, not a production or story map.
 - Apartment editor/debug readability now exposes Environment root guide modes `CLEAN`, `STRUCTURE`, `OBJECT`, and `ALL` without changing authored floor, wall, object, or Polygon geometry. W merges WallCell endpoints within 2 px, emphasizes only non-collinear junctions (12 in the current apartment), keeps door/window colors, and moves one WallGroup label plus optional clicked-Cell detail into a screen-space layout that avoids viewport edges, other labels, and wall wires. MCP confirmed all four editor modes, native Polygon editing, W under V normal/transparent/hidden, and a guide-free Playable screen. Status: `KEEP_CANDIDATE`; production promotion remains unapproved.
@@ -84,12 +85,12 @@
 
 ## Validation Notes
 
-- This change intentionally adds candidate-only shell scripts and documentation.
-- It uses generated geometry only; no image assets, imports, atlas resources, or production start scene wiring are added.
-- Full `git diff --check` may still report unrelated local whitespace in `godot/addons/godot_ai/handlers/texture_handler.gd`; targeted checks should be used for current-task files if that unrelated file remains dirty.
+- The production-readiness audit changes only current documentation and an existing candidate-boundary test; runtime Scenes, geometry, assets, production files, and the start scene remain unchanged.
+- Godot MCP reported zero new game/editor warning or error entries across the requested scene runs. The editor Debugger still shows ten pre-existing production-script warnings outside this task; the shared headless validator reports no warning/error.
+- Targeted readiness GUT, all requested direct startups, metadata checks, strict unit-script parsing, and `scripts/validate_concent.sh --full` pass before commit.
 
 ## Next Recommended Work
 
-1. Open `QuarterviewApartmentShellCandidate.tscn` in Godot and check whether the shared wall, internal door, foreground no-large-object zone, and camera presets match the intended floor plan.
-2. Adjust only the shell coordinates until the two-room structure is stable.
-3. After the shell is accepted, use it as the basis for floor/wall/door atlas replacement or final room art passes.
+1. Stage B: add a candidate-only room adapter that normalizes Quarterview nearest/request signals, input lock, player position, and stable public object IDs without referencing production state or UI.
+2. Approve the production action mapping for the seven Quarterview interactions and decide how existing DAY1 light/laptop/fan/charger appear in the 18-object room.
+3. Only after those two gates, build a separate production-candidate composition with the existing `SurvivalState` and production UI; keep Main and `project.godot` unchanged until the final replacement gate.

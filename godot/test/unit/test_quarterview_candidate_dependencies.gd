@@ -1,5 +1,9 @@
 extends GutTest
 
+const PRODUCTION_MAIN_SCENE := preload("res://scenes/Main.tscn")
+const PRODUCTION_APARTMENT_SCENE := preload("res://scenes/Apartment.tscn")
+const QUARTERVIEW_APARTMENT_PLAYABLE_SCENE := preload("res://scenes/quarterview/QuarterviewApartmentPlayable.tscn")
+
 const CANDIDATE_ROOTS := [
 	"res://scenes/QuarterviewMain.tscn",
 	"res://scenes/quarterview/QuarterviewRoom.tscn",
@@ -79,6 +83,109 @@ func test_project_start_scene_remains_protected_main() -> void:
 	)
 
 
+func test_current_production_main_composition_and_signal_wiring_are_characterized() -> void:
+	var main: Node = PRODUCTION_MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+
+	for required_path in [
+		"SurvivalState",
+		"Apartment",
+		"UI/SurvivalHUD",
+		"UI/PhoneUI",
+		"UI/InteractionPanel",
+		"UI/OutletMode",
+		"UI/DayResultPanel",
+	]:
+		assert_not_null(main.get_node_or_null(required_path), "Production Main must keep its current DAY1 child: %s" % required_path)
+
+	var apartment: Node = main.get_node("Apartment")
+	var survival_state: Node = main.get_node("SurvivalState")
+	assert_true(apartment.is_connected("nearest_interactable_changed", Callable(main, "_on_nearest_interactable_changed")))
+	assert_true(apartment.is_connected("interaction_requested", Callable(main, "_on_interaction_requested")))
+	assert_true(survival_state.is_connected("changed", Callable(main, "_refresh_survival_ui")))
+	assert_true(survival_state.is_connected("day_ended", Callable(main, "_on_day_ended")))
+	assert_eq(_connection_count_to(apartment, "nearest_interactable_changed", main, "_on_nearest_interactable_changed"), 1, "Main startup must not duplicate nearest-object wiring.")
+	assert_eq(_connection_count_to(apartment, "interaction_requested", main, "_on_interaction_requested"), 1, "Main startup must not duplicate interaction wiring.")
+	assert_eq(_connection_count_to(survival_state, "changed", main, "_refresh_survival_ui"), 1, "Main startup must not duplicate state refresh wiring.")
+	assert_eq(_connection_count_to(survival_state, "day_ended", main, "_on_day_ended"), 1, "Main startup must not duplicate day-end wiring.")
+
+	assert_eq(_project_autoload_names(), ["_mcp_game_helper"], "No production state or save singleton is configured; the editor helper is the only Autoload.")
+	for absent_autoload in ["SurvivalState", "SaveManager", "StoryState", "GridCreditState"]:
+		assert_false(
+			ProjectSettings.has_setting("autoload/%s" % absent_autoload),
+			"%s is not a production autoload yet; integration must not assume persistent lifetime." % absent_autoload
+		)
+	assert_null(main.get_node_or_null("SaveManager"), "Current Main must remain safe to start without a save service or save data.")
+
+
+func test_current_production_phone_input_and_state_seams_are_characterized() -> void:
+	var main: Node = PRODUCTION_MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	var phone_ui: Control = main.get_node("UI/PhoneUI") as Control
+	var survival_state: Node = main.get_node("SurvivalState")
+	var apartment: Node = main.get_node("Apartment")
+
+	assert_true(_action_has_key("toggle_test_mode", KEY_P), "Production currently owns P as test mode, not Phone.")
+	assert_true(
+		_action_has_key("open_phone", KEY_BACKSPACE),
+		"Characterize the current mismatch: open_phone is mapped to Backspace in project settings."
+	)
+	assert_true(
+		FileAccess.get_file_as_string("res://scripts/Main.gd").contains("Input.is_key_pressed(KEY_TAB)"),
+		"Production Main also owns a raw Tab fallback that a future input adapter must replace."
+	)
+	assert_true(_action_has_key("cancel_or_menu", KEY_ESCAPE), "Production modal close currently uses ESC.")
+
+	main.call("_unhandled_input", _action_event("toggle_test_mode"))
+	assert_true(bool(main.get("test_mode_enabled")), "P must retain the current production test-mode behavior.")
+	assert_false(phone_ui.visible, "P must not open the production Phone.")
+
+	main.call("_toggle_phone_ui")
+	assert_true(phone_ui.visible)
+	assert_true(bool(survival_state.get("is_clock_paused_by_modal")), "Phone must pause the scene-local DAY1 clock.")
+	var player: Node = apartment.get("player") as Node
+	assert_false(bool(player.get("can_move")), "Phone must disable production player movement.")
+	main.call("_unhandled_input", _action_event("cancel_or_menu"))
+	assert_false(phone_ui.visible, "ESC must close the production Phone.")
+	assert_false(bool(survival_state.get("is_clock_paused_by_modal")))
+	assert_true(bool(player.get("can_move")))
+
+	var initial_clock: String = String(survival_state.call("get_current_clock_text"))
+	survival_state.call("debug_set_time_before_limit", 30)
+	assert_ne(String(survival_state.call("get_current_clock_text")), initial_clock, "A characterization-only time injection seam exists.")
+	survival_state.call("debug_set_current_power", 4.5)
+	survival_state.call("debug_set_phone_battery", 55.0)
+	assert_almost_eq(float(survival_state.get("current_power_units")), 4.5, 0.001)
+	assert_almost_eq(float(survival_state.get("battery")), 55.0, 0.001)
+	assert_true(String(survival_state.call("get_phone_text")).contains("55%"), "Phone reads the same scene-local state.")
+
+
+func test_current_quarterview_playable_requires_an_explicit_production_adapter() -> void:
+	var production_apartment: Node = PRODUCTION_APARTMENT_SCENE.instantiate()
+	var playable: Node = QUARTERVIEW_APARTMENT_PLAYABLE_SCENE.instantiate()
+	add_child_autofree(production_apartment)
+	add_child_autofree(playable)
+	var gameplay: Node = playable.get_node("Gameplay")
+
+	assert_null(playable.get_node_or_null("SurvivalState"), "Quarterview Playable is still independent from production state.")
+	assert_null(playable.get_node_or_null("UI/PhoneUI"), "Quarterview Playable does not yet compose production UI.")
+	assert_true(gameplay.has_method("set_room_input_enabled"))
+	assert_true(gameplay.has_signal("interaction_requested"))
+	assert_eq(_signal_argument_count(production_apartment, "interaction_requested"), 1)
+	assert_eq(_signal_argument_count(gameplay, "interaction_requested"), 3, "Signal shapes differ and must not be wired directly.")
+
+	var production_ids: Array[String] = []
+	for raw_id in production_apartment.get("interactables_by_id").keys():
+		production_ids.append(String(raw_id))
+	production_ids.sort()
+	var quarterview_ids: Array[String] = []
+	quarterview_ids.assign(playable.call("playable_direct_object_ids"))
+	quarterview_ids.sort()
+	assert_eq(production_ids, ["bed", "charger", "communication_device", "fan", "laptop", "light", "power_strip"])
+	assert_eq(quarterview_ids, ["bed", "entrance_door", "fridge", "microwave", "navi_link", "node_17", "power_module_board"])
+	assert_ne(production_ids, quarterview_ids, "Production action IDs and Quarterview object IDs require an explicit mapping contract.")
+
+
 func _assert_pattern_absent(source: String, pattern: String, label: String, script_path: String) -> void:
 	var regex := RegEx.new()
 	var compile_error := regex.compile(pattern)
@@ -92,6 +199,51 @@ func _assert_pattern_absent(source: String, pattern: String, label: String, scri
 			match.get_start() if match != null else -1,
 		]
 	)
+
+
+func _action_has_key(action_name: StringName, keycode: Key) -> bool:
+	for raw_event in InputMap.action_get_events(action_name):
+		var key_event: InputEventKey = raw_event as InputEventKey
+		if key_event != null and key_event.keycode == keycode:
+			return true
+	return false
+
+
+func _action_event(action_name: StringName) -> InputEventAction:
+	var event := InputEventAction.new()
+	event.action = action_name
+	event.pressed = true
+	return event
+
+
+func _signal_argument_count(source: Object, signal_name: StringName) -> int:
+	for raw_signal in source.get_signal_list():
+		var signal_data: Dictionary = raw_signal
+		if StringName(signal_data.get("name", "")) == signal_name:
+			var arguments: Array = signal_data.get("args", [])
+			return arguments.size()
+	return -1
+
+
+func _connection_count_to(source: Object, signal_name: StringName, target: Object, method_name: StringName) -> int:
+	var expected := Callable(target, method_name)
+	var count := 0
+	for raw_connection in source.get_signal_connection_list(signal_name):
+		var connection_data: Dictionary = raw_connection
+		if connection_data.get("callable") == expected:
+			count += 1
+	return count
+
+
+func _project_autoload_names() -> Array[String]:
+	var names: Array[String] = []
+	for raw_property in ProjectSettings.get_property_list():
+		var property_data: Dictionary = raw_property
+		var property_name: String = String(property_data.get("name", ""))
+		if property_name.begins_with("autoload/"):
+			names.append(property_name.trim_prefix("autoload/"))
+	names.sort()
+	return names
 
 
 func _collect_dependency_graph(root_paths: Array) -> Array[String]:
