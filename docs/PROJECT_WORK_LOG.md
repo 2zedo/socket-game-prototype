@@ -8,6 +8,13 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Godot Scene structure and map-authoring audit
+
+- Inventoried all 62 tracked Godot Scenes and their roots, Scripts, child dependencies, reverse references, owned data, direct-run role, and KEEP/REVIEW/SPLIT/MOVE disposition. The set is 40 project Scenes plus 22 vendored GUT Scenes; every path is listed in `TECHNICAL_MAP.md`.
+- Confirmed through godot-ai MCP that `QuarterviewApartmentEnvironment` is the single apartment geometry authority: four Floor layers, four RoomAreas, five Opening mirrors, 58 WallCells, 18 Scene-Node objects, ceiling/wall/parent sockets, and editor guides. Shell and Playable inherit that authority without local geometry overrides; no authored Navigation Node exists because navigation is derived from the provider geometry.
+- Recorded the current one-cell WallCell authoring workflow, actual-child versus `mount_socket_path` attachment contracts, fragile fixed-path references, mixed Environment/provider/debug responsibilities, compatibility scaffolding, and the distinction between active Scene authority and retained legacy paths. No Scene, Script, Resource, geometry, production entry, or project setting changed.
+- Defined nine rollbackable Apartment migration stages: approve roles, split Floor and Structure as single-authority child Scenes without local overrides, normalize wall groups/object boundaries, reduce Environment to assembly/provider, separate DebugShell, clarify the gameplay runtime, lock sample/legacy boundaries, and visually accept W/Junction behavior. A real second map, common extraction, and a small editor helper are three later conditional gates rather than mandatory work. Status remains `KEEP_CANDIDATE`.
+
 ### Quarterview Apartment production-readiness audit
 
 - Compared the protected Main/DAY1/Apartment/SurvivalState/production UI composition with the latest Quarterview Environment/Playable/Room path without changing either runtime. The newest world and movement candidate is stable, but no production orchestrator, state/UI bridge, persistence, or DAY1 entry/exit connection exists.

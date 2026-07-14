@@ -69,6 +69,287 @@ Do not modify by default:
 | `godot/scenes/quarterview/samples/QuarterviewReusableMapSamplePlayable.tscn` | sample Environment + external-provider `QuarterviewRoom` | sample movement/door/interaction validation |
 | `godot/scenes/Player.tscn` | `godot/scripts/Player.gd` | protected current Main player |
 
+## Godot Scene Inventory and Map Authoring Audit
+
+This 2026-07-14 read-only audit matched every one of the 62 tracked Scene files against Scene text, Script/Resource references, fixed test paths, and project.godot. Generated godot/.godot editor metadata is excluded from reverse-reference decisions. Separately, the godot-ai MCP session godot@2212 opened Main, Apartment, the Apartment Environment/Shell/Playable, QuarterviewRoom, all three reusable-sample Scenes, ApartmentWallCell, and ApartmentWallSegment and returned that subset's live hierarchy and Inspector properties. No Scene, Script, Resource, Node, or geometry was changed.
+
+| Role | Count | Meaning in this audit |
+| --- | ---: | --- |
+| Production | 8 | Main, current top-view room/player, and five production UI Scenes |
+| Map editing authority | 1 | The current Apartment Environment Scene |
+| Debug/Shell | 1 | The inherited Apartment debug wrapper |
+| Playable | 2 | QuarterviewMain and the latest Apartment Playable candidate |
+| Common Component | 9 | Interactable, QuarterviewRoom runtime, Floor/Room/Wall/Opening/Object components |
+| Sample | 3 | The two-room reuse fixture Environment/Shell/Playable |
+| Test | 22 | Vendored GUT addon Scenes |
+| Legacy | 16 | Prototype/blockout/sandbox Scenes outside the active production and latest apartment paths |
+| **Total** | **62** | Matches the complete godot/**/*.tscn file list |
+
+Direct run below means a Scene supplies enough context for a meaningful project/editor run. Component means Godot can technically open it, but it is not a gameplay entry.
+
+### Project Scene inventory (40)
+
+| Scene | Root / Script | Role | Direct run | Child Scene dependencies | Incoming Scene/Script/Test references | Major owned data | Proposal |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| scenes/Main.tscn | Node2D / Main.gd | Production | Yes | Apartment; SurvivalHUD; PhoneUI; InteractionPanel; OutletMode; DayResultPanel | project.godot; candidate-dependency test | DAY1 composition, signal wiring, modal/UI orchestration | KEEP |
+| scenes/Apartment.tscn | Node2D / Apartment.gd | Production | Partial | Runtime PackedScene exports for Player and Interactable | Main; candidate-dependency test | Top-view room drawing, player/interactable spawning | KEEP |
+| scenes/Player.tscn | CharacterBody2D / Player.gd | Production | Component | — | Apartment export | Production keyboard player body | KEEP |
+| scenes/Interactable.tscn | Area2D / Interactable.gd | Common Component | Component | — | Apartment export | Production interaction Area contract | KEEP |
+| scenes/QuarterviewMain.tscn | Node2D / QuarterviewMain.gd | Playable | Yes | QuarterviewRoom | candidate-flow and dependency tests | Current production-candidate orchestration and mock UI, structurally separate from the newer Apartment Playable experiment | KEEP; later responsibility-based RENAME review |
+| scenes/prototypes/PrototypeHub.tscn | Control / PrototypeHub.gd | Legacy | Yes | Script change_scene registry | PrototypeSceneUtils test | Prototype launcher and return flow | KEEP while registered prototypes remain |
+| scenes/prototypes/HackingActionPrototype.tscn | Node2D / matching Script | Legacy | Yes | — | PrototypeHub; hacking test; dependency test | Hacking action/state experiment | KEEP |
+| scenes/prototypes/HackingPerspectiveBlockout.tscn | Node2D / matching Script | Legacy | Yes | — | PrototypeHub; dependency test | Hacking camera/perspective blockout | REVIEW for ARCHIVE |
+| scenes/prototypes/QuarterviewPerspectiveBlockout.tscn | Node2D / matching Script | Legacy | Yes | — | PrototypeHub | Old camera/depth blockout | REVIEW for ARCHIVE |
+| scenes/prototypes/QuarterviewRoomPrototype.tscn | Node2D / matching Script | Legacy | Yes | — | PrototypeHub | Old room/object interaction prototype | REVIEW for ARCHIVE |
+| scenes/prototypes/QuarterviewRoomShellPrototype.tscn | Control / matching Script | Legacy | Yes | — | PrototypeHub | Same-canvas shell-layer experiment | REVIEW for ARCHIVE |
+| scenes/prototypes/QuarterviewGameplaySandbox.tscn | Node2D / matching Script | Legacy | Yes | Runtime loads room stub and six sandbox panels | PrototypeHub | Isolated RoomSceneContract/state/UI sandbox | REVIEW as one sandbox bundle |
+| scenes/prototypes/QuarterviewSandboxRoomStub.tscn | Node2D / matching Script | Legacy | Component | — | QuarterviewGameplaySandbox.gd | Sandbox room contract stub | KEEP with sandbox bundle |
+| scenes/prototypes/SandboxEndDayPanel.tscn | Control / matching Script | Legacy | Component | — | QuarterviewGameplaySandbox.gd | Sandbox end-day adapter UI | KEEP with sandbox bundle |
+| scenes/prototypes/SandboxInteractionPanel.tscn | Control / matching Script | Legacy | Component | — | QuarterviewGameplaySandbox.gd | Sandbox interaction adapter UI | KEEP with sandbox bundle |
+| scenes/prototypes/SandboxOutletPanel.tscn | Control / matching Script | Legacy | Component | — | QuarterviewGameplaySandbox.gd | Sandbox outlet adapter UI | KEEP with sandbox bundle |
+| scenes/prototypes/SandboxPhonePanel.tscn | Control / matching Script | Legacy | Component | — | QuarterviewGameplaySandbox.gd | Sandbox Phone adapter UI | KEEP with sandbox bundle |
+| scenes/prototypes/SandboxResultPanel.tscn | Control / matching Script | Legacy | Component | — | QuarterviewGameplaySandbox.gd | Sandbox result adapter UI | KEEP with sandbox bundle |
+| scenes/prototypes/SandboxTestModePanel.tscn | Control / matching Script | Legacy | Component | — | QuarterviewGameplaySandbox.gd | Sandbox test-mode adapter UI | KEEP with sandbox bundle |
+| scenes/prototypes/TitleMenuPrototype.tscn | Control / TitleMenuPrototype.gd | Legacy | Yes | Script self-reload | PrototypeHub | Title/pause flow experiment | REVIEW |
+| scenes/prototypes/quarterview/WorkDevicesAtlasPreview.tscn | Control / matching Script | Legacy | Yes | — | No active source/test reference | Work-device atlas preview | MOVE to dev previews or ARCHIVE |
+| scenes/quarterview/QuarterviewApartmentEnvironment.tscn | Node2D / QuarterviewApartmentShellCandidate.gd | Map editing authority | Yes, inspection | FloorLayer; RoomArea; OpeningMarker; WallCell; both editable-object components | Apartment Shell/Playable; apartment tests | Floor, logical rooms, openings, 58 WallCells, 18 objects, camera, editor guides, provider/debug exports | KEEP Scene; SPLIT Script responsibilities |
+| scenes/quarterview/QuarterviewApartmentShellCandidate.tscn | Inherited Environment / inherited Script | Debug/Shell | Yes | Inherits Apartment Environment | apartment layout/guides/playable/dependency tests | No local geometry override; debug review identity only | KEEP; later RENAME to ApartmentDebugShell |
+| scenes/quarterview/QuarterviewApartmentPlayable.tscn | Inherited Environment / inherited Script | Playable | Yes | Inherits Apartment Environment; adds QuarterviewRoom | apartment playable/dependency tests | Gameplay instance and external-provider wiring only | KEEP |
+| scenes/quarterview/QuarterviewRoom.tscn | Node2D / QuarterviewRoom.gd | Common Component | Yes, legacy standalone; also component | — | QuarterviewMain; Apartment/Sample Playable; room/playable/dependency tests | Player/layers, click movement, hover/use, external-provider consumer plus legacy standalone fallback | KEEP; eventual SPLIT |
+| scenes/quarterview/environment/ApartmentFloorLayer.tscn | TileMapLayer / ApartmentFloorLayer.gd | Common Component | Component | — | Apartment and Sample Environments | Editable floor layer defaults and room identity | KEEP; later generic RENAME candidate |
+| scenes/quarterview/environment/ApartmentRoomArea.tscn | Node2D / ApartmentRoomArea.gd | Common Component | Component | — | Apartment and Sample Environments | Area2D logical room polygon and editor preview | KEEP; later generic RENAME candidate |
+| scenes/quarterview/environment/ApartmentOpeningMarker.tscn | Node2D / ApartmentOpeningMarker.gd | Common Component | Component | — | Apartment and Sample Environments | Door/window semantic mirror and editor preview | KEEP; later generic RENAME candidate |
+| scenes/quarterview/environment/ApartmentWallCell.tscn | Node2D / ApartmentWallCell.gd | Common Component | Component | — | Apartment and Sample Environments | One wall edge, height, visual, collision, opening metadata, attachment socket | KEEP; later generic RENAME candidate |
+| scenes/quarterview/environment/ApartmentWallSegment.tscn | Node2D / ApartmentWallSegment.gd | Common Component | Component | WallCell container, empty by default | Sample Environment and sample test; Apartment reproduces it locally | WallGroup aggregate/scaffold and cell aggregation contract | REVIEW; normalize Apartment usage |
+| scenes/quarterview/objects/ApartmentEditableObject.tscn | Node2D / ApartmentEditableObject.gd | Common Component | Component | — | Apartment and Sample Environments | Interactive visual/body/selection/interaction/use/base/top/socket contract | KEEP; later generic RENAME candidate |
+| scenes/quarterview/objects/ApartmentEditableEnvironmentObject.tscn | Node2D / matching Script | Common Component | Component | — | Apartment and Sample Environments | Noninteractive visual/body/selection/base/top/socket contract | KEEP; later generic RENAME candidate |
+| scenes/quarterview/samples/QuarterviewReusableMapSampleEnvironment.tscn | Node2D / QuarterviewReusableMapSample.gd | Sample | Yes, inspection | Shared Floor/Room/Opening/WallSegment/WallCell/Object components | Sample Shell/Playable and sample test | Fresh two-room geometry and sample provider/debug contract | KEEP |
+| scenes/quarterview/samples/QuarterviewReusableMapSampleShell.tscn | Inherited Sample Environment | Sample | Yes | Inherits Sample Environment | sample test | No local geometry override; sample debug identity | KEEP |
+| scenes/quarterview/samples/QuarterviewReusableMapSamplePlayable.tscn | Inherited Sample Environment | Sample | Yes | Inherits Sample Environment; adds QuarterviewRoom | sample test | Sample gameplay instance and external-provider wiring | KEEP |
+| scenes/ui/DayResultPanel.tscn | Control / DayResultPanel.gd | Production | Component | — | Main; dependency test | Production day-result UI | KEEP |
+| scenes/ui/InteractionPanel.tscn | Control / InteractionPanel.gd | Production | Component | — | Main | Production interaction/dialog UI | KEEP |
+| scenes/ui/OutletMode.tscn | Control / OutletMode.gd | Production | Component | — | Main; dependency test | Production outlet UI | KEEP |
+| scenes/ui/PhoneUI.tscn | Control / PhoneUI.gd | Production | Component | — | Main; dependency test | Production Phone UI | KEEP |
+| scenes/ui/SurvivalHUD.tscn | Control / SurvivalHUD.gd | Production | Component | — | Main | Production survival/time/power HUD | KEEP |
+
+### Vendored GUT Scene inventory (22)
+
+All rows below are Test role and must remain a single vendored addon bundle. None is a game entry; direct use is addon-only. Individual rename, move, merge, or deletion is not a project maintenance action.
+
+| Scene | Root / Script | Child or incoming addon relation | Major data | Proposal |
+| --- | --- | --- | --- | --- |
+| addons/gut/GutScene.tscn | Node2D / GutScene.gd | Instances NormalGui and MinGui; used by GutRunner/utils | Test runner scene | KEEP |
+| addons/gut/UserFileViewer.tscn | Window / UserFileViewer.gd | No tracked incoming reference; standalone addon UI | User-file viewer | KEEP |
+| addons/gut/gui/GutBottomPanel.tscn | Control / GutBottomPanel.gd | Instances RunAtCursor, RunResults, OutputText, ShortcutDialog, ShellOutOptions; plugin entry | Editor bottom panel | KEEP |
+| addons/gut/gui/GutControl.tscn | Control / GutControl.gd | Script loads GutRunner; no tracked incoming Scene reference | Runner control UI | KEEP |
+| addons/gut/gui/GutEditorWindow.tscn | Window / GutEditorWindow.gd | Loaded by plugin | Detached editor window | KEEP |
+| addons/gut/gui/GutLogo.tscn | Node2D / gut_logo.gd | Instanced by About | Addon logo | KEEP |
+| addons/gut/gui/GutRunner.tscn | Node2D / GutRunner.gd | Instances GutScene; used by CLI/control/editor runner | Test execution host | KEEP |
+| addons/gut/gui/MinGui.tscn | Panel / gut_gui.gd | GutScene; instances ResizeHandle | Compact runner UI | KEEP |
+| addons/gut/gui/NormalGui.tscn | Panel / gut_gui.gd | GutScene; instances ResizeHandle | Full runner UI | KEEP |
+| addons/gut/gui/OutputText.tscn | VBoxContainer / OutputText.gd | GutBottomPanel | Output view | KEEP |
+| addons/gut/gui/ResizeHandle.tscn | ColorRect / ResizeHandle.gd | MinGui and NormalGui | Resize interaction | KEEP |
+| addons/gut/gui/ResultsTree.tscn | Tree / ResultsTree.gd | RunResults | Result tree | KEEP |
+| addons/gut/gui/RunAtCursor.tscn | Control / RunAtCursor.gd | GutBottomPanel | Cursor test action | KEEP |
+| addons/gut/gui/RunExternally.tscn | Control / RunExternally.gd | Loaded by addon utils | External-run UI | KEEP |
+| addons/gut/gui/RunResults.tscn | Control / RunResults.gd | GutBottomPanel; instances ResultsTree | Run summary UI | KEEP |
+| addons/gut/gui/Settings.tscn | VBoxContainer / no Script | No tracked incoming reference | Empty settings container | KEEP |
+| addons/gut/gui/ShellOutOptions.tscn | ConfirmationDialog / matching Script | GutBottomPanel | Shell options | KEEP |
+| addons/gut/gui/ShortcutButton.tscn | Control / matching Script | ShortcutDialog | Shortcut row | KEEP |
+| addons/gut/gui/ShortcutDialog.tscn | ConfirmationDialog / matching Script | GutBottomPanel; instances ShortcutButton | Shortcut editor | KEEP |
+| addons/gut/gui/about.tscn | AcceptDialog / about.gd | Bottom-panel script; instances GutLogo | About dialog | KEEP |
+| addons/gut/gui/run_from_editor.tscn | Node2D / matching Script | Addon editor runner | Custom Scene runner | KEEP |
+| addons/gut/gut_loader_the_scene.tscn | Node2D / no Script | No tracked incoming reference; addon loader fixture | Empty load target | KEEP |
+
+### Scene dependency graph and fragile reverse references
+
+    project.godot
+    └─ Main.tscn
+       ├─ Apartment.tscn
+       │  ├─ Player.tscn               (exported PackedScene; runtime instantiate)
+       │  └─ Interactable.tscn         (exported PackedScene; runtime instantiate)
+       └─ SurvivalHUD / PhoneUI / InteractionPanel / OutletMode / DayResultPanel
+
+    QuarterviewMain.tscn
+    └─ QuarterviewRoom.tscn            (standalone legacy-provider mode)
+
+    QuarterviewApartmentEnvironment.tscn
+    ├─ FloorLayer ×4 / RoomArea ×4 / OpeningMarker ×5
+    ├─ WallCell ×58
+    └─ EditableObject and EditableEnvironmentObject instances ×18
+
+    QuarterviewApartmentEnvironment.tscn
+    ├─ inherited by QuarterviewApartmentShellCandidate.tscn
+    └─ inherited by QuarterviewApartmentPlayable.tscn
+       └─ QuarterviewRoom.tscn         (external-provider mode)
+
+    QuarterviewReusableMapSampleEnvironment.tscn
+    ├─ shared Floor/Room/Opening/WallSegment/WallCell/Object components
+    ├─ QuarterviewReusableMapSampleShell.tscn inherits Sample Environment
+    └─ QuarterviewReusableMapSamplePlayable.tscn inherits Sample Environment
+       └─ QuarterviewRoom.tscn         (external-provider mode)
+
+    PrototypeHub.gd
+    └─ change_scene_to_file registry for seven prototype entries
+       └─ QuarterviewGameplaySandbox.gd runtime-instantiates its room stub and six panels
+
+| Reference kind | Current exact source | Rename/move risk |
+| --- | --- | --- |
+| Project entry | project.godot run/main_scene → res://scenes/Main.tscn | Main move breaks startup; protected |
+| Scene ext_resource / inheritance | Main, QuarterviewMain, Apartment Environment/Shell/Playable, Sample trio | Godot UID may help editor moves, but literal paths and tests still require coordinated updates |
+| Exported PackedScene | Apartment.gd player_scene and interactable_scene, assigned in Apartment.tscn | Production runtime spawn fails if either assignment/path breaks |
+| Script preload/change_scene | PrototypeHub.gd registry; QuarterviewGameplaySandbox.gd components; TitleMenuPrototype self-reload | Prototype move requires Script registry changes |
+| Resource load | QuarterviewRoom.gd loads RoomObjectDefinition resources; Environment/Sample Scenes assign footprint Resources to their root Script exports | Scene move can leave Resource/provider tests stale even when the Scene opens |
+| Fixed apartment test paths | test_quarterview_apartment_playable.gd, test_apartment_object_layout_candidate.gd, test_apartment_wall_editor_guides.gd | Environment/Shell/Playable/component renames require same-commit test migration |
+| Fixed sample test paths | test_quarterview_reusable_map_sample.gd | Sample and WallSegment paths are contract assertions |
+| Fixed candidate/production paths | test_quarterview_candidate_dependencies.gd, test_quarterview_main_candidate_flow.gd, test_quarterview_room_interaction_flow.gd | Main, QuarterviewMain, QuarterviewRoom, and candidate path changes fail intentionally |
+| Fixed prototype paths | test_prototype_scene_utils.gd, test_hacking_action_state_machine.gd | PrototypeHub and HackingAction moves require test and registry updates |
+
+Only Apartment.gd exports PackedScene dependencies. No other project Script exports a PackedScene; Quarterview assembly is stored directly through Scene ext_resources and inherited Scenes.
+
+### Apartment editing authority and current WallCell workflow
+
+| Concern | Scene authority / exact NodePath | Runtime consumer |
+| --- | --- | --- |
+| Floor cells | QuarterviewApartmentEnvironment/Floor/EntranceFloor, BathroomFloor, LivingFloor, WorkFloor | Environment provider and debug grid |
+| TileSet | res://resources/quarterview/dev_apartment_floor_tileset.tres; 128×64 isometric development atlas | Four TileMapLayers |
+| Logical rooms | RoomAreas/EntranceArea, BathroomArea, LivingArea, WorkArea → Area2D/CollisionPolygon2D | M and room/path membership |
+| Wall groups | Walls/WorkBackWall, WorkLeftWall, WorkRightWall, EntranceWall, EntranceInnerWall, LivingRightWall, LivingFrontCutaway, WorkFrontSharedWall, BathroomWall, BathroomRightWall | Group labels and cell aggregation |
+| Wall cells | Each group’s WallCells/CellNN; 8+4+4+6+3+6+11+11+2+3 = 58 | M/N/W/V, wall collision and visuals |
+| Openings | Openings/EntranceDoorOpening, EntranceInnerOpening, BathroomDoorOpening, WorkRoomOpening, LivingWindowOpening | Mirrors authoritative opening WallCell metadata |
+| Wall sockets | WallConduit is an actual child of WorkBack Cell02/AttachmentSocket, and SeaHorizonPoster is an actual child of LivingRight Cell03/AttachmentSocket. PowerModuleBoard and EntranceDoor remain under EditableObjectNodes and follow WorkBack Cell05 / Entrance Cell04 through `mount_socket_path` plus `mount_offset`. | Physical child tracking for decorations; explicit Socket-path tracking for interactive mounts |
+| Floor/root objects | EditableObjectNodes with 11 top-level roots and four nested Socket children | P, N, Playable hover/use/collision |
+| Ceiling | CeilingAnchors/FluorescentLightSocket/FluorescentLight | Physical ceiling attachment |
+| Navigation | No authored Navigation or NavigationRegion2D Node exists | Derived by QuarterviewApartmentShellCandidate.gd from Floor, RoomArea, WallCell, Opening, and BodyPolygon; QuarterviewRoom delegates in external mode |
+| Editor guides | EditorGuides/RoomGuides, WallGuides, ObjectGuides, HeightAndSocketGuides | @tool editor-only guide sync; hidden at runtime |
+| Debug | No saved debug layers; QuarterviewApartmentShellCandidate.gd creates P/M/N/W/V/F1 layers in _ready | Environment and inherited Shell/Playable share the same Script |
+| Player movement/use | Playable/Gameplay is QuarterviewRoom; PlayerLayer/Player is QuarterviewPlayer | Click path, UsePoint arrival, interaction request |
+| Y-sort | Editable object Scripts derive z_index from BasePoint; player derives from global y | Scene-node BasePoint and player position |
+
+WallCell is a Node-instance workflow, not a TileMap paint workflow:
+
+1. Open QuarterviewApartmentEnvironment.tscn and expand Walls/<WallGroup>/WallCells.
+2. Duplicate or instance ApartmentWallCell.tscn under WallCells; name it CellNN and give it a unique cell_index.
+3. Move the Cell root to the desired edge start. Set end_offset to one 128×64 isometric edge along the authored wall axes: `(64,32)` or `(-64,32)`.
+4. Set wall_height, enabled, visual_enabled, collision_enabled, opening_kind/id/passable, and visual mode in Inspector.
+5. ApartmentWallCell.gd regenerates StartPoint, EndPoint, BasePoint, TopPoint, Visual, OcclusionVisual, and CollisionPolygon in the editor.
+6. Put wall-mounted content under that Cell’s AttachmentSocket.
+7. ApartmentWallSegment.gd sorts cells, derives group endpoints/opening mirrors, and disables the retired aggregate Visual/Collision.
+8. Reopen inherited Shell and Playable, then validate M/N/W/V and movement.
+
+The current WallCell contract needs per-cell openings, height, collision, state, and child sockets. A TileMap conversion would discard or externalize those instance-specific properties. Do not convert walls to TileMap now. If a second authored map shows repeated placement friction, add a small Cell-stamp tool that instances WallCell Scenes while retaining Node authority.
+
+### Duplicate responsibility and naming confusion
+
+| Finding | Evidence and risk | Direction |
+| --- | --- | --- |
+| Environment also owns debug/provider behavior | Environment root directly attaches the 6,000-line QuarterviewApartmentShellCandidate.gd | Split data provider/editor-guide sync from Shell input/rendering before renaming |
+| Shell is almost only an inherited name | Shell inherits Environment and tests prohibit local geometry overrides | Keep as wrapper; rename to ApartmentDebugShell only in an isolated path-migration commit |
+| Playable inherits the debug-capable Environment Script | Playable adds only Gameplay but still carries P/M/N/W/V code | Make Environment assembly/provider-only; attach debug controller only in DebugShell |
+| QuarterviewRoom means two things | It is both standalone legacy room builder and external Environment gameplay consumer | Preserve now; later split/rename runtime consumer and legacy fixture |
+| Apartment WallGroups duplicate WallSegment scaffold | Sample instances ApartmentWallSegment.tscn; Apartment locally rebuilds its Node structure | Normalize one group at a time after Walls split; never bulk rewrite 58 Cells |
+| Aggregate and unit wall geometry coexist | WallGroup Start/End/Visual/Collision are serialized but disabled; WallCells are active authority | Remove retired aggregate children only after tests prove no fallback use |
+| Opening has authority plus mirror | WallCell opening metadata overwrites OpeningMarker points/type/passability | Keep WallCell authoritative; label OpeningMarker derived/read-only in editing docs |
+| Group sockets and Cell sockets coexist | Physical mounts use Cell sockets; group AttachmentSockets are compatibility containers | Remove only after reverse-reference test proves zero use |
+| Resource semantics can drift from physical parenting | Logical parent/wall IDs remain in Resource while transform authority is Scene Socket | Retain semantic metadata, add validation rather than a second transform |
+| Sample provider repeats debug/provider code | Sample is a fresh component fixture, not a copied apartment, but owns its own controller | Keep until a second real map proves exactly which provider/debug base is shared |
+| Similar Main names imply false equivalence | Main is production; QuarterviewMain is the current production candidate; the newer Apartment Playable experiment is structurally separate | Proposed names must include Production, Candidate, Debug, or Playable responsibility |
+
+There is no current duplicate floor/wall/object geometry in Shell or Playable: both inherit the Environment and their tests reject child transform/geometry overrides. The duplication is inside the Environment’s mixed Script responsibility and WallGroup compatibility scaffolding, not three copies of the apartment map.
+
+### Recommended target Scene structure
+
+The target should separate authoring surfaces only where it removes a real editing or ownership problem:
+
+    godot/scenes/quarterview/maps/apartment/
+    ├─ ApartmentEnvironment.tscn       assembly + map-provider contract only
+    ├─ ApartmentFloor.tscn             four TileMapLayers
+    ├─ ApartmentStructure.tscn         RoomAreas + Walls + Openings + wall children
+    ├─ ApartmentObjects.tscn           conditional; free/floor/parent/ceiling objects
+    ├─ ApartmentDebugShell.tscn        Environment + debug controller/UI
+    └─ ApartmentPlayable.tscn          Environment + gameplay runtime
+
+    godot/scenes/quarterview/components/
+    ├─ QuarterviewFloorLayer.tscn
+    ├─ QuarterviewRoomArea.tscn
+    ├─ QuarterviewOpeningMarker.tscn
+    ├─ QuarterviewWallCell.tscn
+    ├─ QuarterviewWallGroup.tscn
+    ├─ QuarterviewEditableObject.tscn
+    └─ QuarterviewEditableEnvironmentObject.tscn
+
+| Decision | Recommendation | Reason |
+| --- | --- | --- |
+| Split Floor | Yes, first structural split | Four TileMapLayers have no physical child sockets and can be edited without wall occlusion |
+| Split Walls | Yes, as ApartmentStructure with RoomAreas/Openings | Openings are WallCell-derived mirrors and room/wall editing is one structural concern |
+| Split Objects | Conditional, after mount contract audit | Wall/parent/ceiling objects physically live under sockets outside one flat object root |
+| Environment assembly-only | Yes | It should expose map queries and assemble authored children, not own debug input/UI |
+| Debug vs Playable | Yes | Debug input/rendering belongs only to DebugShell; Playable should add gameplay only |
+| Keep a Room Scene | Yes, but clarify its role | QuarterviewRoom is the reusable player/movement/interaction runtime; legacy standalone layout should later be separated |
+| Keep Sample | Yes | It proves fresh component assembly and fixed provider behavior; move to test fixtures only after a second real map replaces its evidence |
+| Generic component rename | Later, not first | Apartment-prefixed components are already reused, but rename cost touches tests and Scene ext_resources |
+
+### Future Scene candidates
+
+#### A. High-probability new Scenes
+
+| Candidate | Purpose / included Nodes | Instances | Source | When / completion |
+| --- | --- | --- | --- | --- |
+| ApartmentFloor.tscn | Floor root and four TileMapLayers | Shared FloorLayer component | Environment/Floor | Stage 2; this child Scene becomes the sole Floor edit authority, with zero instance transform and no Environment-local child overrides |
+| ApartmentStructure.tscn | RoomAreas, Walls/WallCells, Openings, wall-attached children | RoomArea, WallCell, later WallGroup | Environment structural roots | Stages 3–4; this child Scene becomes the sole Structure edit authority, with zero instance transform, no Editable Children/local overrides, and unchanged M/N/W/V, sockets, and collision |
+| ApartmentDebugController.tscn | Runtime debug layers, labels, panels, help | No map geometry | Environment root Script responsibilities | Stage 6; only DebugShell processes P/M/N/W/V |
+| ApartmentObjects.tscn | Free/floor objects plus parent/ceiling anchors where cross-Scene mounts are explicit | Editable object components | Environment object roots | Stage 4 conditional; all 18 world transforms and socket tracking unchanged |
+
+#### B. Rename or split results
+
+| Target name | From | Purpose | Creation point / completion |
+| --- | --- | --- | --- |
+| ApartmentDebugShell.tscn | QuarterviewApartmentShellCandidate.tscn | Name the actual debug wrapper role | Stage 6 isolated rename; all reverse refs/tests updated together |
+| QuarterviewGameplayRuntime.tscn | External-provider half of QuarterviewRoom.tscn | Player, movement, hover/use consumer only | Stage 7 after external-provider tests pass without legacy builder |
+| QuarterviewLegacyRoomFixture.tscn | Standalone fallback half of QuarterviewRoom.tscn | Preserve regression-only generated room | Stage 7; standalone tests remain green |
+| QuarterviewWallGroup.tscn | ApartmentWallSegment.tscn after two-map proof | Generic Cell aggregation contract | Conditional Stage 11 only after an actual second-map requirement proves identical use |
+| Quarterview-prefixed Floor/Room/Opening/Object components | Current Apartment-prefixed components | Remove false apartment-only naming | Conditional Stage 11 in one path-only migration, only after two-map evidence |
+
+#### C. Create only for an actual second-map request
+
+| Candidate set | Purpose | Required content | Create only when / completion |
+| --- | --- | --- | --- |
+| MapBEnvironment / MapBDebugShell / MapBPlayable | Author a real requested non-apartment map while proving post-split assembly | Requirements of that map; never a synthetic duplicate made only for validation | Conditional Stage 10, only after an explicit map request and stable Apartment migration |
+| Optional WallCellStamp test fixture | Verify a future Cell-instancing helper | Empty WallGroup and reversible stamp/remove cases | Conditional Stage 12 only if two actively authored maps demonstrate manual duplication pain |
+
+The existing reusable sample already serves as the first fresh assembly fixture. Do not create a second sample merely to rename it.
+
+### Visual/editing backlog status
+
+| Reported issue | Audit result | Planned checkpoint |
+| --- | --- | --- |
+| Walls obscure floor/object editing | Structurally valid: full wall visuals share one Environment authoring canvas | Floor and Structure split; keep CLEAN/STRUCTURE/OBJECT/ALL as local visibility aids |
+| Project guides mix with Godot white gizmos | Godot gizmo colors are engine-owned; project guides are separately toggled | Preserve direct Polygon editing and hide project guides by mode rather than restyling engine gizmos |
+| Normal game and debug grid separation | Already implemented: runtime debug layers are hidden unless P/M/N/W is active | Protect with startup/debug-state tests through every split |
+| W Junction appears unimplemented | Code now clusters endpoints with tolerance, ignores collinear joins, classifies inner/outer Junctions, and draws 3-way markers | Stage 9 is visual acceptance/regression, not a from-zero implementation |
+| W labels appear under wall lines | Code now uses `DebugOverlayLayer` CanvasLayer with a dedicated `WallScreenLabels` Control, outward offset, viewport flip, overlap/line rejection | Stage 9 visually verify after camera/Scene splits and tune only with evidence |
+| TileMap-style wall stamping | Not present; current workflow is Node instance/duplicate + Inspector metadata | Review a small stamp helper only after an actual second authored map shows repeated need |
+| Large EditorPlugin | Not justified by one apartment plus one sample | Conditional Stage 12 decision; never before common Scene contracts stabilize |
+
+### Staged migration plan
+
+| Stage | Changed files / implementation | Existing behavior to protect | Automated validation | godot-ai MCP and user check | Rollback / next gate |
+| --- | --- | --- | --- | --- | --- |
+| 1. Confirm roles and names | Documentation and path-impact list only | All current paths and entry points | Complete Scene inventory and reverse-reference check | Open current Environment/Shell/Playable; user approves target names | Revert docs only; approval required before file moves |
+| 2. Split Floor | New ApartmentFloor as sole Floor edit authority; Environment instances it at zero transform with Editable Children off and no local child overrides | 99 cells, TileSet, room colors, no overrides in Environment/Shell/Playable | Cell/TileSet equality, Environment-source override rejection, instance-transform-zero check, and three-scene startup | Edit the child Scene only, change one cell and undo; user compares Environment/Shell/Playable | Revert Floor commit; proceed when byte/behavior parity and single-authority tests pass |
+| 3. Split Structure | New ApartmentStructure as sole RoomArea/Wall/Opening authority; Environment uses a zero-transform instance without Editable Children/local overrides | 58 Cells, five openings, M/N/W/V, door collision | hierarchy/count/path-query/navigation tests plus Environment-source override and instance-transform checks | Edit the child Scene only, move one Cell/room point/opening then undo; user checks editor clarity | Revert Structure commit; proceed only with unchanged world geometry and single authority |
+| 4. Normalize wall groups and object boundary | Instance common WallGroup one group at a time; decide conditional Objects Scene | Socket parenting, all 18 transforms, no retired geometry regression | per-group edge/socket/world-transform tests | Inspect Cell/socket tracking and P selection; user approves mount workflow | Revert latest group only; Objects split waits for explicit mount solution |
+| 5. Make Environment assembly/provider-only | Extract map query/provider Script from Shell Script | Floor/room/wall/object authority and Playable queries | provider contract, zero fallback, startup tests | Inspector shows assembly children; Shell/Playable map equality | Restore old Script attachment; proceed when provider API is stable |
+| 6. Separate DebugShell | Add debug controller only to Shell; optionally isolated rename | P/M/N/W/V/F1, guide modes, no Playable default guides | debug mode tests and fixed-path migration | Run all debug modes; user checks labels/overlays | Restore old Shell path/controller; proceed after visual approval |
+| 7. Clarify Playable/Room runtime | Split external gameplay runtime from legacy standalone fallback if evidence supports it | Click movement, UsePoint, interaction, legacy QuarterviewMain regression | Room external/standalone tests and Playable startup | Play Apartment and sample; user checks controls | Revert runtime split; production connection remains blocked |
+| 8. Lock Sample and Legacy boundaries | Keep the sample as a fixture and record prototype/legacy ownership; do not move or archive PrototypeHub/Hacking content in the apartment migration | Sample evidence and all prototype paths/registries remain unchanged | fixed-path, dependency, sample startup, and prototype registry checks | Open the sample trio; user confirms it remains a fixture rather than an Apartment copy | Revert boundary/test commit; any archive cleanup requires a separate explicit task |
+| 9. W/Junction visual acceptance | Tune only current Junction/label implementation with visual evidence | Wall geometry, V states, W visibility | Junction merge/label bounds tests | W with V NORMAL/TRANSPARENT/HIDDEN; user approves readability | Revert tuning commit; no structural rollback required |
+| 10. Conditional real second map | Only when explicitly requested, assemble that map's Environment/DebugShell/Playable from common components; do not create MapB merely for validation | Apartment and reusable sample remain unchanged | both-map provider/startup/movement tests | Edit the requested map's Floor/Cell/Opening and play; user confirms workflow | Revert only the new map commit; Stage 9 may be the migration endpoint |
+| 11. Conditional common extraction | Only with two actively authored maps, rename/move components proven identical in both | Both map paths, Resource links, all fixed tests | dependency and two-map full regression | Open both hierarchies and compare Inspector contracts | Revert one path-migration commit; skip when evidence is insufficient |
+| 12. Conditional small editor helper | Design decision only after two maps prove repetitive manual WallCell work; implement at most a narrow stamp helper | Manual Node workflow and undo safety | stamp/undo/id/index/opening tests | User trials create/move/undo in both maps | Keep manual workflow if benefit is unclear; plugin is never a prerequisite |
+
+Stages 1–9 are the complete Apartment migration and may stop after Stage 9. Stages 10–12 are optional gates triggered only by an explicit real-map request and repeated-work evidence. Every structural stage is its own commit and must pass `scripts/validate_concent.sh --full`, global `git diff --check`, its targeted tests, and the listed MCP check before the next stage. Main.tscn, DAY1, production Apartment, SurvivalState, production UI, and project.godot remain outside this map-authoring migration.
+
 ## Quarterview Apartment Production Readiness
 
 The current decision is `KEEP_CANDIDATE`. `QuarterviewApartmentEnvironment` and `QuarterviewApartmentPlayable` are not connected to production `Main`, DAY1 state, or production UI. In particular, `QuarterviewMain.tscn` still instances the standalone `QuarterviewRoom`; it is not a wrapper for the latest Apartment Environment/Playable pair.
