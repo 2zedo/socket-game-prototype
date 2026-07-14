@@ -1,0 +1,567 @@
+[gd_scene load_steps=11 format=4 uid="uid://ke0jvp67qad6"]
+
+[ext_resource type="Script" uid="uid://b1trfqeu23f73" path="res://scripts/quarterview/QuarterviewReusableMapSample.gd" id="1_sample"]
+[ext_resource type="Resource" path="res://resources/quarterview/reusable_map_sample_object_footprints.tres" id="2_objects"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentFloorLayer.tscn" id="3_floor"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentRoomArea.tscn" id="4_room"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentOpeningMarker.tscn" id="5_opening"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentWallSegment.tscn" id="6_wall_group"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/environment/ApartmentWallCell.tscn" id="7_wall_cell"]
+[ext_resource type="Script" uid="uid://df6nll888xn78" path="res://scripts/quarterview/ApartmentEnvironmentEditorGuides.gd" id="8_editor_guides"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/objects/ApartmentEditableObject.tscn" id="9_editable_object"]
+[ext_resource type="PackedScene" path="res://scenes/quarterview/objects/ApartmentEditableEnvironmentObject.tscn" id="10_environment_object"]
+
+[node name="QuarterviewReusableMapSampleEnvironment" type="Node2D"]
+editor_description = "Floor·RoomArea·WallCell·Opening·Object 재사용성을 검증하는 2방 소형 Environment. 아파트 Scene과 독립된 KEEP_CANDIDATE 테스트 자산입니다."
+script = ExtResource("1_sample")
+object_footprint_set = ExtResource("2_objects")
+
+[node name="Floor" type="Node2D" parent="."]
+editor_description = "두 TileMapLayer를 직접 선택해 128×64 이소메트릭 바닥 셀을 칠하고 지웁니다."
+
+[node name="RoomAFloor" parent="Floor" instance=ExtResource("3_floor")]
+editor_description = "Room A 바닥과 외부문 앞 1칸 threshold. TileMap 편집 도구로 직접 수정합니다."
+position = Vector2(700, 220)
+tile_map_data = PackedByteArray("AAAAAAAAAAACAAAAAAAAAAEAAAACAAAAAAAAAAIAAAACAAAAAAAAAAMAAAACAAAAAAABAAAAAAACAAAAAAABAAEAAAACAAAAAAABAAIAAAACAAAAAAABAAMAAAACAAAAAAACAAAAAAACAAAAAAACAAEAAAACAAAAAAACAAIAAAACAAAAAAACAAMAAAACAAAAAAD//wIAAAAAAAAAAAA=")
+floor_id = &"sample_room_a"
+korean_name = "샘플 방 A"
+
+[node name="RoomBFloor" parent="Floor" instance=ExtResource("3_floor")]
+editor_description = "Room B 바닥. TileMap 편집 도구로 직접 수정합니다."
+position = Vector2(700, 220)
+tile_map_data = PackedByteArray("AAADAAAAAAADAAAAAAADAAEAAAADAAAAAAADAAIAAAADAAAAAAADAAMAAAADAAAAAAAEAAAAAAADAAAAAAAEAAEAAAADAAAAAAAEAAIAAAADAAAAAAAEAAMAAAADAAAAAAAFAAAAAAADAAAAAAAFAAEAAAADAAAAAAAFAAIAAAADAAAAAAAFAAMAAAADAAAAAAA=")
+floor_id = &"sample_room_b"
+korean_name = "샘플 방 B"
+
+[node name="EditorGuides" type="Node2D" parent="."]
+editor_description = "Environment root의 CLEAN/STRUCTURE/OBJECT/ALL enum으로 전환하는 공통 에디터 가이드. 게임 실행 시 숨겨집니다."
+z_index = 1000
+script = ExtResource("8_editor_guides")
+
+[node name="RoomGuides" type="Node2D" parent="EditorGuides"]
+editor_description = "STRUCTURE/ALL에서 RoomArea 외곽과 방 이름을 표시합니다."
+visible = false
+
+[node name="RoomOutlineGuides" type="Node2D" parent="EditorGuides/RoomGuides"]
+editor_description = "RoomArea Polygon에서 자동 파생되는 옅은 외곽 가이드."
+
+[node name="RoomALabel" type="Label" parent="EditorGuides/RoomGuides"]
+offset_left = 666.0
+offset_top = 296.0
+offset_right = 666.0
+offset_bottom = 296.0
+theme_override_colors/font_color = Color(0.68, 1, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.06, 0.08, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 18
+text = "샘플 방 A"
+
+[node name="RoomBLabel" type="Label" parent="EditorGuides/RoomGuides"]
+offset_left = 928.0
+offset_top = 388.0
+offset_right = 928.0
+offset_bottom = 388.0
+theme_override_colors/font_color = Color(0.72, 0.8, 1, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.06, 0.08, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 18
+text = "샘플 방 B"
+
+[node name="FloorLegendBackground" type="ColorRect" parent="EditorGuides/RoomGuides"]
+offset_left = 438.0
+offset_top = 74.0
+offset_right = 798.0
+offset_bottom = 130.0
+color = Color(0.04, 0.045, 0.06, 0.88)
+
+[node name="FloorLegend" type="Label" parent="EditorGuides/RoomGuides"]
+offset_left = 450.0
+offset_top = 82.0
+offset_right = 450.0
+offset_bottom = 82.0
+theme_override_colors/font_color = Color(0.95, 0.95, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "바닥색  ■ Room A(베이지)  ■ Room B(청회색)
+외부문 앞 갈색 1칸은 통과 검증용 threshold"
+
+[node name="WallGuides" type="Node2D" parent="EditorGuides"]
+editor_description = "STRUCTURE/ALL에서 WallCell과 Opening/Socket을 표시합니다."
+visible = false
+
+[node name="ObjectGuides" type="Node2D" parent="EditorGuides"]
+editor_description = "CLEAN은 Visual 외곽, OBJECT/ALL은 Body·Selection·Interaction 가이드를 표시합니다."
+
+[node name="HeightAndSocketGuides" type="Node2D" parent="EditorGuides"]
+editor_description = "OBJECT/ALL에서 Base·Top·UsePoint·Socket을 확인합니다."
+visible = false
+
+[node name="RoomAreas" type="Node2D" parent="."]
+editor_description = "두 논리 방 Polygon. TileMap 바닥과 독립적으로 꼭짓점을 편집합니다."
+position = Vector2(64, 32)
+
+[node name="RoomAArea" parent="RoomAreas" instance=ExtResource("4_room")]
+room_id = &"sample_room_a"
+korean_name = "샘플 방 A"
+selection_priority = 10
+preview_color = Color(0.32, 0.8, 0.58, 0.06)
+
+[node name="CollisionPolygon2D" parent="RoomAreas/RoomAArea/Area2D" index="0"]
+visible = false
+polygon = PackedVector2Array(700, 188, 892, 284, 636, 412, 444, 316)
+
+[node name="EditorPreview" parent="RoomAreas/RoomAArea" index="1"]
+polygon = PackedVector2Array(700, 188, 892, 284, 636, 412, 444, 316)
+color = Color(0.32, 0.8, 0.58, 0.06)
+
+[node name="RoomBArea" parent="RoomAreas" instance=ExtResource("4_room")]
+room_id = &"sample_room_b"
+korean_name = "샘플 방 B"
+selection_priority = 20
+preview_color = Color(0.44, 0.58, 0.96, 0.06)
+
+[node name="CollisionPolygon2D" parent="RoomAreas/RoomBArea/Area2D" index="0"]
+visible = false
+polygon = PackedVector2Array(892, 284, 1084, 380, 828, 508, 636, 412)
+
+[node name="EditorPreview" parent="RoomAreas/RoomBArea" index="1"]
+polygon = PackedVector2Array(892, 284, 1084, 380, 828, 508, 636, 412)
+color = Color(0.44, 0.58, 0.96, 0.06)
+
+[node name="Openings" type="Node2D" parent="."]
+editor_description = "연결문·외부문·창문 의미 Node. 실제 위치/통과 정본은 소유 WallCell입니다."
+position = Vector2(64, 32)
+
+[node name="InternalDoorOpening" parent="Openings" instance=ExtResource("5_opening")]
+opening_id = &"sample_internal_door"
+korean_name = "두 방 연결문"
+owner_wall_id = &"sample_shared_wall"
+
+[node name="StartPoint" parent="Openings/InternalDoorOpening" index="0"]
+position = Vector2(828, 316)
+
+[node name="EndPoint" parent="Openings/InternalDoorOpening" index="1"]
+position = Vector2(764, 348)
+
+[node name="EditorPreview" parent="Openings/InternalDoorOpening" index="2"]
+points = PackedVector2Array(828, 316, 764, 348)
+default_color = Color(0.28, 1, 0.54, 0.95)
+
+[node name="ExternalDoorOpening" parent="Openings" instance=ExtResource("5_opening")]
+opening_id = &"sample_external_door"
+korean_name = "외부 출입문"
+owner_wall_id = &"sample_left_wall"
+
+[node name="StartPoint" parent="Openings/ExternalDoorOpening" index="0"]
+position = Vector2(572, 252)
+
+[node name="EndPoint" parent="Openings/ExternalDoorOpening" index="1"]
+position = Vector2(508, 284)
+
+[node name="EditorPreview" parent="Openings/ExternalDoorOpening" index="2"]
+points = PackedVector2Array(572, 252, 508, 284)
+default_color = Color(0.28, 1, 0.54, 0.95)
+
+[node name="WindowOpening" parent="Openings" instance=ExtResource("5_opening")]
+opening_id = &"sample_window"
+korean_name = "Room B 창문"
+opening_type = 1
+owner_wall_id = &"sample_top_wall"
+passable = false
+
+[node name="StartPoint" parent="Openings/WindowOpening" index="0"]
+position = Vector2(956, 316)
+
+[node name="EndPoint" parent="Openings/WindowOpening" index="1"]
+position = Vector2(1020, 348)
+
+[node name="EditorPreview" parent="Openings/WindowOpening" index="2"]
+points = PackedVector2Array(956, 316, 1020, 348)
+default_color = Color(0.3, 0.7, 1, 0.95)
+
+[node name="Walls" type="Node2D" parent="."]
+editor_description = "WallGroup 의미는 유지하고 WallCells 아래 한 칸을 직접 선택·이동·비활성화합니다."
+position = Vector2(64, 32)
+
+[node name="OuterTopWall" parent="Walls" instance=ExtResource("6_wall_group")]
+wall_id = &"sample_top_wall"
+korean_name = "샘플 위쪽 외벽"
+room_name_ko = "샘플 방 A/B"
+opening_path = NodePath("../../Openings/WindowOpening")
+wall_color = Color(0.66, 0.68, 0.72, 1)
+
+[node name="TopPoint" parent="Walls/OuterTopWall" index="3"]
+position = Vector2(892, 156)
+
+[node name="Cell00" parent="Walls/OuterTopWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_top_wall · 샘플 방 A/B · AXIS_A · Cell 00. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(700, 188)
+wall_id = &"sample_top_wall"
+room_name_ko = "샘플 방 A/B"
+wall_height = 128.0
+wall_color = Color(0.66, 0.68, 0.72, 1)
+
+[node name="Cell01" parent="Walls/OuterTopWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_top_wall · 샘플 방 A/B · AXIS_A · Cell 01. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(764, 220)
+wall_id = &"sample_top_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 1
+wall_height = 128.0
+wall_color = Color(0.66, 0.68, 0.72, 1)
+
+[node name="Cell02" parent="Walls/OuterTopWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_top_wall · 샘플 방 A/B · AXIS_A · Cell 02. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(828, 252)
+wall_id = &"sample_top_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 2
+wall_height = 128.0
+wall_color = Color(0.66, 0.68, 0.72, 1)
+
+[node name="Cell03" parent="Walls/OuterTopWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_top_wall · 샘플 방 A/B · AXIS_A · Cell 03. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(892, 284)
+wall_id = &"sample_top_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 3
+wall_height = 128.0
+wall_color = Color(0.66, 0.68, 0.72, 1)
+
+[node name="Cell04" parent="Walls/OuterTopWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_top_wall · 샘플 방 A/B · AXIS_A · Cell 04. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(956, 316)
+wall_id = &"sample_top_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 4
+wall_height = 128.0
+opening_kind = 2
+opening_id = &"sample_window"
+wall_color = Color(0.66, 0.68, 0.72, 1)
+
+[node name="Cell05" parent="Walls/OuterTopWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_top_wall · 샘플 방 A/B · AXIS_A · Cell 05. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(1020, 348)
+wall_id = &"sample_top_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 5
+wall_height = 128.0
+wall_color = Color(0.66, 0.68, 0.72, 1)
+
+[node name="OuterLeftWall" parent="Walls" instance=ExtResource("6_wall_group")]
+wall_id = &"sample_left_wall"
+korean_name = "샘플 왼쪽 외벽"
+room_name_ko = "샘플 방 A"
+opening_path = NodePath("../../Openings/ExternalDoorOpening")
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="TopPoint" parent="Walls/OuterLeftWall" index="3"]
+position = Vector2(572, 124)
+
+[node name="Cell00" parent="Walls/OuterLeftWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_left_wall · 샘플 방 A · AXIS_B · Cell 00. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(700, 188)
+wall_id = &"sample_left_wall"
+room_name_ko = "샘플 방 A"
+direction = 1
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="Cell01" parent="Walls/OuterLeftWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_left_wall · 샘플 방 A · AXIS_B · Cell 01. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(636, 220)
+wall_id = &"sample_left_wall"
+room_name_ko = "샘플 방 A"
+direction = 1
+cell_index = 1
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="Cell02" parent="Walls/OuterLeftWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_left_wall · 샘플 방 A · AXIS_B · Cell 02. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(572, 252)
+wall_id = &"sample_left_wall"
+room_name_ko = "샘플 방 A"
+direction = 1
+cell_index = 2
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+opening_kind = 1
+opening_id = &"sample_external_door"
+opening_passable = true
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="Cell03" parent="Walls/OuterLeftWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_left_wall · 샘플 방 A · AXIS_B · Cell 03. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(508, 284)
+wall_id = &"sample_left_wall"
+room_name_ko = "샘플 방 A"
+direction = 1
+cell_index = 3
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="OuterRightWall" parent="Walls" instance=ExtResource("6_wall_group")]
+wall_id = &"sample_right_wall"
+korean_name = "샘플 오른쪽 외벽"
+room_name_ko = "샘플 방 B"
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="TopPoint" parent="Walls/OuterRightWall" index="3"]
+position = Vector2(956, 316)
+
+[node name="Cell00" parent="Walls/OuterRightWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_right_wall · 샘플 방 B · AXIS_B · Cell 00. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(1084, 380)
+wall_id = &"sample_right_wall"
+room_name_ko = "샘플 방 B"
+direction = 1
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="Cell01" parent="Walls/OuterRightWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_right_wall · 샘플 방 B · AXIS_B · Cell 01. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(1020, 412)
+wall_id = &"sample_right_wall"
+room_name_ko = "샘플 방 B"
+direction = 1
+cell_index = 1
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="Cell02" parent="Walls/OuterRightWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_right_wall · 샘플 방 B · AXIS_B · Cell 02. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(956, 444)
+wall_id = &"sample_right_wall"
+room_name_ko = "샘플 방 B"
+direction = 1
+cell_index = 2
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="Cell03" parent="Walls/OuterRightWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_right_wall · 샘플 방 B · AXIS_B · Cell 03. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(892, 476)
+wall_id = &"sample_right_wall"
+room_name_ko = "샘플 방 B"
+direction = 1
+cell_index = 3
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.63, 0.65, 0.7, 1)
+
+[node name="OuterBottomWall" parent="Walls" instance=ExtResource("6_wall_group")]
+wall_id = &"sample_bottom_wall"
+korean_name = "샘플 앞쪽 낮은 벽"
+room_name_ko = "샘플 방 A/B"
+display_type = 1
+wall_color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="TopPoint" parent="Walls/OuterBottomWall" index="3"]
+position = Vector2(636, 370)
+
+[node name="Cell00" parent="Walls/OuterBottomWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_bottom_wall · 샘플 방 A/B · AXIS_A · Cell 00. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(444, 316)
+wall_id = &"sample_bottom_wall"
+room_name_ko = "샘플 방 A/B"
+wall_height = 42.0
+visual_mode = 1
+wall_color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="Cell01" parent="Walls/OuterBottomWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_bottom_wall · 샘플 방 A/B · AXIS_A · Cell 01. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(508, 348)
+wall_id = &"sample_bottom_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 1
+wall_height = 42.0
+visual_mode = 1
+wall_color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="Cell02" parent="Walls/OuterBottomWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_bottom_wall · 샘플 방 A/B · AXIS_A · Cell 02. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(572, 380)
+wall_id = &"sample_bottom_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 2
+wall_height = 42.0
+visual_mode = 1
+wall_color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="Cell03" parent="Walls/OuterBottomWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_bottom_wall · 샘플 방 A/B · AXIS_A · Cell 03. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(636, 412)
+wall_id = &"sample_bottom_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 3
+wall_height = 42.0
+visual_mode = 1
+wall_color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="Cell04" parent="Walls/OuterBottomWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_bottom_wall · 샘플 방 A/B · AXIS_A · Cell 04. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(700, 444)
+wall_id = &"sample_bottom_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 4
+wall_height = 42.0
+visual_mode = 1
+wall_color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="Cell05" parent="Walls/OuterBottomWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_bottom_wall · 샘플 방 A/B · AXIS_A · Cell 05. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(764, 476)
+wall_id = &"sample_bottom_wall"
+room_name_ko = "샘플 방 A/B"
+cell_index = 5
+wall_height = 42.0
+visual_mode = 1
+wall_color = Color(0.45, 0.47, 0.5, 1)
+
+[node name="SharedWall" parent="Walls" instance=ExtResource("6_wall_group")]
+wall_id = &"sample_shared_wall"
+korean_name = "두 방 사이 벽"
+room_name_ko = "샘플 방 A/B"
+opening_path = NodePath("../../Openings/InternalDoorOpening")
+wall_color = Color(0.58, 0.61, 0.67, 1)
+
+[node name="TopPoint" parent="Walls/SharedWall" index="3"]
+position = Vector2(764, 220)
+
+[node name="Cell00" parent="Walls/SharedWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_shared_wall · 샘플 방 A/B · AXIS_B · Cell 00. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(892, 284)
+wall_id = &"sample_shared_wall"
+room_name_ko = "샘플 방 A/B"
+direction = 1
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.58, 0.61, 0.67, 1)
+
+[node name="Cell01" parent="Walls/SharedWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_shared_wall · 샘플 방 A/B · AXIS_B · Cell 01. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(828, 316)
+wall_id = &"sample_shared_wall"
+room_name_ko = "샘플 방 A/B"
+direction = 1
+cell_index = 1
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+opening_kind = 1
+opening_id = &"sample_internal_door"
+opening_passable = true
+wall_color = Color(0.58, 0.61, 0.67, 1)
+
+[node name="Cell02" parent="Walls/SharedWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_shared_wall · 샘플 방 A/B · AXIS_B · Cell 02. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(764, 348)
+wall_id = &"sample_shared_wall"
+room_name_ko = "샘플 방 A/B"
+direction = 1
+cell_index = 2
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.58, 0.61, 0.67, 1)
+
+[node name="Cell03" parent="Walls/SharedWall/WallCells" instance=ExtResource("7_wall_cell")]
+editor_description = "sample_shared_wall · 샘플 방 A/B · AXIS_B · Cell 03. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다."
+position = Vector2(700, 380)
+wall_id = &"sample_shared_wall"
+room_name_ko = "샘플 방 A/B"
+direction = 1
+cell_index = 3
+end_offset = Vector2(-64, 32)
+wall_height = 128.0
+wall_color = Color(0.58, 0.61, 0.67, 1)
+
+[node name="EditableObjectNodes" type="Node2D" parent="."]
+editor_description = "검증용 상호작용 오브젝트 1개와 환경 오브젝트 1개의 Scene Node geometry 정본."
+position = Vector2(64, 32)
+
+[node name="SampleBed" parent="EditableObjectNodes" instance=ExtResource("9_editable_object")]
+z_index = 404
+z_as_relative = false
+position = Vector2(892, 380)
+object_id = &"bed"
+
+[node name="VisualPreview" parent="EditableObjectNodes/SampleBed/Visual" index="1"]
+polygon = PackedVector2Array(-54, -82, 42, -60, 54, 18, -42, 0)
+color = Color(0.28, 0.58, 0.88, 0.04)
+
+[node name="BasePoint" parent="EditableObjectNodes/SampleBed" index="1"]
+position = Vector2(0, 24)
+
+[node name="TopPoint" parent="EditableObjectNodes/SampleBed" index="2"]
+position = Vector2(0, -82)
+
+[node name="Body" parent="EditableObjectNodes/SampleBed" index="3"]
+collision_layer = 1
+
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/SampleBed/Body" index="0"]
+visible = false
+editor_description = "플레이어 이동을 막는 샘플 침대 바닥 충돌. 꼭짓점을 직접 조정합니다."
+polygon = PackedVector2Array(-48, 0, 0, -24, 48, 0, 0, 24)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/SampleBed/SelectionArea" index="0"]
+visible = false
+polygon = PackedVector2Array(-60, -88, 52, -68, 64, 28, -52, 8)
+
+[node name="InteractionArea" parent="EditableObjectNodes/SampleBed" index="5"]
+position = Vector2(-64, 32)
+
+[node name="InteractionPolygon" parent="EditableObjectNodes/SampleBed/InteractionArea" index="0"]
+visible = false
+polygon = PackedVector2Array(-38, -18, 38, -18, 38, 18, -38, 18)
+
+[node name="UsePoint" parent="EditableObjectNodes/SampleBed" index="6"]
+position = Vector2(-64, 32)
+
+[node name="SampleDiningTable" parent="EditableObjectNodes" instance=ExtResource("10_environment_object")]
+z_index = 306
+z_as_relative = false
+position = Vector2(700, 284)
+object_id = &"dining_table"
+
+[node name="VisualPreview" parent="EditableObjectNodes/SampleDiningTable/Visual" index="1"]
+polygon = PackedVector2Array(-52, -54, 52, -26, 52, 18, -52, -10)
+color = Color(0.72, 0.48, 0.24, 0.04)
+
+[node name="BasePoint" parent="EditableObjectNodes/SampleDiningTable" index="1"]
+position = Vector2(0, 22)
+
+[node name="TopPoint" parent="EditableObjectNodes/SampleDiningTable" index="2"]
+position = Vector2(0, -54)
+
+[node name="Body" parent="EditableObjectNodes/SampleDiningTable" index="3"]
+collision_layer = 1
+
+[node name="BodyPolygon" type="CollisionPolygon2D" parent="EditableObjectNodes/SampleDiningTable/Body" index="0"]
+visible = false
+editor_description = "플레이어 이동을 막는 샘플 테이블 바닥 충돌. 꼭짓점을 직접 조정합니다."
+polygon = PackedVector2Array(-46, 0, 0, -23, 46, 0, 0, 23)
+
+[node name="SelectionPolygon" parent="EditableObjectNodes/SampleDiningTable/SelectionArea" index="0"]
+visible = false
+polygon = PackedVector2Array(-58, -60, 58, -32, 58, 28, -58, 0)
+
+[node name="AccessorySocket" type="Marker2D" parent="EditableObjectNodes/SampleDiningTable/AttachmentSockets" index="0"]
+editor_description = "재사용 검증용 선택적 환경 오브젝트 Socket."
+position = Vector2(0, -18)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(828, 332)
+zoom = Vector2(1.35, 1.35)
+
+[editable path="RoomAreas/RoomAArea"]
+[editable path="RoomAreas/RoomBArea"]
+[editable path="Openings/InternalDoorOpening"]
+[editable path="Openings/ExternalDoorOpening"]
+[editable path="Openings/WindowOpening"]
+[editable path="EditableObjectNodes/SampleBed"]
+[editable path="EditableObjectNodes/SampleDiningTable"]

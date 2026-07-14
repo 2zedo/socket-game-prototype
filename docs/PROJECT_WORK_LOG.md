@@ -8,6 +8,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Reusable quarterview map sample
+
+- Structure: Built a fresh two-room Environment from the existing Floor, RoomArea, WallSegment, WallCell, Opening, editable-object, environment-object, and editor-guide PackedScenes. Its Shell inherits the Environment; its Playable inherits the same Environment and adds external-provider `QuarterviewRoom`, with no apartment child overrides or copied apartment coordinates.
+- Contract: The sample owns 25 floor cells, five WallGroups/24 WallCells, internal and external passable doors, one non-passable window, one interactive bed, and one non-interactive blocking table. `QuarterviewRoom` external mode now honors an optional provider interaction-id list, so the sample exposes one direct interaction and the apartment retains seven.
+- MCP check: Changed/restored a floor cell, a WallCell and its mirrored Opening, the bed Root/SelectionPolygon/UsePoint, and all four editor-guide modes. Shell P/M/N/W/V, V-hidden wall wireframe, Playable click movement through both doors, bed UsePoint arrival/focus, and existing apartment Environment/Shell/Playable startup were confirmed. Status: `KEEP_CANDIDATE`; only the sample walk/debug controller remains an extraction candidate after another real map repeats it.
+
 ### Apartment wall and editor guide readability
 
 - Editor: Added Environment root `editor_guide_mode` (`CLEAN`/`STRUCTURE`/`OBJECT`/`ALL`) and optional `editor_focus_object_id`. The existing lightweight `@tool` guide node now controls room, wall/opening/socket, object polygon, and height/socket guide groups while preserving Godot's native CollisionPolygon2D editing and hiding all guides at runtime.

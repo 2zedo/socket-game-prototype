@@ -64,11 +64,22 @@ Do not modify by default:
 | `godot/scenes/quarterview/QuarterviewApartmentEnvironment.tscn` | `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` | reusable apartment floor/wall/object authority |
 | `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn` | inherited Environment script | design/debug wrapper; M/P/N/W/V/F1 |
 | `godot/scenes/quarterview/QuarterviewApartmentPlayable.tscn` | Environment + external-provider `QuarterviewRoom` | playable apartment candidate |
+| `godot/scenes/quarterview/samples/QuarterviewReusableMapSampleEnvironment.tscn` | `godot/scripts/quarterview/QuarterviewReusableMapSample.gd` | two-room component-reuse validation Environment |
+| `godot/scenes/quarterview/samples/QuarterviewReusableMapSampleShell.tscn` | inherited sample Environment script | sample P/M/N/W/V inspection wrapper |
+| `godot/scenes/quarterview/samples/QuarterviewReusableMapSamplePlayable.tscn` | sample Environment + external-provider `QuarterviewRoom` | sample movement/door/interaction validation |
 | `godot/scenes/Player.tscn` | `godot/scripts/Player.gd` | protected current Main player |
 
 ## Apartment Shell Candidate Editing
 
 `QuarterviewApartmentEnvironment` is the single ROTATE_90 Scene-Node authority for floor cells, logical room polygons, wall/opening geometry, navigation, and objects. `QuarterviewApartmentShellCandidate` inherits that PackedScene for design/debug review. `QuarterviewApartmentPlayable` inherits the same PackedScene and adds one `QuarterviewRoom` gameplay instance in opt-in external-environment mode. In that mode the legacy room builder stays empty and hover/click, click-to-move, UsePoint arrival, and interaction signals query the Environment's Scene-Node geometry and walkable-cell graph. Existing `QuarterviewRoom` behavior and non-ROTATE_90 candidate checks retain the legacy calculated fallback. These scenes are candidates, not production wiring.
+
+### Quarterview component reuse sample
+
+`QuarterviewReusableMapSampleEnvironment` is a KEEP_CANDIDATE verification asset, not a story map. It was assembled from fresh instances rather than copied from the apartment: two `ApartmentFloorLayer` TileMaps (25 cells), two `ApartmentRoomArea` polygons, five `ApartmentWallSegment` instances containing 24 `ApartmentWallCell` instances, two door and one window `ApartmentOpeningMarker`, one `ApartmentEditableObject` bed, and one `ApartmentEditableEnvironmentObject` table. The Shell inherits this one Environment without overrides; the Playable inherits the same Environment and adds `QuarterviewRoom` in external-provider mode.
+
+Reusable without apartment geometry changes: `ApartmentFloorLayer`, `ApartmentRoomArea`, `ApartmentWallSegment`, `ApartmentWallCell`, `ApartmentOpeningMarker`, both editable-object scenes, `ApartmentEnvironmentEditorGuides`, and `QuarterviewRoom`'s external-provider contract. External mode now optionally reads `playable_direct_object_ids()` so the sample loads only its bed interaction while the apartment still loads its canonical seven. Provider IDs are currently limited to that existing seven-ID legacy mapping; providers without the optional list keep the former seven-object behavior. The sample provider implements Scene-node object lookup, walk target/path queries, and P/M/N/W/V locally; apartment-specific 18-object inventory, four-room measurements, wall labels, ROTATE_90 constants, and candidate panels remain in `QuarterviewApartmentShellCandidate.gd`.
+
+The sample owns a sample-only walk/debug controller but reuses the complete WallSegment scaffold as a PackedScene. A second real map should first instantiate Floor layers, then RoomArea polygons, WallSegment/WallCell groups and Opening markers, editable objects, a provider Environment, the inherited Shell, and finally the inherited Playable with `QuarterviewRoom`. Extract a common map-debug base only when another real map repeats that controller contract; a generic map EditorPlugin is intentionally out of scope.
 
 ### 아파트 환경 편집 방법
 

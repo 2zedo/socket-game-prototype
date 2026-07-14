@@ -770,6 +770,16 @@ func _build_reference_notice() -> void:
 
 func _load_object_definitions() -> void:
 	object_definitions.clear()
+	var filter_external_ids := (
+		external_environment_mode
+		and external_environment != null
+		and external_environment.has_method("playable_direct_object_ids")
+	)
+	var allowed_external_ids: Array[String] = []
+	if filter_external_ids:
+		var provider_ids: Variant = external_environment.call("playable_direct_object_ids")
+		for provider_id: Variant in Array(provider_ids):
+			allowed_external_ids.append(String(provider_id))
 	for path in OBJECT_RESOURCE_PATHS:
 		var definition: Resource = load(path)
 		if definition == null:
@@ -778,8 +788,13 @@ func _load_object_definitions() -> void:
 		if not definition.has_method("is_valid_definition") or not definition.is_valid_definition():
 			push_warning("QuarterviewRoom skipped invalid object definition: %s" % path)
 			continue
-		if external_environment_mode and not EXTERNAL_ENVIRONMENT_IDS_BY_LEGACY_KEY.has(String(definition.key)):
-			continue
+		if external_environment_mode:
+			var legacy_key := String(definition.key)
+			if not EXTERNAL_ENVIRONMENT_IDS_BY_LEGACY_KEY.has(legacy_key):
+				continue
+			var external_id := String(EXTERNAL_ENVIRONMENT_IDS_BY_LEGACY_KEY[legacy_key])
+			if filter_external_ids and not allowed_external_ids.has(external_id):
+				continue
 		object_definitions.append(definition)
 
 

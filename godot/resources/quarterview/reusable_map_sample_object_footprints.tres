@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ApartmentObjectFootprintSetConfig" load_steps=5 format=3 uid="uid://c0lb5knx6v4cg"]
+
+[ext_resource type="Script" uid="uid://c3kunb43cxp8o" path="res://scripts/quarterview/ApartmentObjectFootprintSetConfig.gd" id="1_object_set"]
+[ext_resource type="Script" uid="uid://7mdmv4p4ps16" path="res://scripts/quarterview/ApartmentObjectFootprintConfig.gd" id="2_object"]
+
+[sub_resource type="Resource" id="Object_sample_bed"]
+script = ExtResource("2_object")
+id = &"bed"
+room_area_id = &"sample_room_b"
+category = &"interaction"
+facing_description_ko = "Room B 안쪽에서 접근하는 재사용 검증용 상호작용 오브젝트"
+display_name_ko = "샘플 침대"
+note = "Scene Node geometry authority; existing bed interaction definition is reused only for the sample gameplay contract."
+
+[sub_resource type="Resource" id="Object_sample_table"]
+script = ExtResource("2_object")
+id = &"dining_table"
+room_area_id = &"sample_room_a"
+category = &"environment"
+facing_description_ko = "Room A 중앙의 이동 방해 환경 오브젝트"
+display_name_ko = "샘플 테이블"
+note = "Scene Node geometry authority; no interaction geometry."
+
+[resource]
+script = ExtResource("1_object_set")
+note = "Two-room component reuse verification only. Geometry is authored exclusively in the sample Environment Scene Nodes."
+objects = Array[ExtResource("2_object")]([SubResource("Object_sample_bed"), SubResource("Object_sample_table")])
