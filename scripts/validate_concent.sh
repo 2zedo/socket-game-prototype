@@ -34,8 +34,8 @@ Godot lookup order: --godot-bin, GODOT_BIN, godot on PATH, godot4 on PATH,
 then /Applications/Godot.app/Contents/MacOS/Godot.
 
 The script never runs Git mutation commands (add, commit, push, clean, restore, or reset) and
-never deletes repository files. Godot may still create its normal .import, .uid, or .godot
-metadata; the final Git-status comparison reports that separately.
+never deletes repository files. Source-side .uid/.import metadata must be tracked beside its
+source; Godot's ignored .godot cache is rebuilt by the project-import step.
 EOF
 }
 
@@ -260,6 +260,64 @@ check_godot_scripts() {
 	return "$final_rc"
 }
 
+check_godot_source_metadata() {
+	local metadata_path
+	local source_path
+	local expected_source_file
+	local modified_metadata
+	local untracked_metadata
+	local invalid_count=0
+
+	untracked_metadata="$(
+		git -C "$REPO_ROOT" ls-files --others --exclude-standard -- godot \
+			| grep -E '\.(uid|import)$' || true
+	)"
+	if [[ -n "$untracked_metadata" ]]; then
+		printf 'Untracked Godot source metadata must be reviewed and tracked or removed with its root cause:\n' >&2
+		printf '%s\n' "$untracked_metadata" >&2
+		return 1
+	fi
+	modified_metadata="$(
+		git -C "$REPO_ROOT" diff --name-only -- godot \
+			| grep -E '\.(uid|import)$' || true
+	)"
+	if [[ -n "$modified_metadata" ]]; then
+		printf 'Godot source metadata has unstaged changes; regenerate and stage the canonical sidecar content:\n' >&2
+		printf '%s\n' "$modified_metadata" >&2
+		return 1
+	fi
+
+	while IFS= read -r metadata_path; do
+		[[ -n "$metadata_path" ]] || continue
+		if [[ "$metadata_path" == *.uid ]]; then
+			source_path="${metadata_path%.uid}"
+			if ! grep -Eq '^uid://[a-z0-9]+$' "$REPO_ROOT/$metadata_path"; then
+				printf 'Invalid Godot UID sidecar: %s\n' "$metadata_path" >&2
+				invalid_count=$((invalid_count + 1))
+			fi
+		else
+			source_path="${metadata_path%.import}"
+			expected_source_file="source_file=\"res://${source_path#godot/}\""
+			if ! grep -Fqx -- "$expected_source_file" "$REPO_ROOT/$metadata_path"; then
+				printf 'Import sidecar source path mismatch: %s (expected %s)\n' "$metadata_path" "$expected_source_file" >&2
+				invalid_count=$((invalid_count + 1))
+			fi
+		fi
+		if [[ ! -f "$REPO_ROOT/$source_path" ]]; then
+			printf 'Godot source metadata has no matching source file: %s -> %s\n' "$metadata_path" "$source_path" >&2
+			invalid_count=$((invalid_count + 1))
+		elif ! git -C "$REPO_ROOT" ls-files --error-unmatch -- "$source_path" >/dev/null 2>&1; then
+			printf 'Godot source metadata points to an untracked source file: %s -> %s\n' "$metadata_path" "$source_path" >&2
+			invalid_count=$((invalid_count + 1))
+		fi
+	done < <(git -C "$REPO_ROOT" ls-files | grep -E '^godot/.*\.(uid|import)$' || true)
+
+	if (( invalid_count > 0 )); then
+		return 1
+	fi
+	printf 'All tracked Godot source metadata has a valid tracked source.\n'
+}
+
 find_path_executable() {
 	local executable_name="$1"
 	local path_entry
@@ -472,8 +530,11 @@ if command -v shellcheck >/dev/null 2>&1; then
 else
 	skip_step "ShellCheck" "not installed"
 fi
+run_step "Godot source metadata tracking" "godot_source_metadata" check_godot_source_metadata
 run_step "Git working diff check" "git_diff_check" git -C "$REPO_ROOT" diff --check
 run_step "Git staged diff check" "git_staged_diff_check" git -C "$REPO_ROOT" diff --cached --check
+run_step "Godot project import" "godot_import" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" --import
+run_step "Godot source metadata after import" "godot_source_metadata_after_import" check_godot_source_metadata
 run_step "Godot project parse" "godot_parse" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" --quit-after 2
 run_step "QuarterviewMain startup" "quarterview_main_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/QuarterviewMain.tscn --quit-after 2
 run_step "Apartment shell startup" "apartment_shell_startup" --scan-godot-log "$GODOT_BIN" --headless --path "$GODOT_PROJECT_ROOT" res://scenes/quarterview/QuarterviewApartmentShellCandidate.tscn --quit-after 2
