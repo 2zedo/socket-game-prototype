@@ -62,7 +62,7 @@ Do not modify by default:
 | `godot/scenes/QuarterviewMain.tscn` | `godot/scripts/QuarterviewMain.gd` | production candidate |
 | `godot/scenes/quarterview/QuarterviewRoom.tscn` | `godot/scripts/quarterview/QuarterviewRoom.gd` | candidate room |
 | `godot/scenes/quarterview/QuarterviewApartmentEnvironment.tscn` | `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` | reusable apartment floor/wall/object authority |
-| `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn` | inherited Environment script | design/debug wrapper; M/P/N/V/F1 |
+| `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn` | inherited Environment script | design/debug wrapper; M/P/N/W/V/F1 |
 | `godot/scenes/quarterview/QuarterviewApartmentPlayable.tscn` | Environment + external-provider `QuarterviewRoom` | playable apartment candidate |
 | `godot/scenes/Player.tscn` | `godot/scripts/Player.gd` | protected current Main player |
 
@@ -75,8 +75,9 @@ Do not modify by default:
 - 실제 구조 수정은 `QuarterviewApartmentEnvironment.tscn`, 판정 확인은 `QuarterviewApartmentShellCandidate.tscn`, 플레이어 조작 확인은 `QuarterviewApartmentPlayable.tscn`에서 한다.
 - 오브젝트는 `EditableObjectNodes/<Object>` 아래의 Root 위치, `Visual/Sprite2D` 또는 `VisualPreview`, `Body/BodyPolygon`, `SelectionArea/SelectionPolygon`, `InteractionArea/InteractionPolygon`, `UsePoint` 순으로 수정한다. 환경 오브젝트에는 Interaction/UsePoint가 없다.
 - 바닥은 `Floor/<Room>Floor` TileMapLayer에서 칠하고, 벽은 `Walls/<WallGroup>/WallCells/CellNN`, 벽부착 장비는 해당 Cell의 `AttachmentSocket`에서 수정한다.
-- 기본 Environment 2D 화면은 Visual 외곽만 옅게 보여 준다. 판정 Polygon을 Scene Tree에서 직접 선택하면 Godot 기본 꼭짓점 편집과 해당 오브젝트의 높이·기준점 가이드가 나타난다. `EditorGuides/RoomGuides`, `WallGuides`, `ObjectGuides`, `HeightAndSocketGuides`는 눈 아이콘으로 각각 끌 수 있으며 실행 중에는 자동으로 숨는다.
-- Shell 키는 `P` 선택/hover 오브젝트 판정, `Shift+P` 전체 오브젝트 검사, `M` 방 측량, `N` 이동·충돌, `W` 벽 wireframe/ID, `V` 벽 Visual의 기본→반투명→숨김 순환이다.
+- Environment 루트 `/QuarterviewApartmentEnvironment`의 `Environment Editor Guides > editor_guide_mode`는 `CLEAN`(실물+옅은 Visual 외곽), `STRUCTURE`(Room/Wall/Opening/WallCell/Socket), `OBJECT`(오브젝트 판정과 Base/Top/Socket), `ALL`(전체)을 전환한다. `OBJECT`에서 `editor_focus_object_id`를 지정하면 그 오브젝트만 사용자 정의 가이드를 표시하며, 비워 두면 Scene Tree에서 선택한 오브젝트를 따른다. 판정 Polygon을 직접 선택했을 때의 Godot 기본 꼭짓점 편집은 모드와 무관하게 유지된다.
+- 생성 가이드는 `EditorGuides/RoomGuides`, `WallGuides`, `ObjectGuides`, `HeightAndSocketGuides`로 나뉘며 눈 아이콘으로도 임시 제어할 수 있다. 게임 실행 시 `EditorGuides` 전체가 자동으로 숨는다.
+- Shell 키는 `P` 선택/hover 오브젝트 판정, `Shift+P` 전체 오브젝트 검사, `M` 방 측량, `N` 이동·충돌, `W` 벽 wireframe/그룹 라벨, `V` 벽 Visual의 기본→반투명→숨김 순환이다. W는 직선 Cell 이음은 합치고 방향이 다른 벽이 만나는 Junction만 강조하며, 기본에는 WallGroup당 라벨 하나를 표시하고 WallCell 클릭 후에만 enabled/Opening/AttachmentSocket 상세를 표시한다.
 - 권장 순서는 Environment에서 Visual/Polygon/Socket 수정 → Shell에서 P/M/N/W/V 확인 → Playable에서 실제 이동·가림·상호작용 확인이다.
 
 | Need | Where |
@@ -287,6 +288,7 @@ Current important tests:
 - `test_living_device_definition.gd`
 - `test_asset_smoke.gd`
 - `test_apartment_object_layout_candidate.gd`
+- `test_apartment_wall_editor_guides.gd`
 
 The Quarterview candidate regression tests keep movement completion deterministic: they test object selection, pending focus, cancellation/replacement, and the arrival gate without waiting on long physics movement. Main candidate tests instantiate the real scene and cover panel/modal routing, room input lock restoration, close/ESC/backdrop paths, and portable Phone gating. The dependency boundary test recursively inspects candidate Resource dependencies and executable reference patterns while leaving production-wide autoload policy outside candidate ownership.
 

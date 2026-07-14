@@ -196,6 +196,7 @@ func test_playable_default_hides_all_editor_and_runtime_debug_guides() -> void:
 		"DebugOverlayLayer/RoomMeasurementLegendBackground",
 		"DebugOverlayLayer/RoomMeasurementLegendLabel",
 		"DebugOverlayLayer/DebugDetailPanel",
+		"DebugOverlayLayer/WallScreenLabels",
 	]:
 		assert_false((playable.get_node(control_path) as CanvasItem).visible, "%s must be hidden in normal Playable." % control_path)
 

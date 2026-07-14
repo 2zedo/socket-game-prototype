@@ -33,6 +33,13 @@ enum WallInspectionMode {
 	HIDDEN,
 }
 
+enum EditorGuideMode {
+	CLEAN,
+	STRUCTURE,
+	OBJECT,
+	ALL,
+}
+
 enum WallAxis {
 	AXIS_A,
 	AXIS_B,
@@ -161,6 +168,9 @@ const COLOR_WALL_WIREFRAME_END := Color(0.68, 0.70, 0.74, 0.84)
 const COLOR_WALL_WIREFRAME_DOOR := Color(0.28, 1.0, 0.54, 0.98)
 const COLOR_WALL_WIREFRAME_WINDOW := Color(0.30, 0.70, 1.0, 0.98)
 const COLOR_WALL_WIREFRAME_FOCUS := Color(1.0, 1.0, 1.0, 1.0)
+const COLOR_WALL_JUNCTION_OUTER := Color(0.96, 0.98, 1.0, 0.98)
+const COLOR_WALL_JUNCTION_INNER := Color(0.58, 0.62, 0.68, 0.94)
+const COLOR_WALL_JUNCTION_MARKER := Color(1.0, 0.86, 0.34, 1.0)
 const DIRECT_INTERACTION_OBJECT_IDS := [
 	"entrance_door", "bed", "fridge", "microwave", "navi_link",
 	"power_module_board", "node_17",
@@ -177,6 +187,12 @@ const EDITABLE_ENVIRONMENT_NODE_OBJECT_IDS := [
 const OBJECT_ANCHOR_HIT_RADIUS := 18.0
 const OBJECT_CLICK_CYCLE_RADIUS := 3.0
 const WALL_INSPECTION_ALPHA := 0.18
+const WALL_JUNCTION_MERGE_TOLERANCE := 2.0
+const WALL_JUNCTION_DIRECTION_EPSILON := 0.12
+const WALL_CELL_CLICK_TOLERANCE := 14.0
+const WALL_LABEL_OUTWARD_OFFSET := 28.0
+const WALL_LABEL_VIEWPORT_MARGIN := 12.0
+const WALL_LABEL_VERTICAL_GAP := 6.0
 const COLOR_DEBUG_PANEL := Color(0.025, 0.03, 0.038, 0.92)
 const COLOR_DEBUG_PANEL_ALT := Color(0.045, 0.055, 0.068, 0.94)
 const COLOR_DEBUG_PANEL_BORDER := Color(0.46, 0.66, 0.70, 0.70)
@@ -252,6 +268,10 @@ const COLOR_MEASUREMENT_LABEL_BACKGROUND := Color(0.018, 0.035, 0.04, 0.90)
 # Deprecated compatibility hook for non-ROTATE_90 previews. The current Environment ignores this
 # geometry and reports a warning instead of mixing it with its 18 canonical Scene Nodes.
 @export var custom_object_footprints: Array[Resource] = []
+
+@export_group("Environment Editor Guides")
+@export var editor_guide_mode: EditorGuideMode = EditorGuideMode.CLEAN
+@export var editor_focus_object_id: StringName = &""
 
 @export_group("Window Layout")
 @export var living_window_axis_a := DEFAULT_LIVING_WINDOW_AXIS_A
@@ -332,6 +352,7 @@ var _wall_edge_coord_layer: Node2D
 var _hover_edge_highlight_layer: Node2D
 var _wall_id_layer: Node2D
 var _wall_wireframe_layer: Node2D
+var _wall_label_root: Control
 var _occlusion_debug_layer: Node2D
 var _room_measurement_layer: Node2D
 var _debug_overlay_layer: CanvasLayer
@@ -387,6 +408,7 @@ func _ready() -> void:
 	_apply_wall_inspection_transparency()
 	_validate_object_footprints()
 	_apply_camera_preset(camera_preset)
+	_redraw_wall_wireframe_overlay()
 	_update_label_visibility()
 
 
@@ -497,12 +519,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_object_hover_at(_mouse_event_world_position(event))
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var click_world_position := _mouse_event_world_position(event)
 		if show_object_placeholders:
-			var click_world_position := _mouse_event_world_position(event)
 			_update_object_hover_at(click_world_position)
 			if _select_hovered_object(click_world_position):
 				get_viewport().set_input_as_handled()
 				return
+		if show_wall_ids and _select_wall_cell_at(click_world_position):
+			get_viewport().set_input_as_handled()
+			return
 		var hover_cell: Variant = _hover_floor_cell()
 		var printed_click := false
 		if show_floor_grid_coords and hover_cell != null:
@@ -524,6 +549,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_camera_preset(preset: String) -> void:
 	camera_preset = preset
 	_apply_camera_preset(camera_preset)
+	_redraw_wall_wireframe_overlay()
 
 
 func _apply_wall_inspection_transparency() -> void:
@@ -660,6 +686,11 @@ func _create_layers() -> void:
 	_debug_overlay_layer = CanvasLayer.new()
 	_debug_overlay_layer.name = "DebugOverlayLayer"
 	add_child(_debug_overlay_layer)
+	_wall_label_root = Control.new()
+	_wall_label_root.name = "WallScreenLabels"
+	_wall_label_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_wall_label_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_debug_overlay_layer.add_child(_wall_label_root)
 
 
 func _build_shell() -> void:
@@ -4411,7 +4442,44 @@ func _draw_floor_grid_debug_overlay() -> void:
 func _draw_wall_wireframe_overlay() -> void:
 	if _wall_wireframe_layer == null or not _wall_node_authority_active():
 		return
-	for segment in _wall_segments_from_scene_nodes():
+	var segments := _wall_segments_from_scene_nodes()
+	var active_edges := _active_wall_wire_edges(segments)
+	for wire_edge in active_edges:
+		var edge: Dictionary = wire_edge.get("edge", {})
+		var wall_id := String(wire_edge.get("wall_id", ""))
+		var unit_index := int(wire_edge.get("unit_index", 0))
+		var height := float(wire_edge.get("height", wall_height))
+		var from_world := Vector2(edge.get("from_world", Vector2.ZERO))
+		var to_world := Vector2(edge.get("to_world", Vector2.ZERO))
+		var top_from := from_world - Vector2(0.0, height)
+		var top_to := to_world - Vector2(0.0, height)
+		var opening_kind := int(edge.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE))
+		var base_color := COLOR_WALL_WIREFRAME_BASE
+		var top_color := COLOR_WALL_WIREFRAME_TOP
+		if opening_kind == ApartmentWallCellScript.OpeningKind.DOOR:
+			base_color = COLOR_WALL_WIREFRAME_DOOR
+			top_color = COLOR_WALL_WIREFRAME_DOOR
+		elif opening_kind == ApartmentWallCellScript.OpeningKind.WINDOW:
+			base_color = COLOR_WALL_WIREFRAME_WINDOW
+			top_color = COLOR_WALL_WIREFRAME_WINDOW
+		var prefix := "wall_wire_%s_%02d" % [wall_id, unit_index]
+		_wall_wireframe_layer.call("add_polyline_command", "%s_base" % prefix, PackedVector2Array([from_world, to_world]), base_color, 2.6)
+		_wall_wireframe_layer.call("add_polyline_command", "%s_top" % prefix, PackedVector2Array([top_from, top_to]), top_color, 2.2)
+		if bool(wire_edge.get("focused", false)):
+			_wall_wireframe_layer.call(
+				"add_polyline_command",
+				"%s_focus" % prefix,
+				PackedVector2Array([from_world, to_world, top_to, top_from, from_world]),
+				COLOR_WALL_WIREFRAME_FOCUS,
+				4.0
+			)
+	_draw_wall_endpoint_boundaries(_wall_wire_endpoint_clusters(active_edges))
+	_draw_wall_screen_labels(segments)
+
+
+func _active_wall_wire_edges(segments: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for segment in segments:
 		if not bool(segment.get("enabled", true)):
 			continue
 		var wall_id := String(segment.get("id", ""))
@@ -4419,65 +4487,501 @@ func _draw_wall_wireframe_overlay() -> void:
 		var unit_edges: Dictionary = segment.get("unit_edges", {})
 		var sorted_indices: Array = unit_edges.keys()
 		sorted_indices.sort()
-		var first_world := Vector2.ZERO
-		var last_world := Vector2.ZERO
-		var has_world_edge := false
-		for unit_index in sorted_indices:
-			var edge: Dictionary = unit_edges[unit_index]
+		for unit_index_value in sorted_indices:
+			var unit_index := int(unit_index_value)
+			var edge: Dictionary = unit_edges[unit_index_value]
 			if not bool(edge.get("enabled", true)):
 				continue
-			var from_cell: Vector2i = edge.get("from_cell", Vector2i.ZERO)
-			var to_cell: Vector2i = edge.get("to_cell", Vector2i.ZERO)
-			var from_world := Vector2(edge.get("from_world", _iso(from_cell.x, from_cell.y)))
-			var to_world := Vector2(edge.get("to_world", _iso(to_cell.x, to_cell.y)))
-			if not has_world_edge:
-				first_world = from_world
-				has_world_edge = true
-			last_world = to_world
-			var top_from := from_world - Vector2(0.0, height)
-			var top_to := to_world - Vector2(0.0, height)
-			var opening_kind := int(edge.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE))
-			var cell_path := String(edge.get("cell_path", ""))
-			var focus_path := String(debug_focus_wall_cell_path)
-			var focus_cell := (
-				(not focus_path.is_empty() and (cell_path == focus_path or cell_path.ends_with(focus_path)))
-				or (not debug_focus_wall_id.is_empty() and wall_id == debug_focus_wall_id)
+			result.append({
+				"wall_id": wall_id,
+				"unit_index": unit_index,
+				"height": height,
+				"edge": edge,
+				"focused": _wall_cell_matches_focus(wall_id, String(edge.get("cell_path", ""))),
+			})
+	return result
+
+
+func _wall_cell_matches_focus(wall_id: String, cell_path: String) -> bool:
+	var focus_path := String(debug_focus_wall_cell_path)
+	return (
+		(not focus_path.is_empty() and (cell_path == focus_path or cell_path.ends_with(focus_path)))
+		or (not debug_focus_wall_id.is_empty() and wall_id == debug_focus_wall_id and focus_path.is_empty())
+	)
+
+
+func _wall_wire_endpoint_clusters(active_edges: Array[Dictionary]) -> Array[Dictionary]:
+	var clusters: Array[Dictionary] = []
+	for wire_edge in active_edges:
+		var edge: Dictionary = wire_edge.get("edge", {})
+		var from_world := Vector2(edge.get("from_world", Vector2.ZERO))
+		var to_world := Vector2(edge.get("to_world", Vector2.ZERO))
+		var direction := (to_world - from_world).normalized()
+		if direction.is_zero_approx():
+			continue
+		for endpoint in [from_world, to_world]:
+			var cluster_index := _wall_endpoint_cluster_index(clusters, endpoint)
+			if cluster_index < 0:
+				clusters.append({
+					"position": endpoint,
+					"sample_count": 1,
+					"max_height": float(wire_edge.get("height", wall_height)),
+					"incidents": [],
+				})
+				cluster_index = clusters.size() - 1
+			else:
+				var cluster: Dictionary = clusters[cluster_index]
+				var sample_count := int(cluster.get("sample_count", 1))
+				cluster["position"] = (Vector2(cluster.get("position", endpoint)) * sample_count + endpoint) / float(sample_count + 1)
+				cluster["sample_count"] = sample_count + 1
+				cluster["max_height"] = maxf(float(cluster.get("max_height", 0.0)), float(wire_edge.get("height", wall_height)))
+				clusters[cluster_index] = cluster
+			var incident_cluster: Dictionary = clusters[cluster_index]
+			var incidents: Array = incident_cluster.get("incidents", [])
+			incidents.append({
+				"direction": direction,
+				"wall_id": String(wire_edge.get("wall_id", "")),
+				"cell_path": String(edge.get("cell_path", "")),
+				"opening_kind": int(edge.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE)),
+				"focused": bool(wire_edge.get("focused", false)),
+			})
+			incident_cluster["incidents"] = incidents
+			clusters[cluster_index] = incident_cluster
+	return clusters
+
+
+func _wall_endpoint_cluster_index(clusters: Array[Dictionary], world_position: Vector2) -> int:
+	for cluster_index in range(clusters.size()):
+		if Vector2(clusters[cluster_index].get("position", Vector2.ZERO)).distance_to(world_position) <= WALL_JUNCTION_MERGE_TOLERANCE:
+			return cluster_index
+	return -1
+
+
+func _wall_cluster_direction_count(cluster: Dictionary) -> int:
+	var unique_directions: Array[Vector2] = []
+	for incident_value in Array(cluster.get("incidents", [])):
+		var incident: Dictionary = incident_value
+		var direction := Vector2(incident.get("direction", Vector2.ZERO)).normalized()
+		var new_direction := true
+		for existing_direction in unique_directions:
+			if absf(direction.cross(existing_direction)) <= WALL_JUNCTION_DIRECTION_EPSILON:
+				new_direction = false
+				break
+		if new_direction:
+			unique_directions.append(direction)
+	return unique_directions.size()
+
+
+func _wall_junction_kind(world_position: Vector2) -> String:
+	var grid_point := _screen_to_grid_point(world_position)
+	var vertex := Vector2i(roundi(grid_point.x), roundi(grid_point.y))
+	var floor_cells: Dictionary = {}
+	for floor_cell in _visible_floor_cells():
+		floor_cells[_cell_key(floor_cell)] = true
+	var occupied_quadrants := 0
+	for cell in [
+		Vector2i(vertex.x - 1, vertex.y - 1),
+		Vector2i(vertex.x, vertex.y - 1),
+		Vector2i(vertex.x - 1, vertex.y),
+		Vector2i(vertex.x, vertex.y),
+	]:
+		if floor_cells.has(_cell_key(cell)):
+			occupied_quadrants += 1
+	return "outer" if occupied_quadrants <= 1 else "inner"
+
+
+func _wall_junctions_from_segments(segments: Array[Dictionary]) -> Array[Dictionary]:
+	var junctions: Array[Dictionary] = []
+	for cluster in _wall_wire_endpoint_clusters(_active_wall_wire_edges(segments)):
+		var direction_count := _wall_cluster_direction_count(cluster)
+		if direction_count < 2:
+			continue
+		var junction := cluster.duplicate(true)
+		junction["direction_count"] = direction_count
+		junction["kind"] = _wall_junction_kind(Vector2(cluster.get("position", Vector2.ZERO)))
+		junctions.append(junction)
+	return junctions
+
+
+func _draw_wall_endpoint_boundaries(clusters: Array[Dictionary]) -> void:
+	for cluster_index in range(clusters.size()):
+		var cluster: Dictionary = clusters[cluster_index]
+		var position_world := Vector2(cluster.get("position", Vector2.ZERO))
+		var height := maxf(8.0, float(cluster.get("max_height", wall_height)))
+		var incidents: Array = cluster.get("incidents", [])
+		var direction_count := _wall_cluster_direction_count(cluster)
+		var is_junction := direction_count >= 2
+		var opening_kind: int = ApartmentWallCellScript.OpeningKind.NONE
+		var focused := false
+		for incident_value in incidents:
+			var incident: Dictionary = incident_value
+			focused = focused or bool(incident.get("focused", false))
+			opening_kind = maxi(opening_kind, int(incident.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE)))
+		var color := COLOR_WALL_WIREFRAME_END
+		var width := 1.8
+		var dashed := true
+		var command_prefix := "wall_endpoint"
+		if is_junction:
+			var junction_kind := _wall_junction_kind(position_world)
+			color = COLOR_WALL_JUNCTION_OUTER if junction_kind == "outer" else COLOR_WALL_JUNCTION_INNER
+			width = 4.4 if junction_kind == "outer" else 3.2
+			dashed = false
+			command_prefix = "wall_junction_%s" % junction_kind
+		elif opening_kind == ApartmentWallCellScript.OpeningKind.DOOR:
+			color = COLOR_WALL_WIREFRAME_DOOR
+		elif opening_kind == ApartmentWallCellScript.OpeningKind.WINDOW:
+			color = COLOR_WALL_WIREFRAME_WINDOW
+		if focused:
+			color = COLOR_WALL_WIREFRAME_FOCUS
+			width = maxf(width, 3.4)
+		_wall_wireframe_layer.call(
+			"add_polyline_command",
+			"%s_%03d" % [command_prefix, cluster_index],
+			PackedVector2Array([position_world, position_world - Vector2(0.0, height)]),
+			color,
+			width,
+			dashed,
+			8.0
+		)
+		if is_junction and incidents.size() >= 3:
+			var radius := 6.0
+			_wall_wireframe_layer.call(
+				"add_polyline_command",
+				"wall_junction_marker_%03d" % cluster_index,
+				PackedVector2Array([
+					position_world - Vector2(0.0, radius),
+					position_world + Vector2(radius, 0.0),
+					position_world + Vector2(0.0, radius),
+					position_world - Vector2(radius, 0.0),
+					position_world - Vector2(0.0, radius),
+				]),
+				COLOR_WALL_JUNCTION_MARKER,
+				2.6
 			)
-			var base_color := COLOR_WALL_WIREFRAME_BASE
-			var top_color := COLOR_WALL_WIREFRAME_TOP
-			var end_color := COLOR_WALL_WIREFRAME_END
-			if opening_kind == ApartmentWallCellScript.OpeningKind.DOOR:
-				base_color = COLOR_WALL_WIREFRAME_DOOR
-				top_color = COLOR_WALL_WIREFRAME_DOOR
-				end_color = COLOR_WALL_WIREFRAME_DOOR
-			elif opening_kind == ApartmentWallCellScript.OpeningKind.WINDOW:
-				base_color = COLOR_WALL_WIREFRAME_WINDOW
-				top_color = COLOR_WALL_WIREFRAME_WINDOW
-				end_color = COLOR_WALL_WIREFRAME_WINDOW
-			var prefix := "wall_wire_%s_%02d" % [wall_id, int(unit_index)]
-			_wall_wireframe_layer.call("add_polyline_command", "%s_base" % prefix, PackedVector2Array([from_world, to_world]), base_color, 2.6)
-			_wall_wireframe_layer.call("add_polyline_command", "%s_top" % prefix, PackedVector2Array([top_from, top_to]), top_color, 2.2)
-			_wall_wireframe_layer.call("add_polyline_command", "%s_start" % prefix, PackedVector2Array([from_world, top_from]), end_color, 1.8, true, 8.0)
-			_wall_wireframe_layer.call("add_polyline_command", "%s_end" % prefix, PackedVector2Array([to_world, top_to]), end_color, 1.8, true, 8.0)
-			if focus_cell:
-				_wall_wireframe_layer.call(
-					"add_polyline_command",
-					"%s_focus" % prefix,
-					PackedVector2Array([from_world, to_world, top_to, top_from, from_world]),
-					COLOR_WALL_WIREFRAME_FOCUS,
-					4.0
-				)
-		if has_world_edge and _wall_id_layer != null:
-			var midpoint := (first_world + last_world) * 0.5 - Vector2(0.0, height + 24.0)
-			_add_label_with_background(
-				_wall_id_layer,
-				"wall_id_%s" % wall_id,
-				"%s  |  %d cells" % [_wall_display_name_ko(wall_id), unit_edges.size()],
-				midpoint,
-				12,
-				COLOR_WALL_ID_BACKGROUND,
-				COLOR_DEBUG_TEXT
-			)
+
+
+func _draw_wall_screen_labels(segments: Array[Dictionary]) -> void:
+	if _wall_label_root == null:
+		return
+	var label_requests: Array[Dictionary] = []
+	for segment in segments:
+		if not bool(segment.get("enabled", true)):
+			continue
+		var wall_id := String(segment.get("id", ""))
+		var height := maxf(8.0, float(segment.get("height", wall_height)))
+		var active_segment_edges: Array[Dictionary] = []
+		var unit_edges: Dictionary = segment.get("unit_edges", {})
+		var sorted_indices: Array = unit_edges.keys()
+		sorted_indices.sort()
+		for unit_index_value in sorted_indices:
+			var edge: Dictionary = unit_edges[unit_index_value]
+			if bool(edge.get("enabled", true)):
+				active_segment_edges.append(edge)
+		if active_segment_edges.is_empty():
+			continue
+		var first_edge: Dictionary = active_segment_edges.front()
+		var last_edge: Dictionary = active_segment_edges.back()
+		var first_world := Vector2(first_edge.get("from_world", Vector2.ZERO))
+		var last_world := Vector2(last_edge.get("to_world", Vector2.ZERO))
+		var top_midpoint := (first_world + last_world) * 0.5 - Vector2(0.0, height)
+		label_requests.append({
+			"name": "wall_group_%s" % wall_id,
+			"text": "%s  |  %d cells" % [_wall_display_name_ko(wall_id), active_segment_edges.size()],
+			"anchor_world": top_midpoint,
+			"outward_world": _wall_label_outward_direction(first_world, last_world),
+			"font_size": 12,
+			"text_color": COLOR_DEBUG_TEXT,
+		})
+		for edge in active_segment_edges:
+			if not _wall_cell_matches_focus(wall_id, String(edge.get("cell_path", ""))):
+				continue
+			var from_world := Vector2(edge.get("from_world", Vector2.ZERO))
+			var to_world := Vector2(edge.get("to_world", Vector2.ZERO))
+			label_requests.append({
+				"name": "wall_cell_detail",
+				"text": _wall_cell_detail_text(wall_id, edge),
+				"anchor_world": (from_world + to_world) * 0.5 - Vector2(0.0, height),
+				"outward_world": _wall_label_outward_direction(from_world, to_world),
+				"font_size": 12,
+				"text_color": COLOR_WALL_WIREFRAME_FOCUS,
+			})
+			break
+	label_requests.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return Vector2(a.get("anchor_world", Vector2.ZERO)).y < Vector2(b.get("anchor_world", Vector2.ZERO)).y
+	)
+	var occupied_rects: Array[Rect2] = []
+	var viewport_bounds := _wall_label_viewport_bounds()
+	var canvas_transform := get_viewport().get_canvas_transform()
+	var blocked_screen_segments := _wall_wire_screen_segments(segments, canvas_transform)
+	for request in label_requests:
+		var text := String(request.get("text", ""))
+		var font_size := int(request.get("font_size", 12))
+		var label_size := _wall_screen_label_size(text, font_size)
+		var anchor_screen := canvas_transform * Vector2(request.get("anchor_world", Vector2.ZERO))
+		var outward := Vector2(request.get("outward_world", Vector2.UP)).normalized()
+		if outward.is_zero_approx():
+			outward = Vector2.UP
+		# Labels are axis-aligned screen Controls while wall normals are often diagonal.
+		# Offset by the label rectangle's projection on that normal so no wall line
+		# can run underneath the label, then add the authored outside clearance.
+		var projected_half_extent := (
+			absf(outward.x) * label_size.x * 0.5
+			+ absf(outward.y) * label_size.y * 0.5
+		)
+		var center_offset := WALL_LABEL_OUTWARD_OFFSET + projected_half_extent
+		var preferred_rect := Rect2(anchor_screen + outward * center_offset - label_size * 0.5, label_size)
+		var flipped_rect := Rect2(anchor_screen - outward * center_offset - label_size * 0.5, label_size)
+		var placed_rect := _resolve_wall_label_rect(
+			preferred_rect,
+			flipped_rect,
+			viewport_bounds,
+			occupied_rects,
+			blocked_screen_segments
+		)
+		if placed_rect.size.is_zero_approx():
+			continue
+		occupied_rects.append(placed_rect)
+		_add_wall_screen_label(
+			String(request.get("name", "wall_label")),
+			text,
+			placed_rect,
+			font_size,
+			Color(request.get("text_color", COLOR_DEBUG_TEXT))
+		)
+
+
+func _wall_label_outward_direction(from_world: Vector2, to_world: Vector2) -> Vector2:
+	var tangent := (to_world - from_world).normalized()
+	if tangent.is_zero_approx():
+		return Vector2.UP
+	var normal := Vector2(-tangent.y, tangent.x)
+	var midpoint := (from_world + to_world) * 0.5
+	var plus_inside := _world_point_is_over_visible_floor(midpoint + normal * 32.0)
+	var minus_inside := _world_point_is_over_visible_floor(midpoint - normal * 32.0)
+	if plus_inside != minus_inside:
+		return -normal if plus_inside else normal
+	var floor_center := Vector2.ZERO
+	var floor_cells := _visible_floor_cells()
+	for floor_cell in floor_cells:
+		floor_center += _iso(float(floor_cell.x) + 0.5, float(floor_cell.y) + 0.5)
+	if not floor_cells.is_empty():
+		floor_center /= float(floor_cells.size())
+	return normal if normal.dot(midpoint - floor_center) >= 0.0 else -normal
+
+
+func _world_point_is_over_visible_floor(world_point: Vector2) -> bool:
+	var grid_point := _screen_to_grid_point(world_point)
+	var candidate := Vector2i(floori(grid_point.x), floori(grid_point.y))
+	for floor_cell in _visible_floor_cells():
+		if floor_cell == candidate:
+			return true
+	return false
+
+
+func _wall_label_viewport_bounds() -> Rect2:
+	var viewport_size := get_viewport_rect().size
+	return Rect2(
+		Vector2(WALL_LABEL_VIEWPORT_MARGIN, 48.0),
+		Vector2(
+			maxf(1.0, viewport_size.x - WALL_LABEL_VIEWPORT_MARGIN * 2.0),
+			maxf(1.0, viewport_size.y - 48.0 - WALL_LABEL_VIEWPORT_MARGIN)
+		)
+	)
+
+
+func _wall_screen_label_size(text: String, font_size: int) -> Vector2:
+	var measured_text_size := ThemeDB.fallback_font.get_multiline_string_size(
+		text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		font_size
+	)
+	return Vector2(
+		maxf(92.0, measured_text_size.x + 20.0),
+		maxf(float(font_size + 5) + 12.0, measured_text_size.y + 12.0)
+	)
+
+
+func _resolve_wall_label_rect(
+	preferred_rect: Rect2,
+	flipped_rect: Rect2,
+	bounds: Rect2,
+	occupied_rects: Array[Rect2],
+	blocked_screen_segments: Array[PackedVector2Array] = []
+) -> Rect2:
+	var first_rect := preferred_rect if bounds.encloses(preferred_rect) else flipped_rect
+	var second_rect := flipped_rect if bounds.encloses(preferred_rect) else preferred_rect
+	var bases: Array[Rect2] = [_clamp_wall_label_rect(first_rect, bounds), _clamp_wall_label_rect(second_rect, bounds)]
+	for base_rect in bases:
+		var vertical_step := base_rect.size.y + WALL_LABEL_VERTICAL_GAP
+		var horizontal_step := base_rect.size.x + WALL_LABEL_VERTICAL_GAP
+		for ring in range(9):
+			var offsets: Array[Vector2] = [Vector2.ZERO]
+			if ring > 0:
+				offsets = [
+					Vector2(0.0, vertical_step * ring),
+					Vector2(0.0, -vertical_step * ring),
+					Vector2(horizontal_step * ring, 0.0),
+					Vector2(-horizontal_step * ring, 0.0),
+				]
+			for offset in offsets:
+				var candidate := _clamp_wall_label_rect(Rect2(base_rect.position + offset, base_rect.size), bounds)
+				if _wall_label_rect_is_clear(candidate, occupied_rects, blocked_screen_segments):
+					return candidate
+	# A cramped viewport is safer with one omitted label than with text covering
+	# another label or a wall wire. Normal/full-map layouts always resolve.
+	return Rect2()
+
+
+func _clamp_wall_label_rect(rect: Rect2, bounds: Rect2) -> Rect2:
+	var clamped := rect
+	clamped.position.x = clampf(clamped.position.x, bounds.position.x, bounds.end.x - clamped.size.x)
+	clamped.position.y = clampf(clamped.position.y, bounds.position.y, bounds.end.y - clamped.size.y)
+	return clamped
+
+
+func _wall_label_rect_is_clear(rect: Rect2, occupied_rects: Array[Rect2], blocked_screen_segments: Array[PackedVector2Array]) -> bool:
+	for occupied_rect in occupied_rects:
+		if rect.intersects(occupied_rect, true):
+			return false
+	return not _wall_screen_rect_intersects_segments(rect.grow(3.0), blocked_screen_segments)
+
+
+func _wall_wire_screen_segments(segments: Array[Dictionary], canvas_transform: Transform2D) -> Array[PackedVector2Array]:
+	var result: Array[PackedVector2Array] = []
+	var active_edges := _active_wall_wire_edges(segments)
+	for wire_edge in active_edges:
+		var edge: Dictionary = wire_edge.get("edge", {})
+		var height := float(wire_edge.get("height", wall_height))
+		var from_world := Vector2(edge.get("from_world", Vector2.ZERO))
+		var to_world := Vector2(edge.get("to_world", Vector2.ZERO))
+		result.append(PackedVector2Array([canvas_transform * from_world, canvas_transform * to_world]))
+		result.append(PackedVector2Array([
+			canvas_transform * (from_world - Vector2(0.0, height)),
+			canvas_transform * (to_world - Vector2(0.0, height)),
+		]))
+	for cluster in _wall_wire_endpoint_clusters(active_edges):
+		var cluster_position := Vector2(cluster.get("position", Vector2.ZERO))
+		var cluster_height := maxf(8.0, float(cluster.get("max_height", wall_height)))
+		result.append(PackedVector2Array([
+			canvas_transform * cluster_position,
+			canvas_transform * (cluster_position - Vector2(0.0, cluster_height)),
+		]))
+	return result
+
+
+func _wall_screen_rect_intersects_segments(rect: Rect2, screen_segments: Array[PackedVector2Array]) -> bool:
+	var corners := PackedVector2Array([
+		rect.position,
+		Vector2(rect.end.x, rect.position.y),
+		rect.end,
+		Vector2(rect.position.x, rect.end.y),
+	])
+	for segment in screen_segments:
+		if segment.size() < 2:
+			continue
+		var from_screen := segment[0]
+		var to_screen := segment[1]
+		if rect.has_point(from_screen) or rect.has_point(to_screen):
+			return true
+		for corner_index in range(corners.size()):
+			var next_index := (corner_index + 1) % corners.size()
+			if Geometry2D.segment_intersects_segment(from_screen, to_screen, corners[corner_index], corners[next_index]) != null:
+				return true
+	return false
+
+
+func _add_wall_screen_label(label_name: String, text: String, rect: Rect2, font_size: int, text_color: Color) -> void:
+	var background := ColorRect.new()
+	background.name = "%sBackground" % label_name
+	background.position = rect.position
+	background.size = rect.size
+	background.color = COLOR_WALL_ID_BACKGROUND
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_wall_label_root.add_child(background)
+	var label := Label.new()
+	label.name = label_name
+	label.text = text
+	label.position = Vector2(10.0, 6.0)
+	label.size = rect.size - Vector2(20.0, 12.0)
+	label.clip_text = true
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", text_color)
+	label.add_theme_color_override("font_shadow_color", COLOR_LABEL_SHADOW)
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	background.add_child(label)
+
+
+func _wall_cell_detail_text(wall_id: String, edge: Dictionary) -> String:
+	var cell_path := String(edge.get("cell_path", ""))
+	var path_parts := cell_path.split("/", false)
+	var group_name := path_parts[path_parts.size() - 3] if path_parts.size() >= 3 else wall_id
+	var cell_name: String = path_parts[path_parts.size() - 1] if not path_parts.is_empty() else "WallCell"
+	var opening_kind := int(edge.get("opening_kind", ApartmentWallCellScript.OpeningKind.NONE))
+	var opening_text := "NONE"
+	if opening_kind == ApartmentWallCellScript.OpeningKind.DOOR:
+		opening_text = "DOOR"
+	elif opening_kind == ApartmentWallCellScript.OpeningKind.WINDOW:
+		opening_text = "WINDOW"
+	var cell_node := get_node_or_null(NodePath(cell_path))
+	var socket_path := "없음"
+	if cell_node != null and cell_node.has_node("AttachmentSocket"):
+		socket_path = "%s/AttachmentSocket" % cell_name
+	return "%s / %s\nenabled=%s  |  Opening=%s\nAttachmentSocket=%s" % [
+		group_name,
+		cell_name,
+		str(bool(edge.get("enabled", true))),
+		opening_text,
+		socket_path,
+	]
+
+
+func wall_screen_label_rects() -> Array[Rect2]:
+	var rects: Array[Rect2] = []
+	if _wall_label_root == null:
+		return rects
+	for child in _wall_label_root.get_children():
+		if child is ColorRect:
+			var background := child as ColorRect
+			rects.append(Rect2(background.position, background.size))
+	return rects
+
+
+func _select_wall_cell_at(world_position: Vector2) -> bool:
+	var candidate := _wall_cell_hit_candidate(world_position)
+	if candidate.is_empty():
+		if not String(debug_focus_wall_cell_path).is_empty() or not debug_focus_wall_id.is_empty():
+			debug_focus_wall_cell_path = NodePath()
+			debug_focus_wall_id = ""
+			_redraw_wall_wireframe_overlay()
+			return true
+		return false
+	debug_focus_wall_id = String(candidate.get("wall_id", ""))
+	debug_focus_wall_cell_path = NodePath(String(candidate.get("cell_path", "")))
+	_redraw_wall_wireframe_overlay()
+	return true
+
+
+func _wall_cell_hit_candidate(world_position: Vector2) -> Dictionary:
+	var nearest: Dictionary = {}
+	var nearest_distance := WALL_CELL_CLICK_TOLERANCE
+	for wire_edge in _active_wall_wire_edges(_wall_segments_from_scene_nodes()):
+		var edge: Dictionary = wire_edge.get("edge", {})
+		var from_world := Vector2(edge.get("from_world", Vector2.ZERO))
+		var to_world := Vector2(edge.get("to_world", Vector2.ZERO))
+		var closest := Geometry2D.get_closest_point_to_segment(world_position, from_world, to_world)
+		var distance := closest.distance_to(world_position)
+		if distance > nearest_distance:
+			continue
+		nearest_distance = distance
+		nearest = {
+			"wall_id": String(wire_edge.get("wall_id", "")),
+			"cell_path": String(edge.get("cell_path", "")),
+			"unit_index": int(wire_edge.get("unit_index", 0)),
+		}
+	return nearest
 
 
 func _redraw_wall_wireframe_overlay() -> void:
@@ -4485,6 +4989,8 @@ func _redraw_wall_wireframe_overlay() -> void:
 		_wall_wireframe_layer.call("clear_commands")
 	if _wall_node_authority_active() and _wall_id_layer != null:
 		_clear_layer_children(_wall_id_layer)
+	if _wall_label_root != null:
+		_clear_layer_children(_wall_label_root)
 	_draw_wall_wireframe_overlay()
 
 
@@ -5511,13 +6017,11 @@ func _redraw_reveal_sensitive_layers() -> void:
 	_clear_layer_children(_wall_layer)
 	_clear_layer_children(_door_layer)
 	_clear_layer_children(_wall_id_layer)
-	if _wall_wireframe_layer != null and _wall_wireframe_layer.has_method("clear_commands"):
-		_wall_wireframe_layer.call("clear_commands")
 	_clear_layer_children(_occlusion_debug_layer)
 	_clear_layer_children(_room_measurement_layer)
 	_draw_walls()
 	_draw_doors_and_window_placeholders()
-	_draw_wall_wireframe_overlay()
+	_redraw_wall_wireframe_overlay()
 	_draw_room_measurement_overlay()
 	_apply_wall_inspection_transparency()
 	_update_label_visibility()
@@ -6286,6 +6790,8 @@ func _update_label_visibility() -> void:
 		_floor_grid_debug_layer.visible = _has_primary_debug_mode()
 	if _wall_id_layer != null:
 		_wall_id_layer.visible = show_wall_ids
+	if _wall_label_root != null:
+		_wall_label_root.visible = show_wall_ids
 	if _wall_wireframe_layer != null:
 		_wall_wireframe_layer.visible = show_wall_ids or show_room_measurements
 	if _grid_coord_layer != null:

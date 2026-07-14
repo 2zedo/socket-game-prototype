@@ -34,6 +34,14 @@ func has_command_prefix(prefix: String) -> bool:
 	return false
 
 
+func command_count_with_prefix(prefix: String) -> int:
+	var count := 0
+	for command in _commands:
+		if String(command.get("name", "")).begins_with(prefix):
+			count += 1
+	return count
+
+
 func command_color(command_name: String) -> Color:
 	for command in _commands:
 		if String(command.get("name", "")) == command_name:

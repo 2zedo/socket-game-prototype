@@ -8,6 +8,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment wall and editor guide readability
+
+- Editor: Added Environment root `editor_guide_mode` (`CLEAN`/`STRUCTURE`/`OBJECT`/`ALL`) and optional `editor_focus_object_id`. The existing lightweight `@tool` guide node now controls room, wall/opening/socket, object polygon, and height/socket guide groups while preserving Godot's native CollisionPolygon2D editing and hiding all guides at runtime.
+- W debug: Merged active WallCell endpoints within 2 px, ignores collinear seams, distinguishes outer/inner non-collinear junctions, marks 3-way shared points, and retains door/window colors. Default labels are one per WallGroup; clicked Cell detail reports enabled/opening/socket state. Screen labels clamp/flip, deconflict vertically, and reject positions intersecting another label or any base/top/end wire.
+- MCP/validation: Captured before/after Environment and Shell screens, exercised all four editor modes, native Polygon selection, W with V normal/transparent/hidden, clicked WorkBackWall Cell05, and a guide-free Playable run. Fresh editor and game logs contain no new errors or warnings. Status: `KEEP_CANDIDATE`.
+
 ### Apartment Node geometry ownership finalization
 
 - Authority: Split the current Environment snapshot from `_legacy_resource_object_footprints()`. All 18 active objects read exact Scene transforms, visual/polygon/marker geometry, and physical Socket parents; Resource entries supply logical metadata only. Scene groups and metadata must each match the canonical 18 ids. Any missing/invalid Scene node now warns and yields no fallback visual, hit, occupancy, interaction, or blocker geometry.

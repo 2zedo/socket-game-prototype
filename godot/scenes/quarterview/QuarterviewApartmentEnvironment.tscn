@@ -30,12 +30,13 @@ void fragment() {
 shader = SubResource("Shader_fridge_checker_cleanup")
 
 [node name="QuarterviewApartmentEnvironment" type="Node2D"]
-editor_description = "ROTATE_90 아파트 환경 단일 정본. 18개 오브젝트 geometry는 EditableObjectNodes의 Scene Node만 편집하고 Resource geometry fallback은 사용하지 않습니다."
+editor_description = "ROTATE_90 아파트 환경 단일 정본. Inspector의 Environment Editor Guides에서 CLEAN/STRUCTURE/OBJECT/ALL과 editor_focus_object_id를 선택합니다. 18개 오브젝트 geometry는 EditableObjectNodes의 Scene Node만 편집하고 Resource geometry fallback은 사용하지 않습니다."
 script = ExtResource("1_shell_candidate")
 object_footprint_set = ExtResource("2_object_footprints")
 full_map_camera_center_offset = Vector2(1, 0)
 full_map_camera_zoom = Vector2(0.66, 0.66)
 show_debug_labels = false
+editor_guide_mode = 0
 
 [node name="Floor" type="Node2D" parent="."]
 editor_description = "실제 바닥 셀 정본. 아래 네 TileMapLayer를 선택해 셀을 직접 칠하고 지웁니다."
@@ -65,24 +66,24 @@ floor_id = &"work_power_area"
 korean_name = "작업·전력 공간"
 
 [node name="EditorGuides" type="Node2D" parent="."]
-editor_description = "에디터 전용 가이드 루트. 하위 네 그룹을 Scene Tree 눈 아이콘으로 각각 켜고 끄며, 게임 실행 시 전체가 자동으로 숨겨집니다."
+editor_description = "에디터 전용 가이드 루트. Environment root의 editor_guide_mode(CLEAN/STRUCTURE/OBJECT/ALL)가 하위 그룹을 전환하며, 눈 아이콘으로 임시 개별 제어도 할 수 있습니다. 게임 실행 시 전체가 자동으로 숨겨집니다."
 z_index = 1000
 script = ExtResource("10_editor_guides")
 
 [node name="RoomGuides" type="Node2D" parent="EditorGuides"]
-editor_description = "방 이름·바닥색 범례·어두운 논리 방 외곽선. 이 그룹의 눈 아이콘으로 방 가이드만 숨깁니다."
+editor_description = "STRUCTURE/ALL에서 보이는 방 이름·바닥색 범례·alpha 0.08 이하 논리 방 가이드."
 
 [node name="RoomOutlineGuides" type="Node2D" parent="EditorGuides/RoomGuides"]
 editor_description = "RoomArea Polygon에서 자동 파생된 에디터 전용 외곽선."
 
 [node name="WallGuides" type="Node2D" parent="EditorGuides"]
-editor_description = "WallCell 하단·윗변·끝선과 개구부를 얇은 선으로 보여주는 에디터 전용 가이드."
+editor_description = "STRUCTURE/ALL에서 WallCell 하단·윗변·끝선, 문·창문, Socket을 보여주는 에디터 전용 가이드."
 
 [node name="ObjectGuides" type="Node2D" parent="EditorGuides"]
-editor_description = "Sprite2D 또는 VisualPreview 범위에서 자동 파생된 얇은 오브젝트 외곽선."
+editor_description = "모든 모드에서 Sprite2D 또는 VisualPreview 외곽을 보여줍니다. OBJECT/ALL은 Body·Selection·Interaction 사용자 정의 가이드도 표시합니다."
 
 [node name="HeightAndSocketGuides" type="Node2D" parent="EditorGuides"]
-editor_description = "현재 편집 중인 오브젝트의 BasePoint·TopPoint·Socket만 보여주는 에디터 전용 가이드."
+editor_description = "OBJECT/ALL에서 선택했거나 editor_focus_object_id로 지정한 오브젝트의 BasePoint·TopPoint·Socket만 보여주는 가이드."
 
 [node name="EntranceRoomLabel" type="Label" parent="EditorGuides/RoomGuides"]
 position = Vector2(510, 205)

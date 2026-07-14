@@ -1142,7 +1142,7 @@ func test_scene_node_wall_wireframe_tracks_w_m_focus_and_hidden_visual_state() -
 	assert_true(bool(wireframe.call("has_command_prefix", "wall_wire_work_back_wall_00_base")))
 	assert_true(bool(wireframe.call("has_command_prefix", "wall_wire_work_back_wall_00_top")))
 	assert_true(bool(wireframe.call("has_command_prefix", "wall_wire_entrance_wall_04_base")), "Door opening Cell must have a wireframe boundary.")
-	assert_gt(shell.get_node("WallIdLayer").get_child_count(), 0, "W must no longer be empty for Scene Node walls.")
+	assert_gt(shell.get_node("DebugOverlayLayer/WallScreenLabels").get_child_count(), 0, "W labels must render above world-space wireframes.")
 	var focused_cell: Node2D = shell.get_node("Walls/WorkBackWall/WallCells/Cell02")
 	shell.debug_focus_wall_cell_path = focused_cell.get_path()
 	shell._redraw_wall_wireframe_overlay()

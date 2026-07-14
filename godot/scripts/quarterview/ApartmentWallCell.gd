@@ -39,6 +39,7 @@ enum InspectionMode { NORMAL, TRANSPARENT, HIDDEN }
 var _authority_active := true
 var _inspection_mode: InspectionMode = InspectionMode.NORMAL
 var _revealed := false
+var _editor_structure_guides_visible := false
 
 
 func _ready() -> void:
@@ -64,8 +65,8 @@ func _sync_geometry() -> void:
 	visual.color = wall_color
 	occlusion_visual.color = Color(0.25, 0.26, 0.25, 0.9)
 	editor_opening_preview.points = PackedVector2Array([Vector2.ZERO, end_offset])
-	editor_opening_preview.default_color = Color(0.2, 0.95, 1.0, 0.95) if opening_kind == OpeningKind.WINDOW else Color(1.0, 0.72, 0.22, 0.95)
-	editor_opening_preview.visible = Engine.is_editor_hint() and opening_kind != OpeningKind.NONE
+	editor_opening_preview.default_color = Color(0.30, 0.70, 1.0, 0.95) if opening_kind == OpeningKind.WINDOW else Color(0.28, 1.0, 0.54, 0.95)
+	editor_opening_preview.visible = Engine.is_editor_hint() and _editor_structure_guides_visible and opening_kind != OpeningKind.NONE
 	editor_description = "%s · %s · %s · Cell %02d. Root 이동은 Visual/Collision/Socket과 부착물을 함께 이동합니다. enabled·visual_enabled·V는 벽 시각/판정만 바꾸고 AttachmentSocket 자식은 유지하며, Root visible=false만 전체 부착 subtree를 의도적으로 숨깁니다." % [
 		String(wall_id),
 		room_name_ko,
@@ -140,6 +141,12 @@ func set_group_context(group_wall_id: StringName, group_room_name: String, group
 func set_inspection_mode(mode: int) -> void:
 	_inspection_mode = mode as InspectionMode
 	_refresh_visual_state()
+
+
+func set_editor_structure_guides_visible(active: bool) -> void:
+	_editor_structure_guides_visible = active
+	if is_instance_valid(editor_opening_preview):
+		editor_opening_preview.visible = Engine.is_editor_hint() and active and opening_kind != OpeningKind.NONE
 
 
 func set_authority_active(active: bool) -> void:

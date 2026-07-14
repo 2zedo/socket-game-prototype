@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/quarterview/ApartmentWallCell.gd" id="1_script"]
 
 [node name="ApartmentWallCell" type="Node2D"]
-editor_description = "128×64 이소메트릭 바닥 셀의 벽선 한 칸. Root를 직접 선택·이동·숨김 처리합니다."
+editor_description = "128×64 이소메트릭 바닥 셀의 벽선 한 칸. Root를 직접 선택·이동·숨김 처리하며, 사용자 정의 외곽·Opening 가이드는 Environment의 STRUCTURE/ALL 모드에서 표시됩니다."
 script = ExtResource("1_script")
 
 [node name="StartPoint" type="Marker2D" parent="."]
@@ -50,11 +50,12 @@ editor_description = "이 벽 한 칸의 이동 충돌. Cell Root 이동을 그�
 polygon = PackedVector2Array(-2.683282, 5.366563, 61.31672, 37.366562, 66.68328, 26.633438, 2.683282, -5.366563)
 
 [node name="AttachmentSocket" type="Marker2D" parent="."]
-editor_description = "이 벽 한 칸에 붙는 장비·포스터·전선관의 선택적 Socket. Cell 이동을 함께 따릅니다."
+editor_description = "이 벽 한 칸에 붙는 장비·포스터·전선관의 선택적 Socket. Cell 이동을 함께 따르며 STRUCTURE/ALL 가이드에서는 자홍 마커로 표시됩니다."
 gizmo_extents = 0.0
 
 [node name="EditorOpeningPreview" type="Line2D" parent="."]
 visible = false
+editor_description = "문은 초록, 창문은 파랑으로 표시되는 에디터 전용 개구부 선. CLEAN/OBJECT 및 게임 실행에서는 숨깁니다."
 width = 8.0
 points = PackedVector2Array(0, 0, 64, 32)
 default_color = Color(1, 0.72, 0.22, 0.95)

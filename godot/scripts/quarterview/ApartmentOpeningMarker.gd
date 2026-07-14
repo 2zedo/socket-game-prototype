@@ -32,7 +32,7 @@ func _sync_preview() -> void:
 	if not is_instance_valid(start_point) or not is_instance_valid(end_point) or not is_instance_valid(editor_preview):
 		return
 	editor_preview.points = PackedVector2Array([start_point.position, end_point.position])
-	editor_preview.default_color = Color(0.2, 0.95, 1.0, 0.95) if opening_type == OpeningType.WINDOW else Color(1.0, 0.72, 0.22, 0.95)
+	editor_preview.default_color = Color(0.30, 0.70, 1.0, 0.95) if opening_type == OpeningType.WINDOW else Color(0.28, 1.0, 0.54, 0.95)
 	if Engine.is_editor_hint():
 		_sync_editor_marker_visibility()
 
