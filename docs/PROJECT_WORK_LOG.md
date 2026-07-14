@@ -8,6 +8,12 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Apartment Floor Scene split
+
+- Moved the four apartment TileMapLayers into `maps/apartment/ApartmentFloor.tscn` as the single Floor-cell authority. Environment now assembles one default-transform `Floor` instance, while the established `Floor/EntranceFloor`, `Floor/BathroomFloor`, `Floor/LivingFloor`, and `Floor/WorkFloor` paths remain unchanged.
+- Preserved all 99 cells exactly: Entrance 6, Bathroom 7, Living 54, and Work 32, including every cell coordinate, source/atlas coordinate, the shared development TileSet, layer transforms, Korean descriptions, and room colors. Environment, Shell, and Playable contain no local Floor child data or editable-child override.
+- MCP opened the Floor Scene independently, added and undid a temporary cell, then reopened Environment and ran Shell/Playable. The assembled hierarchy, screen geometry, P/M/N/G overlays, and click movement remained intact with no new editor or runtime error. Floor targeted GUT passed 7 tests/355 assertions, and full validation passed 177 tests/4910 assertions. Status remains `KEEP_CANDIDATE`; `ApartmentStructure.tscn` is the next approved separation stage, not part of this change.
+
 ### Godot Scene structure and map-authoring audit
 
 - Inventoried all 62 tracked Godot Scenes and their roots, Scripts, child dependencies, reverse references, owned data, direct-run role, and KEEP/REVIEW/SPLIT/MOVE disposition. The set is 40 project Scenes plus 22 vendored GUT Scenes; every path is listed in `TECHNICAL_MAP.md`.

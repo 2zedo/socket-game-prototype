@@ -61,7 +61,8 @@ Do not modify by default:
 | `godot/scenes/Apartment.tscn` | `godot/scripts/Apartment.gd` | protected top-view room |
 | `godot/scenes/QuarterviewMain.tscn` | `godot/scripts/QuarterviewMain.gd` | production candidate |
 | `godot/scenes/quarterview/QuarterviewRoom.tscn` | `godot/scripts/quarterview/QuarterviewRoom.gd` | candidate room |
-| `godot/scenes/quarterview/QuarterviewApartmentEnvironment.tscn` | `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` | reusable apartment floor/wall/object authority |
+| `godot/scenes/quarterview/QuarterviewApartmentEnvironment.tscn` | `godot/scripts/quarterview/QuarterviewApartmentShellCandidate.gd` | apartment assembly plus structure/object provider authority |
+| `godot/scenes/quarterview/maps/apartment/ApartmentFloor.tscn` | no root Script; four `ApartmentFloorLayer` instances | apartment Floor cell editing authority |
 | `godot/scenes/quarterview/QuarterviewApartmentShellCandidate.tscn` | inherited Environment script | design/debug wrapper; M/P/N/W/V/F1 |
 | `godot/scenes/quarterview/QuarterviewApartmentPlayable.tscn` | Environment + external-provider `QuarterviewRoom` | playable apartment candidate |
 | `godot/scenes/quarterview/samples/QuarterviewReusableMapSampleEnvironment.tscn` | `godot/scripts/quarterview/QuarterviewReusableMapSample.gd` | two-room component-reuse validation Environment |
@@ -71,23 +72,23 @@ Do not modify by default:
 
 ## Godot Scene Inventory and Map Authoring Audit
 
-This 2026-07-14 read-only audit matched every one of the 62 tracked Scene files against Scene text, Script/Resource references, fixed test paths, and project.godot. Generated godot/.godot editor metadata is excluded from reverse-reference decisions. Separately, the godot-ai MCP session godot@2212 opened Main, Apartment, the Apartment Environment/Shell/Playable, QuarterviewRoom, all three reusable-sample Scenes, ApartmentWallCell, and ApartmentWallSegment and returned that subset's live hierarchy and Inspector properties. No Scene, Script, Resource, Node, or geometry was changed.
+The 2026-07-14 read-only audit matched the then-current 62 tracked Scene files against Scene text, Script/Resource references, fixed test paths, and project.godot. The 2026-07-15 Floor split added one tracked map-authority Scene, so the current inventory is 63. Generated godot/.godot editor metadata is excluded from reverse-reference decisions. Separately, godot-ai MCP opened the listed assembly/component Scenes and confirmed their live hierarchy and Inspector properties.
 
 | Role | Count | Meaning in this audit |
 | --- | ---: | --- |
 | Production | 8 | Main, current top-view room/player, and five production UI Scenes |
-| Map editing authority | 1 | The current Apartment Environment Scene |
+| Map editing authority | 2 | Apartment Environment assembly/structure authority plus the separate Apartment Floor authority |
 | Debug/Shell | 1 | The inherited Apartment debug wrapper |
 | Playable | 2 | QuarterviewMain and the latest Apartment Playable candidate |
 | Common Component | 9 | Interactable, QuarterviewRoom runtime, Floor/Room/Wall/Opening/Object components |
 | Sample | 3 | The two-room reuse fixture Environment/Shell/Playable |
 | Test | 22 | Vendored GUT addon Scenes |
 | Legacy | 16 | Prototype/blockout/sandbox Scenes outside the active production and latest apartment paths |
-| **Total** | **62** | Matches the complete godot/**/*.tscn file list |
+| **Total** | **63** | Matches the complete godot/**/*.tscn file list after the Floor split |
 
 Direct run below means a Scene supplies enough context for a meaningful project/editor run. Component means Godot can technically open it, but it is not a gameplay entry.
 
-### Project Scene inventory (40)
+### Project Scene inventory (41)
 
 | Scene | Root / Script | Role | Direct run | Child Scene dependencies | Incoming Scene/Script/Test references | Major owned data | Proposal |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -112,7 +113,8 @@ Direct run below means a Scene supplies enough context for a meaningful project/
 | scenes/prototypes/SandboxTestModePanel.tscn | Control / matching Script | Legacy | Component | — | QuarterviewGameplaySandbox.gd | Sandbox test-mode adapter UI | KEEP with sandbox bundle |
 | scenes/prototypes/TitleMenuPrototype.tscn | Control / TitleMenuPrototype.gd | Legacy | Yes | Script self-reload | PrototypeHub | Title/pause flow experiment | REVIEW |
 | scenes/prototypes/quarterview/WorkDevicesAtlasPreview.tscn | Control / matching Script | Legacy | Yes | — | No active source/test reference | Work-device atlas preview | MOVE to dev previews or ARCHIVE |
-| scenes/quarterview/QuarterviewApartmentEnvironment.tscn | Node2D / QuarterviewApartmentShellCandidate.gd | Map editing authority | Yes, inspection | FloorLayer; RoomArea; OpeningMarker; WallCell; both editable-object components | Apartment Shell/Playable; apartment tests | Floor, logical rooms, openings, 58 WallCells, 18 objects, camera, editor guides, provider/debug exports | KEEP Scene; SPLIT Script responsibilities |
+| scenes/quarterview/QuarterviewApartmentEnvironment.tscn | Node2D / QuarterviewApartmentShellCandidate.gd | Map editing authority | Yes, inspection | ApartmentFloor; RoomArea; OpeningMarker; WallCell; both editable-object components | Apartment Shell/Playable; apartment tests | Assembly, logical rooms, openings, 58 WallCells, 18 objects, camera, editor guides, provider/debug exports | KEEP Scene; next SPLIT Structure |
+| scenes/quarterview/maps/apartment/ApartmentFloor.tscn | Node2D / no root Script | Map editing authority | Yes, inspection/editing | ApartmentFloorLayer ×4 | Apartment Environment; apartment playable test | Exact 99 Floor cells, room layer identities, TileSet-backed TileMap data | KEEP as sole Floor authority |
 | scenes/quarterview/QuarterviewApartmentShellCandidate.tscn | Inherited Environment / inherited Script | Debug/Shell | Yes | Inherits Apartment Environment | apartment layout/guides/playable/dependency tests | No local geometry override; debug review identity only | KEEP; later RENAME to ApartmentDebugShell |
 | scenes/quarterview/QuarterviewApartmentPlayable.tscn | Inherited Environment / inherited Script | Playable | Yes | Inherits Apartment Environment; adds QuarterviewRoom | apartment playable/dependency tests | Gameplay instance and external-provider wiring only | KEEP |
 | scenes/quarterview/QuarterviewRoom.tscn | Node2D / QuarterviewRoom.gd | Common Component | Yes, legacy standalone; also component | — | QuarterviewMain; Apartment/Sample Playable; room/playable/dependency tests | Player/layers, click movement, hover/use, external-provider consumer plus legacy standalone fallback | KEEP; eventual SPLIT |
@@ -174,7 +176,9 @@ All rows below are Test role and must remain a single vendored addon bundle. Non
     └─ QuarterviewRoom.tscn            (standalone legacy-provider mode)
 
     QuarterviewApartmentEnvironment.tscn
-    ├─ FloorLayer ×4 / RoomArea ×4 / OpeningMarker ×5
+    ├─ ApartmentFloor.tscn
+    │  └─ ApartmentFloorLayer ×4
+    ├─ RoomArea ×4 / OpeningMarker ×5
     ├─ WallCell ×58
     └─ EditableObject and EditableEnvironmentObject instances ×18
 
@@ -196,7 +200,7 @@ All rows below are Test role and must remain a single vendored addon bundle. Non
 | Reference kind | Current exact source | Rename/move risk |
 | --- | --- | --- |
 | Project entry | project.godot run/main_scene → res://scenes/Main.tscn | Main move breaks startup; protected |
-| Scene ext_resource / inheritance | Main, QuarterviewMain, Apartment Environment/Shell/Playable, Sample trio | Godot UID may help editor moves, but literal paths and tests still require coordinated updates |
+| Scene ext_resource / inheritance | Main, QuarterviewMain, Apartment Floor/Environment/Shell/Playable, Sample trio | Godot UID may help editor moves, but literal paths and tests still require coordinated updates |
 | Exported PackedScene | Apartment.gd player_scene and interactable_scene, assigned in Apartment.tscn | Production runtime spawn fails if either assignment/path breaks |
 | Script preload/change_scene | PrototypeHub.gd registry; QuarterviewGameplaySandbox.gd components; TitleMenuPrototype self-reload | Prototype move requires Script registry changes |
 | Resource load | QuarterviewRoom.gd loads RoomObjectDefinition resources; Environment/Sample Scenes assign footprint Resources to their root Script exports | Scene move can leave Resource/provider tests stale even when the Scene opens |
@@ -211,7 +215,7 @@ Only Apartment.gd exports PackedScene dependencies. No other project Script expo
 
 | Concern | Scene authority / exact NodePath | Runtime consumer |
 | --- | --- | --- |
-| Floor cells | QuarterviewApartmentEnvironment/Floor/EntranceFloor, BathroomFloor, LivingFloor, WorkFloor | Environment provider and debug grid |
+| Floor cells | `maps/apartment/ApartmentFloor.tscn` → `Floor/EntranceFloor`, `BathroomFloor`, `LivingFloor`, `WorkFloor`; Environment instances this root once at default transform | Environment provider, pathing, M/N/P/G debug, and Playable movement |
 | TileSet | res://resources/quarterview/dev_apartment_floor_tileset.tres; 128×64 isometric development atlas | Four TileMapLayers |
 | Logical rooms | RoomAreas/EntranceArea, BathroomArea, LivingArea, WorkArea → Area2D/CollisionPolygon2D | M and room/path membership |
 | Wall groups | Walls/WorkBackWall, WorkLeftWall, WorkRightWall, EntranceWall, EntranceInnerWall, LivingRightWall, LivingFrontCutaway, WorkFrontSharedWall, BathroomWall, BathroomRightWall | Group labels and cell aggregation |
@@ -295,7 +299,7 @@ The target should separate authoring surfaces only where it removes a real editi
 
 | Candidate | Purpose / included Nodes | Instances | Source | When / completion |
 | --- | --- | --- | --- | --- |
-| ApartmentFloor.tscn | Floor root and four TileMapLayers | Shared FloorLayer component | Environment/Floor | Stage 2; this child Scene becomes the sole Floor edit authority, with zero instance transform and no Environment-local child overrides |
+| ApartmentFloor.tscn | Floor root and four TileMapLayers | Shared FloorLayer component | Former Environment/Floor children | **Completed 2026-07-15**; sole Floor edit authority, zero Environment instance transform, no Editable Children or local child overrides |
 | ApartmentStructure.tscn | RoomAreas, Walls/WallCells, Openings, wall-attached children | RoomArea, WallCell, later WallGroup | Environment structural roots | Stages 3–4; this child Scene becomes the sole Structure edit authority, with zero instance transform, no Editable Children/local overrides, and unchanged M/N/W/V, sockets, and collision |
 | ApartmentDebugController.tscn | Runtime debug layers, labels, panels, help | No map geometry | Environment root Script responsibilities | Stage 6; only DebugShell processes P/M/N/W/V |
 | ApartmentObjects.tscn | Free/floor objects plus parent/ceiling anchors where cross-Scene mounts are explicit | Editable object components | Environment object roots | Stage 4 conditional; all 18 world transforms and socket tracking unchanged |
@@ -336,7 +340,7 @@ The existing reusable sample already serves as the first fresh assembly fixture.
 | Stage | Changed files / implementation | Existing behavior to protect | Automated validation | godot-ai MCP and user check | Rollback / next gate |
 | --- | --- | --- | --- | --- | --- |
 | 1. Confirm roles and names | Documentation and path-impact list only | All current paths and entry points | Complete Scene inventory and reverse-reference check | Open current Environment/Shell/Playable; user approves target names | Revert docs only; approval required before file moves |
-| 2. Split Floor | New ApartmentFloor as sole Floor edit authority; Environment instances it at zero transform with Editable Children off and no local child overrides | 99 cells, TileSet, room colors, no overrides in Environment/Shell/Playable | Cell/TileSet equality, Environment-source override rejection, instance-transform-zero check, and three-scene startup | Edit the child Scene only, change one cell and undo; user compares Environment/Shell/Playable | Revert Floor commit; proceed when byte/behavior parity and single-authority tests pass |
+| 2. Split Floor — completed 2026-07-15 | ApartmentFloor is the sole Floor edit authority; Environment instances it at zero transform with Editable Children off and no local child overrides | 99 cells, TileSet, room colors, no overrides in Environment/Shell/Playable | Cell/source/atlas equality, Environment-source override rejection, instance-transform-zero check, and three-scene startup | MCP edited one child-Scene cell and undid it; Environment/Shell/Playable and movement remained identical | Floor commit is independently revertible; Stage 3 Structure split is next |
 | 3. Split Structure | New ApartmentStructure as sole RoomArea/Wall/Opening authority; Environment uses a zero-transform instance without Editable Children/local overrides | 58 Cells, five openings, M/N/W/V, door collision | hierarchy/count/path-query/navigation tests plus Environment-source override and instance-transform checks | Edit the child Scene only, move one Cell/room point/opening then undo; user checks editor clarity | Revert Structure commit; proceed only with unchanged world geometry and single authority |
 | 4. Normalize wall groups and object boundary | Instance common WallGroup one group at a time; decide conditional Objects Scene | Socket parenting, all 18 transforms, no retired geometry regression | per-group edge/socket/world-transform tests | Inspect Cell/socket tracking and P selection; user approves mount workflow | Revert latest group only; Objects split waits for explicit mount solution |
 | 5. Make Environment assembly/provider-only | Extract map query/provider Script from Shell Script | Floor/room/wall/object authority and Playable queries | provider contract, zero fallback, startup tests | Inspector shows assembly children; Shell/Playable map equality | Restore old Script attachment; proceed when provider API is stable |
@@ -443,7 +447,7 @@ Additional known risks are characterization findings, not changes made by this a
 
 ## Apartment Shell Candidate Editing
 
-`QuarterviewApartmentEnvironment` is the single ROTATE_90 Scene-Node authority for floor cells, logical room polygons, wall/opening geometry, navigation, and objects. `QuarterviewApartmentShellCandidate` inherits that PackedScene for design/debug review. `QuarterviewApartmentPlayable` inherits the same PackedScene and adds one `QuarterviewRoom` gameplay instance in opt-in external-environment mode. In that mode the legacy room builder stays empty and hover/click, click-to-move, UsePoint arrival, and interaction signals query the Environment's Scene-Node geometry and walkable-cell graph. Existing `QuarterviewRoom` behavior and non-ROTATE_90 candidate checks retain the legacy calculated fallback. These scenes are candidates, not production wiring.
+`ApartmentFloor.tscn` is the single ROTATE_90 Floor-cell authority. `QuarterviewApartmentEnvironment` instances it once and remains the assembly plus logical-room/wall/opening/navigation/object provider authority. `QuarterviewApartmentShellCandidate` inherits that Environment for design/debug review. `QuarterviewApartmentPlayable` inherits the same Environment and adds one `QuarterviewRoom` gameplay instance in opt-in external-environment mode. In that mode the legacy room builder stays empty and hover/click, click-to-move, UsePoint arrival, and interaction signals query the Environment's Scene-Node geometry and walkable-cell graph. Existing `QuarterviewRoom` behavior and non-ROTATE_90 candidate checks retain the legacy calculated fallback. These scenes are candidates, not production wiring.
 
 ### Quarterview component reuse sample
 
@@ -455,7 +459,7 @@ The sample owns a sample-only walk/debug controller but reuses the complete Wall
 
 ### 아파트 환경 편집 방법
 
-- 실제 구조 수정은 `QuarterviewApartmentEnvironment.tscn`, 판정 확인은 `QuarterviewApartmentShellCandidate.tscn`, 플레이어 조작 확인은 `QuarterviewApartmentPlayable.tscn`에서 한다.
+- 바닥 Cell 수정은 `maps/apartment/ApartmentFloor.tscn`의 `Floor/<Room>Floor`에서 한다. RoomArea·WallCell·Opening·Object 구조 수정은 아직 `QuarterviewApartmentEnvironment.tscn`, 판정 확인은 `QuarterviewApartmentShellCandidate.tscn`, 플레이어 조작 확인은 `QuarterviewApartmentPlayable.tscn`에서 한다.
 - 오브젝트는 `EditableObjectNodes/<Object>` 아래의 Root 위치, `Visual/Sprite2D` 또는 `VisualPreview`, `Body/BodyPolygon`, `SelectionArea/SelectionPolygon`, `InteractionArea/InteractionPolygon`, `UsePoint` 순으로 수정한다. 환경 오브젝트에는 Interaction/UsePoint가 없다.
 - 바닥은 `Floor/<Room>Floor` TileMapLayer에서 칠하고, 벽은 `Walls/<WallGroup>/WallCells/CellNN`, 벽부착 장비는 해당 Cell의 `AttachmentSocket`에서 수정한다.
 - Environment 루트 `/QuarterviewApartmentEnvironment`의 `Environment Editor Guides > editor_guide_mode`는 `CLEAN`(실물+옅은 Visual 외곽), `STRUCTURE`(Room/Wall/Opening/WallCell/Socket), `OBJECT`(오브젝트 판정과 Base/Top/Socket), `ALL`(전체)을 전환한다. `OBJECT`에서 `editor_focus_object_id`를 지정하면 그 오브젝트만 사용자 정의 가이드를 표시하며, 비워 두면 Scene Tree에서 선택한 오브젝트를 따른다. 판정 Polygon을 직접 선택했을 때의 Godot 기본 꼭짓점 편집은 모드와 무관하게 유지된다.

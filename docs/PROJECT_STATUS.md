@@ -18,7 +18,7 @@
 - Previous root-level design and migration documents are archived under `docs/old/`.
 - `Main.tscn` / DAY1 remains protected and is not replaced by this documentation cleanup.
 - `QuarterviewMain` remains a production candidate scene, not the project start scene.
-- `QuarterviewApartmentEnvironment` is the reusable coordinate-based apartment authority. `QuarterviewApartmentShellCandidate` is its design/debug wrapper, and `QuarterviewApartmentPlayable` combines the same Environment with opt-in `QuarterviewRoom` movement/interaction without changing the project start scene.
+- `ApartmentFloor.tscn` is the reusable apartment Floor-cell authority. `QuarterviewApartmentEnvironment` assembles it with the remaining room/wall/opening/object authority, `QuarterviewApartmentShellCandidate` is the design/debug wrapper, and `QuarterviewApartmentPlayable` combines the same Environment with opt-in `QuarterviewRoom` movement/interaction without changing the project start scene.
 - QuarterviewMain candidate features are local/mock unless explicitly wired later:
   - click movement and hover affordance
   - portable Phone opened with `P`
@@ -29,6 +29,7 @@
 
 ## Latest Work
 
+- Split the four apartment Floor TileMapLayers into `maps/apartment/ApartmentFloor.tscn` without changing any of the 99 cells, source/atlas coordinates, TileSet, transforms, colors, NodePaths, or runtime queries. Environment now owns one default-transform Floor instance and no local Floor child data; Shell and Playable remain override-free. MCP opened and edited the Floor Scene directly, undid a temporary cell, confirmed P/M/N/G and Playable movement, and found no new runtime error. Status: `KEEP_CANDIDATE`; Manual confirmation: `COMPLETED` for this structural parity check; production promotion remains unapproved.
 - Completed a read-only inventory of all 62 Godot Scenes: 8 production, 1 map authority, 1 debug shell, 2 playable candidates, 9 common components, 3 samples, 22 vendored GUT test Scenes, and 16 legacy/prototype Scenes. Source references and godot-ai MCP hierarchy agree that Apartment Environment is the sole map geometry authority, while its root Script still mixes provider/editor/debug responsibilities. The audit records the exact 58-Cell wall workflow, the locally duplicated WallSegment scaffold, fixed Scene-path tests, target Floor/Structure/Debug/Playable separation, nine rollbackable Apartment migration stages, and three later conditional gates that require a real second-map need. No Scene, Script, Resource, geometry, production entry, or project setting changed. Status: KEEP_CANDIDATE.
 - Quarterview Apartment production-readiness is now characterized without wiring or replacing production. The current Main/DAY1 composition owns a scene-local `SurvivalState`, runtime-generated Apartment, and production HUD/Phone/Outlet/Result; the latest Quarterview Playable owns Environment geometry plus click movement only. Their interaction signals and seven-object IDs are incompatible without an adapter, save/load does not exist, and input ownership is blocked by P having multiple candidate/production meanings plus `open_phone` being mapped to Backspace while Main also polls raw Tab. Minimal regression tests lock Main composition/single signal wiring, no-save startup, Phone modal movement/clock lock, state read/debug-injection seams, and the QV signal/ID mismatch. MCP started Main twice, old Apartment, all Apartment candidate scenes, and all sample scenes; raw Tab/ESC modal lock restoration and Quarterview click movement were confirmed with zero new game/editor warning or error entries. Status: `KEEP_CANDIDATE`; all protected production files and `project.godot` remain unchanged.
 - Phone candidate atlas loading now uses one imported, typed `Texture2D` shared by all six `AtlasTexture` regions instead of decoding the source PNG through `Image.load()`. The former expected-warning test and validator exception are removed, while Phone layout, tabs, P/ESC overlay input, and candidate-only data wiring remain unchanged.
@@ -92,7 +93,7 @@
 
 ## Next Recommended Work
 
-1. Map-authoring track: approve the audited Scene roles and proposed names before any move or rename. The first structural implementation should split only the four Floor TileMapLayers and prove exact Environment/Shell/Playable parity.
-2. After Floor parity, split RoomAreas/Walls/Openings as one ApartmentStructure authority. Defer an ApartmentObjects Scene until cross-Scene wall/parent/ceiling Socket ownership has an explicit tested contract.
+1. Map-authoring track: Floor parity is complete. Next, split RoomAreas/Walls/Openings as one `ApartmentStructure.tscn` authority with a default-transform Environment instance and no local child overrides.
+2. Defer an ApartmentObjects Scene until cross-Scene wall/parent/ceiling Socket ownership has an explicit tested contract.
 3. Keep the existing Junction/label code as a visual acceptance checkpoint after the structural split; do not rebuild it from zero or introduce a Wall TileMap/EditorPlugin yet.
 4. Production-integration track remains separate: add a candidate-only room adapter, approve the seven-object production action mapping, and only then build a production-candidate composition. Main and project.godot remain unchanged until their explicit final gate.
