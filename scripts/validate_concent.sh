@@ -387,21 +387,18 @@ print_summary() {
 	local seconds=$((duration_seconds % 60))
 	local index
 	local warning_summary="none detected"
-	local warning_count=0
 	local total_warning_count=0
 	local error_marker_count=0
-	local known_warning="Loaded resource as image file, this will not work on export: 'res://assets/art/ui/atlases/ui_phone_atlas.png'."
 	local git_counts
 	local staged_count
 	local tracked_count
 	local untracked_count
 	local status_note="unchanged during validation"
 
-	warning_count="$(count_log_matches "$known_warning")"
 	total_warning_count="$(count_log_matches 'WARNING:')"
 	error_marker_count="$(count_log_matches 'ERROR:')"
 	if (( total_warning_count > 0 )); then
-		warning_summary="known Phone PNG export warning ${warning_count} / other warnings $((total_warning_count - warning_count))"
+		warning_summary="total warnings ${total_warning_count}"
 	fi
 	if (( error_marker_count > 0 )); then
 		warning_summary="$warning_summary; log ERROR markers $error_marker_count (fatal script-load markers fail their Godot step; other errors follow command exit status)"

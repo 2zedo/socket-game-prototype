@@ -8,7 +8,7 @@ signal selection_changed(tab_key: String, item_key: String)
 signal job_candidate_accepted(job_key: String, payload: Dictionary)
 
 const PANEL_SIZE := Vector2(690, 520)
-const UI_ATLAS_PATH := "res://assets/art/ui/atlases/ui_phone_atlas.png"
+const UI_ATLAS_TEXTURE: Texture2D = preload("res://assets/art/ui/atlases/ui_phone_atlas.png")
 const JOB_RESOURCE_PATHS := [
 	"res://resources/rooms/quarterview/jobs/maintenance_17_fragment.tres",
 ]
@@ -90,7 +90,7 @@ var use_button: Button
 var item_title_label: Label
 var item_detail_label: Label
 var item_debug_label: Label
-var atlas_texture: Texture2D
+var atlas_texture: Texture2D = UI_ATLAS_TEXTURE
 var job_definitions: Array = []
 var selected_job_key := ""
 var accepted_job_keys := {}
@@ -248,25 +248,17 @@ func _build_atlas_preview(parent: Control) -> void:
 	atlas_box.add_theme_constant_override("separation", 6)
 	atlas_margin.add_child(atlas_box)
 
-	atlas_texture = _load_texture_from_png(UI_ATLAS_PATH)
-	if atlas_texture != null:
-		var phone_visual := Control.new()
-		phone_visual.name = "PhoneAtlasCompositedPreview"
-		phone_visual.custom_minimum_size = Vector2(156, 236)
-		atlas_box.add_child(phone_visual)
+	var phone_visual := Control.new()
+	phone_visual.name = "PhoneAtlasCompositedPreview"
+	phone_visual.custom_minimum_size = Vector2(156, 236)
+	atlas_box.add_child(phone_visual)
 
-		_add_atlas_region(phone_visual, "PhoneScreenRegion", ATLAS_REGION_SCREEN, Vector2(42, 42), Vector2(82, 156))
-		_add_atlas_region(phone_visual, "PhoneFrameRegion", ATLAS_REGION_FRAME, Vector2(14, 0), Vector2(132, 228))
-		_add_atlas_region(phone_visual, "PhoneBatteryRegion", ATLAS_REGION_BATTERY, Vector2(54, 56), Vector2(42, 20))
-		_add_atlas_region(phone_visual, "PhoneSignalRegion", ATLAS_REGION_SIGNAL, Vector2(104, 58), Vector2(30, 38))
-		_add_atlas_region(phone_visual, "PhoneMessageRegion", ATLAS_REGION_MESSAGE, Vector2(62, 116), Vector2(36, 30))
-		_add_atlas_region(phone_visual, "PhonePowerRegion", ATLAS_REGION_POWER, Vector2(100, 116), Vector2(36, 36))
-	else:
-		var missing_atlas := ColorRect.new()
-		missing_atlas.name = "MissingPhoneAtlasPreview"
-		missing_atlas.color = Color(0.08, 0.10, 0.11, 0.94)
-		missing_atlas.custom_minimum_size = Vector2(156, 236)
-		atlas_box.add_child(missing_atlas)
+	_add_atlas_region(phone_visual, "PhoneScreenRegion", ATLAS_REGION_SCREEN, Vector2(42, 42), Vector2(82, 156))
+	_add_atlas_region(phone_visual, "PhoneFrameRegion", ATLAS_REGION_FRAME, Vector2(14, 0), Vector2(132, 228))
+	_add_atlas_region(phone_visual, "PhoneBatteryRegion", ATLAS_REGION_BATTERY, Vector2(54, 56), Vector2(42, 20))
+	_add_atlas_region(phone_visual, "PhoneSignalRegion", ATLAS_REGION_SIGNAL, Vector2(104, 58), Vector2(30, 38))
+	_add_atlas_region(phone_visual, "PhoneMessageRegion", ATLAS_REGION_MESSAGE, Vector2(62, 116), Vector2(36, 30))
+	_add_atlas_region(phone_visual, "PhonePowerRegion", ATLAS_REGION_POWER, Vector2(100, 116), Vector2(36, 36))
 
 	var atlas_hint := Label.new()
 	atlas_hint.text = "phone atlas regions"
@@ -334,15 +326,6 @@ func _build_job_buttons() -> void:
 		button.pressed.connect(_on_job_pressed.bind(key))
 		job_list.add_child(button)
 		job_buttons[key] = button
-
-
-func _load_texture_from_png(path: String) -> Texture2D:
-	var image := Image.new()
-	var error := image.load(path)
-	if error != OK:
-		push_warning("PhoneScreenCandidate could not load optional PNG: %s" % path)
-		return null
-	return ImageTexture.create_from_image(image)
 
 
 func _make_atlas_texture(region: Rect2) -> Texture2D:

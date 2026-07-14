@@ -1,6 +1,7 @@
 extends GutTest
 
 const QUARTERVIEW_MAIN_SCENE := preload("res://scenes/QuarterviewMain.tscn")
+const PHONE_ATLAS_TEXTURE: Texture2D = preload("res://assets/art/ui/atlases/ui_phone_atlas.png")
 
 
 func test_room_interaction_opens_matching_panel_and_bed_candidate_with_input_lock() -> void:
@@ -191,6 +192,31 @@ func test_phone_key_is_gated_by_interaction_panel_and_does_not_duplicate_overlay
 	_assert_room_locked(main)
 
 
+func test_phone_atlas_regions_share_the_imported_texture() -> void:
+	var main = _make_main()
+	var phone: PhoneScreenCandidate = main.phone_closeup_panel
+	var region_names := [
+		"PhoneScreenRegion",
+		"PhoneFrameRegion",
+		"PhoneBatteryRegion",
+		"PhoneSignalRegion",
+		"PhoneMessageRegion",
+		"PhonePowerRegion",
+	]
+
+	assert_same(phone.atlas_texture, PHONE_ATLAS_TEXTURE)
+	assert_null(phone.find_child("MissingPhoneAtlasPreview", true, false))
+	for region_name in region_names:
+		var texture_rect := phone.find_child(String(region_name), true, false) as TextureRect
+		assert_not_null(texture_rect, "%s should remain in the composed Phone preview." % region_name)
+		if texture_rect == null:
+			continue
+		var atlas_region := texture_rect.texture as AtlasTexture
+		assert_not_null(atlas_region, "%s should keep using an AtlasTexture region." % region_name)
+		if atlas_region != null:
+			assert_same(atlas_region.atlas, PHONE_ATLAS_TEXTURE)
+
+
 func test_phone_key_is_gated_by_each_other_candidate_modal() -> void:
 	var cases := [
 		{"open": "_open_desk_closeup", "source": "desk", "flag": "desk_closeup_open"},
@@ -235,7 +261,6 @@ func test_open_modal_blocks_other_room_interactions() -> void:
 func _make_main():
 	var main = QUARTERVIEW_MAIN_SCENE.instantiate()
 	add_child_autofree(main)
-	_consume_one_known_phone_atlas_warning()
 	return main
 
 
@@ -279,16 +304,6 @@ func _count_nodes_with_script(root: Node, target_script: Script) -> int:
 	for child in root.get_children():
 		count += _count_nodes_with_script(child, target_script)
 	return count
-
-
-func _consume_one_known_phone_atlas_warning() -> void:
-	var matching_errors := []
-	for error in get_errors():
-		if not error.handled and error.contains_text("Loaded resource as image file, this will not work on export"):
-			matching_errors.append(error)
-	assert_eq(matching_errors.size(), 1, "QuarterviewMain fixture should emit exactly the one documented Phone atlas export warning.")
-	if matching_errors.size() == 1:
-		matching_errors[0].handled = true
 
 
 func _assert_room_locked(main) -> void:

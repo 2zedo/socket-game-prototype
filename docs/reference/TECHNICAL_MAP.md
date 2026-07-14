@@ -385,7 +385,7 @@ scripts/validate_concent.sh --godot-bin /Applications/Godot.app/Contents/MacOS/G
 - The script only reports Git status; it never stages, commits, pushes, cleans, restores, or deletes repository files. Godot may still generate its normal `.import`, `.uid`, or `.godot` metadata, which the final Git-status comparison reports.
 - Every Godot validation step fails when its log contains `Parse Error` or `Failed to load script`, even if Godot exits with status 0. This closes the engine case where a script reload failure is logged without a failing process exit.
 - The separate unit-test parse step is required because GUT 9.5 intentionally disables GDScript warnings while loading test scripts. A warning configured as an error can therefore be skipped by discovery and still let Full GUT pass; `--script <test> --check-only` keeps the project warning policy active and exposes that failure.
-- The known Phone PNG direct-load export warning may appear during QuarterviewMain startup and remains warning-only; it does not match the fatal script-load markers.
+- `PhoneScreenCandidate` preloads the imported Phone atlas as one typed `Texture2D`; every `AtlasTexture` region shares that resource, so candidate startup never decodes the source PNG through `Image.load()`.
 
 Targeted GUT examples:
 

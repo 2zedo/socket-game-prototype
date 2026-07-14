@@ -8,6 +8,9 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Phone atlas resource loading
+- Replaced per-instance source-PNG decoding with one typed imported `Texture2D` shared by the six Phone atlas regions. Removed the GUT expected-warning consumer and validator's Phone-specific warning classification; candidate layout, tabs, and P/ESC open-close behavior stay unchanged.
+
 ### Reusable quarterview map sample
 
 - Structure: Built a fresh two-room Environment from the existing Floor, RoomArea, WallSegment, WallCell, Opening, editable-object, environment-object, and editor-guide PackedScenes. Its Shell inherits the Environment; its Playable inherits the same Environment and adds external-provider `QuarterviewRoom`, with no apartment child overrides or copied apartment coordinates.
