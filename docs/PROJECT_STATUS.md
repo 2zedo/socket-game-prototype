@@ -10,6 +10,7 @@
 - Historical docs: `docs/old/`
 - Production golden path: existing `Main.tscn` / DAY1 top-view flow
 - Current candidate path: `QuarterviewMain.tscn`
+- Current validated toolchain: Godot `4.7.1`, godot-ai plugin/MCP server `3.0.2`
 
 ## Current State
 
@@ -29,6 +30,7 @@
 
 ## Latest Work
 
+- Accepted the user-installed Godot 4.7.1 and godot-ai 3.0.2 upgrade without reverting its generated changes. `project.godot` now declares feature level 4.7 and retains the engine migration compatibility setting; Main remains the start Scene and production gameplay wiring is unchanged. The complete plugin source update, including seven new Script/UID pairs, is treated as tracked source rather than cache; four unreferenced 2.9.1 legacy artifacts absent from 3.0.2 were removed. One vendored GUT loader read now supplies its former `true` default explicitly because 4.7.1 returns `Nil` for the absent legacy warning setting. MCP opened and ran production Main/Apartment, every current Apartment candidate Scene, QuarterviewRoom, and the three reusable-map samples with zero new editor/runtime errors; Shell debug keys and Playable click movement/object interaction remained functional. Status: `KEEP_CANDIDATE`.
 - Split the four apartment Floor TileMapLayers into `maps/apartment/ApartmentFloor.tscn` without changing any of the 99 cells, source/atlas coordinates, TileSet, transforms, colors, NodePaths, or runtime queries. Environment now owns one default-transform Floor instance and no local Floor child data; Shell and Playable remain override-free. MCP opened and edited the Floor Scene directly, undid a temporary cell, confirmed P/M/N/G and Playable movement, and found no new runtime error. Status: `KEEP_CANDIDATE`; Manual confirmation: `COMPLETED` for this structural parity check; production promotion remains unapproved.
 - Completed a read-only inventory of all 62 Godot Scenes: 8 production, 1 map authority, 1 debug shell, 2 playable candidates, 9 common components, 3 samples, 22 vendored GUT test Scenes, and 16 legacy/prototype Scenes. Source references and godot-ai MCP hierarchy agree that Apartment Environment is the sole map geometry authority, while its root Script still mixes provider/editor/debug responsibilities. The audit records the exact 58-Cell wall workflow, the locally duplicated WallSegment scaffold, fixed Scene-path tests, target Floor/Structure/Debug/Playable separation, nine rollbackable Apartment migration stages, and three later conditional gates that require a real second-map need. No Scene, Script, Resource, geometry, production entry, or project setting changed. Status: KEEP_CANDIDATE.
 - Quarterview Apartment production-readiness is now characterized without wiring or replacing production. The current Main/DAY1 composition owns a scene-local `SurvivalState`, runtime-generated Apartment, and production HUD/Phone/Outlet/Result; the latest Quarterview Playable owns Environment geometry plus click movement only. Their interaction signals and seven-object IDs are incompatible without an adapter, save/load does not exist, and input ownership is blocked by P having multiple candidate/production meanings plus `open_phone` being mapped to Backspace while Main also polls raw Tab. Minimal regression tests lock Main composition/single signal wiring, no-save startup, Phone modal movement/clock lock, state read/debug-injection seams, and the QV signal/ID mismatch. MCP started Main twice, old Apartment, all Apartment candidate scenes, and all sample scenes; raw Tab/ESC modal lock restoration and Quarterview click movement were confirmed with zero new game/editor warning or error entries. Status: `KEEP_CANDIDATE`; all protected production files and `project.godot` remain unchanged.
@@ -87,6 +89,7 @@
 
 ## Validation Notes
 
+- The 4.7.1/3.0.2 compatibility pass changes the engine feature marker, keeps the generated 2D-safe animation compatibility setting, updates the complete Godot AI plugin source, and adds one GUT loader default for an absent legacy warning setting. It does not change production gameplay Scripts, Scene geometry, object coordinates, Polygon points, or the project start Scene.
 - The production-readiness audit changes only current documentation and an existing candidate-boundary test; runtime Scenes, geometry, assets, production files, and the start scene remain unchanged.
 - Godot MCP reported zero new game/editor warning or error entries across the requested scene runs. The editor Debugger still shows ten pre-existing production-script warnings outside this task; the shared headless validator reports no warning/error.
 - Targeted readiness GUT, all requested direct startups, metadata checks, strict unit-script parsing, and `scripts/validate_concent.sh --full` pass before commit.

@@ -16,7 +16,7 @@
 
 ## Running the Godot Project
 
-1. Godot 4.5 이상을 설치합니다.
+1. Godot 4.7.1을 설치합니다.
 2. Godot Project Manager에서 `godot/project.godot`를 엽니다.
 3. 메인 씬은 `res://scenes/Main.tscn`입니다.
 4. Godot 에디터에서 Run을 눌러 실행합니다.

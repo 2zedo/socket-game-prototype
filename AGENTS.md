@@ -129,7 +129,7 @@ Commits should be small, named clearly, and pushed to `origin main` when validat
 
 ## 7. Godot Rules
 
-* Godot 4.5.x is the target.
+* Godot 4.7.1 is the current development target.
 * `godot/` is the current source of truth.
 * For scene / UI work, prefer Godot AI MCP read-only hierarchy checks before editing.
 * Do not guess-edit `.tscn` text when scene hierarchy or property inspection is needed.

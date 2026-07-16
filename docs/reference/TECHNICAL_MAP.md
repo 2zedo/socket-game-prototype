@@ -18,6 +18,17 @@ This is the current reference for important files, protected boundaries, validat
 | `docs/old/` | Historical archived docs |
 | `src/` | Legacy web prototype; do not edit unless explicitly requested |
 
+## Development Environment
+
+- Current editor/runtime target: Godot `4.7.1` (`godot/project.godot` feature level `4.7`).
+- Current editor integration: godot-ai plugin and MCP server `3.0.2`.
+- `/Applications/Godot.app/Contents/MacOS/Godot` is the validated macOS binary; `scripts/validate_concent.sh` still resolves an explicit argument or `GODOT_BIN` first and does not weaken validation for a version change.
+- The 4.7.1 project migration keeps `animation/compatibility/default_parent_skeleton_in_mesh_instance_3d=true`. The current 2D project has no authored `MeshInstance3D`/`Skeleton3D`, so this is retained as engine migration metadata rather than gameplay behavior.
+- Godot AI source and its paired `.gd.uid` files under `godot/addons/godot_ai/` are tracked plugin sources. Generated `godot/.godot/` data remains ignored cache.
+- The accepted 3.0.2 tree removes the unreferenced 2.9.1 `testing/stub_backtrace.gd[.uid]` pair and the empty `runtime/loggers` / `testing/loggers` quarantine markers. The new plugin already classifies those logger directories as extract-over-live legacy artifacts, so retaining tracked copies would recreate paths that 3.0.2 deletes at runtime.
+- Godot 4.7.1 no longer guarantees a value for GUT's legacy `debug/gdscript/warnings/exclude_addons` query. The vendored loader supplies its prior `true` default explicitly so Full GUT starts without a typed `Nil -> bool` script error; warning policy is not lowered.
+- MCP verification on 4.7.1/3.0.2 covers production Main/Apartment, Apartment Environment/Floor/Shell/Playable, QuarterviewRoom, and all three reusable-map sample Scenes. Candidate status remains `KEEP_CANDIDATE`; this toolchain update does not promote or rewire production.
+
 ## Active Docs
 
 Root docs should stay small:
@@ -792,9 +803,7 @@ git log --oneline HEAD..origin/main
 - Do not stage unrelated `godot/addons/*`, `.uid`, `.import`, license files, generated caches, or `godot/.godot/`.
 - Force push is forbidden.
 
-Known current caveat:
-
-- Full `git diff --check` may fail on unrelated `godot/addons/godot_ai/handlers/texture_handler.gd` EOF whitespace if that unrelated local change remains. Do not fix it unless explicitly tasked.
+The Godot 4.7.1 / godot-ai 3.0.2 acceptance pass removed the two trailing-blank-line formatting defects delivered in the plugin update (`texture_handler.gd` and `windows_port_reservation.gd`). No plugin behavior was changed by that cleanup.
 
 ## Documentation Rotation
 

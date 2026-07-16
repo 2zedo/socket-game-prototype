@@ -8,6 +8,16 @@ Long history is archived in `docs/old/`. When this file grows past about 200 lin
 
 ## Current Log
 
+### Godot 4.7.1 / godot-ai 3.0.2 acceptance
+
+- Verified the installed macOS editor as `4.7.1.stable.official.a13da4feb` and the live Godot AI editor plugin and MCP server as `3.0.2`. The validator continues to resolve the macOS app binary without a hardcoded old-version gate.
+- Classified the dirty tree as one coherent user upgrade: 83 modified Godot AI plugin files, seven new Script/UID pairs, and the Godot 4.7 project migration settings. No game `.gd`, `.tscn`, `.tres`, art, geometry, or unrelated local file was changed by the upgrade; `godot/.godot/` remains ignored cache.
+- Release-tree QA found four tracked 2.9.1 remnants that the local updater had not removed: the unreferenced `testing/stub_backtrace.gd[.uid]` pair and two empty legacy logger-directory markers. They are absent from 3.0.2, and the new plugin explicitly deletes the logger quarantine directories, so the four stale files were removed instead of being carried forward.
+- Retained the `4.7` feature marker and the engine-generated parent-skeleton compatibility setting, while leaving Main as the start Scene and all production/candidate wiring intact. Only two trailing blank lines in the delivered plugin source required a formatting-only cleanup.
+- The first Full GUT run exposed a real 4.7.1 startup error in vendored `gut_loader.gd`: an absent legacy `exclude_addons` setting returned `Nil` and was assigned to `bool`. The loader now uses the same prior `true` default explicitly without further weakening GUT's existing warning policy.
+- godot-ai MCP opened and ran Main, Apartment, Apartment Environment, standalone Apartment Floor, Shell, Playable, QuarterviewRoom, and the Sample Environment/Shell/Playable. Scene trees and Inspector data loaded, Shell P/M/N/W/V/G worked, Playable click movement and Fridge interaction worked, and no new editor or runtime error was recorded. Status remains `KEEP_CANDIDATE`.
+- All eleven requested direct startup checks and six targeted GUT files passed. The final `scripts/validate_concent.sh --full` run passed metadata checks before/after import, strict unit-script parsing, all startup gates, and Full GUT at 177 tests/4910 assertions with zero warning/error markers.
+
 ### Apartment Floor Scene split
 
 - Moved the four apartment TileMapLayers into `maps/apartment/ApartmentFloor.tscn` as the single Floor-cell authority. Environment now assembles one default-transform `Floor` instance, while the established `Floor/EntranceFloor`, `Floor/BathroomFloor`, `Floor/LivingFloor`, and `Floor/WorkFloor` paths remain unchanged.
